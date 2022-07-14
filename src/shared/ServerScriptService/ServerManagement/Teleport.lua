@@ -9,7 +9,7 @@ local adventurePlaceIDs = {
     test1 = 10189748812
 }
 
-local teleport = {}
+local Teleport = {}
 
 local function SafeTeleport(destination, players, options)
     local attemptIndex = 0
@@ -47,13 +47,12 @@ local function handleFailedTeleport(player, teleportResult, errorMessage, target
     SafeTeleport(targetPlaceId, {player}, teleportOptions)
 end
 
-function teleport.teleportToAdventure(destination, players)
-    local teleportOptions = Instance.new("TeleportOptions")
-    teleportOptions.ShouldReserveServer = true
+function Teleport.teleport(players, placeId, options)
+    local teleportOptions = options or Instance.new("TeleportOptions")
 
-    SafeTeleport(adventurePlaceIDs[destination], players, teleportOptions)
+    return SafeTeleport(placeId, players, teleportOptions)
 end
 
 TeleportService.TeleportInitFailed:Connect(handleFailedTeleport)
 
-return teleport
+return Teleport

@@ -1,10 +1,11 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ReplicatedStorageShared = ReplicatedStorage:WaitForChild("Shared")
 local Players = game:GetService("Players")
 
-local UIFolder = ReplicatedStorage:WaitForChild("UI")
-local Fusion = require(ReplicatedStorage:WaitForChild("Fusion"))
+local UIFolder = ReplicatedStorageShared:WaitForChild("UI")
+local Fusion = require(ReplicatedStorageShared:WaitForChild("Fusion"))
 
-local Utility = ReplicatedStorage:WaitForChild("Utility")
+local Utility = ReplicatedStorageShared:WaitForChild("Utility")
 local UIManagement = UIFolder:WaitForChild("UIManagement")
 local Components = UIFolder:WaitForChild("Components")
 
