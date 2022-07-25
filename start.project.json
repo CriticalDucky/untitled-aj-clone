@@ -1,0 +1,72 @@
+{
+  "name": "Untitled-AJ-clone",
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "$path": "src/start/ReplicatedStorage",
+
+      "Shared": {
+        "$className": "Folder",
+        "$path": "src/shared/ReplicatedStorage"
+      }
+    },
+
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "$path": "src/start/ServerScriptService",
+
+      "Shared": {
+        "$className": "Folder",
+        "$path": "src/shared/ServerScriptService"
+      }
+    },
+
+    "ServerStorage": {
+      "$className": "ServerStorage",
+      "$path": "src/start/ServerStorage",
+
+      "Shared": {
+        "$className": "Folder",
+        "$path": "src/shared/ServerStorage"
+      }
+    },
+
+    "Players": {
+      "$className": "Players",
+      "$properties": {
+        "CharacterAutoLoads": false
+      }
+    },
+
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "$properties": {
+        "DevComputerMovementMode": "KeyboardMouse",
+        "DevTouchMovementMode": "DynamicThumbstick",
+        "EnableMouseLockOption": false
+      },
+
+      "StarterPlayerScripts": {
+          "$className": "StarterPlayerScripts",
+          "$path": "src/start/StarterPlayer/StarterPlayerScripts",
+
+          "Shared": {
+            "$className": "Folder",
+            "$path": "src/shared/StarterPlayer/StarterPlayerScripts"
+          }
+      },
+
+      "StarterCharacterScripts": {
+          "$className": "StarterCharacterScripts",
+          "$path": "src/start/StarterPlayer/StarterCharacterScripts",
+
+          "Shared": {
+            "$className": "Folder",
+            "$path": "src/shared/StarterPlayer/StarterCharacterScripts"
+          }
+      }
+    }
+  }
+}
