@@ -1,18 +1,28 @@
 local TESTING_DONT_TELEPORT = false
 
+local MessagingService = game:GetService("MessagingService")
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
 local serverStorageShared = ServerStorage:WaitForChild("Shared")
 local serverManagement = serverStorageShared:WaitForChild("ServerManagement")
 local teleportation = serverStorageShared:WaitForChild("Teleportation")
+local enumsFolder = ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Enums")
 
 local Teleport = require(teleportation:WaitForChild("Teleport"))
-local ServerData = require(serverManagement:WaitForChild("ServerData"))
+local WorldData = require(serverManagement:WaitForChild("WorldData"))
+local WorldFillData = require(serverManagement:WaitForChild("WorldFillData"))
 local Locations = require(serverManagement:WaitForChild("Locations"))
+local FillStatusEnum = require(enumsFolder:WaitForChild("FillStatus"))
 
-local function rerouteToWorld(player)
-    local world, locationEnum = ServerData.findAvailableWorldAndLocation()
+local function routeUnsuccessful(player, reason)
+    -- TODO: Route unsuccessful
+    warn("Route unsuccessful: " .. reason)
+end
+
+local function routeToWorld(player)
+    local world, locationEnum = WorldData.findAvailable()
 
     if world then
         print("Rerouting to world")
@@ -21,20 +31,27 @@ local function rerouteToWorld(player)
             return true
         end
 
-        local teleportSuccess = Teleport.teleportToLocation({player}, locationEnum, world)
+        local teleportSuccess, teleportResult = Teleport.teleportToLocation({player}, locationEnum, world)
 
         if teleportSuccess then
             return true
         else
-            warn("Failed to teleport player to world")
+            if teleportResult == Enum.TeleportResult.GameFull then
+                WorldFillData.localSet(world, locationEnum, FillStatusEnum.full)
+
+                return routeToWorld(player)
+            end
+            
             return false
         end
     else
         warn("No available world found")
+
+        return false
     end
 end
 
-local function rerouteToPlayer(player)
+local function routeToPlayer(player)
     print("Rerouting player to player")
 
     local followingPlayerId = player.FollowUserId
@@ -63,18 +80,13 @@ local function rerouteToPlayer(player)
 end
 
 local function playerAdded(player: Player)
-
-    local function rerouteUnsuccessful()
-
-    end
-
     if player.FollowUserId == 0 then
-        if not rerouteToWorld(player) then
-            rerouteUnsuccessful()
+        if not routeToWorld(player) then
+            routeUnsuccessful()
         end
     elseif player.FollowUserId ~= 0 then
-        if not (rerouteToPlayer(player) or rerouteToWorld(player)) then
-            rerouteUnsuccessful()
+        if not (routeToPlayer(player) or routeToWorld(player)) then
+            routeUnsuccessful()
         end
     end
 end
