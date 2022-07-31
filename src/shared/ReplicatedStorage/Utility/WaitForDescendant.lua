@@ -38,13 +38,13 @@ return function (descendantOf, str)
 	else
 		local object
 		
-		coroutine.wrap(function()
+		task.spawn(function()
 			task.wait(TIMEOUT)
 
 			if not object then
 				warn("Infinite yield possible on "..tostring(descendantOf)..":WaitForDescendant("..str..")")
 			end
-		end)()
+		end)
 
 		repeat
 			local descendant = descendantOf.DescendantAdded:Wait()
