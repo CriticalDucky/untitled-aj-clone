@@ -2,10 +2,6 @@ local RETRY_DELAY = 0.5
 local MAX_RETRIES = 10
 local FLOOD_DELAY = 15
 
-local TELEPORT_TO_PLAYER_TIMEOUT = 5
-local TELEPORT_TO_PLAYER_TOPIC = "playerJoinQuery"
-local TELEPORT_TO_PLAYER_RESPONSE_TOPIC = "playerJoinQueryResponse"
-
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -20,17 +16,27 @@ local enumsFolder = replicatedStorageShared:WaitForChild("Enums")
 local Locations = require(serverManagement:WaitForChild("Locations"))
 local LocalServerInfo = require(serverManagement:WaitForChild("LocalServerInfo"))
 local ServerTypeEnum = require(enumsFolder:WaitForChild("ServerType"))
+local FillStatusEnum = require(enumsFolder:WaitForChild("FillStatus"))
 local Message = require(messagingFolder:WaitForChild("Message"))
 local PlayerLocationData = require(serverManagement:WaitForChild("PlayerLocationData"))
+local WorldData = require(serverManagement:WaitForChild("WorldData"))
+local WorldFillData = require(serverManagement:WaitForChild("WorldFillData"))
 
 local Teleport = {}
 
 local function safeTeleport(destination, players, options)
     local attemptIndex = 0
-    local success, result
+    local teleportResult
+    local success
  
+    local teleportFailConnection = TeleportService.TeleportInitFailed:Connect(function(player, reason)
+        if table.find(players, player) then -- If the player is in the list of players to teleport
+            teleportResult = reason
+        end
+    end)
+
     repeat
-        success, result = pcall(function()
+        success = pcall(function()
             return TeleportService:TeleportAsync(destination, players, options)
         end)
 
@@ -40,25 +46,10 @@ local function safeTeleport(destination, players, options)
             task.wait(RETRY_DELAY)
         end
     until success or attemptIndex == MAX_RETRIES
- 
-    if not success then
-        warn("SafeTeleport fail: " .. result)
-    end
- 
-    return success, result
-end
 
-local function handleFailedTeleport(player, teleportResult, errorMessage, targetPlaceId, teleportOptions)
-    if teleportResult == Enum.TeleportResult.Flooded then
-        task.wait(FLOOD_DELAY)
-    elseif teleportResult == Enum.TeleportResult.Failure then
-        task.wait(RETRY_DELAY)
-    else
-        -- if the teleport is invalid, don't retry, just report the error
-        error(("Invalid teleport [%s]: %s"):format(teleportResult.Name, errorMessage))
-    end
- 
-    safeTeleport(targetPlaceId, {player}, teleportOptions)
+    teleportFailConnection:Disconnect()
+
+    return success, teleportResult
 end
 
 function Teleport.teleport(players, placeId, options)
@@ -69,6 +60,7 @@ end
 
 function Teleport.teleportToLocation(players, locationEnum, world)
     if not locationEnum then
+        print("Teleport.teleportToLocation: locationEnum is nil")
         return false
     end
 
@@ -97,15 +89,58 @@ function Teleport.teleportToLocation(players, locationEnum, world)
 
             return Teleport.teleport(players, locationInfo.placeId, teleportOptions)
         else
+            print("Cannot teleport to location from a non-location server")
             return false
         end
     end
 end
 
-function Teleport.teleportToPlayer(player: Player, targetPlayerId)
-    
-end
+function Teleport.teleportToPlayer(player: Player, targetPlayerId) -- TODO: false return management
+    local success, targetPlayerIsPlaying = pcall(function()
+        local currentInstance, _, placeId, jobId = TeleportService:GetPlayerPlaceInstanceAsync(targetPlayerId)
 
-TeleportService.TeleportInitFailed:Connect(handleFailedTeleport)
+        return currentInstance ~= nil and placeId ~= nil and jobId ~= nil
+    end)
+
+    if not success or not targetPlayerIsPlaying then
+        print("Target player is not playing")
+        return false
+    end
+
+    local targetPlayerLocationData = PlayerLocationData.get(targetPlayerId)
+
+    if not targetPlayerLocationData then
+        print("Target player is not in a location")
+        return false
+    end
+
+    if targetPlayerLocationData.serverType == ServerTypeEnum.location then
+        local fillStatus = WorldFillData.get(
+            targetPlayerLocationData.worldIndex,
+            targetPlayerLocationData.locationEnum
+        )
+
+        if fillStatus == FillStatusEnum.full then
+            print("Target player's location is full")
+            return false
+        end
+
+        local worldData = WorldData.get()
+
+        if not worldData then
+            print("World data is nil")
+            return false
+        end
+
+        return Teleport.teleportToLocation(
+            {player},
+            targetPlayerLocationData.locationEnum,
+            worldData[targetPlayerLocationData.worldIndex]
+        )
+    else
+        print("Target player is not in a location")
+        return false
+    end
+end
 
 return Teleport
