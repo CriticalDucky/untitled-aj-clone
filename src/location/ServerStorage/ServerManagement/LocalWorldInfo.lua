@@ -9,57 +9,51 @@ local replicatedStorageShared = ReplicatedStorage:WaitForChild("Shared")
 local serverManagement = serverStorageShared:WaitForChild("ServerManagement")
 local enumsFolder = replicatedStorageShared:WaitForChild("Enums")
 
-local ServerData = require(serverManagement:WaitForChild("ServerData"))
+local WorldData = require(serverManagement:WaitForChild("WorldData"))
 
 local privateServerId = game.PrivateServerId
 
 local lastCacheUpdate = 0
 local cachedData
-local currentWorldIndex
-local currentLocationEnum
-
-local function parseServerData(serverData)
-    cachedData = serverData.worlds[currentWorldIndex]
-end
+local worldIndex
+local locationEnum
 
 do
-    local serverData = ServerData.get()
+    local worlds = WorldData.get()
 
-    if serverData then
-        local worlds = serverData.worlds
-
+    if worlds then
         for i, world in ipairs(worlds) do
             for enum, location in pairs(world.locations) do
                 if location.privateServerId == privateServerId then
-                    currentWorldIndex = i
-                    currentLocationEnum = enum
+                    worldIndex = i
+                    locationEnum = enum
 
                     break
                 end
             end
 
-            if currentWorldIndex then
+            if worldIndex then
                 break
             end
         end
     else
         --TODO: Error handling
-        warn("LocalWorldInfo: Failed to get server data")
+        warn("LocalWorldInfo: Failed to get world data")
     end
 end
 
 local localWorldInfo = {}
 
-localWorldInfo.worldIndex = currentWorldIndex
-localWorldInfo.locationEnum = currentLocationEnum
+localWorldInfo.worldIndex = worldIndex
+localWorldInfo.locationEnum = locationEnum
 
 function localWorldInfo.updateCachedData()
     lastCacheUpdate = time()
 
-    local serverData = ServerData.get()
+    local worlds = WorldData.get()
 
-    if serverData then
-        parseServerData(serverData)
+    if worlds then
+        cachedData = worlds[worldIndex]
     else
         warn("Failed to get server data")
     end
@@ -78,10 +72,10 @@ function localWorldInfo.getLocationData(getUpdated)
         localWorldInfo.updateCachedData()
     end
 
-    return cachedData.locations[currentLocationEnum]
+    return cachedData.locations[locationEnum]
 end
 
-RunService.Stepped:Connect(function(t, deltaTime)
+RunService.Heartbeat:Connect(function()
     if time() - lastCacheUpdate > CACHE_UPDATE_INTERVAL then
         localWorldInfo.updateCachedData()
     end
