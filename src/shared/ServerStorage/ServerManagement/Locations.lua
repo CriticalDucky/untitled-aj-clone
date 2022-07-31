@@ -10,13 +10,11 @@ local Locations = {
         [LocationTypeEnum.town] = {
             name = "Town",
             placeId = 10189748812,
-            spawnable = true,
         },
     
         [LocationTypeEnum.forest] = {
             name = "Forest",
             placeId = 10212920968,
-            spawnable = true,
         },
     },
 
