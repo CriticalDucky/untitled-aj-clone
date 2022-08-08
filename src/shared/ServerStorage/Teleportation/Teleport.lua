@@ -58,7 +58,7 @@ function Teleport.teleport(players, placeId, options)
     return safeTeleport(placeId, players, teleportOptions)
 end
 
-function Teleport.teleportToLocation(players, locationEnum, world)
+function Teleport.teleportToLocation(player, locationEnum, world)
     if not locationEnum then
         print("Teleport.teleportToLocation: locationEnum is nil")
         return false
@@ -72,7 +72,7 @@ function Teleport.teleportToLocation(players, locationEnum, world)
 
         teleportOptions.ReservedServerAccessCode = location.serverCode
 
-        return Teleport.teleport(players, locationInfo.placeId, teleportOptions)
+        return Teleport.teleport(player, locationInfo.placeId, teleportOptions)
     else
         if LocalServerInfo.serverType == ServerTypeEnum.location then
             local serverStorageLocation = ServerStorage:WaitForChild("Location")
@@ -87,7 +87,7 @@ function Teleport.teleportToLocation(players, locationEnum, world)
                 locationFrom = LocalWorldInfo.locationEnum,
             })
 
-            return Teleport.teleport(players, locationInfo.placeId, teleportOptions)
+            return Teleport.teleport(player, locationInfo.placeId, teleportOptions)
         else
             print("Cannot teleport to location from a non-location server")
             return false
