@@ -66,14 +66,4 @@ function PlayerLocationData.get(playerId)
     end
 end
 
-local function playerAdded(player)
-    PlayerLocationData.set(player.UserId)
-end
-
-for _, player in pairs(Players:GetPlayers()) do
-    playerAdded(player)
-end
-
-Players.PlayerAdded:Connect(playerAdded)
-
 return PlayerLocationData
