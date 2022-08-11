@@ -68,8 +68,8 @@ local PlayerData = {}
 PlayerData.__index = PlayerData
 
 local function getReplicationType(index)
-    for replicationType, indexes in pairs(PROFILE_REPLICATION) do
-        if indexes[index] then
+    for replicationType, keys in pairs(PROFILE_REPLICATION) do
+        if table.find(keys, index) then
             return replicationType
         end
     end
@@ -110,8 +110,6 @@ function PlayerData.new(player)
             playerDataCollection[player] = nil
             playerDataCreationComplete[player] = nil
         end)
-
-        print(player, player.IsDescendantOf)
 
         if player:IsDescendantOf(Players) then
             playerDataCollection[player] = newPlayerData
