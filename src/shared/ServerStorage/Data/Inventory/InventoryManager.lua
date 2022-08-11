@@ -6,7 +6,8 @@ local ServerStorage = game:GetService("ServerStorage")
 local replicatedStorageShared = ReplicatedStorage.Shared
 local serverStorageShared = ServerStorage.Shared
 local utilityFolder = serverStorageShared.Utility
-local inventoryFolder = serverStorageShared.Inventory
+local dataFolder = serverStorageShared.Data
+local inventoryFolder = dataFolder.Inventory
 local enumsFolder = replicatedStorageShared.Enums
 local dataFolder = serverStorageShared.Data
 
@@ -77,7 +78,7 @@ end
 function InventoryManager.validateItem(player, item)
     local function handleInvalidItem()
         local playerData = PlayerData.get(player)
-        local inventory = playerData.profile.inventory[item.itemType.indexName]
+        local inventory = playerData.profile.Data.inventory[item.itemType.indexName]
 
         local itemIndex do
             for index, inventoryItem in pairs(inventory) do
@@ -115,7 +116,7 @@ function InventoryManager.validateItem(player, item)
     end
 
     local playerData = PlayerData.get(player)
-    local inventory = playerData.profile.inventory[item.itemType.indexName]
+    local inventory = playerData.profile.Data.inventory[item.itemType.indexName]
 
     local numMatching = 0
 
@@ -144,7 +145,7 @@ end
 
 function InventoryManager.inventoryIsFull(player, itemType, numItemsToAdd)
     local playerData = PlayerData.get(player)
-    local inventory = playerData.profile.inventory[itemType.indexName]
+    local inventory = playerData.profile.Data.inventory[itemType.indexName]
     local numItems = #inventory
     local numItemsToAdd = numItemsToAdd or 0
 
@@ -157,7 +158,7 @@ function InventoryManager.changeOwnerOfItems(items, currentOwner, newOwner)
     local function checkIfInventoryWouldBeFull()
         for _, item in pairs(items) do
             local otherItemsOfSameType = {} do
-                for otherItem in pairs(items) do
+                for _, otherItem in pairs(items) do
                     if otherItem.itemType == item.itemType then
                         table.insert(otherItemsOfSameType, otherItem)
                     end
@@ -176,19 +177,21 @@ function InventoryManager.changeOwnerOfItems(items, currentOwner, newOwner)
         return
     end
 
-    for _, item in pairs(items) do
-        local validation = InventoryManager.validateItem(currentOwner, item)
-
-        if validation == ItemValidationType.noData then
-            warn("Could not get data from id: " .. item.id)
-
-            return
-        end
-        
-        if validation == ItemValidationType.invalid then
-            warn("Item is invalid")
-
-            return
+    if currentOwner then
+        for _, item in pairs(items) do
+            local validation = InventoryManager.validateItem(currentOwner, item)
+    
+            if validation == ItemValidationType.noData then
+                warn("Could not get data from id: " .. item.id)
+    
+                return
+            end
+            
+            if validation == ItemValidationType.invalid then
+                warn("Item is invalid")
+    
+                return
+            end
         end
     end
 
@@ -218,7 +221,7 @@ function InventoryManager.changeOwnerOfItems(items, currentOwner, newOwner)
 
         for _, item in pairs(items) do
             local itemIndex do
-                for i, v in ipairs(currentOwnerData.profile.inventory[item.itemType.indexName]) do
+                for i, v in ipairs(currentOwnerData.profile.Data.inventory[item.itemType.indexName]) do
                     if v.id == item.id then
                         itemIndex = i
                     end
@@ -233,7 +236,7 @@ function InventoryManager.changeOwnerOfItems(items, currentOwner, newOwner)
                     currentOwnerData:arrayInsert({"inventory", item.itemType.indexName}, item)
                     
                     local newItemIndex do
-                        for i, v in ipairs(newOwnerData.profile.inventory[item.itemType.indexName]) do
+                        for i, v in ipairs(newOwnerData.profile.Data.inventory[item.itemType.indexName]) do
                             if v.id == item.id then
                                 newItemIndex = i
                             end
@@ -273,7 +276,7 @@ function InventoryManager.changeOwnerOfItems(items, currentOwner, newOwner)
 
         for _, item in pairs(items) do
             local itemIndex do
-                for i, v in ipairs(playerData.profile.inventory[item.itemType.indexName]) do
+                for i, v in ipairs(playerData.profile.Data.inventory[item.itemType.indexName]) do
                     if v.id == item.id then
                         itemIndex = i
                     end
