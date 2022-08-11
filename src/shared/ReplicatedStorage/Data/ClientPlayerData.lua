@@ -38,7 +38,7 @@ end
 
 function playerData.getDataValue(player, wait)
     if wait then
-        while not playerDataTables[player] do
+        while not playerDataTables[player] and not playerDataTables[player].value do
             task.wait()
         end
     end
@@ -46,7 +46,7 @@ function playerData.getDataValue(player, wait)
     return playerDataTables[player].value
 end
 
-RunService.RenderStepped:Connect(function()
+RunService.Heartbeat:Connect(function()
     for player, data in pairs(playerDataTables) do
         if not player:IsDescendantOf(Players) then
             return
