@@ -59,4 +59,23 @@ function DataStore.safeGet(dataStore, key)
     return
 end
 
+function DataStore.safeRemove(dataStore, key)
+    local function try()
+        return pcall(function()
+            return dataStore:RemoveAsync(key)
+        end)
+    end
+
+    for _ = 1, DATASTORE_MAX_RETRIES do
+        local success = try()
+
+        if success then
+            return true
+        end
+    end
+
+    warn("Failed to remove data store")
+    return false
+end
+
 return DataStore
