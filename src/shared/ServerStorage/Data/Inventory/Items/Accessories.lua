@@ -1,0 +1,5 @@
+return {
+    ["hat"] = {
+        name = "Hat",
+    }
+}
