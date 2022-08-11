@@ -1,31 +1,63 @@
-local RunService = game:GetService("RunService")
+local MOVE_ACTION_NAME = "clickToMove"
+local WALKABLE_TAG = "Walkable"
+local UNWALKABLE_TAG = "Unwalkable"
+local MAX_PATH_LENGTH = 100
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ReplicatedStorageShared = ReplicatedStorage:WaitForChild("Shared")
+local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local ContextActionService = game:GetService("ContextActionService")
+local PathfindingService = game:GetService("PathfindingService")
+local CollectionService = game:GetService("CollectionService")
+
+local replicatedStorageShared = ReplicatedStorage:WaitForChild("Shared")
+local replicatedStorageUtility = replicatedStorageShared:WaitForChild("Utility")
+local sharedFolder = script.Parent
+
+local Mouse = require(replicatedStorageUtility:WaitForChild("Mouse"))
 
 local player = Players.LocalPlayer
-local sharedFolder = script.Parent
 local character = sharedFolder.Parent
-local humanoid = character:WaitForChild("Humanoid")
-
-local Fusion = require(ReplicatedStorageShared:WaitForChild("Fusion"))
-
-local Value = Fusion.Value
-local New = Fusion.New
-local Children = Fusion.Children
-local Computed = Fusion.Computed
-local OnEvent = Fusion.OnEvent
-local OnChange = Fusion.OnChange
-local Observer = Fusion.Observer
-local Tween = Fusion.Tween
-local Spring = Fusion.Spring
-local Hydrate = Fusion.Hydrate
-local unwrap = Fusion.unwrap
-
-local MOVE_ACTION_NAME = "clickToMove"
+local humanoid: Humanoid = character:WaitForChild("Humanoid")
+local rootPart = character:WaitForChild("HumanoidRootPart")
+local path = PathfindingService:CreatePath{
+        AgentRadius = 3,
+}
 
 local movementEnabled = false
+local moveIndex = 0
+
+local function getPathLength(waypoints)
+    local length = 0
+
+    for i = 1, #waypoints - 1 do
+        local start = waypoints[i].Position
+        local endPoint = waypoints[i + 1].Position
+        length += (start - endPoint).magnitude
+    end
+
+    return length
+end
+
+local function move(waypoints)
+    local currentMoveIndex = moveIndex
+
+    for i, waypoint in ipairs(waypoints) do
+        if i == 1 then
+            continue
+        end
+
+        local waypoint = waypoints[i]
+        local waypointPosition = waypoint.Position
+
+        humanoid:MoveTo(waypointPosition)
+        humanoid.MoveToFinished:Wait()
+
+        if currentMoveIndex ~= moveIndex then
+            return
+        end
+    end
+end
 
 local function onClickAction(action, state, input)
     if action == MOVE_ACTION_NAME then
@@ -44,9 +76,52 @@ local renderConnection, destroyingConnection do
 
     renderConnection = RunService.RenderStepped:Connect(function(deltaTime)
         if movementEnabled and not pathRendering then
-            local mouse = player:GetMouse()
+            local walkableParts = CollectionService:GetTagged(WALKABLE_TAG)
+            local unwalkableParts = CollectionService:GetTagged(UNWALKABLE_TAG)
 
-            humanoid:MoveTo(mouse.Hit.Position)
+            local whitelist do
+                whitelist = {}
+
+                for _, part in pairs(walkableParts) do
+                    table.insert(whitelist, part)
+                end
+
+                for _, part in pairs(unwalkableParts) do
+                    table.insert(whitelist, part)
+                end
+            end
+
+            local mouseTargetInfo = Mouse.getTarget(whitelist)
+
+            if mouseTargetInfo then
+                if table.find(walkableParts, mouseTargetInfo.Instance) then
+                    pathRendering = true
+
+                    local success, result = pcall(function()
+                        path:ComputeAsync(rootPart.CFrame.Position, mouseTargetInfo.Position)
+                    end)
+        
+                    pathRendering = false
+
+                    if success and path.Status == Enum.PathStatus.Success then
+                        moveIndex += 1
+
+                        local waypoints = path:GetWaypoints()
+
+                        if getPathLength(waypoints) <= MAX_PATH_LENGTH then
+                            move(waypoints)
+                        else
+                            humanoid:MoveTo(mouseTargetInfo.Position)
+                        end
+                    end
+                elseif table.find(unwalkableParts, mouseTargetInfo.Instance) then
+                    moveIndex += 1
+
+                    humanoid:MoveTo(mouseTargetInfo.Position)
+                end
+
+                
+            end
         end
     end)
 
