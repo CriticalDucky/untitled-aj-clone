@@ -27,7 +27,7 @@
 --	return part
 --end
 
-return function (descendantOf, str)
+local function waitForDescendant (descendantOf, str)
 	assert(typeof(descendantOf) == "Instance", "Invalid type for argument 1 (descendatOf)")
 	assert(typeof(str) == "string", "Invalid type for argument 2 (str)")
 	
@@ -55,3 +55,7 @@ return function (descendantOf, str)
 		return object
 	end
 end
+
+_G.waitForDescendant = waitForDescendant
+
+return waitForDescendant
