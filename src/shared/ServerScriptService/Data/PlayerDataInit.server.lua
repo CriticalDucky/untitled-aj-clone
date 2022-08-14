@@ -14,5 +14,9 @@ local ServerTypeEnum = require(enumsFolder:WaitForChild("ServerType"))
 if LocalServerInfo.serverType ~= ServerTypeEnum.routing then
     local init = require(dataFolder:WaitForChild("PlayerData")).init
 
+    for _, player in pairs(Players:GetPlayers()) do
+        init(player)
+    end
+
     Players.PlayerAdded:Connect(init)
 end
