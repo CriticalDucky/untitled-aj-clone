@@ -5,46 +5,46 @@
 
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
-      "$path": "src/location_forest/ReplicatedStorage",
+      "$path": "src/Locations/Forest/ReplicatedStorage",
 
       "Shared": {
         "$className": "Folder",
-        "$path": "src/shared/ReplicatedStorage"
+        "$path": "src/Shared/ReplicatedStorage"
       },
 
       "Location": {
         "$className": "Folder",
-        "$path": "src/location/ReplicatedStorage"
+        "$path": "src/Location/ReplicatedStorage"
       }
     },
 
     "ServerScriptService": {
       "$className": "ServerScriptService",
-      "$path": "src/location_forest/ServerScriptService",
+      "$path": "src/Locations/Forest/ServerScriptService",
 
       "Shared": {
         "$className": "Folder",
-        "$path": "src/shared/ServerScriptService"
+        "$path": "src/Shared/ServerScriptService"
       },
 
       "Location": {
         "$className": "Folder",
-        "$path": "src/location/ServerScriptService"
+        "$path": "src/Location/ServerScriptService"
       }
     },
 
     "ServerStorage": {
       "$className": "ServerStorage",
-      "$path": "src/location_forest/ServerStorage",
+      "$path": "src/Locations/Forest/ServerStorage",
 
       "Shared": {
         "$className": "Folder",
-        "$path": "src/shared/ServerStorage"
+        "$path": "src/Shared/ServerStorage"
       },
 
       "Location": {
         "$className": "Folder",
-        "$path": "src/location/ServerStorage"
+        "$path": "src/Location/ServerStorage"
       }
     },
 
@@ -65,31 +65,31 @@
 
       "StarterPlayerScripts": {
           "$className": "StarterPlayerScripts",
-          "$path": "src/location_forest/StarterPlayer/StarterPlayerScripts",
+          "$path": "src/Locations/Forest/StarterPlayer/StarterPlayerScripts",
 
           "Shared": {
             "$className": "Folder",
-            "$path": "src/shared/StarterPlayer/StarterPlayerScripts"
+            "$path": "src/Shared/StarterPlayer/StarterPlayerScripts"
           },
 
           "Location": {
             "$className": "Folder",
-            "$path": "src/location/StarterPlayer/StarterPlayerScripts"
+            "$path": "src/Location/StarterPlayer/StarterPlayerScripts"
           }
       },
 
       "StarterCharacterScripts": {
           "$className": "StarterCharacterScripts",
-          "$path": "src/location_forest/StarterPlayer/StarterCharacterScripts",
+          "$path": "src/Locations/Forest/StarterPlayer/StarterCharacterScripts",
 
           "Shared": {
             "$className": "Folder",
-            "$path": "src/shared/StarterPlayer/StarterCharacterScripts"
+            "$path": "src/Shared/StarterPlayer/StarterCharacterScripts"
           },
 
           "Location": {
             "$className": "Folder",
-            "$path": "src/location/StarterPlayer/StarterCharacterScripts"
+            "$path": "src/Location/StarterPlayer/StarterCharacterScripts"
           }
       }
     }
