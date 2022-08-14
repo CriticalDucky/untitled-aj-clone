@@ -20,6 +20,7 @@ local PROFILE_TEMPLATE = { -- Items in here can only be under a table
     inventory = {
         accessories = {},
         homeItems = {},
+        homes = {},
     },
 }
 
@@ -297,6 +298,8 @@ function PlayerDataManager.get(player, wait)
 end
 
 function PlayerDataManager.init(player)
+    print("Initializing player data for " .. player.Name)
+
     PlayerData.new(player)
     playerDataCreationComplete[player] = true
 end
