@@ -1,5 +1,0 @@
-return {
-    ["hat"] = {
-        name = "Hat",
-    }
-}
