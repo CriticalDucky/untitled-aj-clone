@@ -24,7 +24,7 @@ local Spring = Fusion.Spring
 local Hydrate = Fusion.Hydrate
 local unwrap = Fusion.unwrap
 
-local UNIT_VECTOR = Vector3.new(1, 1.4, 0).Unit
+local UNIT_VECTOR = Vector3.new(1, 1.2, 1).Unit
 local DISTANCE = 100
 local FOV = 20
 
