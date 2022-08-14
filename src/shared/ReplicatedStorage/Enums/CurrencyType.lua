@@ -1,5 +1,3 @@
 return {
-    money = {
-        indexName = "money",
-    }
+    money = "money",
 }
