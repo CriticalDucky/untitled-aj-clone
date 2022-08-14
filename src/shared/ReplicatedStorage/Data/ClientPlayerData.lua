@@ -38,7 +38,7 @@ end
 
 function playerData.getDataValue(player, wait)
     if wait then
-        while not playerDataTables[player] and not playerDataTables[player].value do
+        while not (playerDataTables[player] and playerDataTables[player].value) do
             task.wait()
         end
     end
