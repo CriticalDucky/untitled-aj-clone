@@ -1,4 +1,5 @@
 return {
-    homeItem = {indexName = "homeItems"},
-    accessory = {indexName = "accessories"},
+    homeItem = "homeItems",
+    accessory = "accessories",
+    home = "homes",
 }
