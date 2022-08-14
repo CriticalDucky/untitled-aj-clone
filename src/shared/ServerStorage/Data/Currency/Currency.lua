@@ -14,10 +14,10 @@ function Currency.increment(player, currencyType, amount)
         return
     end
 
-    local currencyTable = playerData.profile.currency
+    local currencyTable = playerData.profile.Data.currency
 
-    if currencyTable[currencyTable.indexName] and currencyTable[currencyTable.indexName] + amount >= 0 then
-        playerData:setValue({"currency", currencyType.indexName}, currencyTable[currencyTable.indexName] + amount)
+    if currencyTable[currencyType] and currencyTable[currencyType] + amount >= 0 then
+        playerData:setValue({"currency", currencyType}, currencyTable[currencyType] + amount)
 
         return true
     end
