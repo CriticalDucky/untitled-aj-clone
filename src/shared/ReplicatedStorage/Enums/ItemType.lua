@@ -1,5 +1,5 @@
 return {
-    homeItem = "homeItems",
+    furniture = "homeItems",
     accessory = "accessories",
     home = "homes",
 }
