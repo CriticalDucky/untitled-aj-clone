@@ -18,6 +18,21 @@
       }
     },
 
+    "ReplicatedFirst": {
+      "$className": "ReplicatedFirst",
+      "$path": "src/Home/ReplicatedFirst",
+
+      "Shared": {
+        "$className": "Folder",
+        "$path": "src/Shared/ReplicatedFirst"
+      },
+
+      "Location": {
+        "$className": "Folder",
+        "$path": "src/Location/ReplicatedFirst"
+      }
+    },
+
     "ServerScriptService": {
       "$className": "ServerScriptService",
       "$path": "src/Locations/Forest/ServerScriptService",

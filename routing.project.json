@@ -13,6 +13,16 @@
       }
     },
 
+    "ReplicatedFirst": {
+      "$className": "ReplicatedFirst",
+      "$path": "src/Routing/ReplicatedFirst",
+
+      "Shared": {
+        "$className": "Folder",
+        "$path": "src/Shared/ReplicatedFirst"
+      }
+    },
+
     "ServerScriptService": {
       "$className": "ServerScriptService",
       "$path": "src/Routing/ServerScriptService",
