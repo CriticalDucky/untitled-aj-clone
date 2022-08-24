@@ -10,7 +10,8 @@ local ReplicaController = require(madworkFolder:WaitForChild("ReplicaController"
 local replicas = {}
 local classes = {
     "PlayerDataPrivate_" .. Players.LocalPlayer.UserId,
-    "PlayerDataPublic"
+    "PlayerDataPublic",
+    "ActiveShops",
 }
 
 for _, class in ipairs(classes) do
@@ -22,6 +23,9 @@ end
 local replicaCollection = {}
 
 function replicaCollection.get(class, wait)
+    assert(type(class) == "string", "class must be a string")
+    assert(classes[class], "class must be one of " .. table.concat(classes, ", "))
+
     if wait then
         while not replicas[class] do
             task.wait()
