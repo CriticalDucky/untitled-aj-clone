@@ -9,49 +9,34 @@ local ReplicaCollection = require(replicationFolder:WaitForChild("ReplicaCollect
 local Fusion = require(replicatedStorageShared:WaitForChild("Fusion"))
 
 local Value = Fusion.Value
-local New = Fusion.New
-local Children = Fusion.Children
-local Computed = Fusion.Computed
-local OnEvent = Fusion.OnEvent
-local OnChange = Fusion.OnChange
-local Observer = Fusion.Observer
-local Tween = Fusion.Tween
-local Spring = Fusion.Spring
-local Hydrate = Fusion.Hydrate
-local unwrap = Fusion.unwrap
 
 local playerDataTables = {}
+local connections = {}
+
+local function addConnection(connection, player)
+    connections[player] = connections[player] or {}
+    table.insert(connections[player], connection)
+end
+
+local function removeAllConnections(player)
+    if connections[player] then
+        for _, connection in ipairs(connections[player]) do
+            connection:Disconnect()
+        end
+        connections[player] = nil
+    end
+end
+
 local playerData = {}
 
 function playerData.add(player)
+    local function connect(connection)
+        addConnection(connection, player)
+    end
+
     local data = {}
 
-    data._publicReplica = ReplicaCollection.get(player, true)
-
-    if player == Players.LocalPlayer then
-        data._privateReplica = ReplicaCollection.get("PlayerDataPrivate_" .. player.UserId, true)
-        data._mergeTable = {}
-    end
-
-    playerDataTables[player] = data
-end
-
-function playerData.getDataValue(player, wait)
-    if wait then
-        while not (playerDataTables[player] and playerDataTables[player].value) do
-            task.wait()
-        end
-    end
-
-    return playerDataTables[player].value
-end
-
-RunService.Heartbeat:Connect(function()
-    for player, data in pairs(playerDataTables) do
-        if not player:IsDescendantOf(Players) then
-            return
-        end
-
+    local function onReplicaChange()
         local value = data.value or Value()
 
         if player == Players.LocalPlayer then
@@ -70,6 +55,36 @@ RunService.Heartbeat:Connect(function()
 
         data.value = value
     end
+
+    data._publicReplica = ReplicaCollection.get(player, true)
+    connect(data._publicReplica:ListenToRaw(onReplicaChange))
+
+    if player == Players.LocalPlayer then
+        data._privateReplica = ReplicaCollection.get("PlayerDataPrivate_" .. player.UserId, true)
+        connect(data._privateReplica:ListenToRaw(onReplicaChange))
+        data._mergeTable = {}
+    end
+
+    playerDataTables[player] = data
+
+    onReplicaChange()
+end
+
+function playerData.getData(player, wait)
+    while wait and not (playerDataTables[player] and playerDataTables[player].value) do
+        task.wait()
+    end
+
+    return playerDataTables[player].value
+end
+
+Players.PlayerRemoving:Connect(function(player)
+    removeAllConnections(player)
+    playerDataTables[player] = nil
 end)
+
+function playerData.getLocalPlayerData(wait)
+    return playerData.getData(Players.LocalPlayer, wait)
+end
 
 return playerData

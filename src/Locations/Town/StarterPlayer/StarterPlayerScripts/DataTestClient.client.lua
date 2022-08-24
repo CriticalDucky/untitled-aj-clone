@@ -22,7 +22,7 @@ local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local screenGui = playerGui:WaitForChild("ScreenGui")
 
-local playerValue = ClientPlayerData.getDataValue(player, true)
+local playerValue = ClientPlayerData.getData(player, true)
 
 New "TextLabel" {
     Text = Computed(function()
