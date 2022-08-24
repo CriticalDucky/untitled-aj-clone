@@ -28,7 +28,7 @@ local UNIT_VECTOR = Vector3.new(1, 1.2, 1).Unit
 local DISTANCE = 100
 local FOV = 20
 
-RunService.RenderStepped:Connect(function(deltaTime)
+RunService.Heartbeat:Connect(function(deltaTime)
     local camera = workspace.CurrentCamera
     if camera then
         camera.CameraType = Enum.CameraType.Scriptable
