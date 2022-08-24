@@ -12,11 +12,58 @@ local Items = require(replicatedStorageShared.Data.Inventory.Items)
 local ItemType = require(enumsFolder.ItemType)
 
 local LIMITS = {
-    [ItemType.homeItem] = 400,
-    [ItemType.accessory] = 400,
+    [ItemType.furniture] = 1000,
+    [ItemType.accessory] = 1000,
+    [ItemType.home] = 200,
 }
 
+local PROPS = {
+    [ItemType.home] = {
+        placedItems = {},
+    },
+}
+
+local function deepCopy(value)
+    if type(value) == "table" then
+        local copy = {}
+
+        for k, v in pairs(value) do
+            copy[k] = deepCopy(v)
+        end
+
+        return copy
+    end
+        
+    return value
+end
+
+local function addPropsToTable(itemType, t)
+    if not PROPS[itemType] then
+        return
+    end
+    
+    for k, v in pairs(PROPS[itemType]) do
+        if not t[k] then
+            t[k] = deepCopy(v)
+        end
+    end
+
+    return t
+end
+
 local InventoryManager = {}
+
+function InventoryManager.reconcileInventory(player)
+    local playerData = PlayerData.get(player, true)
+
+    local inventory = playerData.profile.inventory
+
+    for itemType, items in pairs(inventory) do
+        for i, item in ipairs(items) do
+            playerData:arraySet({"inventory", itemType}, i, addPropsToTable(itemType, item))
+        end
+    end
+end
 
 function InventoryManager.newItem(itemType, itemReferenceId)
     local itemsTable = Items[itemType]
@@ -35,11 +82,11 @@ function InventoryManager.newItem(itemType, itemReferenceId)
         return
     end
 
-    return {
+    return addPropsToTable(itemType, {
         id = HttpService:GenerateGUID(false),
         itemType = itemType,
         itemReferenceId = itemReferenceId
-    }
+    })
 end
 
 function InventoryManager.inventoryIsFull(player, itemType, numItemsToAdd)
@@ -67,7 +114,7 @@ function InventoryManager.changeOwnerOfItems(items, currentOwner: Player | nil, 
                     end
                 end
             end
-
+            
             return InventoryManager.inventoryIsFull(newOwner, item.itemType, #otherItemsOfSameType)
         end
     end
