@@ -3,5 +3,6 @@ local homeItemTypeEnum = require(game.ReplicatedStorage.Shared.Enums.FurnitureTy
 return {
     [homeItemTypeEnum.beachBall] = {
         name = "Beach Ball",
+        price = 30
     }
 }
