@@ -8,7 +8,7 @@ local Currency = require(game:GetService("ServerStorage").Shared.Data.Currency.C
 local CurrencyType = require(game.ReplicatedStorage.Shared.Enums.CurrencyType)
 local ItemType = require(game.ReplicatedStorage.Shared.Enums.ItemType)
 local AccessoryType = require(game.ReplicatedStorage.Shared.Enums.AccessoryType)
-local HomeItemType = require(game.ReplicatedStorage.Shared.Enums.HomeItemType)
+local FurnitureType = require(game.ReplicatedStorage.Shared.Enums.FurnitureType)
 
 function changeMoney(player, money)
     print("changeMoney", player.Name, money)
@@ -61,7 +61,7 @@ workspace.Hat.Touched:Connect(function(part)
     if player and time() - lastCooldownTime > COOLDOWN then
         lastCooldownTime = time()
 
-        print(InventoryManager.newItemInInventory(ItemType.accessory, AccessoryType.hat, player))
+        print(InventoryManager.newItemInInventory(ItemType.accessory, AccessoryType.hat_var1, player))
     end
 end)
 
@@ -71,6 +71,6 @@ workspace.BeachBall.Touched:Connect(function(part)
     if player and time() - lastCooldownTime > COOLDOWN then
         lastCooldownTime = time()
 
-        print(InventoryManager.newItemInInventory(ItemType.homeItem, HomeItemType.beachBall, player))
+        print(InventoryManager.newItemInInventory(ItemType.furniture, FurnitureType.beachBall, player))
     end
 end)
