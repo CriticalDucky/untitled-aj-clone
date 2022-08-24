@@ -1,8 +1,10 @@
+local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 
 local UIFolder = ReplicatedStorage:WaitForChild("UI")
-local Fusion = require(ReplicatedStorage:WaitForChild("Fusion"))
+local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
+
 
 local Utility = ReplicatedStorage:WaitForChild("Utility")
 local UIManagement = UIFolder:WaitForChild("UIManagement")
@@ -15,6 +17,7 @@ local Util = require(WaitForDescendant(Utility, "UIUtil"))
 local Constants = require(UIManagement:WaitForChild("Constants"))
 local Component = Util.Component
 
+local Fusion = require(replicatedFirstShared:WaitForChild("Fusion"))
 local Value = Fusion.Value
 local New = Fusion.New
 local Children = Fusion.Children

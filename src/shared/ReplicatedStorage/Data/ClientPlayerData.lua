@@ -1,12 +1,14 @@
 local Players = game:GetService("Players")
+local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild("Shared")
+local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
 local replicationFolder = replicatedStorageShared:WaitForChild("Replication")
 
 local ReplicaCollection = require(replicationFolder:WaitForChild("ReplicaCollection"))
-local Fusion = require(replicatedStorageShared:WaitForChild("Fusion"))
+local Fusion = require(replicatedFirstShared:WaitForChild("Fusion"))
 
 local Value = Fusion.Value
 

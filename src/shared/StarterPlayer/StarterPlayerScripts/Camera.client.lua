@@ -1,7 +1,10 @@
+local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ReplicatedStorageShared = ReplicatedStorage:WaitForChild("Shared")
 local Players = game:GetService("Players")
+
+local replicatedStorageShared = ReplicatedStorage:WaitForChild("Shared")
+local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
@@ -10,7 +13,7 @@ player.CharacterAdded:Connect(function()
     character = player.Character
 end)
 
-local Fusion = require(ReplicatedStorageShared:WaitForChild("Fusion"))
+local Fusion = require(replicatedFirstShared:WaitForChild("Fusion"))
 
 local Value = Fusion.Value
 local New = Fusion.New
