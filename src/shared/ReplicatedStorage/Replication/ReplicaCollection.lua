@@ -12,6 +12,8 @@ local classes = {
     "PlayerDataPrivate_" .. Players.LocalPlayer.UserId,
     "PlayerDataPublic",
     "ActiveShops",
+    "PurchaseRequest",
+    "PurchaseResponse",
 }
 
 for _, class in ipairs(classes) do
