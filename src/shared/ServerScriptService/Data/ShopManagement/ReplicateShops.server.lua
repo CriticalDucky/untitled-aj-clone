@@ -2,11 +2,11 @@ local ServerStorage = game:GetService("ServerStorage")
 
 local serverStorageShared = ServerStorage.Shared
 local dataFolder = serverStorageShared.Data
-local shopsFolder = dataFolder.Shops
+local shoppingFolder = dataFolder.Shopping
 
 local ReplicaService = require(dataFolder.ReplicaService)
-local ActiveShops = require(shopsFolder.ActiveShops)
-local Shops = require(shopsFolder.Shops)
+local ActiveShops = require(shoppingFolder.ActiveShops)
+local Shops = require(shoppingFolder.Shops)
 
 local shops = {}
 
