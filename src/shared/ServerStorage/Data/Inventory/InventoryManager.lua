@@ -89,7 +89,7 @@ function InventoryManager.newItem(itemType, itemReferenceId)
     })
 end
 
-function InventoryManager.inventoryIsFull(player, itemType, numItemsToAdd)
+function InventoryManager.isInventoryFull(player, itemType, numItemsToAdd)
     local playerData = PlayerData.get(player)
     local inventory = playerData.profile.Data.inventory[itemType]
     local numItems = #inventory
@@ -115,7 +115,7 @@ function InventoryManager.changeOwnerOfItems(items, currentOwner: Player | nil, 
                 end
             end
             
-            return InventoryManager.inventoryIsFull(newOwner, item.itemType, #otherItemsOfSameType)
+            return InventoryManager.isInventoryFull(newOwner, item.itemType, #otherItemsOfSameType)
         end
     end
 
