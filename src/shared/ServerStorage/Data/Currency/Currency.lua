@@ -5,9 +5,18 @@ local dataFolder = serverStorageShared.Data
 
 local PlayerData = require(dataFolder.PlayerData)
 
+local lastCurrencyChange = {
+    --[[
+    [player] = {
+        currencyType = currencyType,
+        amount = amount,
+    }
+    ]]
+}
+
 local Currency = {}
 
-function Currency.increment(player, currencyType, amount)
+function Currency.get(player, currencyType)
     local playerData = PlayerData.get(player)
     
     if not playerData then
@@ -16,11 +25,33 @@ function Currency.increment(player, currencyType, amount)
 
     local currencyTable = playerData.profile.Data.currency
 
-    if currencyTable[currencyType] and currencyTable[currencyType] + amount >= 0 then
-        playerData:setValue({"currency", currencyType}, currencyTable[currencyType] + amount)
+    return if currencyType then currencyTable[currencyType] else currencyTable
+end
+
+function Currency.has(player, currencyType, amount)
+   return Currency.get(player, currencyType) >= amount
+end
+
+function Currency.increment(player, currencyType, amount)
+    local playerData = PlayerData.get(player)
+    
+    if not playerData then
+        return
+    end
+
+    local currencyAmount = Currency.get(player, currencyType)
+
+    if currencyAmount and currencyAmount + amount >= 0 then
+        lastCurrencyChange[player] = amount
+        playerData:setValue({"currency", currencyType}, currencyAmount + amount)
 
         return true
     end
+end
+
+function Currency.reimburse(player) -- Undo last currency change
+    local playerCurrencyChange = lastCurrencyChange[player]
+    Currency.increment(player, playerCurrencyChange.currencyType, playerCurrencyChange.amount)
 end
 
 return Currency
