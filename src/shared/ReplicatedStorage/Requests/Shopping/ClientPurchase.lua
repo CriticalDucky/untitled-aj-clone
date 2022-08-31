@@ -1,3 +1,5 @@
+local REQUEST_TIMEOUT = 10
+
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -11,6 +13,7 @@ local ReplicaCollection = require(replicationFolder:WaitForChild("ReplicaCollect
 local ActiveShops = require(shopInfoFolder:WaitForChild("ActiveShopsClient"))
 local ShopItemStatus = require(shopInfoFolder:WaitForChild("ShopItemStatus"))
 local ShopType = require(enumsFolder:WaitForChild("ShopType"))
+local PurchaseResponseType = require(enumsFolder:WaitForChild("PurchaseResponseType"))
 
 local Purchase = {}
 
@@ -34,6 +37,37 @@ function Purchase.request(shopEnum, itemIndex)
     local requestCode = HttpService:GenerateGUID(false)
 
     PurchaseRequest:FireServer(shopEnum, itemIndex, requestCode)
+
+    local response
+
+    local connection do
+        connection = PurchaseResponse:ConnectOnClientEvent(function(requestCode, success)
+            if requestCode == requestCode then
+                connection:Disconnect()
+                
+                if success then
+                    response = PurchaseResponseType.success
+                else
+                    response = PurchaseResponseType.failure
+                end
+            end
+        end) 
+    end
+
+    local startTime = time()
+
+    while not response do
+        task.wait()
+
+        if time() - startTime > REQUEST_TIMEOUT then
+            connection:Disconnect()
+            response = PurchaseResponseType.timeout
+
+            break
+        end
+    end
+
+    return response
 end
 
 return Purchase
