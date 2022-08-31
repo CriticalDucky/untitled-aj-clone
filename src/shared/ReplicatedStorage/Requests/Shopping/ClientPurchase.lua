@@ -14,13 +14,14 @@ local ShopType = require(enumsFolder:WaitForChild("ShopType"))
 
 local Purchase = {}
 
-function Purchase.request(shop, itemIndex)
-    assert(shop and ShopType[shop] and ActiveShops[shop], "shop must be a valid shop type")
-    assert(itemIndex and ActiveShops[shop][itemIndex], "item must be a valid item")
+function Purchase.request(shopEnum, itemIndex)
+    assert(shopEnum and ShopType[shopEnum] and ActiveShops[shopEnum], "shop must be a valid shop type")
+    assert(itemIndex and ActiveShops[shopEnum][itemIndex], "item must be a valid item")
 
     local PurchaseRequest = ReplicaCollection.get("PurchaseRequest")
+    local PurchaseResponse = ReplicaCollection.get("PurchaseResponse")
 
-    if not PurchaseRequest then
+    if not PurchaseRequest or not PurchaseResponse then
         return
     end
 
@@ -30,7 +31,9 @@ function Purchase.request(shop, itemIndex)
         return
     end
 
-    PurchaseRequest:FireServer(shop, itemIndex, HttpService:GenerateGUID())
+    local requestCode = HttpService:GenerateGUID(false)
+
+    PurchaseRequest:FireServer(shopEnum, itemIndex, requestCode)
 end
 
 return Purchase
