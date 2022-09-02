@@ -18,7 +18,9 @@ local PurchaseResponseType = require(enumsFolder:WaitForChild("PurchaseResponseT
 local Purchase = {}
 
 function Purchase.request(shopEnum, itemIndex)
-    assert(shopEnum and ShopType[shopEnum] and ActiveShops[shopEnum], "shop must be a valid shop type")
+    print(ActiveShops, ActiveShops[shopEnum], ActiveShops["-100"])
+
+    assert(shopEnum and ActiveShops[shopEnum], "shop must be a valid shop type")
     assert(itemIndex and ActiveShops[shopEnum][itemIndex], "item must be a valid item")
 
     local PurchaseRequest = ReplicaCollection.get("PurchaseRequest")
