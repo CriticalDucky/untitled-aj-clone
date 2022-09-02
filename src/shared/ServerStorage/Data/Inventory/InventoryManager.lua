@@ -56,7 +56,7 @@ local InventoryManager = {}
 function InventoryManager.reconcileInventory(player)
     local playerData = PlayerData.get(player, true)
 
-    local inventory = playerData.profile.inventory
+    local inventory = playerData.profile.Data.inventory
 
     for itemType, items in pairs(inventory) do
         for i, item in ipairs(items) do
