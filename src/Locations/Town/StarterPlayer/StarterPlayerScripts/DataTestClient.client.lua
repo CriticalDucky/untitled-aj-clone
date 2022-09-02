@@ -6,6 +6,7 @@ local replicatedStorageShared = ReplicatedStorage:WaitForChild("Shared")
 local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
 
 local ClientPlayerData = require(replicatedStorageShared:WaitForChild("Data"):WaitForChild("ClientPlayerData"))
+local ActiveShopsClient =require(replicatedStorageShared:WaitForChild("Data"):WaitForChild("ShopInfo"):WaitForChild("ActiveShopsClient"))
 
 local Fusion = require(replicatedFirstShared:WaitForChild("Fusion"))
 local Value = Fusion.Value
@@ -25,6 +26,8 @@ local playerGui = player:WaitForChild("PlayerGui")
 local screenGui = playerGui:WaitForChild("ScreenGui")
 
 local playerValue = ClientPlayerData.getData(player, true)
+
+print("Active shops from the client:", ActiveShopsClient)
 
 New "TextLabel" {
     Text = Computed(function()
