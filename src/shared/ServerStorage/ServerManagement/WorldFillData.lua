@@ -80,7 +80,7 @@ Message.subscribe(BROADCAST_CHANNEL, function(message)
     local locationEnum = message.Data.locationEnum
 
     if not worldIndex or not locationEnum then
-        warn("WorldFillData: Invalid message received")
+        -- warn("WorldFillData: Invalid message received")
         return
     end
 
