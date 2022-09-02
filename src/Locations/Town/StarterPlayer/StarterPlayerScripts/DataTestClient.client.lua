@@ -4,9 +4,14 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild("Shared")
 local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
+local dataFolder = replicatedStorageShared:WaitForChild("Data")
+local requestsFolder = replicatedStorageShared:WaitForChild("Requests")
+local enumsFolder = replicatedStorageShared:WaitForChild("Enums")
 
-local ClientPlayerData = require(replicatedStorageShared:WaitForChild("Data"):WaitForChild("ClientPlayerData"))
-local ActiveShopsClient =require(replicatedStorageShared:WaitForChild("Data"):WaitForChild("ShopInfo"):WaitForChild("ActiveShopsClient"))
+local ClientPlayerData = require(dataFolder:WaitForChild("ClientPlayerData"))
+local ActiveShopsClient =require(dataFolder:WaitForChild("ShopInfo"):WaitForChild("ActiveShopsClient"))
+local ClientPurchase = require(requestsFolder:WaitForChild("Shopping"):WaitForChild("ClientPurchase"))
+local ShopType = require(enumsFolder:WaitForChild("ShopType"))
 
 local Fusion = require(replicatedFirstShared:WaitForChild("Fusion"))
 local Value = Fusion.Value
@@ -27,7 +32,7 @@ local screenGui = playerGui:WaitForChild("ScreenGui")
 
 local playerValue = ClientPlayerData.getData(player, true)
 
-print("Active shops from the client:", ActiveShopsClient)
+warn(playerValue:get())
 
 New "TextLabel" {
     Text = Computed(function()
@@ -45,3 +50,18 @@ New "TextLabel" {
     Position = UDim2.new(0, 0, 0, 100),
     Parent = screenGui
 }
+
+local DEBOUNCE = 5
+local lastTime = 0
+
+workspace:WaitForChild("PurchasePart").Touched:Connect(function(part)
+    if part and part.Parent and part.Parent:FindFirstChild("Humanoid") then
+        if time() - lastTime > DEBOUNCE then
+            print("Purchase part touched")
+
+
+            lastTime = time()
+            ClientPurchase.request(ShopType.test1, 1)
+        end
+    end
+end)
