@@ -18,7 +18,7 @@ for shopType, _ in pairs(ActiveShops) do
 end
 
 ReplicaService.NewReplica({
-    ReplicaService.NewClassToken("ActiveShops"),
+    ClassToken = ReplicaService.NewClassToken("ActiveShops"),
     Data = shops,
     Replication = "All"
 })
