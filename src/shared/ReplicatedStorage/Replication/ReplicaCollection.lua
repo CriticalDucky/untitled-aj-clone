@@ -18,6 +18,7 @@ local classes = {
 }
 
 local function onReplicaReceived(replica)
+    warn("Replica recieved: ", replica.Class)
     replicas[replica.Data.sender or replica.Class] = replica
 end
 
@@ -29,7 +30,10 @@ function replicaCollection.get(class, wait) -- class must be either a string or 
 
     while wait and not replicas[class] do
         task.wait()
-        print("Waiting for replica", class, ". What we have right now:", replicas)
+
+        if os.time() % 3 == 0 then
+            print("Waiting for replica", class)
+        end
     end
 
     return replicas[class]
