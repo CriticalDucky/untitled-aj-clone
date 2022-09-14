@@ -1,14 +1,15 @@
 local ServerStorage = game:GetService("ServerStorage")
 local Players = game:GetService("Players")
 
-local serverStorageShared = ServerStorage:WaitForChild("Shared")
-local entranceDataFolder = ServerStorage:WaitForChild("EntranceData")
-local teleportation = serverStorageShared:WaitForChild("Teleportation")
-local dataFolder = serverStorageShared:WaitForChild("Data")
+local serverStorageShared = ServerStorage.Shared
+local entranceDataFolder = ServerStorage.EntranceData
+local teleportation = serverStorageShared.Teleportation
+local dataFolder = serverStorageShared.Data
 
-local Entrances = require(entranceDataFolder:WaitForChild("Entrances"))
-local Teleport = require(teleportation:WaitForChild("Teleport"))
-local PlayerData = require(dataFolder:WaitForChild("PlayerData"))
+local Entrances = require(entranceDataFolder.Entrances)
+local Teleport = require(teleportation.Teleport)
+local PlayerData = require(dataFolder.PlayerData)
+local Route = require(teleportation.Route)
 
 local playersTouched = {}
 
@@ -22,7 +23,9 @@ for enum, entranceComponents in pairs(Entrances.groups) do
 
                 PlayerData.yieldUntilHopReady(player)
 
-                Teleport.teleportToLocation({player}, enum)
+                if not Teleport.teleportToLocation({player}, enum) then
+                    -- place is full or error occurred while teleporting
+                end
             end
         end
     end)
