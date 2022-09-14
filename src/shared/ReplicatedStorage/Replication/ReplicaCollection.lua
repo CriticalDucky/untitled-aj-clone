@@ -14,25 +14,35 @@ local classes = {
     "PlayerDataPublic",
     "ActiveShops",
     "PurchaseRequest",
-    "PurchaseResponse",
+    "TeleportRequest",
+    "ServerInfo",
+    "WorldFillData",
 }
 
 local function onReplicaReceived(replica)
-    warn("Replica recieved: ", replica.Class)
-    replicas[replica.Data.sender or replica.Class] = replica
+    local index = replica.Class
+
+    if not replicas[index] then
+        print("Replica recieved: ", index)
+    end
+
+    replicas[index] = replica
 end
 
 local replicaCollection = {}
 
 function replicaCollection.get(class, wait) -- class must be either a string or a player
-    assert(type(class) == "string" or (typeof(class) == "Instance" and class:IsA("Player")), "class must be either a string or a player")
-    assert(if type(class) == "string" then table.find(classes, class) else true, "class must be a valid class")
+    assert(type(class) == "string", "ReplicaCollection.get: class must be a string")
+    assert(table.find(classes, class), "ReplicaCollection.get: class must be a valid class")
+
+    local lastPrint = time()
 
     while wait and not replicas[class] do
         task.wait()
 
-        if os.time() % 3 == 0 then
+        if time() - lastPrint > 5 then
             print("Waiting for replica", class)
+            lastPrint = time()
         end
     end
 
