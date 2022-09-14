@@ -9,6 +9,6 @@ return {
     [homeItemTypeEnum.beachBall] = {
         name = "Beach Ball",
         priceCurrencyType = CurrencyTypeEnum.money,
-        price = 30
+        price = 200
     }
 }
