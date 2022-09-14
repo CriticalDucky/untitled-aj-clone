@@ -17,6 +17,6 @@ local function changeStringKeyToNum(key, value)
     newTable[tonumber(key)] = value
 end
 
-table.foreach(ActiveShops, changeStringKeyToNum)
+table.foreach(ActiveShops.Data, changeStringKeyToNum)
 
-return ActiveShops.Data
+return newTable
