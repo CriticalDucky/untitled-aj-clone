@@ -1,7 +1,6 @@
 local Players = game:GetService("Players")
 local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild("Shared")
 local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
@@ -12,8 +11,11 @@ local Fusion = require(replicatedFirstShared:WaitForChild("Fusion"))
 
 local Value = Fusion.Value
 
+local publicDataReplica = ReplicaCollection.get("PlayerDataPublic", true)
+
 local playerDataTables = {}
 local connections = {}
+local publicDataLoaded = {}
 
 local function addConnection(connection, player)
     connections[player] = connections[player] or {}
@@ -40,26 +42,34 @@ function playerData.add(player)
 
     local function onReplicaChange()
         local value = data.value or Value()
+        local stringId = tostring(player.UserId)
+
+        print("onReplicaChange", stringId)
+
+        if publicDataReplica.Data[stringId] then
+            publicDataLoaded[player] = true
+        end
 
         if player == Players.LocalPlayer then
             for key, value in pairs(data._privateReplica.Data) do
                 data._mergeTable[key] = value
             end
 
-            for key, value in pairs(data._publicReplica.Data) do
-                data._mergeTable[key] = value
+            if publicDataLoaded[player] then
+                for key, value in pairs(publicDataReplica.Data[stringId]) do
+                    data._mergeTable[key] = value
+                end
             end
 
             value:set(data._mergeTable)
         else
-            value:set(data._publicReplica.Data)
+            value:set(publicDataReplica.Data[stringId])
         end
 
         data.value = value
     end
 
-    data._publicReplica = ReplicaCollection.get(player, true)
-    connect(data._publicReplica:ListenToRaw(onReplicaChange))
+    connect(publicDataReplica:ListenToRaw(onReplicaChange))
 
     if player == Players.LocalPlayer then
         data._privateReplica = ReplicaCollection.get("PlayerDataPrivate_" .. player.UserId, true)
@@ -73,7 +83,18 @@ function playerData.add(player)
 end
 
 function playerData.getData(player, wait)
-    while wait and not (playerDataTables[player] and playerDataTables[player].value) do
+    local lastPrint = time()
+
+    while wait and not (playerDataTables[player] and playerDataTables[player].value and publicDataLoaded[player]) do
+        -- only print once every 5 seconds
+        if time() - lastPrint > 5 then
+            lastPrint = time()
+
+            for k, v in pairs(publicDataReplica.Data) do
+                print(k, v)
+            end
+        end
+        
         task.wait()
     end
 
