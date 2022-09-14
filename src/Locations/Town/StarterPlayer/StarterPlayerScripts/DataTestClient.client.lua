@@ -32,7 +32,7 @@ local screenGui = playerGui:WaitForChild("ScreenGui")
 
 local playerValue = ClientPlayerData.getData(player, true)
 
-warn(playerValue:get())
+print("DataTestClient loaded")
 
 New "TextLabel" {
     Text = Computed(function()
