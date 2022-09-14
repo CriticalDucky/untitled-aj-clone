@@ -47,38 +47,4 @@ local localWorldInfo = {}
 localWorldInfo.worldIndex = worldIndex
 localWorldInfo.locationEnum = locationEnum
 
-function localWorldInfo.updateCachedData()
-    lastCacheUpdate = time()
-
-    local worlds = WorldData.get()
-
-    if worlds then
-        cachedData = worlds[worldIndex]
-    else
-        warn("Failed to get server data")
-    end
-end
-
-function localWorldInfo.getWorldData(getUpdated)
-    if cachedData == nil or getUpdated then
-        localWorldInfo.updateCachedData()
-    end
-
-    return cachedData
-end
-
-function localWorldInfo.getLocationData(getUpdated)
-    if cachedData == nil or getUpdated then
-        localWorldInfo.updateCachedData()
-    end
-
-    return cachedData.locations[locationEnum]
-end
-
-RunService.Heartbeat:Connect(function()
-    if time() - lastCacheUpdate > CACHE_UPDATE_INTERVAL then
-        localWorldInfo.updateCachedData()
-    end
-end)
-
 return localWorldInfo
