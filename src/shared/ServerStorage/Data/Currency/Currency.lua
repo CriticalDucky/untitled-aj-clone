@@ -29,10 +29,14 @@ function Currency.get(player, currencyType)
 end
 
 function Currency.has(player, currencyType, amount)
-   return Currency.get(player, currencyType) >= amount
+    assert(player and currencyType and amount, "Currency.has: Missing argument(s)")
+    local currency = Currency.get(player, currencyType)
+    return currency and currency >= amount
 end
 
 function Currency.increment(player, currencyType, amount)
+    assert(player and currencyType and amount, "Currency.increment: Missing argument(s)")
+
     local playerData = PlayerData.get(player)
     
     if not playerData then
@@ -51,7 +55,7 @@ end
 
 function Currency.reimburse(player) -- Undo last currency change
     local playerCurrencyChange = lastCurrencyChange[player]
-    Currency.increment(player, playerCurrencyChange.currencyType, playerCurrencyChange.amount)
+    Currency.increment(player, playerCurrencyChange.currencyType, -playerCurrencyChange.amount)
 end
 
 return Currency
