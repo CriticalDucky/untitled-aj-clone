@@ -22,24 +22,28 @@ local ShopManager = {}
 
 function ShopManager.playerCanBuyItem(player, shopEnum, itemIndex)
     local shopInfoTable = Shops[shopEnum]
-    local shopItem = shopInfoTable.Items[itemIndex]
-    local itemInfo = Items[shopItem.itemType]
+    local shopItem = shopInfoTable.items[itemIndex]
+    local itemInfo = Items[shopItem.itemType][shopItem.item]
 
     local playerData = PlayerData.get(player)
 
     if not playerData then
+        warn("Player data not found")
         return false
     end
 
     if not ShopItemStatus.get(shopItem) then
+        warn("Shop item is not available")
         return false
     end
 
-    if not Currency.has(player, itemInfo.currencyType, itemInfo.price) then
+    if not Currency.has(player, itemInfo.priceCurrencyType, itemInfo.price) then
+        warn("Player does not have enough currency")
         return false
     end
 
-    if not InventoryManager.isInventoryFull(player, shopItem.itemType, 1) then
+    if InventoryManager.isInventoryFull(player, shopItem.itemType, 1) then
+        warn("Player inventory is full")
         return false
     end
 
@@ -50,12 +54,20 @@ function ShopManager.purchaseShopItem(player, shopEnum, itemIndex)
     local shopInfoTable = Shops[shopEnum]
     local shopItem = shopInfoTable.items[itemIndex]
 
-    local itemInfo = Items[shopItem.itemType]
+    local itemInfo = Items[shopItem.itemType][shopItem.item]
 
     if ShopManager.playerCanBuyItem(player, shopEnum, itemIndex) then
         if InventoryManager.newItemInInventory(shopItem.itemType, shopItem.item, player) then
-            return Currency.increment(player, itemInfo.priceCurrencyType, itemInfo.price)
+            if Currency.increment(player, itemInfo.priceCurrencyType, -itemInfo.price) then
+                return true
+            else
+                warn("Failed to increment currency")
+            end
+        else
+            warn("Failed to add item to inventory")
         end
+    else
+        warn("Player cannot buy item")
     end
 end
 
