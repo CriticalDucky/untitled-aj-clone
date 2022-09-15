@@ -5,6 +5,8 @@ local DataStore = {}
 function DataStore.safeUpdate(dataStore, key, transformFunction)
     print("DATASTORE: safeUpdate")
 
+    local possibleError
+
     local function try()
         return pcall(function()
             return dataStore:UpdateAsync(key, transformFunction)
@@ -12,19 +14,23 @@ function DataStore.safeUpdate(dataStore, key, transformFunction)
     end
 
     for _ = 1, DATASTORE_MAX_RETRIES do
-        local success = try()
+        local success, err = try()
+
+        possibleError = err
 
         if success then
             return true
         end
     end
 
-    warn("Failed to update data store")
+    warn("Failed to update data store", possibleError)
     return false
 end
 
 function DataStore.safeSet(dataStore, key, value)
     print("DATASTORE: safeSet")
+
+    local possibleError
 
     local function try()
         return pcall(function()
@@ -33,19 +39,23 @@ function DataStore.safeSet(dataStore, key, value)
     end
 
     for _ = 1, DATASTORE_MAX_RETRIES do
-        local success = try()
+        local success, err = try()
+
+        possibleError = err
 
         if success then
             return true
         end
     end
 
-    warn("Failed to set data store")
+    warn("Failed to set data store", possibleError)
     return false
 end
 
 function DataStore.safeGet(dataStore, key)
     print("DATASTORE: safeGet")
+
+    local possibleError
 
     local function try()
         return pcall(function()
@@ -56,17 +66,21 @@ function DataStore.safeGet(dataStore, key)
     for _ = 1, DATASTORE_MAX_RETRIES do
         local success, data = try()
 
+        possibleError = data
+
         if success then
             return data
         end
     end
 
-    print("Failed to get data store")
+    print("Failed to get data store", possibleError)
     return
 end
 
 function DataStore.safeRemove(dataStore, key)
     print("DATASTORE: safeRemove")
+
+    local possibleError
 
     local function try()
         return pcall(function()
@@ -75,14 +89,16 @@ function DataStore.safeRemove(dataStore, key)
     end
 
     for _ = 1, DATASTORE_MAX_RETRIES do
-        local success = try()
+        local success, err = try()
+
+        possibleError = err
 
         if success then
             return true
         end
     end
 
-    warn("Failed to remove data store")
+    warn("Failed to remove data store", possibleError)
     return false
 end
 
