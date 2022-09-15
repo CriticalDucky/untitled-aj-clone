@@ -15,19 +15,18 @@ local PlayerData = require(dataFolder.PlayerData)
 
 local purchaseRequest = ReplicaService.NewReplica({
     ClassToken = ReplicaService.NewClassToken("PurchaseRequest"),
-})
-
-local purchaseResponse = ReplicaService.NewReplica({
-    ClassToken = ReplicaService.NewClassToken("PurchaseResponse"),
+    Replication = "All"
 })
 
 purchaseRequest:ConnectOnServerEvent(function(player, shopEnum, itemIndex, requestCode) -- Player will always be valid
     local function requestIsValid()
         if not (shopEnum and itemIndex and type(requestCode) == "string") then
+            warn("Invalid arguments")
             return false
         end
 
         if not ActiveShops[shopEnum] then
+            warn("Shop is not active")
             return false
         end
 
@@ -35,10 +34,12 @@ purchaseRequest:ConnectOnServerEvent(function(player, shopEnum, itemIndex, reque
         local shopItem = shopInfo.items[itemIndex]
 
         if not shopItem then
+            warn("Shop item does not exist")
             return false
         end
 
         if not ShopManager.playerCanBuyItem(player, shopEnum, itemIndex) then
+            warn("Player cannot buy item")
             return false
         end
 
@@ -46,12 +47,13 @@ purchaseRequest:ConnectOnServerEvent(function(player, shopEnum, itemIndex, reque
     end
 
     local function respond(success)
-        purchaseResponse:FireClient(player, requestCode, success)
+        purchaseRequest:FireClient(player, requestCode, success)
     end
 
     if requestIsValid() then
         respond(ShopManager.purchaseShopItem(player, shopEnum, itemIndex))
     else
+        warn("Invalid request")
         respond(false)
     end
 end)
