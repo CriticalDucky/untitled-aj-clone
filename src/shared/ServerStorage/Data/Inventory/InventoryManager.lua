@@ -10,6 +10,7 @@ local enumsFolder = replicatedStorageShared.Enums
 local PlayerData = require(dataFolder.PlayerData)
 local Items = require(replicatedStorageShared.Data.Inventory.Items)
 local ItemType = require(enumsFolder.ItemType)
+local Table = require(replicatedStorageShared.Utility.Table)
 
 local LIMITS = {
     [ItemType.furniture] = 1000,
@@ -23,28 +24,12 @@ local PROPS = {
     },
 }
 
-local function deepCopy(value)
-    if type(value) == "table" then
-        local copy = {}
-
-        for k, v in pairs(value) do
-            copy[k] = deepCopy(v)
-        end
-
-        return copy
-    end
-        
-    return value
-end
-
 local function addPropsToTable(itemType, t)
-    if not PROPS[itemType] then
-        return
-    end
-    
-    for k, v in pairs(PROPS[itemType]) do
-        if not t[k] then
-            t[k] = deepCopy(v)
+    if PROPS[itemType] then
+        for k, v in pairs(PROPS[itemType]) do
+            if not t[k] then
+                t[k] = Table.deepCopy(v)
+            end
         end
     end
 
@@ -278,8 +263,17 @@ function InventoryManager.deleteItemsFromInventory(items, player)
 end
 
 function InventoryManager.newItemInInventory(itemType, itemReferenceId, player)
+    assert(itemType and itemReferenceId and player, "InventoryManager.newItemInInventory: Missing argument(s)")
+
     local item = InventoryManager.newItem(itemType, itemReferenceId)
-    return item and InventoryManager.addItemsToInventory({item}, player)
+
+    if not item then
+        warn("Failed to create new item with type " .. itemType .. " and id " .. itemReferenceId)
+    
+        return
+    end
+
+    return InventoryManager.addItemsToInventory({item}, player)
 end
 
 return InventoryManager
