@@ -4,11 +4,13 @@ local ServerStorage = game:GetService("ServerStorage")
 local serverStorageShared = ServerStorage.Shared
 local replicatedStorageShared = ReplicatedStorage.Shared
 local serverManagement = serverStorageShared.ServerManagement
+local dataFolder = serverStorageShared.Data
 local enumsFolder = replicatedStorageShared.Enums
 
 local ServerTypeEnum = require(enumsFolder.ServerType)
 local Locations = require(serverManagement.Locations)
 local Homes = require(replicatedStorageShared.Data.Inventory.Items.Homes)
+local ReplicaService = require(dataFolder.ReplicaService)
 
 local serverType do
     for _, locationInfo in pairs(Locations.info) do
@@ -31,5 +33,11 @@ end
 local localServerInfo = {}
 
 localServerInfo.serverType = serverType
+
+ReplicaService.NewReplica({
+    ClassToken = ReplicaService.NewClassToken("ServerInfo"),
+    Data = localServerInfo,
+    Replication = "All",
+})
 
 return localServerInfo
