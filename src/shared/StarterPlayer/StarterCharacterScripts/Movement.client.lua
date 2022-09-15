@@ -62,10 +62,10 @@ end
 local function onClickAction(action, state, input)
     if action == MOVE_ACTION_NAME then
         if state == Enum.UserInputState.Begin then
-            print("Begin")
+            -- print("Begin")
             movementEnabled = true
         elseif state == Enum.UserInputState.End then
-            print("End")
+            -- print("End")
             movementEnabled = false
         end
     end
