@@ -7,20 +7,20 @@ local TeleportService = game:GetService("TeleportService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
-local serverStorageShared = ServerStorage:WaitForChild("Shared")
-local replicatedStorageShared = ReplicatedStorage:WaitForChild("Shared")
-local serverManagement = serverStorageShared:WaitForChild("ServerManagement")
-local messagingFolder = serverStorageShared:WaitForChild("Messaging")
-local enumsFolder = replicatedStorageShared:WaitForChild("Enums")
+local serverStorageShared = ServerStorage.Shared
+local replicatedStorageShared = ReplicatedStorage.Shared
+local serverManagement = serverStorageShared.ServerManagement
+local messagingFolder = serverStorageShared.Messaging
+local enumsFolder = replicatedStorageShared.Enums
 
-local Locations = require(serverManagement:WaitForChild("Locations"))
-local LocalServerInfo = require(serverManagement:WaitForChild("LocalServerInfo"))
-local ServerTypeEnum = require(enumsFolder:WaitForChild("ServerType"))
-local FillStatusEnum = require(enumsFolder:WaitForChild("FillStatus"))
-local Message = require(messagingFolder:WaitForChild("Message"))
-local PlayerLocationData = require(serverManagement:WaitForChild("PlayerLocationData"))
-local WorldData = require(serverManagement:WaitForChild("WorldData"))
-local WorldFillData = require(serverManagement:WaitForChild("WorldFillData"))
+local Locations = require(serverManagement.Locations)
+local LocalServerInfo = require(serverManagement.LocalServerInfo)
+local ServerTypeEnum = require(enumsFolder.ServerType)
+local FillStatusEnum = require(enumsFolder.FillStatus)
+local PlayerLocation = require(serverManagement.PlayerLocation)
+local WorldData = require(serverManagement.WorldData)
+local GameServerData = require(serverManagement.GameServerData)
+local Constants = require(serverManagement.Constants)
 
 local Teleport = {}
 
@@ -58,29 +58,51 @@ function Teleport.teleport(players, placeId, options)
     return safeTeleport(placeId, players, teleportOptions)
 end
 
-function Teleport.teleportToLocation(player, locationEnum, world)
+function Teleport.teleportToLocation(player, locationEnum, worldIndex)
     if not locationEnum then
         print("Teleport.teleportToLocation: locationEnum is nil")
+        return false
+    end
+
+    local worlds = WorldData.get()
+
+    if not worlds then
+        warn("Teleport.teleportToLocation: WorldData is nil")
         return false
     end
 
     local locationInfo = Locations.info[locationEnum]
     local teleportOptions = Instance.new("TeleportOptions")
 
-    if world then
+    if worldIndex then
+        local world = worlds[worldIndex]
         local location = world.locations[locationEnum]
+
+        local serverData = GameServerData.get(ServerTypeEnum.location, {worldIndex = worldIndex, locationEnum = locationEnum})
+        local population = if serverData then #serverData.players else 0
+
+        if population >= Constants.location_maxPlayers then
+            warn("Teleport.teleportToLocation: location is full")
+            return false
+        end
 
         teleportOptions.ReservedServerAccessCode = location.serverCode
 
         return Teleport.teleport(player, locationInfo.placeId, teleportOptions)
     else
         if LocalServerInfo.serverType == ServerTypeEnum.location then
-            local serverStorageLocation = ServerStorage:WaitForChild("Location")
-            local locationServerManagement = serverStorageLocation:WaitForChild("ServerManagement")
-            local LocalWorldInfo = require(locationServerManagement:WaitForChild("LocalWorldInfo"))
+            local serverStorageLocation = ServerStorage.Location
+            local locationServerManagement = serverStorageLocation.ServerManagement
+            local LocalWorldInfo = require(locationServerManagement.LocalWorldInfo)
 
-            local world = LocalWorldInfo.getWorldData()
-            local location = world.locations[locationEnum]
+            local location = worlds[LocalWorldInfo.worldIndex].locations[locationEnum]
+            local serverData = GameServerData.get(ServerTypeEnum.location, {worldIndex = LocalWorldInfo.worldIndex, locationEnum = locationEnum})
+            local population = if serverData then #serverData.players else 0
+
+            if population >= Constants.location_maxPlayers then
+                warn("Teleport.teleportToLocation: location is full")
+                return false
+            end
 
             teleportOptions.ReservedServerAccessCode = location.serverCode
             teleportOptions:SetTeleportData({
@@ -107,35 +129,33 @@ function Teleport.teleportToPlayer(player: Player, targetPlayerId) -- TODO: fals
         return false
     end
 
-    local targetPlayerLocationData = PlayerLocationData.get(targetPlayerId)
+    local targetPlayerLocation = PlayerLocation.get(targetPlayerId)
 
-    if not targetPlayerLocationData then
+    if not targetPlayerLocation then
         print("Target player is not in a location")
         return false
     end
 
-    if targetPlayerLocationData.serverType == ServerTypeEnum.location then
-        local fillStatus = WorldFillData.get(
-            targetPlayerLocationData.worldIndex,
-            targetPlayerLocationData.locationEnum
+    if targetPlayerLocation.serverType == ServerTypeEnum.location then
+        local serverData = GameServerData.getLocation(
+            targetPlayerLocation.worldIndex,
+            targetPlayerLocation.locationEnum
         )
-
-        if fillStatus == FillStatusEnum.full then
-            print("Target player's location is full")
+        
+        if not serverData then
+            print("Target player is unable to be teleported to")
             return false
         end
 
-        local worldData = WorldData.get()
-
-        if not worldData then
-            print("World data is nil")
+        if #serverData.players >= Constants.location_maxPlayers then
+            print("Target player's location is full")
             return false
         end
 
         return Teleport.teleportToLocation(
             {player},
-            targetPlayerLocationData.locationEnum,
-            worldData[targetPlayerLocationData.worldIndex]
+            targetPlayerLocation.locationEnum,
+            targetPlayerLocation.worldIndex
         )
     else
         print("Target player is not in a location")
