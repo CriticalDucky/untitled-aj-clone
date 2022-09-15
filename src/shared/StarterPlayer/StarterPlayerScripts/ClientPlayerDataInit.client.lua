@@ -1,15 +1,23 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
 
-local ClientPlayerData = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Data"):WaitForChild("ClientPlayerData"))
+local replicatedStorageShared = ReplicatedStorage:WaitForChild("Shared")
+local serverFolder = replicatedStorageShared:WaitForChild("Server")
+local dataFolder = replicatedStorageShared:WaitForChild("Data")
+local enumsFolder = replicatedStorageShared:WaitForChild("Enums")
 
-local function playerAdded(player)
-    ClientPlayerData.add(player)
+local ClientPlayerData = require(dataFolder:WaitForChild("ClientPlayerData"))
+local ServerTypeEnum = require(enumsFolder:WaitForChild("ServerType"))
+local ClientServerInfo = require(serverFolder:WaitForChild("ClientServerInfo"))
+
+if ClientServerInfo.serverType ~= ServerTypeEnum.routing then
+    local function playerAdded(player)
+        ClientPlayerData.add(player)
+    end
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        playerAdded(player)
+    end
+    
+    Players.PlayerAdded:Connect(playerAdded)
 end
-
-for _, player in pairs(Players:GetPlayers()) do
-    playerAdded(player)
-end
-
-Players.PlayerAdded:Connect(playerAdded)
