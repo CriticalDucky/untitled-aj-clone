@@ -11,6 +11,7 @@ local enumsFolder = replicatedStorageShared.Enums
 local ProfileService = require(serverStorageSharedUtility.ProfileService)
 local ReplicaService = require(serverStorageSharedData.ReplicaService)
 local ReplicationType = require(enumsFolder.ReplicationType)
+local Table = require(replicatedStorageShared.Utility.Table)
 
 local PROFILE_TEMPLATE = { -- Items in here can only be under a table
     currency = {
@@ -62,6 +63,12 @@ local ProfileStore = ProfileService.GetProfileStore(
     PROFILE_TEMPLATE
 )
 
+local playerDataPublicReplica = ReplicaService.NewReplica({
+    ClassToken = ReplicaService.NewClassToken("PlayerDataPublic"),
+    Data = {},
+    Replication = "All"
+})
+
 local playerDataCreationComplete = {}
 local playerDataCollection = {}
 
@@ -84,20 +91,6 @@ local function getReplicationType(index)
     return ReplicationType.server
 end
 
-local function deepCopy(value)
-    if type(value) == "table" then
-        local result = {}
-
-        for key, value in pairs(value) do
-            result[key] = deepCopy(value)
-        end
-
-        return result
-    end
-
-    return value
-end
-
 function PlayerData.new(player)
     local newPlayerData = setmetatable({}, PlayerData)
     newPlayerData.player = player
@@ -114,7 +107,7 @@ function PlayerData.new(player)
 
         if player:IsDescendantOf(Players) then
             playerDataCollection[player] = newPlayerData
-            local tempDataCopy = deepCopy(TEMP_DATA_TEMPLATE)
+            local tempDataCopy = Table.deepCopy(TEMP_DATA_TEMPLATE)
 
             local function getMatchingProfileProps(privacy)
                 local matchingProps = {}
@@ -161,11 +154,10 @@ function PlayerData.new(player)
                 Replication = player
             })
 
-            newPlayerData.replica_public = ReplicaService.NewReplica({
-                ClassToken = ReplicaService.NewClassToken("PlayerDataPublic"),
-                Data = {sender = player, data = data_replicationPublic},
-                Replication = "All"
-            })
+            print("Replicating data to " .. player.Name .. "...")
+
+            playerDataPublicReplica:SetValue({tostring(player.UserId)}, data_replicationPublic)
+            newPlayerData.replica_public = playerDataPublicReplica
         else
             profile:Release()
         end
@@ -182,7 +174,7 @@ function PlayerData:setValue(path: table, value)
     local replicationType = getReplicationType(path[1])
 
     if replicationType == ReplicationType.public then
-        table.insert(path, 1, "data")
+        table.insert(path, 1, self.player)
 
         self.replica_public:SetValue(path, value)
     elseif replicationType == ReplicationType.private then
@@ -202,7 +194,7 @@ function PlayerData:setValues(path, values)
     local replicationType = getReplicationType(path[1])
 
     if replicationType == ReplicationType.public then
-        table.insert(path, 1, "data")
+        table.insert(path, 1, self.player)
 
         self.replica_public:SetValues(path, values)
     elseif replicationType == ReplicationType.private then
@@ -224,7 +216,7 @@ function PlayerData:arrayInsert(path, value)
     local replicationType = getReplicationType(path[1])
 
     if replicationType == ReplicationType.public then
-        table.insert(path, 1, "data")
+        table.insert(path, 1, self.player)
 
         self.replica_public:ArrayInsert(path, value)
     elseif replicationType == ReplicationType.private then
@@ -244,7 +236,7 @@ function PlayerData:arraySet(path, index, value)
     local replicationType = getReplicationType(path[1])
 
     if replicationType == ReplicationType.public then
-        table.insert(path, 1, "data")
+        table.insert(path, 1, self.player)
 
         self.replica_public:ArraySet(path, index, value)
     elseif replicationType == ReplicationType.private then
@@ -264,8 +256,8 @@ function PlayerData:arrayRemove(path, index)
     local replicationType = getReplicationType(path[1])
 
     if replicationType == ReplicationType.public then
-        table.insert(path, 1, "data")
-
+        table.insert(path, 1, self.player)
+        
         self.replica_public:ArrayInsert(path, index)
     elseif replicationType == ReplicationType.private then
         self.replica_private:ArrayRemove(path, index)
