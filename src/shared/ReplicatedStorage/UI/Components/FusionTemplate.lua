@@ -6,7 +6,6 @@ local ReplicatedStorageShared = ReplicatedStorage:WaitForChild("Shared")
 local ReplicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
 
 local UIFolder = ReplicatedStorageShared:WaitForChild("UI")
-local Fusion = require(ReplicatedFirstShared:WaitForChild("Fusion"))
 
 local Utility = ReplicatedStorageShared:WaitForChild("Utility")
 local UIManagement = UIFolder:WaitForChild("UIManagement")
@@ -14,12 +13,10 @@ local Components = UIFolder:WaitForChild("Components")
 
 local WaitForDescendant = require(Utility:WaitForChild("WaitForDescendant")) 
 
-local Util = require(WaitForDescendant(Utility, "UIUtil"))
-
 local Constants = require(UIManagement:WaitForChild("Constants"))
 local Component = Util.Component
-local CameraState = require(Utility:WaitForChild("CameraState"))
 
+local Fusion = require(ReplicatedFirstShared:WaitForChild("Fusion"))
 local Value = Fusion.Value
 local New = Fusion.New
 local Children = Fusion.Children
