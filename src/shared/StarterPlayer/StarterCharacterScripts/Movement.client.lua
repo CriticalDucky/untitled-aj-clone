@@ -3,18 +3,18 @@ local WALKABLE_TAG = "Walkable"
 local UNWALKABLE_TAG = "Unwalkable"
 local MAX_PATH_LENGTH = 100
 
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local ContextActionService = game:GetService("ContextActionService")
 local PathfindingService = game:GetService("PathfindingService")
 local CollectionService = game:GetService("CollectionService")
 
-local replicatedStorageShared = ReplicatedStorage:WaitForChild("Shared")
-local replicatedStorageUtility = replicatedStorageShared:WaitForChild("Utility")
+local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
+local replicatedFirstUtility = replicatedFirstShared:WaitForChild("Utility")
 local sharedFolder = script.Parent
 
-local Mouse = require(replicatedStorageUtility:WaitForChild("Mouse"))
+local Mouse = require(replicatedFirstUtility:WaitForChild("Mouse"))
 
 local player = Players.LocalPlayer
 local character = sharedFolder.Parent

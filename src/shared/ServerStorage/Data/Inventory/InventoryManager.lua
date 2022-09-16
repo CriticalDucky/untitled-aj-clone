@@ -1,7 +1,9 @@
 local HttpService = game:GetService("HttpService")
+local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
+local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
 local replicatedStorageShared = ReplicatedStorage.Shared
 local serverStorageShared = ServerStorage.Shared
 local dataFolder = serverStorageShared.Data
@@ -10,7 +12,7 @@ local enumsFolder = replicatedStorageShared.Enums
 local PlayerData = require(dataFolder.PlayerData)
 local Items = require(replicatedStorageShared.Data.Inventory.Items)
 local ItemType = require(enumsFolder.ItemType)
-local Table = require(replicatedStorageShared.Utility.Table)
+local Table = require(replicatedFirstShared.Utility.Table)
 
 local LIMITS = {
     [ItemType.furniture] = 1000,

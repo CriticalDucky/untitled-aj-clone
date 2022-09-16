@@ -1,34 +1,11 @@
 local ReplicatedFirst = game:GetService("ReplicatedFirst")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Players = game:GetService("Players")
 
-local UIFolder = ReplicatedStorage:WaitForChild("UI")
 local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
-
-
-local Utility = ReplicatedStorage:WaitForChild("Utility")
-local UIManagement = UIFolder:WaitForChild("UIManagement")
-local Components = UIFolder:WaitForChild("Components")
-
-local WaitForDescendant = require(Utility:WaitForChild("WaitForDescendant")) 
-
-local Util = require(WaitForDescendant(Utility, "UIUtil"))
-
-local Constants = require(UIManagement:WaitForChild("Constants"))
-local Component = Util.Component
 
 local Fusion = require(replicatedFirstShared:WaitForChild("Fusion"))
 local Value = Fusion.Value
-local New = Fusion.New
-local Children = Fusion.Children
-local Computed = Fusion.Computed
 local OnEvent = Fusion.OnEvent
-local OnChange = Fusion.OnChange
-local Observer = Fusion.Observer
-local Tween = Fusion.Tween
-local Spring = Fusion.Spring
 local Hydrate = Fusion.Hydrate
-local unwrap = Fusion.unwrap
 
 local cameraState = Value({})
 
@@ -40,7 +17,7 @@ local watchingProps = {
 local function initCamera()
     local camera = workspace.CurrentCamera
 
-    Hydrate(camera, {
+    Hydrate(camera){
         [OnEvent "Changed"] = function()
             local currentCameraState = cameraState:get()
 
@@ -50,7 +27,7 @@ local function initCamera()
 
             cameraState:set(currentCameraState)
         end
-    })
+    }
 end
 
 workspace.Changed:Connect(function(property)

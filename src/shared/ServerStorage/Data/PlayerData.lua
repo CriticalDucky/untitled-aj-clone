@@ -1,7 +1,9 @@
 local Players = game:GetService("Players")
+local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
+local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
 local replicatedStorageShared = ReplicatedStorage.Shared
 local serverStorageShared = ServerStorage.Shared
 local serverStorageSharedUtility = serverStorageShared.Utility
@@ -11,7 +13,7 @@ local enumsFolder = replicatedStorageShared.Enums
 local ProfileService = require(serverStorageSharedUtility.ProfileService)
 local ReplicaService = require(serverStorageSharedData.ReplicaService)
 local ReplicationType = require(enumsFolder.ReplicationType)
-local Table = require(replicatedStorageShared.Utility.Table)
+local Table = require(replicatedFirstShared.Utility.Table)
 
 local PROFILE_TEMPLATE = { -- Items in here can only be under a table
     currency = {

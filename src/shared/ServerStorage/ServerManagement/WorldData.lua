@@ -2,25 +2,25 @@ local WORLDS_KEY = "worlds"
 local CACHE_COOLDOWN = 30
 
 local DataStoreService = game:GetService("DataStoreService")
+local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local RunService = game:GetService("RunService")
 local TeleportService = game:GetService("TeleportService")
 local ServerStorage = game:GetService("ServerStorage")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local replicatedStorageShared = ReplicatedStorage.Shared
+local replicatedFirstShared = ReplicatedFirst.Shared
 local serverStorageShared = ServerStorage.Shared
 local serverManagement = serverStorageShared.ServerManagement
-local enumsFolder = replicatedStorageShared.Enums
 local utilityFolder = serverStorageShared.Utility
-local replicatedStorageUtility = replicatedStorageShared.Utility
+local replicatedFirstUtility = replicatedFirstShared.Utility
 
 local Locations = require(serverManagement.Locations)
 local DataStore = require(utilityFolder.DataStore)
 local GameServerData = require(serverManagement.GameServerData)
-local Math = require(replicatedStorageUtility.Math)
-local Table = require(replicatedStorageUtility.Table)
+local Math = require(replicatedFirstUtility.Math)
+local Table = require(replicatedFirstUtility.Table)
 local Constants = require(serverManagement.Constants)
-local Event = require(replicatedStorageUtility.Event)
+local Event = require(replicatedFirstUtility.Event)
 
 local worldsDataStore = DataStoreService:GetDataStore("Worlds")
 local cachedWorlds

@@ -3,15 +3,17 @@ local BROADCAST_CHANNEL = "Servers"
 local BROADCAST_COOLDOWN = 10
 local BROADCAST_COOLDOWN_PADDING = 2
 
+local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
 local serverStorageShared = ServerStorage.Shared
+local replicatedFirstShared = ReplicatedFirst.Shared
 local replicatedStorageShared = ReplicatedStorage.Shared
 local messagingFolder = serverStorageShared.Messaging
 local serverManagement = serverStorageShared.ServerManagement
 local enumsFolder = replicatedStorageShared.Enums
-local utilityFolder = replicatedStorageShared.Utility
+local utilityFolder = replicatedFirstShared.Utility
 
 local Event = require(utilityFolder.Event)
 local Message = require(messagingFolder.Message)
