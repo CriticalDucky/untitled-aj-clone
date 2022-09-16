@@ -47,14 +47,6 @@ local Util = {
 	TimeConvertMS = function(seconds)
 		return string.format("%2i:%02i", math.floor(seconds/60), seconds%60)
 	end,
-
-	unwrap = function(x)
-		if typeof(x) == "table" and x.type == "State" then
-			return x:get()
-		else
-			return x
-		end
-	end
 }
 
 return Util
