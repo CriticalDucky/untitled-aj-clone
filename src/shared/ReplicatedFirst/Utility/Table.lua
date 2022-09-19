@@ -24,4 +24,21 @@ function Table.deepCopy(value)
     return value
 end
 
+function Table.print(t, note)
+    local function printTable(t, indent)
+        for k, v in pairs(t) do
+            if type(v) == "table" then
+                print(indent .. tostring(k) .. " :")
+                printTable(v, indent .. "    ")
+            else
+                print(indent .. tostring(k) .. " : " .. tostring(v))
+            end
+        end
+    end
+
+    print("Printing", note or tostring(t))
+
+    printTable(t, "")
+end
+
 return Table
