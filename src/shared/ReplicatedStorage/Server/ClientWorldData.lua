@@ -7,6 +7,7 @@ local replicationFolder = replicatedStorageShared:WaitForChild("Replication")
 
 local ReplicaCollection = require(replicationFolder:WaitForChild("ReplicaCollection"))
 local Fusion = require(replicatedFirstShared:WaitForChild("Fusion"))
+local Table = require(replicatedFirstShared:WaitForChild("Utility"):WaitForChild("Table"))  
 
 local ClientWorldData = ReplicaCollection.get("Worlds", true)
 
@@ -14,6 +15,8 @@ local worldDataValue = Fusion.Value(ClientWorldData.Data)
 
 ClientWorldData:ListenToRaw(function()
     worldDataValue:set(ClientWorldData.Data)
+
+    Table.print(ClientWorldData.Data, "ClientWorldData.Data")
 end)
 
 return worldDataValue
