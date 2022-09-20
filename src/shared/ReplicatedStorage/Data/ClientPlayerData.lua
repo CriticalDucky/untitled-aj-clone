@@ -69,13 +69,13 @@ function playerData.add(player)
         data.value = value
     end
 
-    connect(publicDataReplica:ListenToRaw(onReplicaChange))
-
     if player == Players.LocalPlayer then
         data._privateReplica = ReplicaCollection.get("PlayerDataPrivate_" .. player.UserId, true)
         connect(data._privateReplica:ListenToRaw(onReplicaChange))
         data._mergeTable = {}
     end
+
+    connect(publicDataReplica:ListenToRaw(onReplicaChange))
 
     playerDataTables[player] = data
 
