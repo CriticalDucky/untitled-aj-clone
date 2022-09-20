@@ -15,8 +15,6 @@ local worldDataValue = Fusion.Value(ClientWorldData.Data)
 
 ClientWorldData:ListenToRaw(function()
     worldDataValue:set(ClientWorldData.Data)
-
-    Table.print(ClientWorldData.Data, "ClientWorldData.Data")
 end)
 
 return worldDataValue
