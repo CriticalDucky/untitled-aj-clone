@@ -3,12 +3,14 @@ local MAX_RETRIES = 10
 local FLOOD_DELAY = 15
 
 local Players = game:GetService("Players")
+local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local TeleportService = game:GetService("TeleportService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
 local serverStorageShared = ServerStorage.Shared
 local replicatedStorageShared = ReplicatedStorage.Shared
+local replicatedFirstShared = ReplicatedFirst.Shared
 local serverManagement = serverStorageShared.ServerManagement
 local messagingFolder = serverStorageShared.Messaging
 local enumsFolder = replicatedStorageShared.Enums
@@ -21,6 +23,7 @@ local PlayerLocation = require(serverManagement.PlayerLocation)
 local WorldData = require(serverManagement.WorldData)
 local GameServerData = require(serverManagement.GameServerData)
 local Constants = require(serverManagement.Constants)
+local Table = require(replicatedFirstShared.Utility.Table)
 
 local Teleport = {}
 
