@@ -23,7 +23,7 @@ local Constants = require(serverManagement.Constants)
 local Event = require(replicatedFirstUtility.Event)
 
 local worldsDataStore = DataStoreService:GetDataStore("Worlds")
-local cachedWorlds
+local cachedWorlds = {}
 local lastDatastoreRequest = 0
 
 local WorldData = {}
@@ -32,22 +32,38 @@ WorldData.WorldsUpdated = Event.new()
 
 local function retrieveDatastore()
     lastDatastoreRequest = time()
-    cachedWorlds = DataStore.safeGet(worldsDataStore, WORLDS_KEY)
-    WorldData.WorldsUpdated:Fire(cachedWorlds)
+    local lastCachedWorlds = cachedWorlds
+    
+    for i, v in ipairs(DataStore.safeGet(worldsDataStore, WORLDS_KEY) or {}) do
+        cachedWorlds[i] = v
+    end
+
+    if #cachedWorlds ~= #lastCachedWorlds then
+        WorldData.WorldsUpdated:Fire(cachedWorlds)
+    end
 end
 
 function WorldData.get(getUpdated)
-    if getUpdated or not cachedWorlds then
+    if getUpdated or #cachedWorlds == 0 then
         retrieveDatastore()
+
+        Table.print(cachedWorlds, "WorldData.get")
     end
 
     return cachedWorlds
 end
 
 function WorldData.update(transformFunction)
-    cachedWorlds = transformFunction(cachedWorlds)
+    local success = DataStore.safeUpdate(worldsDataStore, WORLDS_KEY, transformFunction)
 
-    return DataStore.safeUpdate(worldsDataStore, WORLDS_KEY, transformFunction)
+    if success then
+        transformFunction(cachedWorlds)
+        WorldData.WorldsUpdated:Fire(cachedWorlds)
+    end
+
+    Table.print(cachedWorlds, "WorldData.update")
+
+    return success
 end
 
 function WorldData.addWorld()
@@ -72,7 +88,7 @@ function WorldData.addWorld()
         table.insert(worlds, world)
 
         return worlds
-    end), world
+    end), #cachedWorlds
 end
 
 function WorldData.findAvailable(forcedLocation)
