@@ -36,7 +36,7 @@ function Table.print(t, note)
         end
     end
 
-    print("\nPrinting", note or tostring(t))
+    print("Printing", note or tostring(t))
 
     printTable(t, "")
 end
