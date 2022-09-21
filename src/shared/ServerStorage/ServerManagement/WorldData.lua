@@ -8,6 +8,7 @@ local TeleportService = game:GetService("TeleportService")
 local ServerStorage = game:GetService("ServerStorage")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local replicatedStorageShared = ReplicatedStorage.Shared
 local replicatedFirstShared = ReplicatedFirst.Shared
 local serverStorageShared = ServerStorage.Shared
 local serverManagement = serverStorageShared.ServerManagement
@@ -19,7 +20,7 @@ local DataStore = require(utilityFolder.DataStore)
 local GameServerData = require(serverManagement.GameServerData)
 local Math = require(replicatedFirstUtility.Math)
 local Table = require(replicatedFirstUtility.Table)
-local Constants = require(serverManagement.Constants)
+local Constants = require(replicatedStorageShared.Server.Constants)
 local Event = require(replicatedFirstUtility.Event)
 
 local worldsDataStore = DataStoreService:GetDataStore("Worlds")

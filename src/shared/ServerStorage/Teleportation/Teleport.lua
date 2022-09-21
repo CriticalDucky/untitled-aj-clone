@@ -22,7 +22,7 @@ local FillStatusEnum = require(enumsFolder.FillStatus)
 local PlayerLocation = require(serverManagement.PlayerLocation)
 local WorldData = require(serverManagement.WorldData)
 local GameServerData = require(serverManagement.GameServerData)
-local Constants = require(serverManagement.Constants)
+local Constants = require(replicatedStorageShared.Server.Constants)
 local Table = require(replicatedFirstShared.Utility.Table)
 
 local Teleport = {}
