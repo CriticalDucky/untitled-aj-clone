@@ -15,7 +15,7 @@ local serverManagement = serverStorageShared.ServerManagement
 local utilityFolder = serverStorageShared.Utility
 local replicatedFirstUtility = replicatedFirstShared.Utility
 
-local Locations = require(serverManagement.Locations)
+local Locations = require(replicatedStorageShared.Server.Locations)
 local DataStore = require(utilityFolder.DataStore)
 local GameServerData = require(serverManagement.GameServerData)
 local Math = require(replicatedFirstUtility.Math)

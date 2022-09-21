@@ -8,7 +8,7 @@ local dataFolder = serverStorageShared.Data
 local enumsFolder = replicatedStorageShared.Enums
 
 local ServerTypeEnum = require(enumsFolder.ServerType)
-local Locations = require(serverManagement.Locations)
+local Locations = require(replicatedStorageShared.Server.Locations)
 local Homes = require(replicatedStorageShared.Data.Inventory.Items.Homes)
 local ReplicaService = require(dataFolder.ReplicaService)
 

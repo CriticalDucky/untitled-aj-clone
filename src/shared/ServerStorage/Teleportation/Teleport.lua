@@ -15,7 +15,7 @@ local serverManagement = serverStorageShared.ServerManagement
 local messagingFolder = serverStorageShared.Messaging
 local enumsFolder = replicatedStorageShared.Enums
 
-local Locations = require(serverManagement.Locations)
+local Locations = require(replicatedStorageShared.Server.Locations)
 local LocalServerInfo = require(serverManagement.LocalServerInfo)
 local ServerTypeEnum = require(enumsFolder.ServerType)
 local FillStatusEnum = require(enumsFolder.FillStatus)
