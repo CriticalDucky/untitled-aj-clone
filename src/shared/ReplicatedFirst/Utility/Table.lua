@@ -24,6 +24,16 @@ function Table.deepCopy(value)
     return value
 end
 
+function Table.hasValue(t, value)
+    for _, v in pairs(t) do
+        if v == value then
+            return true
+        end
+    end
+
+    return false 
+end
+
 function Table.print(t, note)
     local function printTable(t, indent)
         for k, v in pairs(t) do
