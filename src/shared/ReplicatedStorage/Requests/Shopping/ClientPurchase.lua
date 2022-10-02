@@ -37,9 +37,7 @@ function Purchase.request(shopEnum, itemIndex)
         return
     end
 
-    local requestCode = HttpService:GenerateGUID(false)
-
-    return ReplicaRequest.new(PurchaseRequest, shopEnum, itemIndex, requestCode) or PurchaseResponseType.timeout
+    return ReplicaRequest.new(PurchaseRequest, shopEnum, itemIndex) or PurchaseResponseType.timeout
 end
 
 return Purchase
