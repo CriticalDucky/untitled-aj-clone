@@ -18,7 +18,7 @@ local purchaseRequest = ReplicaService.NewReplica({
     Replication = "All"
 })
 
-purchaseRequest:ConnectOnServerEvent(function(player, shopEnum, itemIndex, requestCode) -- Player will always be valid
+purchaseRequest:ConnectOnServerEvent(function(player, requestCode, shopEnum, itemIndex) -- Player will always be valid
     local function requestIsValid()
         if not (shopEnum and itemIndex and type(requestCode) == "string") then
             warn("Invalid arguments")
