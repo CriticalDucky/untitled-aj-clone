@@ -17,6 +17,7 @@ local classes = {
     "TeleportRequest",
     "ServerInfo",
     "Worlds",
+    "WorldInfo",
 }
 
 local function onReplicaReceived(replica)
