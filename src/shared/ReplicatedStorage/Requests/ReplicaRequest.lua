@@ -1,3 +1,5 @@
+local HttpService = game:GetService("HttpService")
+
 local ReplicaRequest = {}
 
 function ReplicaRequest.new(replica, ...)
@@ -6,14 +8,18 @@ function ReplicaRequest.new(replica, ...)
         return
     end
 
-    replica:FireServer(...)
+    local requestCode = HttpService:GenerateGUID(false)
+
+    replica:FireServer(requestCode, ...)
 
     local response
 
     local connection do
-        connection = replica:ConnectOnClientEvent(function(...)
-            connection:Disconnect()
-            response = {...}
+        connection = replica:ConnectOnClientEvent(function(returnedCode, ...)
+            if returnedCode == requestCode then
+                response = {...}
+                connection:Disconnect()
+            end
         end)
     end
 
@@ -25,7 +31,7 @@ function ReplicaRequest.new(replica, ...)
 
     connection:Disconnect()
 
-    return response and unpack(response)
+    return response
 end
 
 return ReplicaRequest
