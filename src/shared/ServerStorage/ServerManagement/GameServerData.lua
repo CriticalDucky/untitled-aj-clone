@@ -2,6 +2,7 @@ local BROADCAST_CHANNEL = "Servers"
 
 local BROADCAST_COOLDOWN = 10
 local BROADCAST_COOLDOWN_PADDING = 2
+local WAIT_TIME = BROADCAST_COOLDOWN + BROADCAST_COOLDOWN_PADDING
 
 local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -19,6 +20,14 @@ local Event = require(utilityFolder.Event)
 local Message = require(messagingFolder.Message)
 local LocalServerInfo = require(serverManagement.LocalServerInfo)
 local ServerTypeEnum = require(enumsFolder.ServerType)
+local Constants = require(replicatedStorageShared.Server.Constants)
+
+local SERVER_FILL = {
+    [ServerTypeEnum.location] = {
+        max = Constants.location_maxPlayers,
+        recommended = Constants.location_maxRecommendedPlayers
+    },
+}
 
 local cachedData = {
     [ServerTypeEnum.routing] = {
@@ -48,6 +57,12 @@ local cachedData = {
     },
 }
 local lastBroadcast = 0
+
+local function initDataWait()
+    if time() < (WAIT_TIME) then
+        task.wait(WAIT_TIME - time())
+    end
+end
 
 local GameServerData = {}
 
@@ -86,12 +101,8 @@ function GameServerData.get(serverType, indexInfo)
         end
     end
 
-    local timeToWait = BROADCAST_COOLDOWN + BROADCAST_COOLDOWN_PADDING
-
     if not serverType then -- Wait for all data, and then return it
-        if time() < (timeToWait) then
-            task.wait(timeToWait - time())
-        end
+        initDataWait()
 
         return cachedData
     end
@@ -106,7 +117,7 @@ function GameServerData.get(serverType, indexInfo)
         task.wait()
 
         serverInfo = check()
-    until time() > timeToWait or serverInfo
+    until time() > WAIT_TIME or serverInfo
 
     return serverInfo
 end
@@ -116,6 +127,54 @@ function GameServerData.getLocation(worldIndex, locationEnum)
         worldIndex = worldIndex,
         locationEnum = locationEnum,
     })
+end
+
+function GameServerData.getPopulationInfo(serverType, indexInfo)
+    local serverInfo = GameServerData.get(serverType, indexInfo)
+
+    if serverInfo then
+        local population = #serverInfo.players
+        local fillInfo = SERVER_FILL[serverType]
+
+        return {
+            population = population,
+            recommended_emptySlots = math.max(fillInfo.recommended - population, 0),
+            max_emptySlots = math.max(fillInfo.max - population, 0),
+        }
+    end
+end
+
+function GameServerData.getWorldPopulationInfo(worldIndex)
+    initDataWait()
+
+    local worldTable = cachedData[ServerTypeEnum.location][worldIndex]
+    local fillInfo = SERVER_FILL[ServerTypeEnum.location]
+
+    if worldTable then
+        local populationInfo = {
+            population = 0,
+            recommended_emptySlots = Constants.world_maxRecommendedPlayers,
+
+            locations = {},
+        }
+
+        for locationEnum, locationServerInfo in pairs(worldTable) do
+            local locationPopulation = #locationServerInfo.players
+            local locationRecommended_emptySlots = math.max(fillInfo.recommended - locationPopulation, 0)
+            local locationMax_emptySlots = math.max(fillInfo.max - locationPopulation, 0)
+
+            populationInfo.population += locationPopulation
+            populationInfo.recommended_emptySlots = math.max(populationInfo.recommended_emptySlots - locationPopulation, 0)
+
+            populationInfo.locations[locationEnum] = {
+                population = locationPopulation,
+                recommended_emptySlots = locationRecommended_emptySlots,
+                max_emptySlots = locationMax_emptySlots,
+            }
+        end
+
+        return populationInfo
+    end
 end
 
 function GameServerData.publish(serverInfo, indexInfo)
