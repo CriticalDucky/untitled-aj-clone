@@ -322,6 +322,7 @@ Players.PlayerRemoving:Connect(function(player)
     local playerData = playerDataCollection[player]
 
     if playerData then
+        playerData.replica_private:Destroy()
         playerData.profile:Release()
     end
 
