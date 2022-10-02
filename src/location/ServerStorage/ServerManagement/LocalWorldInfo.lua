@@ -10,6 +10,7 @@ local serverManagement = serverStorageShared:WaitForChild("ServerManagement")
 local enumsFolder = replicatedStorageShared:WaitForChild("Enums")
 
 local WorldData = require(serverManagement:WaitForChild("WorldData"))
+local ReplicaService = require(serverStorageShared:WaitForChild("Data"):WaitForChild("ReplicaService"))
 
 local privateServerId = game.PrivateServerId
 
@@ -46,5 +47,11 @@ local localWorldInfo = {}
 
 localWorldInfo.worldIndex = worldIndex
 localWorldInfo.locationEnum = locationEnum
+
+ReplicaService.NewReplica({
+    ClassToken = ReplicaService.NewClassToken("WorldInfo"),
+    Data = localWorldInfo,
+    Replication = "All"
+})
 
 return localWorldInfo
