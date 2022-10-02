@@ -13,11 +13,6 @@ local Teleport = require(teleportation.Teleport)
 local WorldData = require(serverManagement.WorldData)
 local PlayerData = require(serverStorageShared.Data.PlayerData)
 
-local function routeUnsuccessful(player, reason)
-    -- TODO: Route unsuccessful
-    --warn("Route unsuccessful: " .. reason)
-end
-
 local Route = {}
 
 function Route.routeToWorld(player) -- Once any of these functions are called, the player can no longer stay in this server
