@@ -61,6 +61,7 @@ return restrictRead("Fusion", {
 	ForValues = require(script.State.ForValues),
 	Observer = require(script.State.Observer),
 	unwrap = require(script.State.unwrap),
+	doNothing = function() end,
 
 	Tween = require(script.Animation.Tween),
 	Spring = require(script.Animation.Spring)
