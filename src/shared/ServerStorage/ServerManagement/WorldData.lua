@@ -92,7 +92,30 @@ function WorldData.addWorld()
     end), #cachedWorlds
 end
 
-function WorldData.findAvailable(forcedLocation)
+function WorldData.findAvailableLocation(worldIndex)
+    if not worldIndex then
+        return
+    end
+    
+    local locationEnum
+    local worldPopulationInfo = GameServerData.getWorldPopulationInfo(worldIndex)
+
+    for _, locationType in pairs(Locations.priority) do
+        if worldPopulationInfo then
+            if worldPopulationInfo.locations[locationType].recommended_emptySlots ~= 0 then
+                locationEnum = locationType
+                break
+            end
+        else -- No server info, so location is available
+            locationEnum = locationType
+            break
+        end
+    end
+
+    return locationEnum
+end
+
+function WorldData.findAvailableWorld(forcedLocation)
     local worlds = WorldData.get()
 
     if worlds == nil then
@@ -100,44 +123,39 @@ function WorldData.findAvailable(forcedLocation)
         return
     end
 
-    local function newWorldAndLocation()
-        local success, world = WorldData.addWorld()
-
-        if success then
-            return world, Locations.priority[1]
-        end
-    end
-
     local worldIndex do
         local rarities = {}
 
         for worldIndex, world in ipairs(worlds) do
-            local population = 0
+            local worldPopulationInfo = GameServerData.getWorldPopulationInfo(worldIndex)
+
             local worldIsSuitable = true
 
-            for locationEnum, _ in pairs(world.locations) do
-                local serverInfo = GameServerData.getLocation(worldIndex, locationEnum)
-
-                if serverInfo then
-                    local locationPopulation = #serverInfo.players
-
-                    if (forcedLocation == locationEnum) and (locationPopulation >= Constants.location_maxPlayers) then
+            if worldPopulationInfo then
+                for locationEnum, _ in pairs(world.locations) do
+                    local locationPopulationInfo = worldPopulationInfo.locations[locationEnum]
+    
+                    if locationPopulationInfo and (forcedLocation == locationEnum) and (locationPopulationInfo.max_emptySlots == 0) then
                         worldIsSuitable = false
                         break
                     end
-
-                    population += locationPopulation
                 end
-            end
-
-            if population >= Constants.world_maxRecommendedPlayers or population >= (Table.dictLen(world.locations) * Constants.location_maxRecommendedPlayers) then
-                worldIsSuitable = false
+    
+                if not WorldData.findAvailableLocation(worldIndex) then
+                    worldIsSuitable = false
+                end
+    
+                if worldPopulationInfo.recommended_emptySlots == 0 then
+                    worldIsSuitable = false
+                end
             end
 
             if not worldIsSuitable then
                 print("WorldData.findAvailable: World " .. worldIndex .. " is not suitable")
                 continue
             end
+
+            local population = worldPopulationInfo and worldPopulationInfo.population or 0
 
             local chance do
                 if population == 0 then
@@ -157,36 +175,40 @@ function WorldData.findAvailable(forcedLocation)
 
     if worldIndex == nil then
         print("No suitable world found, creating new world")
-        return newWorldAndLocation()
+
+        local success, worldIndex = WorldData.addWorld()
+
+        return success and worldIndex
     end
 
-    local locationEnum do
-        if not forcedLocation then
-            for _, locationType in pairs(Locations.priority) do
-                local serverInfo = GameServerData.getLocation(worldIndex, locationType)
+    return worldIndex
+end
 
-                if serverInfo then
-                    local locationPopulation = #serverInfo.players
+function WorldData.findAvailable(forcedLocation)
+    local worlds = WorldData.get()
 
-                    if locationPopulation < Constants.location_maxRecommendedPlayers then
-                        locationEnum = locationType
-                        break
-                    end
-                else -- No server info, so location is available
-                    locationEnum = locationType
-                    break
-                end
-            end
-        else
-            locationEnum = forcedLocation
-        end
+    if worlds == nil then
+        warn("No server data found")
+        return
     end
+
+    local worldIndex = WorldData.findAvailableWorld(forcedLocation)
+    local locationEnum = forcedLocation or WorldData.findAvailableLocation(worldIndex)
 
     print("Found world", worldIndex, "with location", locationEnum)
 
     if locationEnum == nil then
-        print("No location found, creating new world")
-        return newWorldAndLocation()
+        print("No available location found, creating new world")
+        
+        local success, newWorldIndex = WorldData.addWorld()
+
+        if success then
+            worldIndex = newWorldIndex
+            locationEnum = WorldData.findAvailableLocation(worldIndex)
+        else -- Failed to create new world
+            warn("Failed to create new world")
+            return
+        end
     end
 
     return worldIndex, locationEnum
