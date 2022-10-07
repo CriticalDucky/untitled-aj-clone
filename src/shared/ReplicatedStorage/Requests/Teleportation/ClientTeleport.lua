@@ -43,7 +43,7 @@ function Teleport.toWorld(worldIndex)
     local population do
         local total = 0
 
-        for _, locationData in pairs(worldData.locations) do
+        for _, locationData in pairs(worldData) do
             total += if locationData.serverInfo then locationData.serverInfo.players else 0
         end
 
@@ -72,7 +72,7 @@ function Teleport.toLocation(locationEnum)
         end
 
         local worldData = currentWorldData[localWorldIndex]
-        local locationData = worldData.locations[locationEnum]
+        local locationData = worldData[locationEnum]
         local serverInfo = locationData.serverInfo
 
         if serverInfo and serverInfo.players >= Constants.location_maxPlayers then
@@ -92,7 +92,7 @@ function Teleport.toFriend(playerId)
 
         if serverType == ServerTypeEnum.location then
             local currentWorldData = ClientWorldData:get()
-            local locationData = currentWorldData[friendLocation.worldIndex].locations[friendLocation.locationEnum]
+            local locationData = currentWorldData[friendLocation.worldIndex][friendLocation.locationEnum]
 
             if locationData.serverInfo and locationData.serverInfo.players >= Constants.location_maxPlayers then
                 return TeleportResponseType.full
