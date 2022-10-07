@@ -12,7 +12,7 @@ local Computed = Fusion.Computed
 local playerData = ClientPlayerData.getLocalPlayerData(true)
 
 local FriendLocations = Computed(function()
-    return playerData:get().friendLocations
+    return playerData:get().friendLocations.locations
 end)
 
 return FriendLocations
