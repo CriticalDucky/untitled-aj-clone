@@ -59,7 +59,7 @@ TeleportRequest:ConnectOnServerEvent(function(player: Player, requestCode, telep
         task.spawn(function()
             respond(TeleportResponseType.teleportError)
         
-            local success = Teleport.rejoin(player)
+            local success = Teleport.rejoin({player})
     
             if not success then
                 warn("Failed to rejoin player")
@@ -92,13 +92,7 @@ TeleportRequest:ConnectOnServerEvent(function(player: Player, requestCode, telep
 
         local populationInfo = GameServerData.getWorldPopulationInfo(worldIndex)
 
-        if not populationInfo then
-            print("Error: populationInfo not found")
-
-            return respond(TeleportResponseType.teleportError)
-        end
-
-        if populationInfo.max_emptySlots == 0 then
+        if populationInfo and populationInfo.max_emptySlots == 0 then
             return respond(TeleportResponseType.full)
         end
 
@@ -128,7 +122,7 @@ TeleportRequest:ConnectOnServerEvent(function(player: Player, requestCode, telep
 
         PlayerData.yieldUntilHopReady(player)
 
-        local success = Teleport.teleportToLocation(player, locationEnum)
+        local success = Teleport.teleportToLocation({player}, locationEnum)
 
         evaluateSuccess(success)
     elseif teleportRequestType == TeleportRequestType.toFriend then
