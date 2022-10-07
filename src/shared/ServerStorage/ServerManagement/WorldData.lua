@@ -47,8 +47,6 @@ end
 function WorldData.get(getUpdated)
     if getUpdated or #cachedWorlds == 0 then
         retrieveDatastore()
-
-        Table.print(cachedWorlds, "WorldData.get")
     end
 
     return cachedWorlds
@@ -61,8 +59,6 @@ function WorldData.update(transformFunction)
         transformFunction(cachedWorlds)
         WorldData.WorldsUpdated:Fire(cachedWorlds)
     end
-
-    Table.print(cachedWorlds, "WorldData.update")
 
     return success
 end
@@ -94,6 +90,8 @@ end
 
 function WorldData.findAvailableLocation(worldIndex)
     if not worldIndex then
+        warn("WorldData.findAvailableLocation: worldIndex is nil")
+
         return
     end
     
@@ -102,7 +100,14 @@ function WorldData.findAvailableLocation(worldIndex)
 
     for _, locationType in pairs(Locations.priority) do
         if worldPopulationInfo then
-            if worldPopulationInfo.locations[locationType].recommended_emptySlots ~= 0 then
+            local populationInfo = worldPopulationInfo.locations[locationType]
+
+            if populationInfo then
+                if populationInfo.recommended_emptySlots ~= 0 then
+                    locationEnum = locationType
+                    break
+                end
+            else -- No server info, so location is available
                 locationEnum = locationType
                 break
             end
