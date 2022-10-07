@@ -1,3 +1,8 @@
+local ReplicationType = require(game:GetService("ReplicatedStorage").Shared.Enums.ReplicationType)
+
 return {
-    friendLocations = {}
+    friendLocations = {
+        _replication = ReplicationType.private,
+        locations = {}
+    }
 }
