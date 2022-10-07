@@ -21,7 +21,7 @@ Players.PlayerAdded:Connect(function(player)
         local friendLocation = PlayerLocation.get(friend.Id)
 
         if friendLocation then
-            playerData:setValue({"friendLocations"}, friend.Id, friendLocation)
+            playerData:setValue({"friendLocations", "locations", friend.Id}, friendLocation)
         end
     end
 end)
