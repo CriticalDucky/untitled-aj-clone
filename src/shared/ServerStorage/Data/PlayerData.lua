@@ -1,6 +1,7 @@
 local Players = game:GetService("Players")
 local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerScriptService = game:GetService("ServerScriptService")
 local ServerStorage = game:GetService("ServerStorage")
 
 local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
@@ -51,11 +52,14 @@ local TEMP_DATA_TEMPLATE do
 
     local dictionaries = {}
 
-    for _, instance in ipairs(ServerStorage:GetDescendants()) do
+    local function iterate(_, instance)
         if instance:IsA("ModuleScript") and instance.Name == "TempDataTemplate" then
             table.insert(dictionaries, require(instance))
         end
     end
+
+    table.foreachi(ServerStorage:GetDescendants(), iterate)
+    table.foreachi(ServerScriptService:GetDescendants(), iterate)
 
     TEMP_DATA_TEMPLATE = combineDictionaries(table.unpack(dictionaries))
 end
