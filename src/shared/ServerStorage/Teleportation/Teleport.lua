@@ -12,10 +12,11 @@ local serverStorageShared = ServerStorage.Shared
 local replicatedStorageShared = ReplicatedStorage.Shared
 local replicatedFirstShared = ReplicatedFirst.Shared
 local serverManagement = serverStorageShared.ServerManagement
+local serverFolder = replicatedStorageShared.Server
 local enumsFolder = replicatedStorageShared.Enums
 
 local Locations = require(replicatedStorageShared.Server.Locations)
-local LocalServerInfo = require(serverManagement.LocalServerInfo)
+local LocalServerInfo = require(serverFolder.LocalServerInfo)
 local ServerTypeEnum = require(enumsFolder.ServerType)
 local PlayerLocation = require(serverManagement.PlayerLocation)
 local WorldData = require(serverManagement.WorldData)

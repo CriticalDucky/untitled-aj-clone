@@ -3,11 +3,10 @@ local ServerStorage = game:GetService("ServerStorage")
 local Players = game:GetService("Players")
 
 local replicatedStorageShared = ReplicatedStorage.Shared
-local serverStorageShared = ServerStorage.Shared
 local enumsFolder = replicatedStorageShared.Enums
-local serverManagement = serverStorageShared.ServerManagement
+local serverFolder = replicatedStorageShared.Server
 
-local LocalServerInfo = require(serverManagement.LocalServerInfo)
+local LocalServerInfo = require(serverFolder.LocalServerInfo)
 local ServerTypeEnum = require(enumsFolder.ServerType)
 
 local function playerAdded(player: Player)

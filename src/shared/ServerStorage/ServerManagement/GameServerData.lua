@@ -12,13 +12,13 @@ local serverStorageShared = ServerStorage.Shared
 local replicatedFirstShared = ReplicatedFirst.Shared
 local replicatedStorageShared = ReplicatedStorage.Shared
 local messagingFolder = serverStorageShared.Messaging
-local serverManagement = serverStorageShared.ServerManagement
+local serverFolder = replicatedStorageShared.Server
 local enumsFolder = replicatedStorageShared.Enums
 local utilityFolder = replicatedFirstShared.Utility
 
 local Event = require(utilityFolder.Event)
 local Message = require(messagingFolder.Message)
-local LocalServerInfo = require(serverManagement.LocalServerInfo)
+local LocalServerInfo = require(serverFolder.LocalServerInfo)
 local ServerTypeEnum = require(enumsFolder.ServerType)
 local Constants = require(replicatedStorageShared.Server.Constants)
 

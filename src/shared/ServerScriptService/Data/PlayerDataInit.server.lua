@@ -4,11 +4,11 @@ local ServerStorage = game:GetService("ServerStorage")
 
 local serverStorageShared = ServerStorage.Shared
 local replicatedStorageShared = ReplicatedStorage.Shared
-local serverManagement = serverStorageShared.ServerManagement
+local serverFolder = replicatedStorageShared.Server
 local dataFolder = serverStorageShared.Data
 local enumsFolder = replicatedStorageShared.Enums
 
-local LocalServerInfo = require(serverManagement.LocalServerInfo)
+local LocalServerInfo = require(serverFolder.LocalServerInfo)
 local ServerTypeEnum = require(enumsFolder.ServerType)
 
 if LocalServerInfo.serverType ~= ServerTypeEnum.routing then
