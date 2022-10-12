@@ -44,8 +44,6 @@ function playerData.add(player)
         local value = data.value or Value()
         local stringId = tostring(player.UserId)
 
-        print("onReplicaChange", stringId)
-
         if publicDataReplica.Data[stringId] then
             publicDataLoaded[player] = true
         end
