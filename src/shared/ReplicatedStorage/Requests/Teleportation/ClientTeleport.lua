@@ -12,12 +12,12 @@ local enumsFolder = replicatedStorageShared:WaitForChild("Enums")
 local ReplicaCollection = require(replicationFolder:WaitForChild("ReplicaCollection"))
 local ReplicaRequest = require(requestsFolder:WaitForChild("ReplicaRequest"))
 local ClientWorldData = require(serverFolder:WaitForChild("ClientWorldData"))
-local ClientServerInfo = require(serverFolder:WaitForChild("ClientServerInfo"))
+local ClientWorldDataHelper = require(serverFolder:WaitForChild("ClientWorldDataHelper"))
+local LocalServerInfo = require(serverFolder:WaitForChild("LocalServerInfo"))
 local Table = require(utilityFolder:WaitForChild("Table"))
 local ServerTypeEnum = require(enumsFolder:WaitForChild("ServerType"))
 local TeleportRequestType = require(enumsFolder:WaitForChild("TeleportRequestType"))
 local TeleportResponseType = require(enumsFolder:WaitForChild("TeleportResponseType"))
-local Constants = require(serverFolder:WaitForChild("Constants"))
 local Locations = require(serverFolder:WaitForChild("Locations"))
 local FriendLocations = require(serverFolder:WaitForChild("FriendLocations"))
 
@@ -40,17 +40,7 @@ function Teleport.toWorld(worldIndex)
 
     local worldData = currentWorldData[worldIndex]
 
-    local population do
-        local total = 0
-
-        for _, locationData in pairs(worldData) do
-            total += if locationData.serverInfo then locationData.serverInfo.players else 0
-        end
-
-        population = total
-    end
-
-    if population >= #Locations.priority * Constants.location_maxPlayers then
+    if ClientWorldDataHelper.isWorldFull(worldData) then
         return TeleportResponseType.full
     end
 
@@ -58,7 +48,7 @@ function Teleport.toWorld(worldIndex)
 end
 
 function Teleport.toLocation(locationEnum)
-    if ClientServerInfo.serverType == ServerTypeEnum.location then
+    if LocalServerInfo.serverType == ServerTypeEnum.location then
         local replicatedStorageLocation = ReplicatedStorage:WaitForChild("Location")
         local serverFolderLocation = replicatedStorageLocation:WaitForChild("Server")
 
@@ -73,9 +63,8 @@ function Teleport.toLocation(locationEnum)
 
         local worldData = currentWorldData[localWorldIndex]
         local locationData = worldData[locationEnum]
-        local serverInfo = locationData.serverInfo
 
-        if serverInfo and serverInfo.players >= Constants.location_maxPlayers then
+        if ClientWorldDataHelper.isLocationFull(locationData) then
             return TeleportResponseType.full
         end
 
@@ -94,7 +83,7 @@ function Teleport.toFriend(playerId)
             local currentWorldData = ClientWorldData:get()
             local locationData = currentWorldData[friendLocation.worldIndex][friendLocation.locationEnum]
 
-            if locationData.serverInfo and locationData.serverInfo.players >= Constants.location_maxPlayers then
+            if ClientWorldDataHelper.isLocationFull(locationData) then
                 return TeleportResponseType.full
             end
 
