@@ -10,7 +10,6 @@ local replicatedStorageSharedData = replicatedStorageShared.Data
 local enumsFolder = replicatedStorageShared.Enums
 
 local ShopType = require(enumsFolder.ShopType)
-local ShopItemStatus = require(replicatedStorageSharedData.ShopInfo.ShopItemStatus)
 local ActiveShops = require(shoppingFolder.ActiveShops)
 local Shops = require(shoppingFolder.Shops)
 local PlayerData = require(dataFolder.PlayerData)
@@ -32,7 +31,7 @@ function ShopManager.playerCanBuyItem(player, shopEnum, itemIndex)
         return false
     end
 
-    if not ShopItemStatus.get(shopItem) then
+    if not shopItem.sellingTime or not shopItem.sellingTime:isInRange() then
         warn("Shop item is not available")
         return false
     end
