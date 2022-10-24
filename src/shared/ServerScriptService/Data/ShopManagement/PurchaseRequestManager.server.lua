@@ -9,7 +9,6 @@ local shoppingFolder = dataFolder.Shopping
 local ReplicaService = require(dataFolder.ReplicaService)
 local ActiveShops = require(shoppingFolder.ActiveShops)
 local Shops = require(shoppingFolder.Shops)
-local ShopItemStatus = require(replicatedStorageShared.Data.ShopInfo.ShopItemStatus)
 local ShopManager = require(shoppingFolder.ShopManager)
 local PlayerData = require(dataFolder.PlayerData)
 
