@@ -20,7 +20,7 @@
 
     "ReplicatedFirst": {
       "$className": "ReplicatedFirst",
-      "$path": "src/Home/ReplicatedFirst",
+      "$path": "src/Locations/Forest/ReplicatedStorage",
 
       "Shared": {
         "$className": "Folder",
