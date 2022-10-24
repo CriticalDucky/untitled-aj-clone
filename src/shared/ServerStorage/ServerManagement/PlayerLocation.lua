@@ -53,6 +53,20 @@ function PlayerLocation.get(playerId)
                     break
                 end
             end
+        elseif serverType == ServerTypeEnum.party then
+            for partyType, partyTypeData in pairs(serverTypeData) do
+                for privateServerId, serverInfo in pairs(partyTypeData) do
+                    if table.find(serverInfo.players, playerId) then
+                        playerLocationTable = {
+                            serverType = serverType,
+                            partyType = partyType,
+                            privateServerId = privateServerId,
+                        }
+
+                        break
+                    end
+                end
+            end
         end
     end
 
