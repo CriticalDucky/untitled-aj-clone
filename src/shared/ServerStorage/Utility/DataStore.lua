@@ -2,14 +2,14 @@ local DATASTORE_MAX_RETRIES = 10
 
 local DataStore = {}
 
-function DataStore.safeUpdate(dataStore, key, transformFunction)
+function DataStore.safeUpdate(dataStore, key, transformFunction, extra)
     print("DATASTORE: safeUpdate")
 
     local possibleError
 
     local function try()
         return pcall(function()
-            return dataStore:UpdateAsync(key, transformFunction)
+            return dataStore:UpdateAsync(key, transformFunction, extra)
         end)
     end
 
@@ -27,14 +27,14 @@ function DataStore.safeUpdate(dataStore, key, transformFunction)
     return false
 end
 
-function DataStore.safeSet(dataStore, key, value)
+function DataStore.safeSet(dataStore, key, value, extra)
     print("DATASTORE: safeSet")
 
     local possibleError
 
     local function try()
         return pcall(function()
-            return dataStore:SetAsync(key, value)
+            return dataStore:SetAsync(key, value, extra)
         end)
     end
 
@@ -52,14 +52,14 @@ function DataStore.safeSet(dataStore, key, value)
     return false
 end
 
-function DataStore.safeGet(dataStore, key)
+function DataStore.safeGet(dataStore, key, extra)
     print("DATASTORE: safeGet")
 
     local possibleError
 
     local function try()
         return pcall(function()
-            return dataStore:GetAsync(key)
+            return dataStore:GetAsync(key, extra)
         end)
     end
 
@@ -77,14 +77,14 @@ function DataStore.safeGet(dataStore, key)
     return
 end
 
-function DataStore.safeRemove(dataStore, key)
+function DataStore.safeRemove(dataStore, key, extra)
     print("DATASTORE: safeRemove")
 
     local possibleError
 
     local function try()
         return pcall(function()
-            return dataStore:RemoveAsync(key)
+            return dataStore:RemoveAsync(key, extra)
         end)
     end
 
