@@ -70,13 +70,13 @@ local testUI = New "ScreenGui" {
                     HorizontalAlignment = Enum.HorizontalAlignment.Right,
                 },
 
-                useUI(worldButton, ServerTypeEnum.location),
-                useUI(mapButton, ServerTypeEnum.location),
+                useUI(worldButton, ServerTypeEnum.location, ServerTypeEnum.party),
+                useUI(mapButton, ServerTypeEnum.location, ServerTypeEnum.party),
             },
         },
 
-        useUI(worldMenu, ServerTypeEnum.location),
-        useUI(map, ServerTypeEnum.location),
+        useUI(worldMenu, ServerTypeEnum.location, ServerTypeEnum.party),
+        useUI(map, ServerTypeEnum.location, ServerTypeEnum.party),
     },
 }
 
