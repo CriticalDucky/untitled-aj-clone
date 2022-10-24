@@ -13,11 +13,11 @@ local requestsFolder = replicatedStorageShared:WaitForChild("Requests")
 local Component = require(utilityFolder:WaitForChild("GetComponent"))
 local Fusion = require(replicatedFirstShared:WaitForChild("Fusion"))
 local ClientWorldData = require(serverFolder:WaitForChild("ClientWorldData"))
-local ClientWorldDataHelper = require(serverFolder:WaitForChild("ClientWorldDataHelper"))
 local LocalServerInfo = require(serverFolder:WaitForChild("LocalServerInfo"))
 local WorldNames = require(serverFolder:WaitForChild("WorldNames"))
 local ServerTypeEnum = require(enumsFolder:WaitForChild("ServerType"))
 local ClientTeleport = require(requestsFolder:WaitForChild("Teleportation"):WaitForChild("ClientTeleport"))
+local LocalWorldOrigin = require(serverFolder:WaitForChild("LocalWorldOrigin"))
 
 local ClientWorldInfo do
     if LocalServerInfo.serverType == ServerTypeEnum.location then
@@ -80,7 +80,7 @@ local component = function(props)
             onClick = function()
                 ClientTeleport.toWorld(worldIndex)
             end,
-            layoutOrder = worldIndex - ClientWorldDataHelper.getWorldPopulation(ClientWorldData:get()[worldIndex]) * 10000,
+            layoutOrder = worldIndex - ClientWorldData.getWorldPopulation(worldIndex) * 10000,
             text = WorldNames.get(worldIndex),
             size = UDim2.new(1, 0, 0, 50),
             visible = Computed(function()
@@ -117,12 +117,14 @@ local component = function(props)
                 local isDifferentWorld do
                     if LocalServerInfo.serverType == ServerTypeEnum.location then
                         isDifferentWorld = ClientWorldInfo.worldIndex ~= worldIndex
+                    elseif LocalServerInfo.serverType == ServerTypeEnum.party then
+                        isDifferentWorld = LocalWorldOrigin ~= worldIndex
                     else
                         isDifferentWorld = true
                     end
                 end
 
-                return ((isFirstThreeEmptyWorlds or (ClientWorldDataHelper.getWorldPopulation(currentWorlds[worldIndex]) ~= 0)) and isDifferentWorld and true) or false
+                return ((isFirstThreeEmptyWorlds or (ClientWorldData.getWorldPopulation(worldIndex) ~= 0)) and isDifferentWorld and true) or false
             end),
 
             children = {
@@ -133,11 +135,7 @@ local component = function(props)
                     BackgroundTransparency = 1,
 
                     Text = Computed(function()
-                        local currentWorlds = ClientWorldData:get()
-
-                        local world = currentWorlds[worldIndex]
-
-                        return ClientWorldDataHelper.getWorldPopulation(world)
+                        return ClientWorldData.getWorldPopulation(worldIndex)
                     end),
                     Font = Enum.Font.Gotham,
                 }
