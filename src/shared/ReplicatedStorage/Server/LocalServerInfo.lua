@@ -5,7 +5,7 @@ local enumsFolder = replicatedStorageShared.Enums
 
 local ServerTypeEnum = require(enumsFolder.ServerType)
 local Locations = require(replicatedStorageShared.Server.Locations)
-local Homes = require(replicatedStorageShared.Data.Inventory.Items.Homes)
+local Parties = require(replicatedStorageShared.Server.Parties)
 
 local serverType do
     for _, locationInfo in pairs(Locations.info) do
@@ -14,9 +14,9 @@ local serverType do
         end
     end
 
-    for _, homeInfo in pairs(Homes) do
-        if homeInfo.placeId == game.PlaceId then
-            serverType = ServerTypeEnum.home
+    for _, partyInfo in pairs(Parties) do
+        if partyInfo.placeId == game.PlaceId then
+            serverType = ServerTypeEnum.party
         end
     end
 
