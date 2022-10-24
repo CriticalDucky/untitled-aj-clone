@@ -50,7 +50,7 @@ for worldIndex, worldData in pairs(WorldData.get()) do
     mergedData[worldIndex] = newWorldElement(worldIndex, worldData)
 end
 
-local gameServerDataReplica = ReplicaService.NewReplica({
+local worldDataReplica = ReplicaService.NewReplica({
     ClassToken = ReplicaService.NewClassToken("Worlds"),
     Data = mergedData,
     Replication = "All"
@@ -65,14 +65,14 @@ GameServerData.ServerInfoUpdated:Connect(function(serverType, indexInfo, serverI
             return
         end
 
-        gameServerDataReplica:SetValue({worldIndex, locationEnum, "serverInfo"}, filterServerInfo(serverInfo))
+        worldDataReplica:SetValue({worldIndex, locationEnum, "serverInfo"}, filterServerInfo(serverInfo))
     end
 end)
 
 WorldData.WorldsUpdated:Connect(function()
     for worldIndex, worldData in pairs(WorldData.get()) do
         if not mergedData[worldIndex] then
-            gameServerDataReplica:SetValue({worldIndex}, newWorldElement(worldIndex, worldData))
+            worldDataReplica:SetValue({worldIndex}, newWorldElement(worldIndex, worldData))
         end
     end
 end)
