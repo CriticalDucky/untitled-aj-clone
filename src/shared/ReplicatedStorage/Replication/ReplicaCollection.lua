@@ -18,6 +18,8 @@ local classes = {
     "ServerInfo",
     "Worlds",
     "WorldInfo",
+    "ServerUnixTime",
+    "Parties"
 }
 
 local function onReplicaReceived(replica)
