@@ -27,6 +27,11 @@ local SERVER_FILL = {
         max = Constants.location_maxPlayers,
         recommended = Constants.location_maxRecommendedPlayers
     },
+
+    [ServerTypeEnum.party] = {
+        max = Constants.party_maxPlayers,
+        recommended = Constants.party_maxRecommendedPlayers
+    }
 }
 
 local cachedData = {
@@ -55,6 +60,16 @@ local cachedData = {
             }
         ]]
     },
+
+    [ServerTypeEnum.party] = {
+        --[[
+            [partyType] = {
+                [privateServerId] = {
+                    serverInfo
+                }
+            }
+        ]]
+    },
 }
 local lastBroadcast = 0
 
@@ -69,14 +84,20 @@ local GameServerData = {}
 GameServerData.ServerInfoUpdated = Event.new()
 
 function GameServerData.setCachedData(serverType, indexInfo, serverInfo)
+    local cachedServerType = cachedData[serverType]
+
     if serverType == ServerTypeEnum.routing then
-        cachedData[serverType][indexInfo.jobId] = serverInfo
+        cachedServerType[indexInfo.jobId] = serverInfo
     elseif serverType == ServerTypeEnum.location then
-        local worldTable = cachedData[serverType][indexInfo.worldIndex] or {}
+        local worldTable = cachedServerType[indexInfo.worldIndex] or {}
         worldTable[indexInfo.locationEnum] = serverInfo
-        cachedData[serverType][indexInfo.worldIndex] = worldTable
+        cachedServerType[indexInfo.worldIndex] = worldTable
     elseif serverType == ServerTypeEnum.home then
-        cachedData[serverType][indexInfo.userId] = serverInfo
+        cachedServerType[indexInfo.userId] = serverInfo
+    elseif serverType == ServerTypeEnum.party then
+        local partyTable = cachedServerType[indexInfo.partyType] or {}
+        partyTable[indexInfo.privateServerId] = serverInfo
+        cachedServerType[indexInfo.partyType] = partyTable
     else
         error("GameServerData: Message received with invalid server type")
     end
@@ -86,16 +107,24 @@ end
 
 function GameServerData.get(serverType, indexInfo)
     local function check()
+        local cachedServerType = cachedData[serverType]
+
         if serverType == ServerTypeEnum.routing then
-            return cachedData[serverType][indexInfo.jobId]
+            return cachedServerType[indexInfo.jobId]
         elseif serverType == ServerTypeEnum.location then
-            local worldTable = cachedData[serverType][indexInfo.worldIndex]
+            local worldTable = cachedServerType[indexInfo.worldIndex]
 
             if worldTable then
                 return worldTable[indexInfo.locationEnum]
             end
         elseif serverType == ServerTypeEnum.home then
-            return cachedData[serverType][indexInfo.userId]
+            return cachedServerType[indexInfo.userId]
+        elseif serverType == ServerTypeEnum.party then
+            local partyTable = cachedServerType[indexInfo.partyType]
+
+            if partyTable then
+                return partyTable[indexInfo.privateServerId]
+            end
         else
             error("GameServerData: Message received with invalid server type")
         end
@@ -175,6 +204,30 @@ function GameServerData.getWorldPopulationInfo(worldIndex)
 
         return populationInfo
     end
+end
+
+function GameServerData.getPartyServers(partyType)
+    initDataWait()
+
+    local partyTable = cachedData[ServerTypeEnum.party][partyType]
+
+    if partyTable then
+        return partyTable
+    end
+end
+
+function GameServerData.getPartyPopulationInfo(partyType, privateServerId)
+    return GameServerData.getPopulationInfo(ServerTypeEnum.party, {
+        partyType = partyType,
+        privateServerId = privateServerId,
+    })
+end
+
+function GameServerData.getLocationPopulationInfo(worldIndex, locationEnum)
+    return GameServerData.getPopulationInfo(ServerTypeEnum.location, {
+        worldIndex = worldIndex,
+        locationEnum = locationEnum,
+    })
 end
 
 function GameServerData.publish(serverInfo, indexInfo)
