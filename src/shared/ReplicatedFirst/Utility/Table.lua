@@ -31,7 +31,31 @@ function Table.hasValue(t, value)
         end
     end
 
-    return false 
+    return false
+end
+
+function Table.findMax(t)
+    local k, v
+
+    for key, value in pairs(t) do
+        if not k or value > v then
+            k, v = key, value
+        end
+    end
+
+    return k, v
+end
+
+function Table.findMin(t)
+    local k, v
+
+    for key, value in pairs(t) do
+        if not k or value < v then
+            k, v = key, value
+        end
+    end
+
+    return k, v
 end
 
 function Table.print(t, note)
