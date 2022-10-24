@@ -12,7 +12,6 @@ local requestsFolder = replicatedStorageShared:WaitForChild("Requests")
 
 local ReplicaCollection = require(replicationFolder:WaitForChild("ReplicaCollection"))
 local ActiveShops = require(shopInfoFolder:WaitForChild("ActiveShopsClient"))
-local ShopItemStatus = require(shopInfoFolder:WaitForChild("ShopItemStatus"))
 local PurchaseResponseType = require(enumsFolder:WaitForChild("PurchaseResponseType"))
 local ReplicaRequest = require(requestsFolder:WaitForChild("ReplicaRequest"))
 
@@ -30,7 +29,7 @@ function Purchase.request(shopEnum, itemIndex)
     end
 
     local item = ActiveShops[shopEnum].items[itemIndex]
-    local isForSale = ShopItemStatus.get(item)
+    local isForSale = item.sellingTime and item.sellingTime:isInRange()
 
     if not isForSale then
         warn("Item is not for sale")
