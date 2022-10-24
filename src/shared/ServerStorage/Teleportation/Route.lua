@@ -25,7 +25,7 @@ function Route.routeToWorld(player) -- Once any of these functions are called, t
             return true
         end
 
-        local teleportSuccess, teleportResult = Teleport.teleportToLocation({player}, locationEnum, worldIndex)
+        local teleportSuccess, teleportResult = Teleport.teleportToLocation(player, locationEnum, worldIndex)
 
         if teleportSuccess then
             return true
@@ -66,7 +66,6 @@ function Route.routeToPlayer(player)
     if success then
         return true
     else
-        warn("Failed to teleport player to player")
         return false
     end
 end
