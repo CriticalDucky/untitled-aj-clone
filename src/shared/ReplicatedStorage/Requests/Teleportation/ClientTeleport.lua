@@ -12,7 +12,7 @@ local enumsFolder = replicatedStorageShared:WaitForChild("Enums")
 local ReplicaCollection = require(replicationFolder:WaitForChild("ReplicaCollection"))
 local ReplicaRequest = require(requestsFolder:WaitForChild("ReplicaRequest"))
 local ClientWorldData = require(serverFolder:WaitForChild("ClientWorldData"))
-local ClientWorldDataHelper = require(serverFolder:WaitForChild("ClientWorldDataHelper"))
+local ClientPartyData = require(serverFolder:WaitForChild("ClientPartyData"))
 local LocalServerInfo = require(serverFolder:WaitForChild("LocalServerInfo"))
 local Table = require(utilityFolder:WaitForChild("Table"))
 local ServerTypeEnum = require(enumsFolder:WaitForChild("ServerType"))
@@ -20,6 +20,8 @@ local TeleportRequestType = require(enumsFolder:WaitForChild("TeleportRequestTyp
 local TeleportResponseType = require(enumsFolder:WaitForChild("TeleportResponseType"))
 local Locations = require(serverFolder:WaitForChild("Locations"))
 local FriendLocations = require(serverFolder:WaitForChild("FriendLocations"))
+local LocalWorldOrigin = require(serverFolder:WaitForChild("LocalWorldOrigin"))
+local ActiveParties = require(serverFolder:WaitForChild("ActiveParties"))
 
 local TeleportRequest = ReplicaCollection.get("TeleportRequest")
 
@@ -38,9 +40,7 @@ function Teleport.toWorld(worldIndex)
         return TeleportResponseType.teleportError
     end
 
-    local worldData = currentWorldData[worldIndex]
-
-    if ClientWorldDataHelper.isWorldFull(worldData) then
+    if ClientWorldData.isWorldFull(worldIndex) then
         return TeleportResponseType.full
     end
 
@@ -48,23 +48,34 @@ function Teleport.toWorld(worldIndex)
 end
 
 function Teleport.toLocation(locationEnum)
-    if LocalServerInfo.serverType == ServerTypeEnum.location then
-        local replicatedStorageLocation = ReplicatedStorage:WaitForChild("Location")
-        local serverFolderLocation = replicatedStorageLocation:WaitForChild("Server")
+    local acceptable = {
+        [ServerTypeEnum.location] = true,
+        [ServerTypeEnum.party] = true,
+    }
 
-        local ClientWorldInfo = require(serverFolderLocation:WaitForChild("ClientWorldInfo")):get()
-        
-        local currentWorldData = ClientWorldData:get()
-        local localWorldIndex = ClientWorldInfo.worldIndex
+    if acceptable[LocalServerInfo.serverType] then
+        local localWorldIndex do
+            if LocalServerInfo.serverType == ServerTypeEnum.location then
+                local replicatedStorageLocation = ReplicatedStorage:WaitForChild("Location")
+                local serverFolderLocation = replicatedStorageLocation:WaitForChild("Server")
+    
+                local ClientWorldInfo = require(serverFolderLocation:WaitForChild("ClientWorldInfo")):get()
+                
+                if locationEnum == ClientWorldInfo.locationEnum then
+                    return TeleportResponseType.alreadyInLocation
+                end
 
-        if locationEnum == ClientWorldInfo.locationEnum then
-            return TeleportResponseType.alreadyInLocation
+                localWorldIndex = ClientWorldInfo.worldIndex
+            elseif LocalServerInfo.serverType == ServerTypeEnum.party then
+                if not LocalWorldOrigin then
+                    return TeleportResponseType.invalid
+                end
+
+                localWorldIndex = LocalWorldOrigin
+            end
         end
 
-        local worldData = currentWorldData[localWorldIndex]
-        local locationData = worldData[locationEnum]
-
-        if ClientWorldDataHelper.isLocationFull(locationData) then
+        if ClientWorldData.isLocationFull(localWorldIndex, locationEnum) then
             return TeleportResponseType.full
         end
 
@@ -80,10 +91,7 @@ function Teleport.toFriend(playerId)
         local serverType = friendLocation.serverType
 
         if serverType == ServerTypeEnum.location then
-            local currentWorldData = ClientWorldData:get()
-            local locationData = currentWorldData[friendLocation.worldIndex][friendLocation.locationEnum]
-
-            if ClientWorldDataHelper.isLocationFull(locationData) then
+            if ClientWorldData.isLocationFull(friendLocation.worldIndex, friendLocation.locationEnum) then
                 return TeleportResponseType.full
             end
 
@@ -92,9 +100,29 @@ function Teleport.toFriend(playerId)
             end
 
             return Teleport.request(TeleportRequestType.toFriend, playerId)
+        elseif serverType == ServerTypeEnum.party then
+            if ClientPartyData.isPartyFull(friendLocation.partyType, friendLocation.privateServerId) then
+                return TeleportResponseType.full
+            end
+
+            return Teleport.request(TeleportRequestType.toFriend, playerId)
         else
             return TeleportResponseType.invalid
         end
+    else
+        return TeleportResponseType.invalid
+    end
+end
+
+function Teleport.toParty(partyType)
+    local activeParty = ActiveParties:getActiveParty()
+
+    if activeParty then
+        if activeParty ~= partyType then
+            return TeleportResponseType.disabled
+        end
+
+        return Teleport.request(TeleportRequestType.toParty, partyType)
     else
         return TeleportResponseType.invalid
     end
