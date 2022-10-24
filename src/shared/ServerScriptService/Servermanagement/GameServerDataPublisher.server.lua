@@ -12,6 +12,8 @@ local serverFolder = replicatedStorageShared.Server
 local GameServerData = require(serverManagementShared.GameServerData)
 local LocalServerInfo = require(serverFolder.LocalServerInfo)
 local ServerTypeEnum = require(enumsFolder.ServerType)
+local Teleport = require(serverStorageShared.Teleportation.Teleport)
+local Fingerprint = require(serverStorageShared.Utility.Fingerprint)
 
 local indexInfo do
     if LocalServerInfo.serverType == ServerTypeEnum.routing then
@@ -29,10 +31,17 @@ local indexInfo do
         indexInfo = {
             userId = LocalServerInfo.userId,
         }
+    elseif LocalServerInfo.serverType == ServerTypeEnum.party then
+        local LocalPartyInfo = require(ReplicatedStorage.Party.Server.LocalPartyInfo)
+
+        indexInfo = {
+            partyType = LocalPartyInfo.partyType,
+            privateServerId = game.PrivateServerId
+        }
     end
 end
 
-local runServiceConnection = RunService.Heartbeat:Connect(function(deltaTime)
+local runServiceConnection = RunService.Heartbeat:Connect(function()
     if GameServerData.canPublish() then
         local serverInfo
 
@@ -48,17 +57,33 @@ local runServiceConnection = RunService.Heartbeat:Connect(function(deltaTime)
 
         if LocalServerInfo.serverType == ServerTypeEnum.routing then
             serverInfo = {
-                players = getUserIds(),
+                
             }
         elseif LocalServerInfo.serverType == ServerTypeEnum.location then
             serverInfo = {
-                players = getUserIds(),
+                
             }
         elseif LocalServerInfo.serverType == ServerTypeEnum.home then
             serverInfo = {
-                players = getUserIds(),
+                
+            }
+        elseif LocalServerInfo.serverType == ServerTypeEnum.party then
+            local serverCode = Fingerprint.trace(game.PrivateServerId)
+
+            if not serverCode then
+                Teleport.rejoin(Players:GetPlayers())
+
+                Players.PlayerAdded:Connect(function(player)
+                    Teleport.rejoin(player) -- Shut down the server.
+                end)
+            end -- Boot players if the server code is not found
+
+            serverInfo = {
+                serverCode = serverCode,
             }
         end
+
+        serverInfo.players = getUserIds()
 
         GameServerData.publish(serverInfo, indexInfo)
     end
