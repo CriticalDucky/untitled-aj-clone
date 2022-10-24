@@ -1,0 +1,112 @@
+{
+    "name": "Untitled-AJ-clone",
+    "tree": {
+      "$className": "DataModel",
+  
+      "ReplicatedStorage": {
+        "$className": "ReplicatedStorage",
+        "$path": "src/Parties/BeachParty/ReplicatedStorage",
+  
+        "Shared": {
+          "$className": "Folder",
+          "$path": "src/Shared/ReplicatedStorage"
+        },
+  
+        "Party": {
+          "$className": "Folder",
+          "$path": "src/Party/ReplicatedStorage"
+        }
+      },
+  
+      "ReplicatedFirst": {
+        "$className": "ReplicatedFirst",
+        "$path": "src/Parties/BeachParty/ReplicatedStorage",
+  
+        "Shared": {
+          "$className": "Folder",
+          "$path": "src/Shared/ReplicatedFirst"
+        },
+  
+        "Party": {
+          "$className": "Folder",
+          "$path": "src/Party/ReplicatedFirst"
+        }
+      },
+  
+      "ServerScriptService": {
+        "$className": "ServerScriptService",
+        "$path": "src/Parties/BeachParty/ServerScriptService",
+  
+        "Shared": {
+          "$className": "Folder",
+          "$path": "src/Shared/ServerScriptService"
+        },
+  
+        "Party": {
+          "$className": "Folder",
+          "$path": "src/Party/ServerScriptService"
+        }
+      },
+  
+      "ServerStorage": {
+        "$className": "ServerStorage",
+        "$path": "src/Parties/BeachParty/ServerStorage",
+  
+        "Shared": {
+          "$className": "Folder",
+          "$path": "src/Shared/ServerStorage"
+        },
+  
+        "Party": {
+          "$className": "Folder",
+          "$path": "src/Party/ServerStorage"
+        }
+      },
+  
+      "Players": {
+        "$className": "Players",
+        "$properties": {
+          "CharacterAutoLoads": false
+        }
+      },
+  
+      "StarterPlayer": {
+        "$className": "StarterPlayer",
+        "$properties": {
+          "DevComputerMovementMode": "KeyboardMouse",
+          "DevTouchMovementMode": "DynamicThumbstick",
+          "EnableMouseLockOption": false
+        },
+  
+        "StarterPlayerScripts": {
+            "$className": "StarterPlayerScripts",
+            "$path": "src/Parties/BeachParty/StarterPlayer/StarterPlayerScripts",
+  
+            "Shared": {
+              "$className": "Folder",
+              "$path": "src/Shared/StarterPlayer/StarterPlayerScripts"
+            },
+  
+            "Party": {
+              "$className": "Folder",
+              "$path": "src/Party/StarterPlayer/StarterPlayerScripts"
+            }
+        },
+  
+        "StarterCharacterScripts": {
+            "$className": "StarterCharacterScripts",
+            "$path": "src/Parties/BeachParty/StarterPlayer/StarterCharacterScripts",
+  
+            "Shared": {
+              "$className": "Folder",
+              "$path": "src/Shared/StarterPlayer/StarterCharacterScripts"
+            },
+  
+            "Party": {
+              "$className": "Folder",
+              "$path": "src/Party/StarterPlayer/StarterCharacterScripts"
+            }
+        }
+      }
+    }
+  }
