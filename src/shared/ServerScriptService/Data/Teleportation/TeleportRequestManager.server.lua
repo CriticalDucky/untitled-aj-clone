@@ -22,6 +22,9 @@ local TeleportResponseType = require(enumsFolder.TeleportResponseType)
 local GameServerData = require(serverManagementFolder.GameServerData)
 local PlayerLocation = require(serverManagementFolder.PlayerLocation)
 local Locations = require(serverFolder.Locations)
+local ActiveParties = require(serverFolder.ActiveParties)
+local LocalWorldOrigin = require(serverFolder.LocalWorldOrigin)
+local LocalServerInfo = require(serverFolder.LocalServerInfo)
 
 local TeleportRequest = ReplicaService.NewReplica({
     ClassToken = ReplicaService.NewClassToken("TeleportRequest"),
@@ -59,7 +62,7 @@ TeleportRequest:ConnectOnServerEvent(function(player: Player, requestCode, telep
         task.spawn(function()
             respond(TeleportResponseType.teleportError)
         
-            local success = Teleport.rejoin({player})
+            local success = Teleport.rejoin(player)
     
             if not success then
                 warn("Failed to rejoin player")
@@ -110,11 +113,17 @@ TeleportRequest:ConnectOnServerEvent(function(player: Player, requestCode, telep
             return respond(TeleportResponseType.invalid)
         end
 
-        local LocalWorldInfo = require(ServerStorage.Location.ServerManagement.LocalWorldInfo)
-        local populationInfo = GameServerData.getPopulationInfo(ServerTypeEnum.location, {
-            locationEnum = locationEnum,
-            worldIndex = LocalWorldInfo.worldIndex
-        })
+        local populationInfo do
+            local worldIndex
+
+            if LocalServerInfo.serverType == ServerTypeEnum.location then
+                worldIndex = require(ServerStorage.Location.ServerManagement.LocalWorldInfo).worldIndex
+            elseif LocalServerInfo.serverType == ServerTypeEnum.party then
+                worldIndex = LocalWorldOrigin(player)
+            end
+
+            populationInfo = GameServerData.getLocationPopulationInfo(locationEnum, worldIndex)
+        end
 
         if populationInfo and populationInfo.max_emptySlots == 0 then
             return respond(TeleportResponseType.full)
@@ -122,7 +131,7 @@ TeleportRequest:ConnectOnServerEvent(function(player: Player, requestCode, telep
 
         PlayerData.yieldUntilHopReady(player)
 
-        local success = Teleport.teleportToLocation({player}, locationEnum)
+        local success = Teleport.teleportToLocation(player, locationEnum)
 
         evaluateSuccess(success)
     elseif teleportRequestType == TeleportRequestType.toFriend then
@@ -179,9 +188,44 @@ TeleportRequest:ConnectOnServerEvent(function(player: Player, requestCode, telep
             PlayerData.yieldUntilHopReady(player)
 
             evaluateSuccess(Teleport.teleportToPlayer(player, targetPlayerId))
+        elseif targetPlayerLocation.serverType == ServerTypeEnum.party then
+            local partyType = targetPlayerLocation.partyType
+            local privateServerId = targetPlayerLocation.privateServerId
+
+            local populationInfo = GameServerData.getPartyPopulationInfo(partyType, privateServerId)
+
+            if not populationInfo then
+                print("Error: populationInfo not found")
+
+                return respond(TeleportResponseType.teleportError)
+            end
+
+            if populationInfo.max_emptySlots == 0 then
+                return respond(TeleportResponseType.full)
+            end
+
+            PlayerData.yieldUntilHopReady(player)
+
+            evaluateSuccess(Teleport.teleportToPlayer(player, targetPlayerId))
         else
             return respond(TeleportResponseType.invalid)
         end
+    elseif teleportRequestType == TeleportRequestType.toParty then
+        local partyType = ...
+
+        if not partyType then
+            print("Invalid request: partyType is nil")
+
+            return respond(TeleportResponseType.invalid)
+        end
+
+        if partyType ~= ActiveParties.getActiveParty() then
+            return respond(TeleportResponseType.disabled)
+        end
+
+        PlayerData.yieldUntilHopReady(player)
+
+        evaluateSuccess(Teleport.teleportToParty(player, partyType))
     end
 end)
 
