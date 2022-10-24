@@ -26,7 +26,7 @@ local function playerAdded(player: Player)
             else
                 spawnpoint = Entrances.main
             end
-        elseif serverType == ServerTypeEnum.home then
+        elseif serverType == ServerTypeEnum.home or serverType == ServerTypeEnum.party then
             spawnpoint = workspace:FindFirstChild("SpawnLocation", true)
         end
     end
