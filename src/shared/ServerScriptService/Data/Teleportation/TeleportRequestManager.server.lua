@@ -16,7 +16,6 @@ local ReplicaService = require(dataFolder.ReplicaService)
 local Teleport = require(teleportationFolder.Teleport)
 local PlayerData = require(dataFolder.PlayerData)
 local Table = require(utilityFolder.Table)
-local ServerTypeEnum = require(enumsFolder.ServerType)
 local TeleportRequestType = require(enumsFolder.TeleportRequestType)
 local TeleportResponseType = require(enumsFolder.TeleportResponseType)
 local GameServerData = require(serverManagementFolder.GameServerData)
@@ -24,7 +23,10 @@ local PlayerLocation = require(serverManagementFolder.PlayerLocation)
 local Locations = require(serverFolder.Locations)
 local ActiveParties = require(serverFolder.ActiveParties)
 local LocalWorldOrigin = require(serverFolder.LocalWorldOrigin)
-local LocalServerInfo = require(serverFolder.LocalServerInfo)
+local WorldData = require(serverManagementFolder.WorldData)
+local PlayerSettings = require(dataFolder.Settings.PlayerSettings)
+local ServerTypeGroups = require(serverFolder.ServerTypeGroups)
+local ServerGroupEnum = require(enumsFolder.ServerGroup)
 
 local TeleportRequest = ReplicaService.NewReplica({
     ClassToken = ReplicaService.NewClassToken("TeleportRequest"),
@@ -116,22 +118,38 @@ TeleportRequest:ConnectOnServerEvent(function(player: Player, requestCode, telep
         local populationInfo do
             local worldIndex
 
-            if LocalServerInfo.serverType == ServerTypeEnum.location then
+            if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
                 worldIndex = require(ServerStorage.Location.ServerManagement.LocalWorldInfo).worldIndex
-            elseif LocalServerInfo.serverType == ServerTypeEnum.party then
-                worldIndex = LocalWorldOrigin(player)
+            elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.hasWorldOrigin) then
+                worldIndex = LocalWorldOrigin(player) or WorldData.findAvailableWorld(locationEnum)
             end
 
-            populationInfo = GameServerData.getLocationPopulationInfo(locationEnum, worldIndex)
+            if not worldIndex then
+                return respond(TeleportResponseType.teleportError)
+            end
+
+            populationInfo = GameServerData.getLocationPopulationInfo(worldIndex, locationEnum)
         end
 
+        local worldIndex
+
         if populationInfo and populationInfo.max_emptySlots == 0 then
-            return respond(TeleportResponseType.full)
+            local findOpenWorld = PlayerSettings.getSetting(player, "findOpenWorld")
+
+            if not findOpenWorld then
+                return respond(TeleportResponseType.full)
+            end
+
+            worldIndex = WorldData.findAvailableWorld(locationEnum)
+
+            if not worldIndex then
+                return respond(TeleportResponseType.teleportError)
+            end
         end
 
         PlayerData.yieldUntilHopReady(player)
 
-        local success = Teleport.teleportToLocation(player, locationEnum)
+        local success = Teleport.teleportToLocation(player, locationEnum, worldIndex)
 
         evaluateSuccess(success)
     elseif teleportRequestType == TeleportRequestType.toFriend then
@@ -163,11 +181,8 @@ TeleportRequest:ConnectOnServerEvent(function(player: Player, requestCode, telep
             return respond(TeleportResponseType.invalid)
         end
 
-        if targetPlayerLocation.serverType == ServerTypeEnum.location then
-            local populationInfo = GameServerData.getPopulationInfo(ServerTypeEnum.location, {
-                worldIndex = targetPlayerLocation.worldIndex,
-                locationEnum = targetPlayerLocation.locationEnum,
-            })
+        if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation, targetPlayerLocation.serverType) then
+            local populationInfo = GameServerData.getLocationPopulationInfo(targetPlayerLocation.worldIndex, targetPlayerLocation.locationEnum)
             
             if not populationInfo then
                 print("Error: populationInfo not found")
@@ -188,7 +203,7 @@ TeleportRequest:ConnectOnServerEvent(function(player: Player, requestCode, telep
             PlayerData.yieldUntilHopReady(player)
 
             evaluateSuccess(Teleport.teleportToPlayer(player, targetPlayerId))
-        elseif targetPlayerLocation.serverType == ServerTypeEnum.party then
+        elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isParty, targetPlayerLocation.serverType) then
             local partyType = targetPlayerLocation.partyType
             local privateServerId = targetPlayerLocation.privateServerId
 
@@ -219,7 +234,7 @@ TeleportRequest:ConnectOnServerEvent(function(player: Player, requestCode, telep
             return respond(TeleportResponseType.invalid)
         end
 
-        if partyType ~= ActiveParties.getActiveParty() then
+        if partyType ~= ActiveParties.getActiveParty().partyType then
             return respond(TeleportResponseType.disabled)
         end
 
