@@ -1,29 +1,36 @@
-local NO_REPEAT_ZONE = 2/3 -- of current active parties
+local NO_REPEAT_ZONE = 1/2 -- of current active parties
+local PARTY_PADDING_MINUTES = 5 -- minutes
 
 local utilityFolder = game:GetService("ReplicatedFirst"):WaitForChild("Shared"):WaitForChild("Utility")
 
 local Parties = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Server"):WaitForChild("Parties"))
 local ServerUnixTime = require(utilityFolder:WaitForChild("ServerUnixTime"))
 local Table = require(utilityFolder:WaitForChild("Table"))
+local Math = require(utilityFolder:WaitForChild("Math"))
+local TimeRange = require(utilityFolder:WaitForChild("TimeRange"))
 
-local function getPossiblePartiesFromHour(hour, dayId)
+local function halfHourIdToUnixTime(halfHourId)
+    return halfHourId * 1800
+end
+
+local function getPossiblePartiesFromHalfHour(halfHour)
     local possibleParties = {}
 
-    for enum, party in ipairs(Parties) do
-        if party.enabledTime:isInRange((dayId * 86400) + (hour or 0) * 3600) then
-            table.insert(possibleParties, enum)
+    for enum, party in pairs(Parties) do
+        if party.enabledTime:isInRange(halfHourIdToUnixTime(halfHour)) then
+            possibleParties[enum] = party.chanceWeight
         end
     end
 
-    return possibleParties 
+    return possibleParties
 end
 
 local function getWeekId(time)
     return math.floor((time or ServerUnixTime.evaluateTime()) / 604800)
 end
 
-local function getHourId(time)
-    return math.floor((time or ServerUnixTime.evaluateTime()) / 3600)
+local function getHalfHourId(time)
+    return math.floor((time or ServerUnixTime.evaluateTime()) / 1800)
 end
 
 local function createWeekPartySchedule(weekId)
@@ -34,20 +41,29 @@ local function createWeekPartySchedule(weekId)
     for day = 1, 7 do
         local dayId = weekId * 7 + day
 
-        for hour = 1, 24 do
-            local possibleParties = getPossiblePartiesFromHour(hour, dayId)
-            local noRepeatZone = math.floor(#possibleParties * NO_REPEAT_ZONE)
+        for halfHour = 1, 24 * 2 do
+            local partyChances = getPossiblePartiesFromHalfHour(dayId * 24 * 2 + halfHour)
+            local noRepeatZone = math.floor(Table.dictLen(partyChances) * NO_REPEAT_ZONE)
 
             local party
 
+            local timeout = 0
+
             repeat -- Only allow parties that haven't been played in the last 2/3 of the possible parties
-                party = possibleParties[random:NextInteger(1, #possibleParties)]
-                
-                for i = #partyOrder - noRepeatZone + 1, #partyOrder do
-                    if partyOrder[i] == party then
+                party = Math.weightedChance(partyChances, random:NextNumber())
+
+                for i = 1, noRepeatZone do
+                    if partyOrder[#partyOrder - i + 1] == party then
                         party = nil
                         break
                     end
+                end
+
+                timeout += 1
+
+                if timeout > 500 then
+                    warn("Timeout while trying to find a party. Here are the stats: ", noRepeatZone, Table.dictLen(partyChances), #partyOrder)
+                    break
                 end
             until party
 
@@ -57,8 +73,17 @@ local function createWeekPartySchedule(weekId)
 
     local partySchedule = {}
 
-    for hour, party in ipairs(partyOrder) do
-        partySchedule[weekId * 168 + hour] = party
+    for halfHour, party in ipairs(partyOrder) do -- The number of half hours in a week is: 7 * 24 * 2 = 336
+        local halfHourId = weekId * 336 + halfHour - 1
+
+        partySchedule[halfHourId] = {
+            partyType = party,
+            halfHourId = halfHourId,
+            time = TimeRange.new(
+                halfHourIdToUnixTime(halfHourId),
+                halfHourIdToUnixTime(halfHourId + 1) - (PARTY_PADDING_MINUTES * 60)
+            )
+        }
     end
 
     return partySchedule
@@ -78,24 +103,24 @@ end
 
 local ActiveParties = {}
 
-function ActiveParties.getPartyAtHourId(hourId)
-    local weekId = math.floor(hourId / 168)
+function ActiveParties.getPartyAtHalfHourId(halfHourId)
+    local weekId = math.floor(halfHourId / 336)
     local partySchedule = getWeekPartySchedule(weekId)
 
-    return partySchedule[hourId]
+    return partySchedule[halfHourId]
 end
 
 function ActiveParties.getActiveParty()
-    return ActiveParties.getPartyAtHourId(getHourId())
+    return ActiveParties.getPartyAtHalfHourId(getHalfHourId())
 end
 
-function ActiveParties.generatePartyList(length)
+function ActiveParties.generatePartyList(length, time)
     local partyList = {}
 
-    local hourId = getHourId()
+    local halfHourId = getHalfHourId(time)
 
     for i = 1, length do
-        table.insert(partyList, ActiveParties.getPartyAtHourId(hourId + i - 1))
+        table.insert(partyList, ActiveParties.getPartyAtHalfHourId(halfHourId + i - 1))
     end
 
     return partyList
