@@ -68,7 +68,7 @@ function playerData.add(player)
     end
 
     if player == Players.LocalPlayer then
-        data._privateReplica = ReplicaCollection.get("PlayerDataPrivate_" .. player.UserId, true)
+        data._privateReplica = ReplicaCollection.get("PlayerDataPrivate", true)
         connect(data._privateReplica:ListenToRaw(onReplicaChange))
         data._mergeTable = {}
     end
