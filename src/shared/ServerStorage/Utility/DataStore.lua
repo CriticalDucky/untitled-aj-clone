@@ -73,7 +73,7 @@ function DataStore.safeGet(dataStore, key, extra)
         end
     end
 
-    print("Failed to get data store", possibleError)
+    warn("Failed to get data store", possibleError)
     return
 end
 
