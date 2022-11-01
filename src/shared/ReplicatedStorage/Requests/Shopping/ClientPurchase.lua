@@ -11,15 +11,15 @@ local enumsFolder = replicatedStorageShared:WaitForChild("Enums")
 local requestsFolder = replicatedStorageShared:WaitForChild("Requests")
 
 local ReplicaCollection = require(replicationFolder:WaitForChild("ReplicaCollection"))
-local ActiveShops = require(shopInfoFolder:WaitForChild("ActiveShopsClient"))
 local PurchaseResponseType = require(enumsFolder:WaitForChild("PurchaseResponseType"))
 local ReplicaRequest = require(requestsFolder:WaitForChild("ReplicaRequest"))
+local Shops = require(shopInfoFolder:WaitForChild("Shops"))
 
 local Purchase = {}
 
 function Purchase.request(shopEnum, itemIndex)
-    assert(shopEnum and ActiveShops[shopEnum], "shop must be a valid shop type")
-    assert(itemIndex and ActiveShops[shopEnum].items[itemIndex], "item must be a valid item")
+    assert(shopEnum and Shops[shopEnum], "shop must be a valid shop type")
+    assert(itemIndex and Shops[shopEnum].items[itemIndex], "item must be a valid item")
 
     local PurchaseRequest = ReplicaCollection.get("PurchaseRequest")
 
@@ -28,7 +28,7 @@ function Purchase.request(shopEnum, itemIndex)
         return
     end
 
-    local item = ActiveShops[shopEnum].items[itemIndex]
+    local item = Shops[shopEnum].items[itemIndex]
     local isForSale = item.sellingTime and item.sellingTime:isInRange()
 
     if not isForSale then
