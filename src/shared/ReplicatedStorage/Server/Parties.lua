@@ -8,6 +8,7 @@ return {
     [PartyTypeEnum.baseballParty] = {
         name = "Baseball Party",
         placeId = 11353468067,
+        chanceWeight = 1,
         enabledTime = group {
             timeRange(
                 {
@@ -34,6 +35,7 @@ return {
     [PartyTypeEnum.beachParty] = {
         name = "Beach Party",
         placeId = 11353468067,
+        chanceWeight = 30,
         enabledTime = group {
             timeRange(
                 {
@@ -60,6 +62,7 @@ return {
     [PartyTypeEnum.birthdayParty] = {
         name = "Birthday Party",
         placeId = 11353468067,
+        chanceWeight = 1,
         enabledTime = group {
             timeRange(
                 {
@@ -86,6 +89,7 @@ return {
     [PartyTypeEnum.campingParty] = {
         name = "Camping Party",
         placeId = 11353468067,
+        chanceWeight = 1,
         enabledTime = group {
             timeRange(
                 {
@@ -112,6 +116,7 @@ return {
     [PartyTypeEnum.catParty] = {
         name = "Cat Party",
         placeId = 11353468067,
+        chanceWeight = 1,
         enabledTime = group {
             timeRange(
                 {
@@ -138,6 +143,7 @@ return {
     [PartyTypeEnum.circusParty] = {
         name = "Circus Party",
         placeId = 11353468067,
+        chanceWeight = 1,
         enabledTime = group {
             timeRange(
                 {
