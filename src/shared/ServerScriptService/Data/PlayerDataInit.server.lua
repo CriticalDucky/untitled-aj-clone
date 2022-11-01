@@ -8,15 +8,18 @@ local serverFolder = replicatedStorageShared.Server
 local dataFolder = serverStorageShared.Data
 local enumsFolder = replicatedStorageShared.Enums
 
-local LocalServerInfo = require(serverFolder.LocalServerInfo)
-local ServerTypeEnum = require(enumsFolder.ServerType)
+local Teleport = require(serverStorageShared.Teleportation.Teleport)
+local ServerGroupEnum = require(enumsFolder.ServerGroup)
+local ServerTypeGroups = require(serverFolder.ServerTypeGroups)
 
-if LocalServerInfo.serverType ~= ServerTypeEnum.routing then
+if not ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
     local PlayerData = require(dataFolder.PlayerData)
     local InventoryManager = require(dataFolder.Inventory.InventoryManager)
 
     local function playerAdded(player)
-        PlayerData.init(player)
+        if not PlayerData.init(player) then
+            Teleport.rejoin(player)
+        end
 
         InventoryManager.reconcileInventory(player)
     end
