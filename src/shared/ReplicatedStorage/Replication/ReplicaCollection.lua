@@ -1,18 +1,15 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-print("ReplicaCollection")
-
 local replicatedStorageShared = ReplicatedStorage:WaitForChild("Shared")
 local madworkFolder = replicatedStorageShared:WaitForChild("Madwork")
 
 local ReplicaController = require(madworkFolder:WaitForChild("ReplicaController"))
 
 local replicas = {}
+
 local classes = {
-    "PlayerDataPrivate_" .. Players.LocalPlayer.UserId,
     "PlayerDataPublic",
-    "ActiveShops",
     "PurchaseRequest",
     "TeleportRequest",
     "ServerInfo",
@@ -22,21 +19,39 @@ local classes = {
     "Parties"
 }
 
-local function onReplicaReceived(replica)
-    local index = replica.Class
+local inclusiveClasses = {
+    "PlayerDataPrivate"
+}
 
-    if not replicas[index] then
-        print("Replica recieved: ", index)
+local function getInclusiveClass(class)
+    for _, inclusiveClass in pairs(inclusiveClasses) do
+        if string.find(class, inclusiveClass) then
+            return inclusiveClass
+        end
     end
 
-    replicas[index] = replica
+    return false
+end
+
+local function onReplicaReceived(replica)
+    local class = replica.Class
+
+    class = getInclusiveClass(class) or class
+
+    if not replicas[class] then
+        print("Replica recieved: ", class)
+    end
+
+    replicas[class] = replica
 end
 
 local replicaCollection = {}
 
 function replicaCollection.get(class, wait) -- class must be either a string or a player
     assert(type(class) == "string", "ReplicaCollection.get: class must be a string")
-    assert(table.find(classes, class), "ReplicaCollection.get: class must be a valid class")
+    assert(table.find(classes, class) or getInclusiveClass(class), "ReplicaCollection.get: class must be a valid class")
+
+    class = getInclusiveClass(class) or class
 
     local lastPrint = time()
 
