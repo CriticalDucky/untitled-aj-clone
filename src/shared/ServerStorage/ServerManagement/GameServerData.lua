@@ -21,6 +21,7 @@ local Message = require(messagingFolder.Message)
 local LocalServerInfo = require(serverFolder.LocalServerInfo)
 local ServerTypeEnum = require(enumsFolder.ServerType)
 local Constants = require(replicatedStorageShared.Server.Constants)
+local Table = require(utilityFolder.Table)
 
 local SERVER_FILL = {
     [ServerTypeEnum.location] = {
@@ -211,8 +212,20 @@ function GameServerData.getPartyServers(partyType)
 
     local partyTable = cachedData[ServerTypeEnum.party][partyType]
 
-    if partyTable then
-        return partyTable
+    return partyTable or {}
+end
+
+function GameServerData.getPartyCode(privateServerId)
+    initDataWait()
+
+    local partyTable = cachedData[ServerTypeEnum.party]
+
+    for partyType, partyServers in pairs(partyTable or {}) do
+        for serverId, serverInfo in pairs(partyServers or {}) do
+            if serverId == privateServerId then
+                return serverInfo.serverCode
+            end
+        end
     end
 end
 
