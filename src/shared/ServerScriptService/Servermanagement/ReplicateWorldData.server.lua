@@ -9,7 +9,8 @@ local enumsFolder = replicatedStorageShared.Enums
 
 local GameServerData = require(serverManagementFolder.GameServerData)
 local ReplicaService = require(dataFolder.ReplicaService)
-local ServerTypeEnum = require(enumsFolder.ServerType)
+local ServerGroupEnum = require(enumsFolder.ServerGroup)
+local ServerTypeGroups = require(replicatedStorageShared.Server.ServerTypeGroups)
 local WorldData = require(serverManagementFolder.WorldData)
 
 local mergedData = {}
@@ -57,7 +58,7 @@ local worldDataReplica = ReplicaService.NewReplica({
 })
 
 GameServerData.ServerInfoUpdated:Connect(function(serverType, indexInfo, serverInfo)
-    if serverType == ServerTypeEnum.location then
+    if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation, serverType) then
         local worldIndex = indexInfo.worldIndex
         local locationEnum = indexInfo.locationEnum
 
