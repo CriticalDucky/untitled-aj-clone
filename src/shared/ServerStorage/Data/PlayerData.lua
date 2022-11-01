@@ -1,10 +1,12 @@
+local INACTIVE_PROFILE_COOLDOWN = 30 -- seconds
+
 local Players = game:GetService("Players")
 local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 local ServerStorage = game:GetService("ServerStorage")
 
-local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
+local replicatedFirstShared = ReplicatedFirst.Shared
 local replicatedStorageShared = ReplicatedStorage.Shared
 local serverStorageShared = ServerStorage.Shared
 local serverStorageSharedUtility = serverStorageShared.Utility
@@ -15,8 +17,13 @@ local ProfileService = require(serverStorageSharedUtility.ProfileService)
 local ReplicaService = require(serverStorageSharedData.ReplicaService)
 local ReplicationType = require(enumsFolder.ReplicationType)
 local Table = require(replicatedFirstShared.Utility.Table)
+local PlayerJoinTimes = require(serverStorageSharedUtility.PlayerJoinTimes)
+local HomeLockType = require(enumsFolder.HomeLockType)
 
-local PROFILE_TEMPLATE = { -- Items in here can only be under a table
+local PROFILE_TEMPLATE = { -- Items in here can only be under a table. See:
+
+    -- NOTE TO FUTURE SELF: adding stuff here also requires adding it to PROFILE_REPLICATION below
+
     currency = {
         money = 0,
     },
@@ -26,6 +33,11 @@ local PROFILE_TEMPLATE = { -- Items in here can only be under a table
         homeItems = {},
         homes = {},
     },
+
+    playerSettings = {
+        findOpenWorld = true,
+        homeLock = HomeLockType.unlocked
+    }
 }
 
 local PROFILE_REPLICATION = {
@@ -35,7 +47,7 @@ local PROFILE_REPLICATION = {
     },
 
     [ReplicationType.public] = { -- public data is replicated to everyone
-
+        "playerSettings",
     },
 }
 
@@ -77,6 +89,7 @@ local playerDataPublicReplica = ReplicaService.NewReplica({
 
 local playerDataCreationComplete = {}
 local playerDataCollection = {}
+local cachedInactiveProfiles = {}
 
 local PlayerData = {}
 PlayerData.__index = PlayerData
@@ -97,11 +110,15 @@ local function getReplicationType(index)
     return ReplicationType.server
 end
 
+local function getKey(playerId)
+    return "Player_" .. playerId
+end
+
 function PlayerData.new(player)
     local newPlayerData = setmetatable({}, PlayerData)
     newPlayerData.player = player
 
-    local profile = ProfileStore:LoadProfileAsync("Player_" .. player.UserId, "ForceLoad")
+    local profile = ProfileStore:LoadProfileAsync(getKey(player.UserId), "ForceLoad")
 
     if profile then
         profile:AddUserId(player.UserId)
@@ -155,7 +172,7 @@ function PlayerData.new(player)
             newPlayerData.tempData = tempDataCopy
 
             newPlayerData.replica_private = ReplicaService.NewReplica({
-                ClassToken = ReplicaService.NewClassToken("PlayerDataPrivate_" .. player.UserId),
+                ClassToken = ReplicaService.NewClassToken("PlayerDataPrivate_" .. player.UserId .. PlayerJoinTimes.getTimesJoined(player)),
                 Data = data_replicationPrivate,
                 Replication = player
             })
@@ -167,9 +184,8 @@ function PlayerData.new(player)
         else
             profile:Release()
         end
-    else 
+    else
         print("Failed to load profile for player " .. player.Name)
-        -- TODO: Error handling
         return
     end
 
@@ -295,11 +311,33 @@ function PlayerDataManager.get(player, wait)
     end
 end
 
+function PlayerDataManager.viewPlayerData(player, getUpdated)
+    local userId = if typeof(player) == "Instance" then player.UserId else player
+
+    local profile = cachedInactiveProfiles[userId]
+
+    if not profile or (getUpdated and time() - profile.cachedTime > INACTIVE_PROFILE_COOLDOWN) then
+        cachedInactiveProfiles[userId] = {
+            cachedTime = time()
+        }
+
+        profile = ProfileStore:ViewProfileAsync(getKey(userId))
+        
+        if profile then
+            cachedInactiveProfiles[userId].profile = profile
+        end
+    end
+
+    return cachedInactiveProfiles[userId].profile
+end
+
 function PlayerDataManager.init(player)
     print("Initializing player data for " .. player.Name)
 
-    PlayerData.new(player)
+    local playerData = PlayerData.new(player)
     playerDataCreationComplete[player] = true
+    
+    return playerData
 end
 
 function PlayerDataManager.yieldUntilHopReady(player)
