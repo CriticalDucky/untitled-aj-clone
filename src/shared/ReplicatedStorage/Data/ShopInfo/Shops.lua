@@ -1,17 +1,16 @@
 local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local replicatedStorageShared = ReplicatedStorage.Shared
-local replicatedFirstShared = ReplicatedFirst.Shared
-local enumsFolder = replicatedStorageShared.Enums
-local utilityFolder = replicatedFirstShared.Utility
+local replicatedStorageShared = ReplicatedStorage:WaitForChild("Shared")
+local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
+local enumsFolder = replicatedStorageShared:WaitForChild("Enums")
+local utilityFolder = replicatedFirstShared:WaitForChild("Utility")
 
-
-local ShopTypeEnum = require(enumsFolder.ShopType)
-local ItemType = require(enumsFolder.ItemType)
-local AccessoryTypeEnum = require(enumsFolder.AccessoryType)
-local FurnitureTypeEnum = require(enumsFolder.FurnitureType)
-local HomeTypeEnum = require(enumsFolder.HomeType)
-local TimeRange = require(utilityFolder.TimeRange)
+local ShopTypeEnum = require(enumsFolder:WaitForChild("ShopType"))
+local ItemType = require(enumsFolder:WaitForChild("ItemType"))
+local AccessoryTypeEnum = require(enumsFolder:WaitForChild("AccessoryType"))
+local FurnitureTypeEnum = require(enumsFolder:WaitForChild("FurnitureType"))
+local HomeTypeEnum = require(enumsFolder:WaitForChild("HomeType"))
+local TimeRange = require(utilityFolder:WaitForChild("TimeRange"))
 
 local timeRange = TimeRange.new
 local group = TimeRange.newGroup
