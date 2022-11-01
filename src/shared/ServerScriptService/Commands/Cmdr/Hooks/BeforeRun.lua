@@ -24,7 +24,7 @@ return function(registry)
         local groupPermissionLevel = GROUPS[group]
 
         if not groupPermissionLevel or not PlayerPermission.hasPermission(player, groupPermissionLevel) then
-            return "You do not have permission to run this command."
+            return "You do not have permission to run this command lol :)"
         end
     end)
 end
