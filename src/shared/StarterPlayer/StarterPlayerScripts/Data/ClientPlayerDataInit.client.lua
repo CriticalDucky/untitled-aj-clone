@@ -7,10 +7,10 @@ local dataFolder = replicatedStorageShared:WaitForChild("Data")
 local enumsFolder = replicatedStorageShared:WaitForChild("Enums")
 
 local ClientPlayerData = require(dataFolder:WaitForChild("ClientPlayerData"))
-local ServerTypeEnum = require(enumsFolder:WaitForChild("ServerType"))
-local LocalServerInfo = require(serverFolder:WaitForChild("LocalServerInfo"))
+local ServerGroupEnum = require(enumsFolder:WaitForChild("ServerGroup"))
+local ServerTypeGroups = require(serverFolder:WaitForChild("ServerTypeGroups"))
 
-if LocalServerInfo.serverType ~= ServerTypeEnum.routing then
+if not ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
     local function playerAdded(player)
         ClientPlayerData.add(player)
     end
