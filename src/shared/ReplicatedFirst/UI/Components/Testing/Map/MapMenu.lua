@@ -14,8 +14,8 @@ local Component = require(utilityFolder:WaitForChild("GetComponent"))
 local Fusion = require(replicatedFirstShared:WaitForChild("Fusion"))
 local Locations = require(serverFolder:WaitForChild("Locations"))
 local ClientTeleport = require(requestsFolder:WaitForChild("Teleportation"):WaitForChild("ClientTeleport"))
-local LocalServerInfo = require(serverFolder:WaitForChild("LocalServerInfo"))
-local ServerTypeEnum = require(enumsFolder:WaitForChild("ServerType"))
+local ServerTypeGroups = require(serverFolder:WaitForChild("ServerTypeGroups"))
+local ServerGroupEnum = require(enumsFolder:WaitForChild("ServerGroup"))
 
 local Value = Fusion.Value
 local New = Fusion.New
@@ -47,7 +47,7 @@ local component = function(props)
             TextColor3 = Color3.fromRGB(255, 255, 255),
 
             [OnEvent "MouseButton1Click"] = function()
-                if LocalServerInfo.serverType == ServerTypeEnum.location then
+                if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
                     local locationServerFolder = ReplicatedStorage:WaitForChild("Location"):WaitForChild("Server")
                     local ClientWorldInfo = require(locationServerFolder:WaitForChild("ClientWorldInfo")):get()
 
@@ -72,14 +72,25 @@ local component = function(props)
         Visible = open,
 
         [Children] = {
-            New "UIGridLayout" {
-                CellSize = UDim2.new(0, 100, 0, 100),
-                FillDirection = Enum.FillDirection.Horizontal,
-                SortOrder = Enum.SortOrder.LayoutOrder,
-                StartCorner = Enum.StartCorner.TopLeft,
+            New "Frame" {
+                Size = UDim2.fromScale(1, 1),
+                BackgroundTransparency = 1,
+
+                [Children] = {
+                    New "UIGridLayout" {
+                        CellSize = UDim2.new(0, 100, 0, 100),
+                        FillDirection = Enum.FillDirection.Horizontal,
+                        SortOrder = Enum.SortOrder.LayoutOrder,
+                        StartCorner = Enum.StartCorner.TopLeft,
+                    },
+
+                    locationButtons
+                }
             },
-            
-            locationButtons
+
+            Component "ExitButton" {
+                value = open,
+            },
         }
     }
 
