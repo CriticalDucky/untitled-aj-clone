@@ -3,10 +3,12 @@ local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
-local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
+local replicatedFirstShared = ReplicatedFirst.Shared
 local replicatedStorageShared = ReplicatedStorage.Shared
 local serverStorageShared = ServerStorage.Shared
 local dataFolder = serverStorageShared.Data
+local inventoryFolder = dataFolder.Inventory
+
 local enumsFolder = replicatedStorageShared.Enums
 
 local PlayerData = require(dataFolder.PlayerData)
@@ -40,10 +42,22 @@ end
 
 local InventoryManager = {}
 
+function InventoryManager.getInventory(player)
+    local playerData = PlayerData.get(player)
+
+    return playerData and playerData.profile.Data.inventory
+end
+
+function InventoryManager.getItemInventory(player, itemType)
+    local inventory = InventoryManager.getInventory(player)
+
+    return inventory and inventory[itemType]
+end
+
 function InventoryManager.reconcileInventory(player)
     local playerData = PlayerData.get(player, true)
 
-    local inventory = playerData.profile.Data.inventory
+    local inventory = InventoryManager.getInventory(player)
 
     for itemType, items in pairs(inventory) do
         for i, item in ipairs(items) do
@@ -77,10 +91,10 @@ function InventoryManager.newItem(itemType, itemReferenceId)
 end
 
 function InventoryManager.isInventoryFull(player, itemType, numItemsToAdd)
-    local playerData = PlayerData.get(player)
-    local inventory = playerData.profile.Data.inventory[itemType]
+    local inventory = InventoryManager.getItemInventory(player, itemType)
     local numItems = #inventory
-    local numItemsToAdd = numItemsToAdd or 0
+
+    numItemsToAdd = numItemsToAdd or 0
 
     if numItems == LIMITS[itemType] then
         return true
@@ -138,7 +152,7 @@ function InventoryManager.changeOwnerOfItems(items, currentOwner: Player | nil, 
             end
     
             for _, item in pairs(items) do
-                local inventory = currentOwnerData.profile.Data.inventory[item.itemType]
+                local inventory = InventoryManager.getItemInventory(currentOwner, item.itemType)
 
                 if not inventory then
                     warn("Player does not have an inventory of type " .. item.itemType)
@@ -199,7 +213,7 @@ function InventoryManager.changeOwnerOfItems(items, currentOwner: Player | nil, 
 
         for _, item in pairs(items) do
             local itemIndex do
-                for i, v in ipairs(currentOwnerData.profile.Data.inventory[item.itemType]) do
+                for i, v in ipairs(InventoryManager.getItemInventory(currentOwner, item.itemType)) do
                     if v.id == item.id then
                         itemIndex = i
                     end
@@ -222,7 +236,7 @@ function InventoryManager.changeOwnerOfItems(items, currentOwner: Player | nil, 
 
         for _, item in pairs(items) do
             local itemIndex do
-                for i, v in ipairs(playerData.profile.Data.inventory[item.itemType]) do
+                for i, v in ipairs(InventoryManager.getItemInventory(currentOwner, item.itemType)) do
                     if v.id == item.id then
                         itemIndex = i
                     end
