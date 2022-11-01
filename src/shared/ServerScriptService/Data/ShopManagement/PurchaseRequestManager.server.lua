@@ -5,19 +5,19 @@ local serverStorageShared = ServerStorage.Shared
 local replicatedStorageShared = ReplicatedStorage.Shared
 local dataFolder = serverStorageShared.Data
 local shoppingFolder = dataFolder.Shopping
+local replicatedShoppingFolder = replicatedStorageShared.Data.ShopInfo
 
 local ReplicaService = require(dataFolder.ReplicaService)
 local ActiveShops = require(shoppingFolder.ActiveShops)
-local Shops = require(shoppingFolder.Shops)
+local Shops = require(replicatedShoppingFolder.Shops)
 local ShopManager = require(shoppingFolder.ShopManager)
-local PlayerData = require(dataFolder.PlayerData)
 
 local purchaseRequest = ReplicaService.NewReplica({
     ClassToken = ReplicaService.NewClassToken("PurchaseRequest"),
     Replication = "All"
 })
 
-purchaseRequest:ConnectOnServerEvent(function(player, requestCode, shopEnum, itemIndex) -- Player will always be valid
+purchaseRequest:ConnectOnServerEvent(function(player, requestCode, shopEnum, itemIndex)
     local function requestIsValid()
         if not (shopEnum and itemIndex and type(requestCode) == "string") then
             warn("Invalid arguments")
