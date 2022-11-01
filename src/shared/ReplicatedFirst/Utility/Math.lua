@@ -1,6 +1,6 @@
 local Math = {}
 
-function Math.weightedChance(rarities) -- takes in a table of rarities and returns a random index based on the rarities. if the rarities table is empty, returns nil
+function Math.weightedChance(rarities, presetRandom) -- takes in a table of rarities and returns a random index based on the rarities. if the rarities table is empty, returns nil
     local raritiesIsEmpty do
         raritiesIsEmpty = true
 
@@ -19,7 +19,7 @@ function Math.weightedChance(rarities) -- takes in a table of rarities and retur
         total = total + rarity
     end
 
-    local random = math.random() * total
+    local random = (presetRandom or math.random()) * total
     local index = 1
 
     for i, rarity in pairs(rarities) do
