@@ -6,14 +6,12 @@ local replicatedStorageShared = ReplicatedStorage.Shared
 local enumsFolder = replicatedStorageShared.Enums
 local serverFolder = replicatedStorageShared.Server
 
-local LocalServerInfo = require(serverFolder.LocalServerInfo)
-local ServerTypeEnum = require(enumsFolder.ServerType)
+local ServerGroupEnum = require(enumsFolder.ServerGroup)
+local ServerTypeGroups = require(serverFolder.ServerTypeGroups)
 
 local function playerAdded(player: Player)
     local spawnpoint do
-        local serverType = LocalServerInfo.serverType
-
-        if serverType == ServerTypeEnum.location then
+        if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
             local entranceDataFolder = ServerStorage.EntranceData
             local Entrances = require(entranceDataFolder.Entrances)
 
@@ -26,7 +24,7 @@ local function playerAdded(player: Player)
             else
                 spawnpoint = Entrances.main
             end
-        elseif serverType == ServerTypeEnum.home or serverType == ServerTypeEnum.party then
+        elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.hasWorldInfo) then
             spawnpoint = workspace:FindFirstChild("SpawnLocation", true)
         end
     end
@@ -35,7 +33,7 @@ local function playerAdded(player: Player)
     player:LoadCharacter()
 end
 
-if LocalServerInfo.serverType ~= ServerTypeEnum.routing then
+if not ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
     for _, player in pairs(Players:GetPlayers()) do
         playerAdded(player)
     end
