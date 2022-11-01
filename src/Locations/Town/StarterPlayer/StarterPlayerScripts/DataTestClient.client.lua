@@ -9,7 +9,6 @@ local requestsFolder = replicatedStorageShared:WaitForChild("Requests")
 local enumsFolder = replicatedStorageShared:WaitForChild("Enums")
 
 local ClientPlayerData = require(dataFolder:WaitForChild("ClientPlayerData"))
-local ActiveShopsClient =require(dataFolder:WaitForChild("ShopInfo"):WaitForChild("ActiveShopsClient"))
 local ClientPurchase = require(requestsFolder:WaitForChild("Shopping"):WaitForChild("ClientPurchase"))
 local ShopType = require(enumsFolder:WaitForChild("ShopType"))
 
