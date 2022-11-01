@@ -17,7 +17,8 @@ local enumsFolder = replicatedStorageShared.Enums
 local Locations = require(serverFolder.Locations)
 local Parties = require(serverFolder.Parties)
 local LocalServerInfo = require(serverFolder.LocalServerInfo)
-local ServerTypeEnum = require(enumsFolder.ServerType)
+local ServerGroupEnum = require(enumsFolder.ServerGroup)
+local ServerTypeGroups = require(serverFolder.ServerTypeGroups)
 local PlayerLocation = require(serverManagement.PlayerLocation)
 local WorldData = require(serverManagement.WorldData)
 local GameServerData = require(serverManagement.GameServerData)
@@ -85,10 +86,7 @@ function Teleport.teleportToLocation(player, locationEnum, worldIndex)
         local world = worlds[worldIndex]
         local location = world.locations[locationEnum]
 
-        local populationInfo = GameServerData.getPopulationInfo(ServerTypeEnum.location, {
-            worldIndex = worldIndex,
-            locationEnum = locationEnum
-        })
+        local populationInfo = GameServerData.getLocationPopulationInfo(worldIndex, locationEnum)
 
         if populationInfo and populationInfo.max_emptySlots == 0 then
             warn("Teleport.teleportToLocation: location is full")
@@ -99,15 +97,15 @@ function Teleport.teleportToLocation(player, locationEnum, worldIndex)
 
         return Teleport.teleport(player, locationInfo.placeId, teleportOptions)
     else
-        if LocalServerInfo.serverType == ServerTypeEnum.location then
+        if ServerTypeGroups.serverInGroup(ServerGroupEnum.hasWorldInfo) then
             local currentWorldIndex, currentLocation do
-                if LocalServerInfo.serverType == ServerTypeEnum.location then
+                if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
                     local localWorldInfo = require(ServerStorage.Location.ServerManagement.LocalWorldInfo)
                     
                     currentWorldIndex = localWorldInfo.worldIndex
                     currentLocation = localWorldInfo.locationEnum
-                elseif LocalServerInfo.serverType == ServerTypeEnum.party then
-                    currentWorldIndex = LocalWorldOrigin(player)
+                elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.hasWorldOrigin) then
+                    currentWorldIndex = LocalWorldOrigin(player) or WorldData.findAvailableWorld()
                 end
             end
 
@@ -122,12 +120,13 @@ function Teleport.teleportToLocation(player, locationEnum, worldIndex)
 
             teleportOptions.ReservedServerAccessCode = location.serverCode
             teleportOptions:SetTeleportData({
-                locationFrom = currentLocation
+                locationFrom = currentLocation,
+                worldIndexOrigin = currentWorldIndex
             })
 
             return Teleport.teleport(player, locationInfo.placeId, teleportOptions)
         else
-            print("Cannot teleport to location from a non-location server")
+            warn("Cannot teleport to location from an 'oblivious' server")
             return false
         end
     end
@@ -168,6 +167,8 @@ end
 function Teleport.teleportToParty(player, partyType, privateServerId)
     local teleportOptions = Instance.new("TeleportOptions")
 
+    local code
+
     if not privateServerId then -- Look for the party, with the given party type, that has the highest player count
         local slots = {
             -- [privateServerId] = number of open slots
@@ -184,15 +185,18 @@ function Teleport.teleportToParty(player, partyType, privateServerId)
         end
 
         privateServerId = Table.findMin(slots)
+        Table.print(slots)
 
         if not privateServerId then
-            local success, code
+            print("Teleport.teleportToParty: no available party servers")
+
+            local success
 
             success, code, privateServerId = pcall(function()
                 return TeleportService:ReserveServer(Parties[partyType].placeId)
             end)
 
-            if not success then
+            if not success or not privateServerId then
                 warn("Teleport.teleportToParty: Failed to reserve server: " .. code)
                 return false
             end
@@ -206,29 +210,35 @@ function Teleport.teleportToParty(player, partyType, privateServerId)
 
             teleportOptions.ReservedServerAccessCode = code
         end
-    else
-        local populationInfo = GameServerData.getPartyPopulationInfo(partyType, privateServerId)
-
-        if not populationInfo then
-            warn("Teleport.teleportToParty: populationInfo is nil")
-            return false
-        end
-
-        if populationInfo.recommended_emptySlots == 0 then
-            warn("Teleport.teleportToParty: party is full")
-            return false
-        end
     end
 
+    local populationInfo = GameServerData.getPartyPopulationInfo(partyType, privateServerId)
+
+    if populationInfo and populationInfo.recommended_emptySlots == 0 then
+        warn("Teleport.teleportToParty: party is full")
+        return false
+    end
+    
+    code = code or GameServerData.getPartyCode(privateServerId)
+
+    if not code then
+        warn("Teleport.teleportToParty: code is nil")
+        return false
+    end
+
+    teleportOptions.ReservedServerAccessCode = code
+
     local worldIndex do
-        if LocalServerInfo.serverType == ServerTypeEnum.location then
+        if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
             local serverStorageLocation = ServerStorage.Location
             local locationServerManagement = serverStorageLocation.ServerManagement
             local LocalWorldInfo = require(locationServerManagement.LocalWorldInfo)
     
             worldIndex = LocalWorldInfo.worldIndex
-        else
-            worldIndex = LocalWorldOrigin(player)
+        elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.hasWorldOrigin) then
+            worldIndex = LocalWorldOrigin(player) or WorldData.findAvailableWorld()
+        elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
+            worldIndex = WorldData.findAvailableWorld()
         end
     end
 
@@ -247,11 +257,8 @@ function Teleport.teleportToPlayer(player: Player, targetPlayerId)
         return false
     end
 
-    if targetPlayerLocation.serverType == ServerTypeEnum.location then
-        local populationInfo = GameServerData.getPopulationInfo(ServerTypeEnum.location, {
-            worldIndex = targetPlayerLocation.worldIndex,
-            locationEnum = targetPlayerLocation.locationEnum,
-        })
+    if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation, targetPlayerLocation.serverType) then
+        local populationInfo = GameServerData.getLocationPopulationInfo(targetPlayerLocation.worldIndex, targetPlayerLocation.locationEnum)
         
         if not populationInfo then
             print("Target player is unable to be teleported to")
@@ -275,7 +282,7 @@ function Teleport.teleportToPlayer(player: Player, targetPlayerId)
             targetPlayerLocation.locationEnum,
             targetPlayerLocation.worldIndex
         )
-    elseif targetPlayerLocation.serverType == ServerTypeEnum.party then
+    elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isParty, targetPlayerLocation.serverType) then
         local populationInfo = GameServerData.getPartyPopulationInfo(targetPlayerLocation.partyType, targetPlayerLocation.privateServerId)
         
         if not populationInfo then
