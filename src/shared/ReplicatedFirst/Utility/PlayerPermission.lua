@@ -8,8 +8,8 @@ local PlayerPermissionLevel = require(enumsFolder:WaitForChild("PlayerPermission
 
 local RANK_TO_PERMISSION = {
     [0] = PlayerPermissionLevel.player,
-    [128] = PlayerPermissionLevel.moderator,
-    [254] = PlayerPermissionLevel.admin,
+    [64] = PlayerPermissionLevel.moderator,
+    [128] = PlayerPermissionLevel.admin,
     [255] = PlayerPermissionLevel.owner,
 }
 
