@@ -15,12 +15,13 @@ local Fusion = require(replicatedFirstShared:WaitForChild("Fusion"))
 local ClientWorldData = require(serverFolder:WaitForChild("ClientWorldData"))
 local LocalServerInfo = require(serverFolder:WaitForChild("LocalServerInfo"))
 local WorldNames = require(serverFolder:WaitForChild("WorldNames"))
-local ServerTypeEnum = require(enumsFolder:WaitForChild("ServerType"))
+local ServerGroupEnum = require(enumsFolder:WaitForChild("ServerGroup"))
+local ServerTypeGroups = require(serverFolder:WaitForChild("ServerTypeGroups"))
 local ClientTeleport = require(requestsFolder:WaitForChild("Teleportation"):WaitForChild("ClientTeleport"))
 local LocalWorldOrigin = require(serverFolder:WaitForChild("LocalWorldOrigin"))
 
 local ClientWorldInfo do
-    if LocalServerInfo.serverType == ServerTypeEnum.location then
+    if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
         local replicatedStorageLocation = ReplicatedStorage:WaitForChild("Location")
         local locationServerFolder = replicatedStorageLocation:WaitForChild("Server")
         ClientWorldInfo = require(locationServerFolder:WaitForChild("ClientWorldInfo")):get()
@@ -99,6 +100,10 @@ local component = function(props)
                             end
                         end
 
+                        if LocalWorldOrigin == j then
+                            isEmpty = false
+                        end
+
                         if isEmpty then
                             emptyWorlds += 1
                         end
@@ -115,9 +120,9 @@ local component = function(props)
                 end
 
                 local isDifferentWorld do
-                    if LocalServerInfo.serverType == ServerTypeEnum.location then
+                    if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
                         isDifferentWorld = ClientWorldInfo.worldIndex ~= worldIndex
-                    elseif LocalServerInfo.serverType == ServerTypeEnum.party then
+                    elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.hasWorldOrigin) then
                         isDifferentWorld = LocalWorldOrigin ~= worldIndex
                     else
                         isDifferentWorld = true
@@ -157,44 +162,12 @@ local component = function(props)
         return worldButtons
     end)
 
-    local menu = New "ScrollingFrame" {
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.fromOffset(300, 400),
-        BackgroundColor3 = Color3.fromRGB(160, 160, 160),
-        Visible = open,
-
-        ClipsDescendants = true,
-        AutomaticCanvasSize = Enum.AutomaticSize.Y,
-        CanvasSize = UDim2.fromOffset(0, 0),
-        ScrollBarThickness = 5,
-        ScrollingDirection = Enum.ScrollingDirection.Y,
-
-        [Children] = {
-            New "UIListLayout" {
-                Padding = UDim.new(0, 5),
-                SortOrder = Enum.SortOrder.LayoutOrder,
-                FillDirection = Enum.FillDirection.Vertical,
-                HorizontalAlignment = Enum.HorizontalAlignment.Center,
-                VerticalAlignment = Enum.VerticalAlignment.Top,
-            },
-
-            New "UIPadding" {
-                PaddingLeft = UDim.new(0, 5),
-                PaddingRight = UDim.new(0, 5),
-                PaddingTop = UDim.new(0, 5),
-                PaddingBottom = UDim.new(0, 5),
-            },
-
-            New "UICorner" {
-                CornerRadius = UDim.new(0, 5)
-            },
-
-            worldButtons,
-        }
+    local menu = Component "DefaultElementList" {
+        open = open,
+        elements = worldButtons,
     }
 
-    return menu, button {
+    local button = button {
         onClick = function()
             open:set(not open:get())
         end,
@@ -202,6 +175,8 @@ local component = function(props)
         size = UDim2.fromOffset(75, 75),
         layoutOrder = props.layoutOrder or 1,
     }
+
+    return menu, button
 end
 
 return component
