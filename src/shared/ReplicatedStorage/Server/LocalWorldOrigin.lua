@@ -7,10 +7,11 @@ if RunService:IsClient() then
 
     return teleportData and teleportData.worldIndexOrigin
 elseif RunService:IsServer() then
-    return function(player)
-        local teleportData = player:GetJoinData()
+    return function(player: Player)
+        local teleportData = player:GetJoinData().TeleportData
+
+        print(teleportData, teleportData.worldIndexOrigin)
 
         return teleportData and teleportData.worldIndexOrigin
     end
 end
-
