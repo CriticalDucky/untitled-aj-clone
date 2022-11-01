@@ -71,7 +71,7 @@ function Route.routeToPlayer(player)
 end
 
 function Route.onRouteFailure(player)
-    warn("Route failed")
+    Teleport.rejoin(player) -- Guthub copilot, please stop commenting on my code all the time
 end
 
 return Route
