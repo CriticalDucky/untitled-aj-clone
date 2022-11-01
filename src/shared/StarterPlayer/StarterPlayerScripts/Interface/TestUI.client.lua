@@ -9,74 +9,91 @@ local utilityFolder = replicatedFirstShared:WaitForChild("Utility")
 local serverFolder = replicatedStorageShared:WaitForChild("Server")
 local enumsFolder = replicatedStorageShared:WaitForChild("Enums")
 
-local Component = require(utilityFolder:WaitForChild("GetComponent"))
-local Fusion = require(replicatedFirstShared:WaitForChild("Fusion"))
-local LocalServerInfo = require(serverFolder:WaitForChild("LocalServerInfo"))
-local ServerTypeEnum = require(enumsFolder:WaitForChild("ServerType"))
+local ServerGroupEnum = require(enumsFolder:WaitForChild("ServerGroup"))
+local ServerTypeGroups = require(serverFolder:WaitForChild("ServerTypeGroups"))
 
-local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
+if not ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
+    local Component = require(utilityFolder:WaitForChild("GetComponent"))
+    local Fusion = require(replicatedFirstShared:WaitForChild("Fusion"))
 
-local Value = Fusion.Value
-local New = Fusion.New
-local Children = Fusion.Children
-local Computed = Fusion.Computed
-local OnEvent = Fusion.OnEvent
-local OnChange = Fusion.OnChange
-local Observer = Fusion.Observer
-local Tween = Fusion.Tween
-local Spring = Fusion.Spring
-local Hydrate = Fusion.Hydrate
-local unwrap = Fusion.unwrap
+    local player = Players.LocalPlayer
+    local playerGui = player:WaitForChild("PlayerGui")
 
-local worldMenu, worldButton = Component "WorldMenu" {}
-local map, mapButton = Component "MapMenu" {}
+    local Value = Fusion.Value
+    local New = Fusion.New
+    local Children = Fusion.Children
+    local Computed = Fusion.Computed
+    local OnEvent = Fusion.OnEvent
+    local OnChange = Fusion.OnChange
+    local Observer = Fusion.Observer
+    local Tween = Fusion.Tween
+    local Spring = Fusion.Spring
+    local Hydrate = Fusion.Hydrate
+    local unwrap = Fusion.unwrap
 
-local emptyTable = {}
+    local worldMenu, worldButton = Component "WorldMenu" {}
+    local map, mapButton = Component "MapMenu" {}
+    local partyList, partyListButton = Component "PartyList" {}
 
-local function useUI(element, ...) -- element: Instance, ...: all accepted ServerTypeEnums
-    local use = false
+    local emptyTable = {}
 
-    for _, serverTypeEnum in ipairs({...}) do
-        if serverTypeEnum == LocalServerInfo.serverType then
-            use = true
-            break
-        end
+    local function useUI(element, group)
+        return if ServerTypeGroups.serverInGroup(group) then element else emptyTable
     end
 
-    return if use then element else emptyTable
-end
+    New "ScreenGui" {
+        Name = "TestUI",
+        IgnoreGuiInset = true,
+        Parent = playerGui,
 
-local testUI = New "ScreenGui" {
-    Name = "TestUI",
-    IgnoreGuiInset = true,
-    Parent = playerGui,
+        [Children] = {
+            New "Frame" { -- A list that contains all the buttons on the right side of the screen
+                Name = "RightButtonList",
+                Size = UDim2.fromScale(0, 0.5),
+                Position = UDim2.fromScale(1, 0.5),
+                AnchorPoint = Vector2.new(1, 0),
 
-    [Children] = {
-        New "Frame" { -- A list that contains all the buttons on the right side of the screen
-            Name = "RightButtonList",
-            Size = UDim2.fromScale(0, 0.5),
-            Position = UDim2.fromScale(1, 0.5),
-            AnchorPoint = Vector2.new(1, 0),
+                BackgroundTransparency = 1,
 
-            BackgroundTransparency = 1,
+                [Children] = {
+                    New "UIListLayout" {
+                        SortOrder = Enum.SortOrder.LayoutOrder,
+                        Padding = UDim.new(0, 5),
+                        FillDirection = Enum.FillDirection.Vertical,
+                        VerticalAlignment = Enum.VerticalAlignment.Top,
+                        HorizontalAlignment = Enum.HorizontalAlignment.Right,
+                    },
 
-            [Children] = {
-                New "UIListLayout" {
-                    SortOrder = Enum.SortOrder.LayoutOrder,
-                    Padding = UDim.new(0, 5),
-                    FillDirection = Enum.FillDirection.Vertical,
-                    VerticalAlignment = Enum.VerticalAlignment.Top,
-                    HorizontalAlignment = Enum.HorizontalAlignment.Right,
+                    useUI(worldButton, ServerGroupEnum.isWorldBased),
+                    useUI(mapButton, ServerGroupEnum.isWorldBased),
                 },
-
-                useUI(worldButton, ServerTypeEnum.location, ServerTypeEnum.party),
-                useUI(mapButton, ServerTypeEnum.location, ServerTypeEnum.party),
             },
-        },
 
-        useUI(worldMenu, ServerTypeEnum.location, ServerTypeEnum.party),
-        useUI(map, ServerTypeEnum.location, ServerTypeEnum.party),
-    },
-}
+            New "Frame" { -- A list that contains all buttons on the top of the screen
+                Name = "TopButtonList",
+                Size = UDim2.fromScale(0, 0),
+                Position = UDim2.fromOffset(150, 0),
+                AnchorPoint = Vector2.new(0, 0),
+
+                BackgroundTransparency = 1,
+
+                [Children] = {
+                    New "UIListLayout" {
+                        SortOrder = Enum.SortOrder.LayoutOrder,
+                        Padding = UDim.new(0, 5),
+                        FillDirection = Enum.FillDirection.Horizontal,
+                        VerticalAlignment = Enum.VerticalAlignment.Top,
+                        HorizontalAlignment = Enum.HorizontalAlignment.Left,
+                    },
+
+                    useUI(partyListButton, ServerGroupEnum.isWorldBased),
+                },
+            },
+
+            useUI(worldMenu, ServerGroupEnum.isWorldBased),
+            useUI(map, ServerGroupEnum.isWorldBased),
+            useUI(partyList, ServerGroupEnum.isWorldBased),
+        },
+    }
+end
 
