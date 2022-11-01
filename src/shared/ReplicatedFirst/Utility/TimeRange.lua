@@ -72,7 +72,7 @@ function TimeRange:distanceToClosing(time)
             if timeRange:isInRange(time) then
                 local distanceToClosing = timeRange:distanceToClosing()
 
-                if  distanceToClosing > distance then
+                if distanceToClosing > distance then
                     distance = distanceToClosing
                 end
             end
@@ -81,6 +81,32 @@ function TimeRange:distanceToClosing(time)
         return distance
     else
         return getUnixFromInfo(self.closing) - time
+    end
+end
+
+function TimeRange:distanceToIntroduction(time)
+    local time = time or ServerUnixTime.evaluateTime()
+
+    if self.timeRanges then
+        local distance = math.huge
+
+        for _, timeRange in ipairs(self.timeRanges) do
+            if not timeRange:isInRange(time) then
+                local distanceToIntroduction = timeRange:distanceToIntroduction()
+
+                if distanceToIntroduction < distance and distanceToIntroduction > 0 then
+                    distance = distanceToIntroduction
+                end
+            end
+        end
+
+        if distance == math.huge then
+            return 0
+        else
+            return distance
+        end
+    else
+        return math.max(getUnixFromInfo(self.introduction) - time, 0)
     end
 end
 
