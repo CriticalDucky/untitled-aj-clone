@@ -6,7 +6,7 @@ local enumsFolder = replicatedStorageShared:WaitForChild("Enums")
 local utilityFolder = replicatedFirstShared:WaitForChild("Utility")
 
 local ShopTypeEnum = require(enumsFolder:WaitForChild("ShopType"))
-local ItemType = require(enumsFolder:WaitForChild("ItemType"))
+local ItemCategory = require(enumsFolder:WaitForChild("ItemCategory"))
 local AccessoryTypeEnum = require(enumsFolder:WaitForChild("AccessoryType"))
 local FurnitureTypeEnum = require(enumsFolder:WaitForChild("FurnitureType"))
 local HomeTypeEnum = require(enumsFolder:WaitForChild("HomeType"))
@@ -20,7 +20,7 @@ return {
         name = "Test Shop",
         items = {
             { -- Beach Ball
-                itemType = ItemType.furniture,
+                itemCategory = ItemCategory.furniture,
                 item = FurnitureTypeEnum.beachBall,
                 sellingTime = group {
                     timeRange(
