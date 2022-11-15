@@ -7,4 +7,5 @@ return {
     hasWorldInfo = 6,
     needsIdentity = 7,
     isWorldBased = 8,
+    isGame = 9,
 }
