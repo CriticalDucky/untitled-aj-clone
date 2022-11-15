@@ -42,7 +42,7 @@ end
 -- RunService.RenderStepped:Connect(function()
 --     local targetInfo = Mouse.getTarget()
 --     if targetInfo then
---         smallGreenSphere.CFrame = CFrame.new(targetInfo.Position)
+--         smallGreenSphere.CFrame = CFrame.lookAt(targetInfo.Position, targetInfo.Position + targetInfo.Normal) + targetInfo.Normal
 --     else
 --         print("No target")
 --     end
