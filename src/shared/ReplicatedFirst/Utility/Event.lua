@@ -46,7 +46,7 @@ end
 
 function Event:Fire(...)
     for _, connection in ipairs(self._connections) do
-        connection._callback(...)
+        task.spawn(connection._callback, ...)
     end
 end
 
