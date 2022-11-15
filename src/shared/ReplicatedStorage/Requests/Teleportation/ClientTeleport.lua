@@ -1,3 +1,4 @@
+local Players = game:GetService("Players")
 local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -21,6 +22,7 @@ local ReplicaCollection = require(replicationFolder:WaitForChild("ReplicaCollect
 local ReplicaRequest = require(requestsFolder:WaitForChild("ReplicaRequest"))
 local ClientWorldData = require(serverFolder:WaitForChild("ClientWorldData"))
 local ClientPartyData = require(serverFolder:WaitForChild("ClientPartyData"))
+local ClientHomeData = require(serverFolder:WaitForChild("ClientHomeData"))
 local LocalPlayerSettings = require(dataFolder:WaitForChild("Settings"):WaitForChild("LocalPlayerSettings"))
 local Table = require(utilityFolder:WaitForChild("Table"))
 local TeleportRequestType = require(enumsFolder:WaitForChild("TeleportRequestType"))
@@ -30,6 +32,8 @@ local FriendLocations = require(serverFolder:WaitForChild("FriendLocations"))
 local LocalWorldOrigin = require(serverFolder:WaitForChild("LocalWorldOrigin"))
 local ActiveParties = require(serverFolder:WaitForChild("ActiveParties"))
 local PrintEnum = require(utilityFolder:WaitForChild("PrintEnum"))
+
+local player = Players.LocalPlayer
 
 local TeleportRequest = ReplicaCollection.get("TeleportRequest")
 
@@ -67,7 +71,7 @@ function Teleport.toLocation(locationEnum)
                 local ClientWorldInfo = require(serverFolderLocation:WaitForChild("ClientWorldInfo")):get()
                 
                 if locationEnum == ClientWorldInfo.locationEnum then
-                    return TeleportResponseType.alreadyInLocation
+                    return TeleportResponseType.alreadyInPlace
                 end
 
                 localWorldIndex = ClientWorldInfo.worldIndex
@@ -127,6 +131,20 @@ function Teleport.toParty(partyType)
         return Teleport.request(TeleportRequestType.toParty, partyType)
     else
         return TeleportResponseType.invalid
+    end
+end
+
+function Teleport.toHome(homeOwnerUserId)
+    if ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome) then
+        local LocalHomeInfo = require(ReplicatedStorage.Home.Server.LocalHomeInfo)
+
+        if LocalHomeInfo.homeOwner == homeOwnerUserId then
+            return TeleportResponseType.alreadyInPlace
+        end
+    end
+
+    if homeOwnerUserId == player.UserId then
+        return Teleport.request(TeleportRequestType.toHome, homeOwnerUserId)
     end
 end
 
