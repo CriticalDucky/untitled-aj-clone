@@ -24,7 +24,7 @@ for enum, entranceComponents in pairs(Entrances.groups) do
                 PlayerData.yieldUntilHopReady(player)
 
                 if not (Teleport.teleportToLocation(player, enum) or Teleport.rejoin({player})) then
-                    player:Kick("Failed to teleport. Please rejoin the game.")
+                    player:Kick("Failed to teleport. Please rejoin the game. (err code 3)")
                 end
             end
         end
