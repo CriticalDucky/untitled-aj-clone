@@ -121,8 +121,12 @@ local SETTINGS = {
 }
 
 local Madwork -- Standalone Madwork reference for portable version of ReplicaService/ReplicaController
+local Table
 do
 	local RunService = game:GetService("RunService")
+	local ReplicatedFirst = game:GetService("ReplicatedFirst")
+
+	Table = require(ReplicatedFirst:WaitForChild("Shared"):WaitForChild("Utility"):WaitForChild("Table"))
 	
 	local function WaitForDescendant(ancestor, instance_name, warn_name)
 		local instance = ancestor:FindFirstChild(instance_name, true) -- Recursive
@@ -524,7 +528,15 @@ local function ReplicaSetValue(replica_id, path_array, value)
 	end
 	-- Setting value:
 	local key = path_array[#path_array]
-	local old_value = pointer[key]
+	local old_value
+	local succes, err = pcall(function()
+		old_value = pointer[key]
+	end)
+	if not succes then
+		print(replica_id, value)
+		Table.print(path_array)
+		error(err)
+	end
 	pointer[key] = value
 	-- Signaling listeners:
 	if old_value ~= value and listeners ~= nil then
