@@ -1,3 +1,3 @@
 return {
-    testHome = -100,
+    defaultHome = -100,
 }
