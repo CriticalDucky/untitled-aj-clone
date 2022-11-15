@@ -96,7 +96,7 @@ local component = function(props)
 
     return map, New "TextButton" {
         Size = UDim2.fromOffset(75, 75),
-        LayoutOrder = 2,
+        LayoutOrder = 100,
         Visible = true,
 
         Text = "Map",
