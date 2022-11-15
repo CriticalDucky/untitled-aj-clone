@@ -8,6 +8,7 @@ local replicationFolder = replicatedStorageShared:WaitForChild("Replication")
 
 local ReplicaCollection = require(replicationFolder:WaitForChild("ReplicaCollection"))
 local Fusion = require(replicatedFirstShared:WaitForChild("Fusion"))
+local Table = require(replicatedFirstShared:WaitForChild("Utility"):WaitForChild("Table"))
 
 local Value = Fusion.Value
 
@@ -39,13 +40,13 @@ function playerData.add(player)
     end
 
     local data = {}
+    local userIdKey = tostring(player.UserId)
 
     local function onReplicaChange()
         local value = data.value or Value()
-        local stringId = tostring(player.UserId)
 
-        if publicDataReplica.Data[stringId] then
-            publicDataLoaded[player] = true
+        if publicDataReplica.Data[userIdKey] then
+            publicDataLoaded[userIdKey] = true
         end
 
         if player == Players.LocalPlayer then
@@ -53,15 +54,15 @@ function playerData.add(player)
                 data._mergeTable[key] = value
             end
 
-            if publicDataLoaded[player] then
-                for key, value in pairs(publicDataReplica.Data[stringId]) do
+            if publicDataLoaded[userIdKey] then
+                for key, value in pairs(publicDataReplica.Data[userIdKey]) do
                     data._mergeTable[key] = value
                 end
             end
 
             value:set(data._mergeTable)
         else
-            value:set(publicDataReplica.Data[stringId])
+            value:set(publicDataReplica.Data[userIdKey])
         end
 
         data.value = value
@@ -83,14 +84,11 @@ end
 function playerData.getData(player, wait)
     local lastPrint = time()
 
-    while wait and not (playerDataTables[player] and playerDataTables[player].value and publicDataLoaded[player]) do
+    while wait and not (playerDataTables[player] and playerDataTables[player].value and publicDataLoaded[tostring(player.UserId)]) do
         -- only print once every 5 seconds
         if time() - lastPrint > 5 then
             lastPrint = time()
-
-            for k, v in pairs(publicDataReplica.Data) do
-                print(k, v)
-            end
+            warn("Waiting for player data for " .. player.Name)
         end
         
         task.wait()
