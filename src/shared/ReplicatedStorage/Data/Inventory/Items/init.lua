@@ -1,6 +1,7 @@
-local itemType = require(game:GetService("ReplicatedStorage").Shared.Enums.ItemType)
+local itemCategory = require(game:GetService("ReplicatedStorage").Shared.Enums.ItemCategory)
 
 return {
-    [itemType.furniture] = require(script.Furniture),
-    [itemType.accessory] = require(script.Accessories),
+    [itemCategory.furniture] = require(script:WaitForChild("Furniture")),
+    [itemCategory.accessory] = require(script:WaitForChild("Accessories")),
+    [itemCategory.home] = require(script:WaitForChild("Homes")),
 }
