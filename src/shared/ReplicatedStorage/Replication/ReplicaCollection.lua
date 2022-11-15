@@ -16,7 +16,10 @@ local classes = {
     "Worlds",
     "WorldInfo",
     "ServerUnixTime",
-    "Parties"
+    "Parties",
+    "HomeServers",
+    "HomeOwner",
+    "PlaceItemRequest",
 }
 
 local inclusiveClasses = {
