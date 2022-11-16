@@ -10,7 +10,7 @@ local ReplicaCollection = require(replicationFolder:WaitForChild("ReplicaCollect
 local Fusion = require(replicatedFirstShared:WaitForChild("Fusion"))
 local Table = require(replicatedFirstShared:WaitForChild("Utility"):WaitForChild("Table"))
 local Locations = require(serverFolder:WaitForChild("Locations"))
-local Constants = require(serverFolder:WaitForChild("Constants"))
+local GameSettings = require(replicatedFirstShared:WaitForChild("Settings"):WaitForChild("GameSettings"))
 
 local ClientWorldData = {}
 
@@ -39,13 +39,13 @@ function ClientWorldData.getWorldPopulation(worldIndex)
 end
 
 function ClientWorldData.isWorldFull(worldIndex)
-    return ClientWorldData.getWorldPopulation(worldIndex) >= #Locations.priority * Constants.location_maxPlayers
+    return ClientWorldData.getWorldPopulation(worldIndex) >= #Locations.priority * GameSettings.location_maxPlayers
 end
 
 function ClientWorldData.isLocationFull(worldIndex, locationEnum)
     local locationData = ClientWorldData:get()[worldIndex][locationEnum]
 
-    return locationData.serverInfo and locationData.serverInfo.players >= Constants.location_maxPlayers
+    return locationData.serverInfo and locationData.serverInfo.players >= GameSettings.location_maxPlayers
 end
 
 return ClientWorldData
