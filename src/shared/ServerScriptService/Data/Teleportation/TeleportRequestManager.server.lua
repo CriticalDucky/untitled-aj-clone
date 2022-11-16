@@ -27,6 +27,8 @@ local WorldData = require(serverManagementFolder.WorldData)
 local PlayerSettings = require(dataFolder.Settings.PlayerSettings)
 local ServerTypeGroups = require(serverFolder.ServerTypeGroups)
 local ServerGroupEnum = require(enumsFolder.ServerGroup)
+local HomeManager = require(dataFolder.Inventory.HomeManager)
+local HomeLockType = require(enumsFolder.HomeLockType)
 
 local TeleportRequest = ReplicaService.NewReplica({
     ClassToken = ReplicaService.NewClassToken("TeleportRequest"),
@@ -64,12 +66,12 @@ TeleportRequest:ConnectOnServerEvent(function(player: Player, requestCode, telep
         task.spawn(function()
             respond(TeleportResponseType.teleportError)
         
-            local success = Teleport.rejoin(player)
+            local success = Teleport.rejoin(player, "There was an error teleporting you. Please try again. (err code 6)")
     
             if not success then
                 warn("Failed to rejoin player")
     
-                player:Kick("There has been an error. Please rejoin.")
+                player:Kick("There has been an error. Please rejoin. (err code 4)")
             end
         end)
     end
@@ -241,6 +243,52 @@ TeleportRequest:ConnectOnServerEvent(function(player: Player, requestCode, telep
         PlayerData.yieldUntilHopReady(player)
 
         evaluateSuccess(Teleport.teleportToParty(player, partyType))
+    elseif teleportRequestType == TeleportRequestType.toHome then
+        local homeOwnerUserId = ...
+
+        if not homeOwnerUserId then
+            print("Invalid request: homeOwnerUserId is nil")
+
+            return respond(TeleportResponseType.invalid)
+        end
+
+        if player.UserId ~= homeOwnerUserId then
+            local populationInfo = GameServerData.getHomePopulationInfo(homeOwnerUserId)
+    
+            if populationInfo and populationInfo.max_emptySlots == 0 then
+                warn("Teleport.teleportToHome: home is full")
+                return respond(TeleportResponseType.full)
+            end
+    
+            local homeLockType = HomeManager.getLockStatus(homeOwnerUserId)
+    
+            if homeLockType == HomeLockType.locked then
+                warn("Teleport.teleportToHome: home is private")
+                return respond(TeleportResponseType.invalid)
+            end
+    
+            local success, isFriendsWith = pcall(function()
+                return player:IsFriendsWith(homeOwnerUserId)
+            end)
+    
+            if not success then
+                warn("Teleport.teleportToHome: failed to check friendship")
+                return respond(TeleportResponseType.teleportError)
+            end
+    
+            if homeLockType == HomeLockType.friendsOnly and not isFriendsWith then
+                warn("Teleport.teleportToHome: home is friends only")
+                return respond(TeleportResponseType.invalid)
+            end
+        end
+
+        PlayerData.yieldUntilHopReady(player)
+
+        evaluateSuccess(Teleport.teleportToHome(player, homeOwnerUserId))
+    else
+        warn("Invalid request: teleportRequestType is nil or invalid")
+
+        return respond(TeleportResponseType.invalid)
     end
 end)
 
