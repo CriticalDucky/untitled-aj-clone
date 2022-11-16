@@ -12,13 +12,15 @@ local serverStorageShared = ServerStorage.Shared
 local serverStorageSharedUtility = serverStorageShared.Utility
 local serverStorageSharedData = serverStorageShared.Data
 local enumsFolder = replicatedStorageShared.Enums
+local replicatedFirstUtility = replicatedFirstShared.Utility
 
 local ProfileService = require(serverStorageSharedUtility.ProfileService)
 local ReplicaService = require(serverStorageSharedData.ReplicaService)
 local ReplicationType = require(enumsFolder.ReplicationType)
-local Table = require(replicatedFirstShared.Utility.Table)
+local Table = require(replicatedFirstUtility.Table)
 local PlayerJoinTimes = require(serverStorageSharedUtility.PlayerJoinTimes)
 local HomeLockType = require(enumsFolder.HomeLockType)
+local Event = require(replicatedFirstUtility.Event)
 
 local PROFILE_TEMPLATE = { -- Items in here can only be under a table. See:
 
@@ -34,9 +36,17 @@ local PROFILE_TEMPLATE = { -- Items in here can only be under a table. See:
         homes = {},
     },
 
+    playerInfo = { -- stuff that never changes
+        homeServerInfo = {
+            privateServerId = nil,
+            serverCode = nil,
+        }
+    },
+
     playerSettings = {
         findOpenWorld = true,
-        homeLock = HomeLockType.unlocked
+        homeLock = HomeLockType.unlocked,
+        selectedHomeSlot = 1
     }
 }
 
@@ -52,16 +62,6 @@ local PROFILE_REPLICATION = {
 }
 
 local TEMP_DATA_TEMPLATE do
-    local function combineDictionaries(...)
-        local result = {}
-        for _, dictionary in ipairs({...}) do
-            for key, value in pairs(dictionary) do
-                result[key] = value
-            end
-        end
-        return result
-    end
-
     local dictionaries = {}
 
     local function iterate(_, instance)
@@ -73,7 +73,7 @@ local TEMP_DATA_TEMPLATE do
     table.foreachi(ServerStorage:GetDescendants(), iterate)
     table.foreachi(ServerScriptService:GetDescendants(), iterate)
 
-    TEMP_DATA_TEMPLATE = combineDictionaries(table.unpack(dictionaries))
+    TEMP_DATA_TEMPLATE = Table.merge(table.unpack(dictionaries))
 end
 
 local ProfileStore = ProfileService.GetProfileStore(
@@ -179,7 +179,7 @@ function PlayerData.new(player)
 
             print("Replicating data to " .. player.Name .. "...")
 
-            playerDataPublicReplica:SetValue({tostring(player.UserId)}, data_replicationPublic)
+            playerDataPublicReplica:SetValue({player.UserId}, data_replicationPublic)
             newPlayerData.replica_public = playerDataPublicReplica
         else
             profile:Release()
@@ -296,6 +296,8 @@ end
 
 local PlayerDataManager = {}
 
+PlayerDataManager.playerDataAdded = Event.new()
+
 function PlayerDataManager.get(player, wait)
     local playerData = playerDataCollection[player]
 
@@ -325,6 +327,10 @@ function PlayerDataManager.viewPlayerData(player, getUpdated)
         
         if profile then
             cachedInactiveProfiles[userId].profile = profile
+        else
+            warn("Failed to view profile")
+
+            return
         end
     end
 
@@ -336,6 +342,7 @@ function PlayerDataManager.init(player)
 
     local playerData = PlayerData.new(player)
     playerDataCreationComplete[player] = true
+    PlayerDataManager.playerDataAdded:Fire(playerData)
     
     return playerData
 end
@@ -358,6 +365,16 @@ function PlayerDataManager.yieldUntilHopReady(player)
             task.wait()
         end
     end
+end
+
+function PlayerDataManager.forAllPlayerData(callback)
+    for _, playerData in pairs(playerDataCollection) do
+        callback(playerData)
+    end
+
+    local connection = PlayerDataManager.playerDataAdded:Connect(callback)
+
+    return connection
 end
 
 Players.PlayerRemoving:Connect(function(player)
