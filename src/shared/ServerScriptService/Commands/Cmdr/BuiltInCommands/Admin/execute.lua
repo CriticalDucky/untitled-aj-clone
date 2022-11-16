@@ -27,7 +27,7 @@ return {
             context:Reply(message, Color3.new(1, 0.188235, 0.188235))
         end
 
-        if runContext == "Client" then
+        if string.lower(runContext) == "client" then
             local env, failtureReason = loadstringSub(command)
 
             if not failtureReason then
