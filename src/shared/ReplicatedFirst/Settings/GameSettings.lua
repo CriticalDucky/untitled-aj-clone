@@ -19,4 +19,6 @@ return { -- Constants for the game
     },
 
     maxFurniturePlaced = 900, -- The max amount of furniture that can be placed in a home
+
+    homePlaceId = 10564407502, -- The place ID of home
 }
