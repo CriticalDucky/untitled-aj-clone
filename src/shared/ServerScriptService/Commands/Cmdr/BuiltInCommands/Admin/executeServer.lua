@@ -5,16 +5,20 @@ return function(context, runContext, command)
         context:Reply(message, Color3.new(1, 0.188235, 0.188235))
     end
 
-    local env, failtureReason = loadstringSub(command)
+    if string.lower(runContext) == "server" then
+        local env, failtureReason = loadstringSub(command)
 
-    if not failtureReason then
-        local success, err = pcall(env)
+        if not failtureReason then
+            local success, err = pcall(env)
 
-        if not success then
-            replyError(err)
+            if not success then
+                replyError(err)
+            end
+        else
+            replyError(failtureReason)
         end
     else
-        replyError(failtureReason)
+        replyError("Invalid run context")
     end
 
     return ""
