@@ -10,7 +10,7 @@ local ReplicaCollection = require(replicationFolder:WaitForChild("ReplicaCollect
 local Fusion = require(replicatedFirstShared:WaitForChild("Fusion"))
 local Table = require(replicatedFirstShared:WaitForChild("Utility"):WaitForChild("Table"))
 local Locations = require(serverFolder:WaitForChild("Locations"))
-local Constants = require(serverFolder:WaitForChild("Constants"))
+local GameSettings = require(replicatedFirstShared:WaitForChild("Settings"):WaitForChild("GameSettings"))
 
 local ClientPartyData = {}
 
@@ -36,8 +36,8 @@ function ClientPartyData.getPartyPopulationInfo(partyType, privateServerId)
 
         return {
             population = population,
-            recommended_emptySlots = math.max(Constants.party_maxRecommendedPlayers - population, 0),
-            max_emptySlots = math.max(Constants.party_maxPlayers - population, 0),
+            recommended_emptySlots = math.max(GameSettings.party_maxRecommendedPlayers - population, 0),
+            max_emptySlots = math.max(GameSettings.party_maxPlayers - population, 0),
         }
     end
 end
