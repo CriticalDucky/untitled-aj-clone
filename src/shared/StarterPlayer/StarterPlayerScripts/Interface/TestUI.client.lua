@@ -34,6 +34,7 @@ if not ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
     local worldMenu, worldButton = Component "WorldMenu" {}
     local map, mapButton = Component "MapMenu" {}
     local partyList, partyListButton = Component "PartyList" {}
+    local homeButton = Component "HomeButton" {}
 
     local emptyTable = {}
 
@@ -65,7 +66,6 @@ if not ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
                     },
 
                     useUI(worldButton, ServerGroupEnum.isWorldBased),
-                    useUI(mapButton, ServerGroupEnum.isWorldBased),
                 },
             },
 
@@ -87,6 +87,29 @@ if not ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
                     },
 
                     useUI(partyListButton, ServerGroupEnum.isWorldBased),
+                },
+            },
+
+            New "Frame" { -- The hotbar, centered on the vertical axis
+                Name = "Hotbar",
+                Size = UDim2.fromOffset(0, 0),
+                Position = UDim2.fromScale(0.5, 1),
+                AnchorPoint = Vector2.new(0.5, 1),
+                AutomaticSize = Enum.AutomaticSize.X,
+
+                BackgroundTransparency = 1,
+
+                [Children] = {
+                    New "UIListLayout" {
+                        SortOrder = Enum.SortOrder.LayoutOrder,
+                        Padding = UDim.new(0, 5),
+                        FillDirection = Enum.FillDirection.Horizontal,
+                        VerticalAlignment = Enum.VerticalAlignment.Bottom,
+                        HorizontalAlignment = Enum.HorizontalAlignment.Center,
+                    },
+
+                    useUI(mapButton, ServerGroupEnum.isWorldBased),
+                    useUI(homeButton, ServerGroupEnum.isWorldBased),
                 },
             },
 
