@@ -405,6 +405,11 @@ function Replica:SetValue(path, value)
 	local path_array = (type(path) == "string") and StringPathToArray(path) or path
 	-- Apply change server-side:
 	local pointer = self.Data
+
+	-- print("------")
+	-- _G.Table.print(path, "path")
+	-- _G.Table.print(pointer, "pointer")
+
 	for i = 1, #path_array - 1 do
 		pointer = pointer[path_array[i]]
 	end
