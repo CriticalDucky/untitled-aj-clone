@@ -20,8 +20,6 @@ if not ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
         if not PlayerData.init(player) then
             Teleport.rejoin(player)
         end
-
-        InventoryManager.reconcileInventory(player)
     end
 
     for _, player in pairs(Players:GetPlayers()) do
