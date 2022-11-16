@@ -22,7 +22,7 @@ local ShopManager = {}
 function ShopManager.playerCanBuyItem(player, shopEnum, itemIndex)
     local shopInfoTable = Shops[shopEnum]
     local shopItem = shopInfoTable.items[itemIndex]
-    local itemInfo = Items[shopItem.itemType][shopItem.item]
+    local itemInfo = Items[shopItem.itemCategory][shopItem.item]
 
     local playerData = PlayerData.get(player)
 
@@ -46,7 +46,7 @@ function ShopManager.playerCanBuyItem(player, shopEnum, itemIndex)
         return false
     end
 
-    if InventoryManager.isInventoryFull(player, shopItem.itemType, 1) then
+    if InventoryManager.isInventoryFull(player, shopItem.itemCategory, 1) then
         warn("Player inventory is full")
         return false
     end
@@ -58,10 +58,10 @@ function ShopManager.purchaseShopItem(player, shopEnum, itemIndex)
     local shopInfoTable = Shops[shopEnum]
     local shopItem = shopInfoTable.items[itemIndex]
 
-    local itemInfo = Items[shopItem.itemType][shopItem.item]
+    local itemInfo = Items[shopItem.itemCategory][shopItem.item]
 
     if ShopManager.playerCanBuyItem(player, shopEnum, itemIndex) then
-        if InventoryManager.newItemInInventory(shopItem.itemType, shopItem.item, player) then
+        if InventoryManager.newItemInInventory(shopItem.itemCategory, shopItem.item, player) then
             if Currency.increment(player, itemInfo.priceCurrencyType, -itemInfo.price) then
                 return true
             else
