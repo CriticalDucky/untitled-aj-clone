@@ -1,3 +1,4 @@
+local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local ServerStorage = game:GetService("ServerStorage")
@@ -14,6 +15,7 @@ local ServerGroupEnum = require(enumsFolder.ServerGroup)
 local ServerTypeGroups = require(serverFolder.ServerTypeGroups)
 local Teleport = require(serverStorageShared.Teleportation.Teleport)
 local Fingerprint = require(serverStorageShared.Utility.Fingerprint)
+local Table = require(ReplicatedFirst.Shared.Utility.Table)
 
 local indexInfo do
     if ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
@@ -28,8 +30,10 @@ local indexInfo do
             locationEnum = LocalWorldInfo.locationEnum,
         }
     elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome) then
-        indexInfo = {
+        local LocalHomeInfo = require(ReplicatedStorage.Home.Server.LocalHomeInfo)
 
+        indexInfo = {
+            userId = LocalHomeInfo.homeOwner,
         }
     elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isParty) then
         local LocalPartyInfo = require(ReplicatedStorage.Party.Server.LocalPartyInfo)
@@ -38,20 +42,23 @@ local indexInfo do
             partyType = LocalPartyInfo.partyType,
             privateServerId = game.PrivateServerId
         }
+    elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isGame) then
+        local LocalGameInfo = require(ReplicatedStorage.Game.Server.LocalGameInfo)
+
+        indexInfo = {
+            gameType = LocalGameInfo.gameType,
+            privateServerId = game.PrivateServerId
+        }
     end
 end
 
-local party_serverCode
+local success, party_serverCode
 
 if ServerTypeGroups.serverInGroup(ServerGroupEnum.isParty) then
-    party_serverCode = Fingerprint.trace(game.PrivateServerId)
+    success, party_serverCode = Fingerprint.trace(game.PrivateServerId)
 
-    if not party_serverCode then
-        Teleport.rejoin(Players:GetPlayers())
-
-        Players.PlayerAdded:Connect(function(player)
-            Teleport.rejoin(player) -- Shut down the server.
-        end)
+    if not success then
+        Teleport.bootServer("An internal server error occurred. Please try again later. (err code 5)")
     end -- Boot players if the server code is not found
 end
 
