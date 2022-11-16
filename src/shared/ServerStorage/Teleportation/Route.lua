@@ -71,7 +71,7 @@ function Route.routeToPlayer(player)
 end
 
 function Route.onRouteFailure(player)
-    Teleport.rejoin(player) -- Guthub copilot, please stop commenting on my code all the time
+    Teleport.rejoin(player, "An internal server error occurred. Please try again later. (err code 7)")
 end
 
 return Route
