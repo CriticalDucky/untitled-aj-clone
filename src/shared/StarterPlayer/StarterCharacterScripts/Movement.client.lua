@@ -22,6 +22,7 @@ local humanoid: Humanoid = character:WaitForChild("Humanoid")
 local rootPart = character:WaitForChild("HumanoidRootPart")
 local path = PathfindingService:CreatePath{
         AgentRadius = 3,
+        AgentCanClimb = true,
 }
 
 local movementEnabled = false
