@@ -20,7 +20,6 @@ local DataStore = require(utilityFolder.DataStore)
 local GameServerData = require(serverManagement.GameServerData)
 local Math = require(replicatedFirstUtility.Math)
 local Table = require(replicatedFirstUtility.Table)
-local Constants = require(replicatedStorageShared.Server.Constants)
 local Event = require(replicatedFirstUtility.Event)
 
 local worldsDataStore = DataStoreService:GetDataStore("Worlds")
@@ -34,8 +33,10 @@ WorldData.WorldsUpdated = Event.new()
 local function retrieveDatastore()
     lastDatastoreRequest = time()
     local lastCachedWorlds = cachedWorlds
+
+    local success, worlds = DataStore.safeGet(worldsDataStore, WORLDS_KEY)
     
-    for i, v in ipairs(DataStore.safeGet(worldsDataStore, WORLDS_KEY) or {}) do
+    for i, v in ipairs(worlds or {}) do
         cachedWorlds[i] = v
     end
 
