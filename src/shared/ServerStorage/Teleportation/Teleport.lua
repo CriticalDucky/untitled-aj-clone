@@ -1,5 +1,6 @@
-local RETRY_DELAY = 0.5
+local RETRY_DELAY = 5
 local MAX_RETRIES = 10
+local TELEPORT_TIMEOUT = 20
 
 local Players = game:GetService("Players")
 local ReplicatedFirst = game:GetService("ReplicatedFirst")
@@ -10,23 +11,40 @@ local ServerStorage = game:GetService("ServerStorage")
 local serverStorageShared = ServerStorage.Shared
 local replicatedStorageShared = ReplicatedStorage.Shared
 local replicatedFirstShared = ReplicatedFirst.Shared
+local replicatedFirstUtility = replicatedFirstShared.Utility
 local serverManagement = serverStorageShared.ServerManagement
 local serverFolder = replicatedStorageShared.Server
 local enumsFolder = replicatedStorageShared.Enums
 
 local Locations = require(serverFolder.Locations)
 local Parties = require(serverFolder.Parties)
-local LocalServerInfo = require(serverFolder.LocalServerInfo)
 local ServerGroupEnum = require(enumsFolder.ServerGroup)
 local ServerTypeGroups = require(serverFolder.ServerTypeGroups)
 local PlayerLocation = require(serverManagement.PlayerLocation)
 local WorldData = require(serverManagement.WorldData)
 local GameServerData = require(serverManagement.GameServerData)
-local Table = require(replicatedFirstShared.Utility.Table)
+local Table = require(replicatedFirstUtility.Table)
 local Fingerprint = require(serverStorageShared.Utility.Fingerprint)
 local LocalWorldOrigin = require(serverFolder.LocalWorldOrigin)
+local HomeManager = require(serverStorageShared.Data.Inventory.HomeManager)
+local HomeLockType = require(enumsFolder.HomeLockType)
+local GameSettings = require(replicatedFirstShared.Settings.GameSettings)
 
 local Teleport = {}
+
+local function getWorldIndex(player)
+    if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
+        local serverStorageLocation = ServerStorage.Location
+        local locationServerManagement = serverStorageLocation.ServerManagement
+        local LocalWorldInfo = require(locationServerManagement.LocalWorldInfo)
+
+        return LocalWorldInfo.worldIndex
+    elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.hasWorldOrigin) then
+        return LocalWorldOrigin(player) or WorldData.findAvailableWorld()
+    elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
+        return WorldData.findAvailableWorld()
+    end
+end
 
 local function safeTeleport(destination, players, options)
     local attemptIndex = 0
@@ -40,13 +58,33 @@ local function safeTeleport(destination, players, options)
     end)
 
     repeat
-        success = pcall(function()
-            return TeleportService:TeleportAsync(destination, players, options)
+        task.spawn(function()
+            success = pcall(function()
+                return TeleportService:TeleportAsync(destination, players, options)
+            end)
         end)
+
+        local startTime = time()
+        local scrap
+
+        while success == nil do
+            if time() - startTime > TELEPORT_TIMEOUT then
+                scrap = true
+
+                break
+            end
+
+            task.wait()
+        end
+
+        if scrap then
+            break
+        end
 
         attemptIndex += 1
 
         if not success then
+            warn("Teleport attempt #" .. attemptIndex .. " failed with error: " .. teleportResult)
             task.wait(RETRY_DELAY)
         end
     until success or attemptIndex == MAX_RETRIES
@@ -228,25 +266,71 @@ function Teleport.teleportToParty(player, partyType, privateServerId)
 
     teleportOptions.ReservedServerAccessCode = code
 
-    local worldIndex do
-        if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
-            local serverStorageLocation = ServerStorage.Location
-            local locationServerManagement = serverStorageLocation.ServerManagement
-            local LocalWorldInfo = require(locationServerManagement.LocalWorldInfo)
-    
-            worldIndex = LocalWorldInfo.worldIndex
-        elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.hasWorldOrigin) then
-            worldIndex = LocalWorldOrigin(player) or WorldData.findAvailableWorld()
-        elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
-            worldIndex = WorldData.findAvailableWorld()
-        end
-    end
+    local worldIndex = getWorldIndex(player)
 
     teleportOptions:SetTeleportData({
         worldIndexOrigin = worldIndex,
     })
 
     return Teleport.teleport(player, Parties[partyType].placeId, teleportOptions)
+end
+
+function Teleport.teleportToHome(player: Player, homeOwnerUserId)
+    if player.UserId ~= homeOwnerUserId then
+        local populationInfo = GameServerData.getHomePopulationInfo(homeOwnerUserId)
+
+        if populationInfo and populationInfo.max_emptySlots == 0 then
+            warn("Teleport.teleportToHome: home is full")
+            return false
+        end
+
+        local homeLockType = HomeManager.getLockStatus(homeOwnerUserId)
+
+        if homeLockType == HomeLockType.locked then
+            warn("Teleport.teleportToHome: home is private")
+            return false
+        end
+
+        local success, isFriendsWith = pcall(function()
+            return player:IsFriendsWith(homeOwnerUserId)
+        end)
+
+        if not success then
+            warn("Teleport.teleportToHome: failed to check friendship")
+            return false
+        end
+
+        if homeLockType == HomeLockType.friendsOnly and not isFriendsWith then
+            warn("Teleport.teleportToHome: home is friends only")
+            return false
+        end
+    end
+
+    local homeServerInfo = HomeManager.getHomeServerInfo(homeOwnerUserId)
+
+    if not homeServerInfo then
+        warn("Teleport.teleportToHome: home server info is nil")
+        return false
+    end
+
+    local success = Fingerprint.stamp(homeServerInfo.privateServerId, homeOwnerUserId)
+
+    if not success then
+        warn("Teleport.teleportToHome: Failed to stamp server")
+        return false
+    end
+
+    local teleportOptions = Instance.new("TeleportOptions")
+
+    teleportOptions.ReservedServerAccessCode = homeServerInfo.serverCode
+
+    local worldIndex = getWorldIndex(player)
+
+    teleportOptions:SetTeleportData({
+        worldIndexOrigin = worldIndex,
+    })
+
+    return Teleport.teleport(player, GameSettings.homePlaceId, teleportOptions)
 end
 
 function Teleport.teleportToPlayer(player: Player, targetPlayerId)
@@ -300,16 +384,52 @@ function Teleport.teleportToPlayer(player: Player, targetPlayerId)
             targetPlayerLocation.partyType,
             targetPlayerLocation.privateServerId
         )
+    elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome, targetPlayerLocation.serverType) then
+        local homeOwnerUserId = targetPlayerLocation.homeOwner
+
+        local populationInfo = GameServerData.getHomePopulationInfo(homeOwnerUserId)
+        
+        if not populationInfo then
+            print("Target player is unable to be teleported to")
+            return false
+        end
+
+        return Teleport.teleportToHome(
+            player,
+            homeOwnerUserId
+        )
     else
         print("Target player is not in a supported server type")
         return false
     end
 end
 
-function Teleport.rejoin(players, options)
-    local teleportOptions = options or Instance.new("TeleportOptions")
+function Teleport.rejoin(players, reason)
+    local teleportOptions = Instance.new("TeleportOptions")
+
+    if reason then
+        teleportOptions:SetTeleportData({
+            rejoinReason = reason,
+        })
+    end
 
     return Teleport.teleport(players, 10189729412, teleportOptions)
+end
+
+function Teleport.bootServer(reason)
+    local rejoinFailedText = "[REJOIN FAILED] " .. reason
+
+    if not Teleport.rejoin(Players:GetPlayers(), reason) then
+        for _, player in ipairs(Players:GetPlayers()) do
+            player:Kick(rejoinFailedText)
+        end
+    end
+
+    Players.PlayerAdded:Connect(function(player)
+        if not Teleport.rejoin(player, reason) then
+            player:Kick(rejoinFailedText)
+        end
+    end)
 end
 
 return Teleport
