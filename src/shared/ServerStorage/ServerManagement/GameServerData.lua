@@ -20,18 +20,22 @@ local Event = require(utilityFolder.Event)
 local Message = require(messagingFolder.Message)
 local LocalServerInfo = require(serverFolder.LocalServerInfo)
 local ServerTypeEnum = require(enumsFolder.ServerType)
-local Constants = require(replicatedStorageShared.Server.Constants)
+local GameSettings = require(replicatedFirstShared.Settings.GameSettings)
 local Table = require(utilityFolder.Table)
 
 local SERVER_FILL = {
     [ServerTypeEnum.location] = {
-        max = Constants.location_maxPlayers,
-        recommended = Constants.location_maxRecommendedPlayers
+        max = GameSettings.location_maxPlayers,
+        recommended = GameSettings.location_maxRecommendedPlayers
     },
 
     [ServerTypeEnum.party] = {
-        max = Constants.party_maxPlayers,
-        recommended = Constants.party_maxRecommendedPlayers
+        max = GameSettings.party_maxPlayers,
+        recommended = GameSettings.party_maxRecommendedPlayers
+    },
+
+    [ServerTypeEnum.home] = {
+        max = GameSettings.home_maxNormalPlayers,
     }
 }
 
@@ -72,6 +76,7 @@ local cachedData = {
         ]]
     },
 }
+
 local lastBroadcast = 0
 
 local function initDataWait()
@@ -168,7 +173,7 @@ function GameServerData.getPopulationInfo(serverType, indexInfo)
 
         return {
             population = population,
-            recommended_emptySlots = math.max(fillInfo.recommended - population, 0),
+            recommended_emptySlots = fillInfo.recommended and math.max(fillInfo.recommended - population, 0),
             max_emptySlots = math.max(fillInfo.max - population, 0),
         }
     end
@@ -183,7 +188,7 @@ function GameServerData.getWorldPopulationInfo(worldIndex)
     if worldTable then
         local populationInfo = {
             population = 0,
-            recommended_emptySlots = Constants.world_maxRecommendedPlayers,
+            recommended_emptySlots = GameSettings.world_maxRecommendedPlayers,
 
             locations = {},
         }
@@ -241,6 +246,18 @@ function GameServerData.getLocationPopulationInfo(worldIndex, locationEnum)
         worldIndex = worldIndex,
         locationEnum = locationEnum,
     })
+end
+
+function GameServerData.getHomePopulationInfo(userId)
+    return GameServerData.getPopulationInfo(ServerTypeEnum.home, {
+        userId = userId,
+    })
+end
+
+function GameServerData.getHomeServers()
+    initDataWait()
+
+    return cachedData[ServerTypeEnum.home]
 end
 
 function GameServerData.publish(serverInfo, indexInfo)
