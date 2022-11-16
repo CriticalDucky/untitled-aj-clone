@@ -53,7 +53,7 @@ function DataStore.safeSet(dataStore, key, value, extra)
 end
 
 function DataStore.safeGet(dataStore, key, extra)
-    print("DATASTORE: safeGet")
+    print("DATASTORE: safeGet", key)
 
     local possibleError
 
@@ -69,12 +69,12 @@ function DataStore.safeGet(dataStore, key, extra)
         possibleError = data
 
         if success then
-            return data
+            return true, data
         end
     end
 
     warn("Failed to get data store", possibleError)
-    return
+    return false
 end
 
 function DataStore.safeRemove(dataStore, key, extra)
