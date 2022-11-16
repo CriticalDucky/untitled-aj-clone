@@ -20,6 +20,7 @@ local classes = {
     "HomeServers",
     "HomeOwner",
     "PlaceItemRequest",
+    "GameType"
 }
 
 local inclusiveClasses = {
