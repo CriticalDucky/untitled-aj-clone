@@ -1,13 +1,16 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 local Players = game:GetService("Players")
+local ReplicatedFirst = game:GetService("ReplicatedFirst")
 
 local replicatedStorageShared = ReplicatedStorage.Shared
 local enumsFolder = replicatedStorageShared.Enums
 local serverFolder = replicatedStorageShared.Server
+local utilityFolder = ReplicatedFirst.Shared.Utility
 
 local ServerGroupEnum = require(enumsFolder.ServerGroup)
 local ServerTypeGroups = require(serverFolder.ServerTypeGroups)
+local WaitForDescendant = require(utilityFolder.WaitForDescendant)
 
 local function playerAdded(player: Player)
     local spawnpoint do
@@ -25,7 +28,11 @@ local function playerAdded(player: Player)
                 spawnpoint = Entrances.main
             end
         elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.hasWorldInfo) then
-            spawnpoint = workspace:FindFirstChild("SpawnLocation", true)
+            spawnpoint = WaitForDescendant(workspace, function(descendant)
+                local name = descendant.Name
+
+                return string.find(name, "Spawn")
+            end)
         end
     end
 
