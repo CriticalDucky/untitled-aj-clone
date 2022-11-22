@@ -75,6 +75,16 @@ local cachedData = {
             }
         ]]
     },
+
+    [ServerTypeEnum.game] = {
+        --[[
+            [gameType] = {
+                [privateServerId] = {
+                    serverInfo
+                }
+            }
+        ]]
+    }
 }
 
 local lastBroadcast = 0
@@ -104,6 +114,10 @@ function GameServerData.setCachedData(serverType, indexInfo, serverInfo)
         local partyTable = cachedServerType[indexInfo.partyType] or {}
         partyTable[indexInfo.privateServerId] = serverInfo
         cachedServerType[indexInfo.partyType] = partyTable
+    elseif serverType == ServerTypeEnum.game then
+        local gameTable = cachedServerType[indexInfo.gameType] or {}
+        gameTable[indexInfo.privateServerId] = serverInfo
+        cachedServerType[indexInfo.gameType] = gameTable
     else
         error("GameServerData: Message received with invalid server type")
     end
@@ -130,6 +144,12 @@ function GameServerData.get(serverType, indexInfo)
 
             if partyTable then
                 return partyTable[indexInfo.privateServerId]
+            end
+        elseif serverType == ServerTypeEnum.game then
+            local gameTable = cachedServerType[indexInfo.gameType]
+
+            if gameTable then
+                return gameTable[indexInfo.privateServerId]
             end
         else
             error("GameServerData: Message received with invalid server type")
@@ -225,7 +245,7 @@ function GameServerData.getPartyCode(privateServerId)
 
     local partyTable = cachedData[ServerTypeEnum.party]
 
-    for partyType, partyServers in pairs(partyTable or {}) do
+    for _, partyServers in pairs(partyTable or {}) do
         for serverId, serverInfo in pairs(partyServers or {}) do
             if serverId == privateServerId then
                 return serverInfo.serverCode
@@ -258,6 +278,21 @@ function GameServerData.getHomeServers()
     initDataWait()
 
     return cachedData[ServerTypeEnum.home]
+end
+
+function GameServerData.getGameServers(gameType)
+    initDataWait()
+
+    local gameTable = cachedData[ServerTypeEnum.game][gameType] or {}
+
+    return gameTable
+end
+
+function GameServerData.getGamePopulationInfo(gameType, privateServerId)
+    return GameServerData.getPopulationInfo(ServerTypeEnum.game, {
+        gameType = gameType,
+        privateServerId = privateServerId,
+    })
 end
 
 function GameServerData.publish(serverInfo, indexInfo)
