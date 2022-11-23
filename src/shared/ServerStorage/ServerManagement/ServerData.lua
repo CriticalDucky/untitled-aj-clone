@@ -1,4 +1,6 @@
 local WORLDS_KEY = "worlds"
+local PARTIES_KEY = "parties"
+local 
 local CACHE_COOLDOWN = 30
 
 local DataStoreService = game:GetService("DataStoreService")
@@ -22,7 +24,7 @@ local Math = require(replicatedFirstUtility.Math)
 local Table = require(replicatedFirstUtility.Table)
 local Event = require(replicatedFirstUtility.Event)
 
-local worldsDataStore = DataStoreService:GetDataStore("Worlds")
+local serverDataStore = DataStoreService:GetDataStore("Servers")
 local cachedWorlds = {}
 local lastDatastoreRequest = 0
 
