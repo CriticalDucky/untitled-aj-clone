@@ -11,6 +11,7 @@ local serverFolder = replicatedStorageShared.Server
 local ServerTypeEnum = require(enumsFolder.ServerType)
 local Locations = require(serverFolder.Locations)
 local Parties = require(serverFolder.Parties)
+local Games = require(serverFolder.Games)
 local GameSettings = require(replicatedFirstShared.Settings.GameSettings)
 
 
@@ -24,6 +25,12 @@ local serverType do
     for _, partyInfo in pairs(Parties) do
         if partyInfo.placeId == game.PlaceId then
             serverType = ServerTypeEnum.party
+        end
+    end
+
+    for _, gameInfo in pairs(Games) do
+        if gameInfo.placeId == game.PlaceId then
+            serverType = ServerTypeEnum.game
         end
     end
 
