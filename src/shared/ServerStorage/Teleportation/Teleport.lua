@@ -15,12 +15,14 @@ local replicatedFirstUtility = replicatedFirstShared.Utility
 local serverManagement = serverStorageShared.ServerManagement
 local serverFolder = replicatedStorageShared.Server
 local enumsFolder = replicatedStorageShared.Enums
+local serverUtility = serverStorageShared.Utility
 
 local Locations = require(serverFolder.Locations)
 local Parties = require(serverFolder.Parties)
+local Games = require(serverFolder.Games)
 local ServerGroupEnum = require(enumsFolder.ServerGroup)
 local ServerTypeGroups = require(serverFolder.ServerTypeGroups)
-local PlayerLocation = require(serverManagement.PlayerLocation)
+local PlayerLocation = require(serverUtility.PlayerLocation)
 local WorldData = require(serverManagement.WorldData)
 local GameServerData = require(serverManagement.GameServerData)
 local Table = require(replicatedFirstUtility.Table)
@@ -331,6 +333,49 @@ function Teleport.teleportToHome(player: Player, homeOwnerUserId)
     })
 
     return Teleport.teleport(player, GameSettings.homePlaceId, teleportOptions)
+end
+
+function Teleport.teleportToGame(players, gameType, privateServerId)
+    players = if type(players) == "table" then players else {players}
+
+    local playerIdTable do
+        playerIdTable = {}
+
+        for _, player in pairs(players) do
+            table.insert(playerIdTable, player.UserId)
+        end
+    end
+
+    local success, code, privateServerId = pcall(function()
+        return TeleportService:ReserveServer(gamePlaceId)
+    end)
+
+    if not success or not privateServerId or not code then
+        warn("Teleport.toGame: Failed to reserve server")
+        return false
+    end
+
+    local success = Fingerprint.stamp(privateServerId, {
+        gameType = gameType,
+        players = playerIdTable,
+        serverCode = code,
+    })
+
+    if not success then
+        warn("Teleport.toGame: Failed to stamp server")
+        return false
+    end
+
+    local worldIndex = getWorldIndex(players[1])
+
+    local teleportOptions = Instance.new("TeleportOptions")
+
+    teleportOptions.ReservedServerAccessCode = code
+    teleportOptions:SetTeleportData({
+        worldIndexOrigin = worldIndex,
+    })
+
+    return Teleport.teleport(players, gamePlaceId, teleportOptions)
 end
 
 function Teleport.teleportToPlayer(player: Player, targetPlayerId)
