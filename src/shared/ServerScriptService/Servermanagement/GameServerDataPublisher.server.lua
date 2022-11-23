@@ -52,14 +52,14 @@ local indexInfo do
     end
 end
 
-local success, party_serverCode
+local success, serverCode
 
-if ServerTypeGroups.serverInGroup(ServerGroupEnum.isParty) then
-    success, party_serverCode = Fingerprint.trace(game.PrivateServerId)
+if ServerTypeGroups.serverInGroup(ServerGroupEnum.serverCodeFingerprint) then
+    success, serverCode = Fingerprint.trace(game.PrivateServerId)
 
     if not success then
         Teleport.bootServer("An internal server error occurred. Please try again later. (err code 5)")
-    end -- Boot players if the server code is not found
+    end
 end
 
 local runServiceConnection = RunService.Heartbeat:Connect(function()
@@ -90,7 +90,13 @@ local runServiceConnection = RunService.Heartbeat:Connect(function()
             }
         elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isParty) then
             serverInfo = {
-                serverCode = party_serverCode,
+                serverCode = serverCode,
+            }
+        elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isGame) then
+            local LocalGameInfo = require(ReplicatedStorage.Game.Server.LocalGameInfo)
+
+            serverInfo = {
+                serverCode = LocalGameInfo.serverCode,
             }
         end
 
