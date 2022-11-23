@@ -11,6 +11,7 @@ local teleportationFolder = serverStorageShared.Teleportation
 local utilityFolder = replicatedFirstShared.Utility
 local enumsFolder = replicatedStorageShared.Enums
 local serverManagementFolder = serverStorageShared.ServerManagement
+local serverStorageSharedUtility = serverStorageShared.Utility
 
 local ReplicaService = require(dataFolder.ReplicaService)
 local Teleport = require(teleportationFolder.Teleport)
@@ -19,7 +20,7 @@ local Table = require(utilityFolder.Table)
 local TeleportRequestType = require(enumsFolder.TeleportRequestType)
 local TeleportResponseType = require(enumsFolder.TeleportResponseType)
 local GameServerData = require(serverManagementFolder.GameServerData)
-local PlayerLocation = require(serverManagementFolder.PlayerLocation)
+local PlayerLocation = require(serverStorageSharedUtility.PlayerLocation)
 local Locations = require(serverFolder.Locations)
 local ActiveParties = require(serverFolder.ActiveParties)
 local LocalWorldOrigin = require(serverFolder.LocalWorldOrigin)
@@ -43,8 +44,8 @@ TeleportRequest:ConnectOnServerEvent(function(player: Player, requestCode, telep
             return
         end
 
-        if not player or not teleportRequestType then
-            print("Invalid request: player or teleportRequestType is nil")
+        if not teleportRequestType then
+            print("Invalid request: teleportRequestType is nil")
 
             return
         end
