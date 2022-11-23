@@ -4,9 +4,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local serverStorageShared = ServerStorage.Shared
 
-local LocalHomeInfo = require(ReplicatedStorage.Home.Server.LocalHomeInfo)
+local LocalGameInfo = require(ReplicatedStorage.Game.Server.LocalGameInfo)
 local Teleport = require(serverStorageShared.Teleportation.Teleport)
 
-if not LocalHomeInfo.homeOwner then
+if not LocalGameInfo.success then
     Teleport.bootServer("An internal server error occurred. Please try again later. (err code 2)")
 end
