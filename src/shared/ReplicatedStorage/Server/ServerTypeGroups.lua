@@ -53,6 +53,10 @@ local ServerTypeGroups = {
         [ServerTypeEnum.party] = true,
         [ServerTypeEnum.game] = true,
     },
+
+    [ServerTypeGroup.serverCodeFingerprint] = {
+        [ServerTypeEnum.party] = true,
+    },
 }
 
 function ServerTypeGroups.serverInGroup(group, serverType)
