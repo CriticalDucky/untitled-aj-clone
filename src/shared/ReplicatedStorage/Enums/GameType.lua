@@ -1,0 +1,3 @@
+return {
+    fishing = 1,
+}
