@@ -4,11 +4,11 @@ local ServerStorage = game:GetService("ServerStorage")
 
 local serverStorageShared = ServerStorage.Shared
 local replicatedFirstShared = ReplicatedFirst.Shared
-local serverManagement = serverStorageShared.ServerManagement
 local utilityFolder = replicatedFirstShared.Utility
 local dataFolder = serverStorageShared.Data
+local serverUtility = serverStorageShared.Utility
 
-local PlayerLocation = require(serverManagement.PlayerLocation)
+local PlayerLocation = require(serverUtility.PlayerLocation)
 local GetFriends = require(utilityFolder.GetFriends)
 local PlayerData = require(dataFolder.PlayerData)
 
