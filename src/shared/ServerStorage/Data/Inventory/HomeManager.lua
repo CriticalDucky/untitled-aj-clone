@@ -31,6 +31,7 @@ local ServerTypeGroups = require(serverFolder.ServerTypeGroups)
 local Table = require(utilityFolder.Table)
 local SpacialQuery = require(utilityFolder.SpacialQuery)
 local Serialization = require(utilityFolder.Serialization)
+local ServerData = require(serverStorageShared.ServerManagement.ServerData)
 
 local isHomeServer = ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome)
 local initalLoad = false
@@ -156,6 +157,19 @@ function HomeManager.getHomeServerInfo(player)
     local homeServerInfo: homeServerInfo = profile and profile.Data.playerInfo.homeServerInfo
 
     return homeServerInfo
+end
+
+function HomeManager.isHomeInfoStamped(player: Player | number)
+    local playerData = PlayerData.get(player) or PlayerData.viewPlayerData(player)
+    local profile = playerData and if playerData.profile then playerData.profile else playerData
+
+    if not playerData then
+        return false
+    end
+
+    local isHomeInfoStamped = profile.Data.playerInfo.homeInfoStamped
+
+    return isHomeInfoStamped
 end
 
 function HomeManager.getPlacedItems(player: Player | number)
@@ -449,6 +463,10 @@ PlayerData.forAllPlayerData(function(playerData)
         end
     end
 
+    if not HomeManager.isHomeInfoStamped(player) then
+        ServerData.stampHomeServer(player)
+    end
+
     if isHomeServer and not initalLoad then
         initalLoad = true
         HomeManager.loadHome()
@@ -465,7 +483,7 @@ PlayerData.forAllPlayerData(function(playerData)
     end
 
     if isHomeServer then
-        for _, itemId in pairs(getLoadedItems()) do
+        for itemId, _ in pairs(getLoadedItems()) do
             local item = InventoryManager.playerOwnsItem(player, itemId)
 
             if not item then
