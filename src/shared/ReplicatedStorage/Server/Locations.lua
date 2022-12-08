@@ -10,6 +10,11 @@ local Locations = {
         [LocationTypeEnum.town] = {
             name = "Town",
             placeId = 10189748812,
+            -- populationInfo = {
+            --     max = 100,
+            --     recommended = 50,
+            -- },
+            -- cantJoinPlayer = bool
         },
     
         [LocationTypeEnum.forest] = {
