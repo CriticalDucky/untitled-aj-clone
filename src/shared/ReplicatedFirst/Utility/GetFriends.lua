@@ -20,7 +20,13 @@ local getFriends = function(playerId)
             end)
         end
     
-        local friendPages = Players:GetFriendsAsync(playerId)
+        local success, friendPages = pcall(function()
+            return Players:GetFriendsAsync(playerId)
+        end)
+
+        if not success then
+            return {}
+        end
     
         local list = {}
     
