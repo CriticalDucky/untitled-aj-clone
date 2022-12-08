@@ -10,13 +10,22 @@ local teleportation = serverStorageShared.Teleportation
 local enumsFolder = ReplicatedStorage.Shared.Enums
 
 local Teleport = require(teleportation.Teleport)
-local WorldData = require(serverManagement.WorldData)
+local ServerData = require(serverManagement.ServerData)
 local PlayerData = require(serverStorageShared.Data.PlayerData)
 
 local Route = {}
 
-function Route.routeToWorld(player) -- Once any of these functions are called, the player can no longer stay in this server
-    local worldIndex, locationEnum = WorldData.findAvailable()
+function Route.routeToWorld(player, worldsExcluded)
+    if worldsExcluded and #worldsExcluded > 4 then
+        warn("Too many worlds excluded")
+        return
+    end
+
+    local worldIndex, locationEnum = ServerData.findAvailableWorldAndLocation(nil, worldsExcluded)
+
+    local function teleport()
+        return Teleport.teleportToLocation(player, locationEnum, worldIndex)
+    end
 
     if worldIndex then
         print("Routing to world")
@@ -25,13 +34,30 @@ function Route.routeToWorld(player) -- Once any of these functions are called, t
             return true
         end
 
-        local teleportSuccess, teleportResult = Teleport.teleportToLocation(player, locationEnum, worldIndex)
+        local teleportSuccess, teleportResults = teleport()
 
         if teleportSuccess then
             return true
         else
+            local teleportResult = teleportResults and teleportResults[player]
+
             if teleportResult == Enum.TeleportResult.GameFull then
-                return Route.routeToWorld(player) -- Try again
+                locationEnum = ServerData.findAvailableLocation(worldIndex, {locationEnum})
+
+                if locationEnum then
+                    teleportSuccess, teleportResults = teleport()
+                    local teleportResult = teleportResults and teleportResults[player]
+
+                    if teleportSuccess then
+                        return true
+                    elseif teleportResult == Enum.TeleportResult.GameFull then
+                        worldsExcluded = worldsExcluded or {}
+                        
+                        table.insert(worldsExcluded, worldIndex)
+
+                        return Route.routeToWorld(player, worldsExcluded)
+                    end
+                end
             end
             
             return false
@@ -71,7 +97,7 @@ function Route.routeToPlayer(player)
 end
 
 function Route.onRouteFailure(player)
-    Teleport.rejoin(player, "An internal server error occurred. Please try again later. (err code 7)")
+    Teleport.rejoin(player, "An internal server error occurred. Please try again later. (err code R1)")
 end
 
 return Route
