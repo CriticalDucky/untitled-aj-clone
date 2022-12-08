@@ -14,20 +14,21 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local replicatedStorageShared = ReplicatedStorage.Shared
 local replicatedFirstShared = ReplicatedFirst.Shared
 local serverStorageShared = ServerStorage.Shared
-local serverManagement = serverStorageShared.ServerManagement
 local serverFolder = replicatedStorageShared.Server
 local utilityFolder = serverStorageShared.Utility
 local replicatedFirstUtility = replicatedFirstShared.Utility
+local dataFolder = serverStorageShared.Data
 
 local Locations = require(serverFolder.Locations)
 local Parties = require(serverFolder.Parties)
 local Games = require(serverFolder.Games)
 local DataStore = require(utilityFolder.DataStore)
-local LiveServerData = require(serverManagement.LiveServerData)
+local LiveServerData = require(serverFolder.LiveServerData)
 local Math = require(replicatedFirstUtility.Math)
 local Table = require(replicatedFirstUtility.Table)
 local Event = require(replicatedFirstUtility.Event)
 local PlayerData = require(serverStorageShared.Data.PlayerData)
+local ReplicaService = require(dataFolder.ReplicaService)
 
 local serverDataStore = DataStoreService:GetDataStore(SERVERS_DATASTORE)
 
@@ -89,18 +90,24 @@ local isRetrieving = {}
 
 local ServerData = {}
 
-ServerData.WorldsUpdated = Event.new()
 ServerData.WORLDS_KEY = WORLDS_KEY
 ServerData.PARTIES_KEY = PARTIES_KEY
 ServerData.GAMES_KEY = GAMES_KEY
 
+local replica = ReplicaService.NewReplica({
+    ClassToken = ReplicaService.NewClassToken("ServerData"),
+    Data = Table.copy(cachedData),
+    Replication = "All"
+})
+
 local function retrieveDatastore(key)
     if isRetrieving[key] then
         repeat task.wait() until not isRetrieving[key]
+
+        return
     end
 
     lastDatastoreRequest[key] = time()
-    local lastCached = cachedData[key]
     isRetrieving[key] = true
 
     local success, data = DataStore.safeGet(serverDataStore, key)
@@ -110,10 +117,23 @@ local function retrieveDatastore(key)
     if success then
         cachedData[key] = data or {}
 
-        if key == WORLDS_KEY and not Table.compare(lastCached, data) then
-            ServerData.WorldsUpdated:Fire(data)
+        if constantKeys[key] then
+            replica:SetValue({key}, Table.copy(cachedData[key]))
         end
     end
+end
+
+local function newLocation(locationEnum)
+    local locationInfo = Locations.info[locationEnum]
+
+    local serverCode, privateServerId = TeleportService:ReserveServer(locationInfo.placeId)
+
+    local locationTable = {
+        serverCode = serverCode,
+        privateServerId = privateServerId,
+    }
+    
+    return locationTable
 end
 
 function ServerData.get(key)
@@ -138,16 +158,16 @@ function ServerData.getGames()
     return ServerData.get(GAMES_KEY)
 end
 
-function ServerData.update(key, transformFunction)
+function ServerData.update(key, transformFunction, replicaFunction)
     local success = DataStore.safeUpdate(serverDataStore, key, transformFunction)
 
     local data = cachedData[key]
 
     if success then
         transformFunction(data)
-        
-        if key == WORLDS_KEY then
-            ServerData.WorldsUpdated:Fire(data)
+
+        if constantKeys[key] and replicaFunction then
+            replicaFunction()
         end
     end
 
@@ -160,23 +180,25 @@ function ServerData.addWorld()
             locations = {},
         }
 
-        for enum, location in pairs(Locations.info) do
-            local serverCode, privateServerId = TeleportService:ReserveServer(location.placeId)
-
-            local locationTable = {
-                serverCode = serverCode,
-                privateServerId = privateServerId,
-            }
-
-            world.locations[enum] = locationTable
+        for enum, _ in pairs(Locations.info) do
+            world.locations[enum] = newLocation(enum)
         end
     end
 
-    return ServerData.update(WORLDS_KEY, function(worlds)
-        table.insert(worlds, world)
+    return ServerData.update(
+        WORLDS_KEY,
+        function(worlds)
+            worlds = worlds or {}
 
-        return worlds
-    end), #cachedData[WORLDS_KEY]
+            table.insert(worlds, world)
+
+            return worlds
+        end,
+        function()
+            replica:ArrayInsert({WORLDS_KEY}, world)
+        end
+    ),
+    #cachedData[WORLDS_KEY]
 end
 
 function ServerData.addParty(partyEnum)
@@ -189,13 +211,22 @@ function ServerData.addParty(partyEnum)
         }
     end
 
-    return ServerData.update(PARTIES_KEY, function(parties)
-        parties[partyEnum] = parties[partyEnum] or {}
+    return ServerData.update(
+        PARTIES_KEY, 
+        function(parties)
+            parties = parties or {}
 
-        table.insert(parties[partyEnum], party)
+            parties[partyEnum] = parties[partyEnum] or {}
 
-        return parties
-    end), #(cachedData[PARTIES_KEY][partyEnum] or {})
+            table.insert(parties[partyEnum], party)
+
+            return parties
+        end,
+        function()
+            replica:ArrayInsert({PARTIES_KEY, partyEnum}, party)
+        end
+    ),
+    #(cachedData[PARTIES_KEY][partyEnum] or {})
 end
 
 function ServerData.addGame(gameEnum)
@@ -208,13 +239,22 @@ function ServerData.addGame(gameEnum)
         }
     end
 
-    return ServerData.update(GAMES_KEY, function(games)
-        games[gameEnum] = games[gameEnum] or {}
+    return ServerData.update(
+        GAMES_KEY, 
+        function(games)
+            games = games or {}
 
-        table.insert(games[gameEnum], newGame)
+            games[gameEnum] = games[gameEnum] or {}
 
-        return games
-    end), #(cachedData[GAMES_KEY][gameEnum] or {})
+            table.insert(games[gameEnum], newGame)
+
+            return games
+        end,
+        function()
+            replica:ArrayInsert({GAMES_KEY, gameEnum}, newGame)
+        end
+    ),
+    #(cachedData[GAMES_KEY][gameEnum] or {})
 end
 
 function ServerData.stampHomeServer(owner: Player)
@@ -224,16 +264,20 @@ function ServerData.stampHomeServer(owner: Player)
         local homeServerInfo = playerData.profile.Data.playerInfo.homeServerInfo
         local privateServerId = homeServerInfo.privateServerId
 
+        assert(privateServerId, "Player does not have a home server")
+
         local success = DataStore.safeSet(serverDataStore, privateServerId, {
-            owner = owner.UserId,
+            homeOwner = owner.UserId,
         })
 
         if success then
             cachedData[privateServerId] = {
-                owner = owner.UserId,
+                homeOwner = owner.UserId,
             }
 
             playerData:setValue({"playerInfo", "homeInfoStamped"}, true)
+
+            return true
         end
     end
 end
@@ -313,13 +357,17 @@ function ServerData.getServerInfo(key)
     end
 end
 
-function ServerData.findAvailableLocation(worldIndex)
+function ServerData.findAvailableLocation(worldIndex, locationsExcluded)
     assert(worldIndex, "No world index provided")
     
     local locationEnum
     local worldPopulationInfo = LiveServerData.getWorldPopulationInfo(worldIndex)
 
     for _, locationType in pairs(Locations.priority) do
+        if locationsExcluded and table.find(locationsExcluded, locationType) then
+            continue
+        end
+
         if worldPopulationInfo then
             local populationInfo = worldPopulationInfo.locations[locationType]
 
@@ -341,7 +389,7 @@ function ServerData.findAvailableLocation(worldIndex)
     return locationEnum
 end
 
-function ServerData.findAvailableWorld(forcedLocation)
+function ServerData.findAvailableWorld(forcedLocation, worldsExcluded)
     local worlds = ServerData.getWorlds()
 
     if worlds == nil then
@@ -357,7 +405,11 @@ function ServerData.findAvailableWorld(forcedLocation)
 
             local worldIsSuitable = true
 
-            if worldPopulationInfo then
+            if worldsExcluded and table.find(worldsExcluded, worldIndex) then
+                worldIsSuitable = false
+            end
+
+            if worldIsSuitable and worldPopulationInfo then
                 for locationEnum, _ in pairs(world.locations) do
                     local locationPopulationInfo = worldPopulationInfo.locations[locationEnum]
     
@@ -410,7 +462,63 @@ function ServerData.findAvailableWorld(forcedLocation)
     return worldIndex
 end
 
-function ServerData.findAvailableWorldAndLocation(forcedLocation)
+function ServerData.findAvailableParty(partyEnum)
+    local parties = ServerData.getParties(partyEnum)
+
+    if parties == nil then
+        warn("No server data found")
+        return
+    end
+
+    local partyIndex do
+        local rarities = {}
+
+        for partyIndex, party in ipairs(parties) do
+            local partyPopulationInfo = LiveServerData.getPartyPopulationInfo(partyEnum, partyIndex)
+
+            local partyIsSuitable = true
+
+            if partyPopulationInfo then
+                if partyPopulationInfo.recommended_emptySlots == 0 then
+                    partyIsSuitable = false
+                end
+            end
+
+            if not partyIsSuitable then
+                print("ServerData.findAvailableParty: Party " .. partyIndex .. " is not suitable")
+                continue
+            end
+
+            local population = partyPopulationInfo and partyPopulationInfo.population or 0
+
+            local chance do
+                if population == 0 then
+                    chance = 0.001
+                else
+                    chance = population
+                end
+            end
+
+            print("ServerData.findAvailableParty: Party " .. partyIndex .. " has a chance of " .. chance)
+
+            rarities[partyIndex] = chance
+        end
+
+        partyIndex = Math.weightedChance(rarities)
+    end
+
+    if partyIndex == nil then
+        print("No suitable party found, creating new party")
+
+        local success, partyIndex = ServerData.addParty(partyEnum)
+
+        return success and partyIndex
+    end
+
+    return partyIndex
+end
+
+function ServerData.findAvailableWorldAndLocation(forcedLocation, worldsExcluded)
     local worlds = ServerData.getWorlds()
 
     if worlds == nil then
@@ -418,7 +526,7 @@ function ServerData.findAvailableWorldAndLocation(forcedLocation)
         return
     end
 
-    local worldIndex = ServerData.findAvailableWorld(forcedLocation)
+    local worldIndex = ServerData.findAvailableWorld(forcedLocation, worldsExcluded)
     local locationEnum = forcedLocation or ServerData.findAvailableLocation(worldIndex)
 
     print("Found world", worldIndex, "with location", locationEnum)
@@ -439,6 +547,65 @@ function ServerData.findAvailableWorldAndLocation(forcedLocation)
 
     return worldIndex, locationEnum
 end
+
+function ServerData.reconcileWorlds() -- Never done in the live game
+    local additions = {}
+    local newLocations = {}
+
+    for _ = 1, #ServerData.getWorlds() do
+        for locationEnum, _ in pairs(Locations.info) do
+            local locationTable =  newLocations[locationEnum] or {}
+            newLocations[locationEnum] = locationTable
+
+            table.insert(locationTable, newLocation(locationEnum))
+        end
+    end
+
+    local function getNewLocation(locationEnum)
+        local locationTable = newLocations[locationEnum]
+
+        local newLocation = table.remove(locationTable, 1)
+
+        return newLocation
+    end
+
+    ServerData.update(
+        WORLDS_KEY,
+        function(worlds)
+            for worldIndex, world in ipairs(worlds) do
+                local locations = world.locations
+        
+                for locationEnum, _ in pairs(Locations.info) do
+                    if not locations[locationEnum] then
+                        local location = getNewLocation(locationEnum)
+                        locations[locationEnum] = location
+                        table.insert(additions, {
+                            worldIndex = worldIndex,
+                            locationEnum = locationEnum,
+                            location = location,
+                        })
+                    end
+                end
+            end
+
+            return worlds
+        end,
+        function()
+            for _, addition in pairs(additions) do
+                replica:SetValue(
+                    {
+                        WORLDS_KEY,
+                        addition.worldIndex,
+                        "locations",
+                        addition.locationEnum,
+                    },
+                    addition.location
+                )
+            end
+        end
+    )
+end
+
 
 RunService.Heartbeat:Connect(function()
     for constantKey, _ in pairs(constantKeys) do
