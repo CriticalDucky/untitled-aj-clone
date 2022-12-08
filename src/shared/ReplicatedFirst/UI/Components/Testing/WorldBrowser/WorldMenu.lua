@@ -12,7 +12,8 @@ local requestsFolder = replicatedStorageShared:WaitForChild("Requests")
 
 local Component = require(utilityFolder:WaitForChild("GetComponent"))
 local Fusion = require(replicatedFirstShared:WaitForChild("Fusion"))
-local ClientWorldData = require(serverFolder:WaitForChild("ClientWorldData"))
+local ClientServerData = require(serverFolder:WaitForChild("ClientServerData"))
+local LiveServerData = require(serverFolder:WaitForChild("LiveServerData"))
 local LocalServerInfo = require(serverFolder:WaitForChild("LocalServerInfo"))
 local WorldNames = require(serverFolder:WaitForChild("WorldNames"))
 local ServerGroupEnum = require(enumsFolder:WaitForChild("ServerGroup"))
@@ -20,11 +21,11 @@ local ServerTypeGroups = require(serverFolder:WaitForChild("ServerTypeGroups"))
 local ClientTeleport = require(requestsFolder:WaitForChild("Teleportation"):WaitForChild("ClientTeleport"))
 local LocalWorldOrigin = require(serverFolder:WaitForChild("LocalWorldOrigin"))
 
-local ClientWorldInfo do
+local LocalWorldInfo do
     if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
         local replicatedStorageLocation = ReplicatedStorage:WaitForChild("Location")
         local locationServerFolder = replicatedStorageLocation:WaitForChild("Server")
-        ClientWorldInfo = require(locationServerFolder:WaitForChild("ClientWorldInfo")):get()
+        LocalWorldInfo = require(locationServerFolder:WaitForChild("LocalWorldInfo"))
     end
 end
 
@@ -81,35 +82,22 @@ local component = function(props)
             onClick = function()
                 ClientTeleport.toWorld(worldIndex)
             end,
-            layoutOrder = worldIndex - ClientWorldData.getWorldPopulation(worldIndex) * 10000,
+            layoutOrder = worldIndex - LiveServerData.getWorldPopulation(worldIndex) * 10000,
             text = WorldNames.get(worldIndex),
             size = UDim2.new(1, 0, 0, 50),
             visible = Computed(function()
-                local currentWorlds = ClientWorldData:get()
+                local currentWorlds = ClientServerData.getWorlds()
 
                 local isFirstThreeEmptyWorlds = false do
                     local emptyWorlds = 0
 
-                    for j, worldData in ipairs(currentWorlds) do
-                        local isEmpty = true
-
-                        for _, data in pairs(worldData) do
-                            if data.serverInfo then
-                                isEmpty = false
-                                break
-                            end
-                        end
-
-                        if LocalWorldOrigin == j then
-                            isEmpty = false
-                        end
-
-                        if isEmpty then
+                    for index, _ in ipairs(currentWorlds) do
+                        if LiveServerData.getWorldPopulation(index) == 0 then
                             emptyWorlds += 1
                         end
 
-                        if j == worldIndex then
-                            isFirstThreeEmptyWorlds = true
+                        if index == worldIndex then
+                            isFirstThreeEmptyWorlds =true
                             break
                         end
 
@@ -121,7 +109,7 @@ local component = function(props)
 
                 local isDifferentWorld do
                     if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
-                        isDifferentWorld = ClientWorldInfo.worldIndex ~= worldIndex
+                        isDifferentWorld = LocalWorldInfo.worldIndex ~= worldIndex
                     elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.hasWorldOrigin) then
                         isDifferentWorld = LocalWorldOrigin ~= worldIndex
                     else
@@ -129,7 +117,7 @@ local component = function(props)
                     end
                 end
 
-                return ((isFirstThreeEmptyWorlds or (ClientWorldData.getWorldPopulation(worldIndex) ~= 0)) and isDifferentWorld and true) or false
+                return ((isFirstThreeEmptyWorlds or (LiveServerData.getWorldPopulation(worldIndex) ~= 0)) and isDifferentWorld and true) or false
             end),
 
             children = {
@@ -140,7 +128,7 @@ local component = function(props)
                     BackgroundTransparency = 1,
 
                     Text = Computed(function()
-                        return ClientWorldData.getWorldPopulation(worldIndex)
+                        return LiveServerData.getWorldPopulation(worldIndex)
                     end),
                     Font = Enum.Font.Gotham,
                 }
@@ -151,7 +139,7 @@ local component = function(props)
     end
 
     local worldButtons = Computed(function()
-        local currentWorlds = ClientWorldData:get()
+        local currentWorlds = ClientServerData.getWorlds()
 
         local worldButtons = {}
 
