@@ -4,6 +4,41 @@ local TimeRange = require(game:GetService("ReplicatedFirst"):WaitForChild("Share
 local timeRange = TimeRange.new
 local group = TimeRange.newGroup
 
+--[[
+
+[PartyTypeEnum.baseballParty] = {
+    name = "Baseball Party",
+    placeId = 11353468067,
+    chanceWeight = 1,
+    populationInfo = {
+        max = 100,
+        recommended = 50,
+    },
+    enabledTime = group {
+        timeRange(
+            {
+                year = 2020,
+                month = 1,
+                day = 1,
+                hour = 0,
+                min = 0,
+                sec = 0
+            },
+
+            {
+                year = 2025,
+                month = 1,
+                day = 1,
+                hour = 0,
+                min = 0,
+                sec = 0
+            }
+        )
+    }
+},
+
+]]
+
 return {
     [PartyTypeEnum.baseballParty] = {
         name = "Baseball Party",
