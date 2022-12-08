@@ -8,5 +8,4 @@ return {
     needsIdentity = 7,
     isWorldBased = 8,
     isGame = 9,
-    serverCodeFingerprint = 10,
 }
