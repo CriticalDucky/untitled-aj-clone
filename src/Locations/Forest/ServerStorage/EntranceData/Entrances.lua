@@ -14,7 +14,7 @@ local function getComponents(name)
     return {
         entrance = entranceGroup:WaitForChild("Entrance"),
         exit = entranceGroup:WaitForChild("Exit"),
-    }   
+    }
 end
 
 local entranceGroupTable = {
