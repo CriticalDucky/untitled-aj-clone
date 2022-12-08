@@ -1,18 +1,15 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ServerStorage = game:GetService("ServerStorage")
 
 local replicatedStorageShared = ReplicatedStorage.Shared
-local serverStorageShared = ServerStorage.Shared
-local serverManagement = serverStorageShared.ServerManagement
 local enumsFolder = replicatedStorageShared.Enums
 
-local GameServerData = require(serverManagement.GameServerData)
+local LiveServerData = require(replicatedStorageShared.Server.LiveServerData)
 local ServerTypeEnum = require(enumsFolder.ServerType)
 
 local PlayerLocation = {}
 
 function PlayerLocation.get(playerId)
-    local serverData = GameServerData.get()
+    local serverData = LiveServerData.get()
 
     local playerLocationTable
 
@@ -55,12 +52,12 @@ function PlayerLocation.get(playerId)
             end
         elseif serverType == ServerTypeEnum.party then
             for partyType, partyTypeData in pairs(serverTypeData) do
-                for privateServerId, serverInfo in pairs(partyTypeData) do
+                for partyIndex, serverInfo in pairs(partyTypeData) do
                     if table.find(serverInfo.players, playerId) then
                         playerLocationTable = {
                             serverType = serverType,
                             partyType = partyType,
-                            privateServerId = privateServerId,
+                            partyIndex = partyIndex,
                         }
 
                         break
@@ -69,12 +66,12 @@ function PlayerLocation.get(playerId)
             end
         elseif serverType == ServerTypeEnum.game then
             for gameType, gameTypeData in pairs(serverTypeData) do
-                for privateServerId, serverInfo in pairs(gameTypeData) do
+                for gameIndex, serverInfo in pairs(gameTypeData) do
                     if table.find(serverInfo.players, playerId) then
                         playerLocationTable = {
                             serverType = serverType,
                             gameType = gameType,
-                            privateServerId = privateServerId,
+                            gameIndex = gameIndex,
                         }
 
                         break
