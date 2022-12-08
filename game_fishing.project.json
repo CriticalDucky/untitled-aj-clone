@@ -1,5 +1,8 @@
 {
   "name": "Untitled-AJ-clone",
+  "servePlaceIds": [
+    11569189394
+  ],
   "tree": {
     "$className": "DataModel",
 
@@ -106,6 +109,28 @@
             "$className": "Folder",
             "$path": "src/Game/StarterPlayer/StarterCharacterScripts"
           }
+      }
+    },
+
+    "Workspace": {
+      "$className": "Workspace",
+      "$path": "src/Games/Fishing/Workspace",
+
+      "Shared": {
+        "$className": "Folder",
+        "$path": "src/Shared/Workspace"
+      },
+
+      "Location": {
+        "$className": "Folder",
+        "$path": "src/Game/Workspace"
+      }
+    },
+
+    "Lighting": {
+      "$className": "Lighting",
+      "$properties": {
+        "Technology": "Future"
       }
     }
   }

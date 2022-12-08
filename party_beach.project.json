@@ -1,5 +1,8 @@
 {
     "name": "Untitled-AJ-clone",
+    "servePlaceIds": [
+      11353468067
+    ],
     "tree": {
       "$className": "DataModel",
   
@@ -106,6 +109,28 @@
               "$className": "Folder",
               "$path": "src/Party/StarterPlayer/StarterCharacterScripts"
             }
+        }
+      },
+
+      "Workspace": {
+        "$className": "Workspace",
+        "$path": "src/Parties/BeachParty/Workspace",
+
+        "Shared": {
+          "$className": "Folder",
+          "$path": "src/Shared/Workspace"
+        },
+
+        "Party": {
+          "$className": "Folder",
+          "$path": "src/Party/Workspace"
+        }
+      },
+
+      "Lighting": {
+        "$className": "Lighting",
+        "$properties": {
+          "Technology": "Future"
         }
       }
     }

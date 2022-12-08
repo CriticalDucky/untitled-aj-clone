@@ -1,5 +1,8 @@
 {
   "name": "Untitled-AJ-clone",
+  "servePlaceIds": [
+    10189729412
+  ],
   "tree": {
     "$className": "DataModel",
 
@@ -76,6 +79,23 @@
             "$className": "Folder",
             "$path": "src/Shared/StarterPlayer/StarterCharacterScripts"
           }
+      }
+    },
+
+    "Workspace": {
+      "$className": "Workspace",
+      "$path": "src/Routing/StarterPlayer/Workspace",
+
+      "Shared": {
+        "$className": "Folder",
+        "$path": "src/Shared/StarterPlayer/Workspace"
+      }
+    },
+
+    "Lighting": {
+      "$className": "Lighting",
+      "$properties": {
+        "Technology": "Future"
       }
     }
   }
