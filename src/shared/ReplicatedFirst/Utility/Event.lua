@@ -50,4 +50,10 @@ function Event:Fire(...)
     end
 end
 
+function Event:Destroy()
+    for _, connection in pairs(self._connections) do
+        connection:Disconnect()
+    end
+end
+
 return Event
