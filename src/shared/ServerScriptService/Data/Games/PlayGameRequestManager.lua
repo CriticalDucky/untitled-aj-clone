@@ -58,12 +58,12 @@ PlayGameRequest:ConnectOnServerEvent(function(player, requestCode, gameType, ...
         task.spawn(function()
             respond(TeleportResponseType.teleportError)
         
-            local success = Teleport.rejoin(player, "There was an error teleporting you. Please try again. (err code 8)")
+            local success = Teleport.rejoin(player, "There was an error teleporting you. Please try again. (err code G1)")
     
             if not success then
                 warn("Failed to rejoin player")
     
-                player:Kick("There has been an error. Please rejoin. (err code 9)")
+                player:Kick("There has been an error. Please rejoin. (err code G1K)")
             end
         end)
     end
