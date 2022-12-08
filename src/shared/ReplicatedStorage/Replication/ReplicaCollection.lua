@@ -12,16 +12,15 @@ local classes = {
     "PlayerDataPublic",
     "PurchaseRequest",
     "TeleportRequest",
-    "ServerInfo",
-    "Worlds",
     "WorldInfo",
     "ServerUnixTime",
-    "Parties",
-    "HomeServers",
     "HomeOwner",
     "PlaceItemRequest",
-    "GamePlayers",
     "PlayGameRequest",
+    "PartyIndex",
+    "GameIndex",
+    "LiveServerData",
+    "ServerData",
 }
 
 local inclusiveClasses = {
