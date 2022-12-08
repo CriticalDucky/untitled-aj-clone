@@ -1,21 +1,14 @@
-local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local ServerStorage = game:GetService("ServerStorage")
 local Players = game:GetService("Players")
 
 local replicatedStorageShared = ReplicatedStorage.Shared
-local serverStorageShared = ServerStorage.Shared
 local enumsFolder = replicatedStorageShared.Enums
-local serverManagementShared = serverStorageShared.ServerManagement
 local serverFolder = replicatedStorageShared.Server
 
-local GameServerData = require(serverManagementShared.GameServerData)
+local LiveServerData = require(serverFolder.LiveServerData)
 local ServerGroupEnum = require(enumsFolder.ServerGroup)
 local ServerTypeGroups = require(serverFolder.ServerTypeGroups)
-local Teleport = require(serverStorageShared.Teleportation.Teleport)
-local Fingerprint = require(serverStorageShared.Utility.Fingerprint)
-local Table = require(ReplicatedFirst.Shared.Utility.Table)
 
 local indexInfo do
     if ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
@@ -23,7 +16,7 @@ local indexInfo do
             jobId = game.JobId,
         }
     elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
-        local LocalWorldInfo = require(ServerStorage.Location.ServerManagement.LocalWorldInfo)
+        local LocalWorldInfo = require(ReplicatedStorage.Location.Server.LocalWorldInfo)
 
         indexInfo = {
             worldIndex = LocalWorldInfo.worldIndex,
@@ -40,30 +33,21 @@ local indexInfo do
 
         indexInfo = {
             partyType = LocalPartyInfo.partyType,
-            privateServerId = game.PrivateServerId
+            partyIndex = LocalPartyInfo.partyIndex,
         }
     elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isGame) then
         local LocalGameInfo = require(ReplicatedStorage.Game.Server.LocalGameInfo)
 
         indexInfo = {
             gameType = LocalGameInfo.gameType,
-            privateServerId = game.PrivateServerId
+            gameIndex = LocalGameInfo.gameIndex,
+            privateServerId = game.PrivateServerId,
         }
     end
 end
 
-local success, serverCode
-
-if ServerTypeGroups.serverInGroup(ServerGroupEnum.serverCodeFingerprint) then
-    success, serverCode = Fingerprint.trace(game.PrivateServerId)
-
-    if not success then
-        Teleport.bootServer("An internal server error occurred. Please try again later. (err code 5)")
-    end
-end
-
 local runServiceConnection = RunService.Heartbeat:Connect(function()
-    if GameServerData.canPublish() then
+    if LiveServerData.canPublish() then
         local serverInfo
 
         local function getUserIds()
@@ -76,39 +60,33 @@ local runServiceConnection = RunService.Heartbeat:Connect(function()
             return userIds
         end
 
-        if ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
-            serverInfo = {
-                
-            }
-        elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
-            serverInfo = {
-                
-            }
-        elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome) then
-            serverInfo = {
-                
-            }
-        elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isParty) then
-            serverInfo = {
-                serverCode = serverCode,
-            }
-        elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isGame) then
-            local LocalGameInfo = require(ReplicatedStorage.Game.Server.LocalGameInfo)
+        serverInfo = {}
 
-            serverInfo = {
-                serverCode = LocalGameInfo.serverCode,
-            }
+        --#region Optional custom server info
+
+        if ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
+
+        elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
+
+        elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome) then
+
+        elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isParty) then
+
+        elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isGame) then
+
         end
+
+        --#endregion
 
         serverInfo.players = getUserIds()
 
-        GameServerData.publish(serverInfo, indexInfo)
+        LiveServerData.publish(serverInfo, indexInfo)
     end
 end)
 
 game:BindToClose(function()
     runServiceConnection:Disconnect() -- Disconnect heartbeat connection so that no other publish requests are made after this
 
-    GameServerData.publish(nil, indexInfo)
+    LiveServerData.publish(nil, indexInfo)
 end)
 
