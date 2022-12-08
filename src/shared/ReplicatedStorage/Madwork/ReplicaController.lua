@@ -516,6 +516,8 @@ end
 -- Write handlers:
 
 local function ReplicaSetValue(replica_id, path_array, value)
+	Table.deepToNumberKeys(value)
+
 	local replica = Replicas[replica_id]
 	-- Getting path pointer and listener table:
 	local pointer = replica.Data
@@ -563,6 +565,8 @@ local function ReplicaSetValue(replica_id, path_array, value)
 end
 
 local function ReplicaSetValues(replica_id, path_array, values)
+	Table.deepToNumberKeys(values)
+
 	local replica = Replicas[replica_id]
 	-- Getting path pointer and listener table:
 	local pointer = replica.Data
@@ -604,6 +608,8 @@ local function ReplicaSetValues(replica_id, path_array, values)
 end
 
 local function ReplicaArrayInsert(replica_id, path_array, value) --> new_index
+	Table.deepToNumberKeys(value)
+
 	local replica = Replicas[replica_id]
 	-- Getting path pointer and listener table:
 	local pointer = replica.Data
@@ -633,6 +639,8 @@ local function ReplicaArrayInsert(replica_id, path_array, value) --> new_index
 end
 
 local function ReplicaArraySet(replica_id, path_array, index, value)
+	Table.deepToNumberKeys(value)
+
 	local replica = Replicas[replica_id]
 	-- Getting path pointer and listener table:
 	local pointer = replica.Data
