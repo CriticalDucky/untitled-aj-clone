@@ -19,12 +19,12 @@ local PlayerData = require(dataFolder.PlayerData)
 local Table = require(utilityFolder.Table)
 local TeleportRequestType = require(enumsFolder.TeleportRequestType)
 local TeleportResponseType = require(enumsFolder.TeleportResponseType)
-local GameServerData = require(serverManagementFolder.GameServerData)
+local LiveServerData = require(serverFolder.LiveServerData)
 local PlayerLocation = require(serverStorageSharedUtility.PlayerLocation)
 local Locations = require(serverFolder.Locations)
 local ActiveParties = require(serverFolder.ActiveParties)
 local LocalWorldOrigin = require(serverFolder.LocalWorldOrigin)
-local WorldData = require(serverManagementFolder.WorldData)
+local ServerData = require(serverManagementFolder.ServerData)
 local PlayerSettings = require(dataFolder.Settings.PlayerSettings)
 local ServerTypeGroups = require(serverFolder.ServerTypeGroups)
 local ServerGroupEnum = require(enumsFolder.ServerGroup)
@@ -35,6 +35,18 @@ local TeleportRequest = ReplicaService.NewReplica({
     ClassToken = ReplicaService.NewClassToken("TeleportRequest"),
     Replication = "All"
 })
+
+local function getWorldIndexOrigin(player)
+    if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
+        local LocalWorldInfo = require(ReplicatedStorage.Location.Server.LocalWorldInfo)
+
+        return LocalWorldInfo.worldIndex, LocalWorldInfo.locationEnum
+    elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.hasWorldOrigin) then
+        return LocalWorldOrigin(player) or ServerData.findAvailableWorld()
+    elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
+        return ServerData.findAvailableWorld()
+    end
+end
 
 TeleportRequest:ConnectOnServerEvent(function(player: Player, requestCode, teleportRequestType, ...)
     local function requestIsValid()
@@ -67,12 +79,12 @@ TeleportRequest:ConnectOnServerEvent(function(player: Player, requestCode, telep
         task.spawn(function()
             respond(TeleportResponseType.teleportError)
         
-            local success = Teleport.rejoin(player, "There was an error teleporting you. Please try again. (err code 6)")
+            local success = Teleport.rejoin(player, "There was an error teleporting you. Please try again. (TR1)")
     
             if not success then
                 warn("Failed to rejoin player")
     
-                player:Kick("There has been an error. Please rejoin. (err code 4)")
+                player:Kick("There has been an error. Please rejoin. (err code TR1K)")
             end
         end)
     end
@@ -98,9 +110,9 @@ TeleportRequest:ConnectOnServerEvent(function(player: Player, requestCode, telep
             return respond(TeleportResponseType.invalid)
         end
 
-        local populationInfo = GameServerData.getWorldPopulationInfo(worldIndex)
+        if LiveServerData.isWorldFull(worldIndex) then
+            print("Invalid request: world is full")
 
-        if populationInfo and populationInfo.max_emptySlots == 0 then
             return respond(TeleportResponseType.full)
         end
 
@@ -118,43 +130,61 @@ TeleportRequest:ConnectOnServerEvent(function(player: Player, requestCode, telep
             return respond(TeleportResponseType.invalid)
         end
 
-        local populationInfo do
+        local function validateLocationEnum(worldIndex)
+            local worlds = ServerData.getWorlds()
+
+            if not worlds[worldIndex].locations[locationEnum] then
+                print("Invalid request: locationEnum is not a valid location for worldIndex")
+
+                return false
+            end
+
+            return true
+        end
+
+        local isLocationFull do
             local worldIndex
 
             if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
-                worldIndex = require(ServerStorage.Location.ServerManagement.LocalWorldInfo).worldIndex
+                worldIndex = require(ReplicatedStorage.Location.Server.LocalWorldInfo).worldIndex
             elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.hasWorldOrigin) then
-                worldIndex = LocalWorldOrigin(player) or WorldData.findAvailableWorld(locationEnum)
+                worldIndex = LocalWorldOrigin(player) or ServerData.findAvailableWorld(locationEnum)
             end
 
             if not worldIndex then
                 return respond(TeleportResponseType.teleportError)
             end
 
-            populationInfo = GameServerData.getLocationPopulationInfo(worldIndex, locationEnum)
+            if not validateLocationEnum(worldIndex) then
+                return respond(TeleportResponseType.invalid)
+            end
+
+            isLocationFull = LiveServerData.isLocationFull(worldIndex, locationEnum)
         end
 
         local worldIndex
 
-        if populationInfo and populationInfo.max_emptySlots == 0 then
+        if isLocationFull then
             local findOpenWorld = PlayerSettings.getSetting(player, "findOpenWorld")
 
             if not findOpenWorld then
                 return respond(TeleportResponseType.full)
             end
 
-            worldIndex = WorldData.findAvailableWorld(locationEnum)
+            worldIndex = ServerData.findAvailableWorld(locationEnum)
 
             if not worldIndex then
                 return respond(TeleportResponseType.teleportError)
+            end
+
+            if not validateLocationEnum(worldIndex) then
+                return respond(TeleportResponseType.invalid)
             end
         end
 
         PlayerData.yieldUntilHopReady(player)
 
-        local success = Teleport.teleportToLocation(player, locationEnum, worldIndex)
-
-        evaluateSuccess(success)
+        evaluateSuccess(Teleport.teleportToLocation(player, locationEnum, worldIndex))
     elseif teleportRequestType == TeleportRequestType.toFriend then
         local targetPlayerId = ...
 
@@ -185,15 +215,9 @@ TeleportRequest:ConnectOnServerEvent(function(player: Player, requestCode, telep
         end
 
         if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation, targetPlayerLocation.serverType) then
-            local populationInfo = GameServerData.getLocationPopulationInfo(targetPlayerLocation.worldIndex, targetPlayerLocation.locationEnum)
-            
-            if not populationInfo then
-                print("Error: populationInfo not found")
+            local isLocationFull = LiveServerData.isLocationFull(targetPlayerLocation.worldIndex, targetPlayerLocation.locationEnum)
 
-                return respond(TeleportResponseType.teleportError)
-            end
-    
-            if populationInfo.max_emptySlots == 0 then
+            if isLocationFull then
                 return respond(TeleportResponseType.full)
             end
     
@@ -208,17 +232,11 @@ TeleportRequest:ConnectOnServerEvent(function(player: Player, requestCode, telep
             evaluateSuccess(Teleport.teleportToPlayer(player, targetPlayerId))
         elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isParty, targetPlayerLocation.serverType) then
             local partyType = targetPlayerLocation.partyType
-            local privateServerId = targetPlayerLocation.privateServerId
+            local partyIndex = targetPlayerLocation.partyIndex
 
-            local populationInfo = GameServerData.getPartyPopulationInfo(partyType, privateServerId)
+            local isPartyFull = LiveServerData.isPartyFull(partyType, partyIndex)
 
-            if not populationInfo then
-                print("Error: populationInfo not found")
-
-                return respond(TeleportResponseType.teleportError)
-            end
-
-            if populationInfo.max_emptySlots == 0 then
+            if isPartyFull then
                 return respond(TeleportResponseType.full)
             end
 
@@ -254,9 +272,7 @@ TeleportRequest:ConnectOnServerEvent(function(player: Player, requestCode, telep
         end
 
         if player.UserId ~= homeOwnerUserId then
-            local populationInfo = GameServerData.getHomePopulationInfo(homeOwnerUserId)
-    
-            if populationInfo and populationInfo.max_emptySlots == 0 then
+            if LiveServerData.isHomeFull(homeOwnerUserId) then
                 warn("Teleport.teleportToHome: home is full")
                 return respond(TeleportResponseType.full)
             end
