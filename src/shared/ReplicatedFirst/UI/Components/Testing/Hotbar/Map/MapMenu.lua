@@ -49,9 +49,9 @@ local component = function(props)
             [OnEvent "MouseButton1Click"] = function()
                 if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
                     local locationServerFolder = ReplicatedStorage:WaitForChild("Location"):WaitForChild("Server")
-                    local ClientWorldInfo = require(locationServerFolder:WaitForChild("ClientWorldInfo")):get()
+                    local LocalWorldInfo = require(locationServerFolder:WaitForChild("LocalWorldInfo"))
 
-                    if ClientWorldInfo.locationEnum == locationEnum then
+                    if LocalWorldInfo.locationEnum == locationEnum then
                         open:set(false)
                     else
                         ClientTeleport.toLocation(locationEnum)
