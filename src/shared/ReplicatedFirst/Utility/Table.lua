@@ -1,8 +1,8 @@
 local Table = {}
 
-_G.Table = Table
+_G.Table = Table -- NOT for use in production code, only for debugging purposes
 
-function Table.dictLen(dict)
+function Table.dictLen(dict) -- returns the length of a dictionary (table with no sequential keys)
     local count = 0
 
     for _ in pairs(dict) do
@@ -12,7 +12,7 @@ function Table.dictLen(dict)
     return count
 end
 
-function Table.deepCopy(value)
+function Table.deepCopy(value) -- returns a deep copy of a table
     if type(value) == "table" then
         local copy = {}
 
@@ -26,7 +26,7 @@ function Table.deepCopy(value)
     return value
 end
 
-function Table.copy(t)
+function Table.copy(t) -- returns a shallow copy of a table
     local copy = {}
 
     for k, v in pairs(t) do
@@ -36,7 +36,7 @@ function Table.copy(t)
     return copy
 end
 
-function Table.hasValue(t, value)
+function Table.hasValue(t, value) -- returns true if the table has the value
     for _, v in pairs(t) do
         if v == value then
             return true
@@ -46,7 +46,7 @@ function Table.hasValue(t, value)
     return false
 end
 
-function Table.findMax(t)
+function Table.findMax(t) -- returns the key and value of the maximum value in a table
     local k, v
 
     for key, value in pairs(t) do
@@ -58,7 +58,7 @@ function Table.findMax(t)
     return k, v
 end
 
-function Table.findMin(t)
+function Table.findMin(t) -- returns the key and value of the minimum value in a table
     local k, v
 
     for key, value in pairs(t) do
@@ -70,7 +70,7 @@ function Table.findMin(t)
     return k, v
 end
 
-function Table.print(t, note, printTypes)
+function Table.print(t, note, printTypes) -- takes a table and prints it to the console recursively with an optional note and printTypes flag
     local MAX_PRINTS = 300
     local prints = 0
 
@@ -103,7 +103,7 @@ function Table.print(t, note, printTypes)
     printTable(t, "")
 end
 
-function Table.merge(...)
+function Table.merge(...) -- merges multiple tables into one, later tables overwrite earlier tables
     local merged = {}
 
     for _, t in pairs({...}) do
@@ -115,7 +115,7 @@ function Table.merge(...)
     return merged
 end
 
-function Table.compare(t1, t2)
+function Table.compare(t1, t2) -- compares two tables recursively, returns true if they are the same
     if type(t1) ~= "table" or type(t2) ~= "table" then
         return t1 == t2
     end
@@ -135,7 +135,7 @@ function Table.compare(t1, t2)
     return true
 end
 
-function Table.recursiveIterate(t, callback)
+function Table.recursiveIterate(t, callback) -- iterates through a table recursively, calling the callback with the path and value of each item
     local function recursiveIterate(t1, path)
         for k, v in pairs(t1) do
             local newPath = Table.copy(path)
@@ -153,7 +153,7 @@ function Table.recursiveIterate(t, callback)
     recursiveIterate(t, {})
 end
 
-function Table.findFirstKey(t, callback) -- callback can be nil
+function Table.findFirstKey(t, callback) -- returns the first key that passes the callback
     for k, v in pairs(t) do
         if not callback or callback(k, v) then
             return k, v
@@ -161,7 +161,7 @@ function Table.findFirstKey(t, callback) -- callback can be nil
     end
 end
 
-function Table.hasAnything(t)
+function Table.hasAnything(t) -- returns true if the table has anything in it
     for _, _ in pairs(t) do
         return true
     end
@@ -169,7 +169,7 @@ function Table.hasAnything(t)
     return false
 end
 
-function Table.deepReconcile(template, t)
+function Table.deepReconcile(template, t) -- reconciles t with template, adding any missing values from template to t
     local function deepReconcile(t1, t2)
         for k, v in pairs(t1) do
             if type(v) == "table" then
@@ -189,7 +189,7 @@ function Table.deepReconcile(template, t)
     deepReconcile(template, t)
 end
 
-function Table.safeIndex(t, ...)
+function Table.safeIndex(t, ...) -- safely indexes a table using a path, returns nil if normally would error
     local value = t
 
     for _, key in pairs({...}) do
@@ -203,7 +203,7 @@ function Table.safeIndex(t, ...)
     return value
 end
 
-function Table.deepToNumber(t, copy)
+function Table.deepToNumber(t, copy) -- converts all values to numbers if possible
     t = if copy then Table.deepCopy(t) else t
 
     local function deepToNumber(t1)
@@ -221,7 +221,7 @@ function Table.deepToNumber(t, copy)
     return t
 end
 
-function Table.deepToNumberKeys(t, copy): table
+function Table.deepToNumberKeys(t, copy): table -- converts all string keys to numbers if possible
     t = if copy then Table.deepCopy(t) else t
 
     local function deepToNumberKeys(t1)
@@ -254,6 +254,16 @@ function Table.selectWithKeys(t, keys) -- takes in an array of keys and returns 
     end
 
     return selected
+end
+
+function Table.indexOf(t, value) -- returns the index of the value in the table, or nil if it doesn't exist
+    for i, v in pairs(t) do
+        if v == value then
+            return i
+        end
+    end
+
+    return nil
 end
 
 
