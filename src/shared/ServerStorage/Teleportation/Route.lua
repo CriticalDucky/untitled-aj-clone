@@ -24,7 +24,7 @@ function Route.routeToWorld(player, worldsExcluded)
     local worldIndex, locationEnum = ServerData.findAvailableWorldAndLocation(nil, worldsExcluded)
 
     local function teleport()
-        return Teleport.teleportToLocation(player, locationEnum, worldIndex)
+        return Teleport.toLocation(player, locationEnum, worldIndex)
     end
 
     if worldIndex then
@@ -87,7 +87,7 @@ function Route.routeToPlayer(player)
         return false
     end
 
-    local success = Teleport.teleportToPlayer(player, followingPlayerId)
+    local success = Teleport.toPlayer(player, followingPlayerId)
 
     if success then
         return true
