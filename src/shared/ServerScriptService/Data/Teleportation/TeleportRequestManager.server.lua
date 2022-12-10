@@ -116,11 +116,13 @@ TeleportRequest:ConnectOnServerEvent(function(player: Player, requestCode, telep
             return respond(TeleportResponseType.full)
         end
 
-        PlayerData.yieldUntilHopReady(player)
+        local success = Teleport.toWorld(player, worldIndex)
 
-        local success = Teleport.teleportToWorld(player, worldIndex)
-
-        evaluateSuccess(success)
+        if not success then
+            return respond(TeleportResponseType.teleportError)
+        else
+            return respond(TeleportResponseType.success)
+        end
     elseif teleportRequestType == TeleportRequestType.toLocation then
         local locationEnum = ...
 
@@ -182,9 +184,13 @@ TeleportRequest:ConnectOnServerEvent(function(player: Player, requestCode, telep
             end
         end
 
-        PlayerData.yieldUntilHopReady(player)
+        local success = Teleport.toLocation(player, locationEnum, worldIndex)
 
-        evaluateSuccess(Teleport.teleportToLocation(player, locationEnum, worldIndex))
+        if not success then
+            return respond(TeleportResponseType.teleportError)
+        else
+            return respond(TeleportResponseType.success)
+        end
     elseif teleportRequestType == TeleportRequestType.toFriend then
         local targetPlayerId = ...
 
@@ -227,9 +233,13 @@ TeleportRequest:ConnectOnServerEvent(function(player: Player, requestCode, telep
                 return respond(TeleportResponseType.invalid)
             end
 
-            PlayerData.yieldUntilHopReady(player)
+            local success = Teleport.toPlayer(player, targetPlayerId)
 
-            evaluateSuccess(Teleport.teleportToPlayer(player, targetPlayerId))
+            if not success then
+                return respond(TeleportResponseType.teleportError)
+            else
+                return respond(TeleportResponseType.success)
+            end
         elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isParty, targetPlayerLocation.serverType) then
             local partyType = targetPlayerLocation.partyType
             local partyIndex = targetPlayerLocation.partyIndex
@@ -240,9 +250,13 @@ TeleportRequest:ConnectOnServerEvent(function(player: Player, requestCode, telep
                 return respond(TeleportResponseType.full)
             end
 
-            PlayerData.yieldUntilHopReady(player)
+            local success = Teleport.toPlayer(player, targetPlayerId)
 
-            evaluateSuccess(Teleport.teleportToPlayer(player, targetPlayerId))
+            if not success then
+                return respond(TeleportResponseType.teleportError)
+            else
+                return respond(TeleportResponseType.success)
+            end
         else
             return respond(TeleportResponseType.invalid)
         end
@@ -259,9 +273,13 @@ TeleportRequest:ConnectOnServerEvent(function(player: Player, requestCode, telep
             return respond(TeleportResponseType.disabled)
         end
 
-        PlayerData.yieldUntilHopReady(player)
+        local success = Teleport.toParty(player, partyType)
 
-        evaluateSuccess(Teleport.teleportToParty(player, partyType))
+        if not success then
+            return respond(TeleportResponseType.teleportError)
+        else
+            return respond(TeleportResponseType.success)
+        end
     elseif teleportRequestType == TeleportRequestType.toHome then
         local homeOwnerUserId = ...
 
@@ -299,9 +317,13 @@ TeleportRequest:ConnectOnServerEvent(function(player: Player, requestCode, telep
             end
         end
 
-        PlayerData.yieldUntilHopReady(player)
+        local success = Teleport.toHome(player, homeOwnerUserId)
 
-        evaluateSuccess(Teleport.teleportToHome(player, homeOwnerUserId))
+        if not success then
+            return respond(TeleportResponseType.teleportError)
+        else
+            return respond(TeleportResponseType.success)
+        end
     else
         warn("Invalid request: teleportRequestType is nil or invalid")
 
