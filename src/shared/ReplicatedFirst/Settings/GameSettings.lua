@@ -21,4 +21,7 @@ return { -- Constants for the game
     maxFurniturePlaced = 500, -- The max amount of furniture that can be placed in a home
 
     homePlaceId = 10564407502, -- The place ID of home
+
+    teleport_maxRetries = 4, -- The max amount of times to retry teleporting a player
+    teleport_retryDelay = 2, -- The delay between teleport retries
 }
