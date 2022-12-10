@@ -54,28 +54,6 @@ PlayGameRequest:ConnectOnServerEvent(function(player, requestCode, gameType, ...
         PlayGameRequest:FireClient(player, requestCode, ...)
     end
 
-    local function onTeleportError()
-        task.spawn(function()
-            respond(TeleportResponseType.teleportError)
-        
-            local success = Teleport.rejoin(player, "There was an error teleporting you. Please try again. (err code G1)")
-    
-            if not success then
-                warn("Failed to rejoin player")
-    
-                player:Kick("There has been an error. Please rejoin. (err code G1K)")
-            end
-        end)
-    end
-
-    local function evaluateSuccess(success)
-        if not success then
-            onTeleportError()
-        else
-            respond(TeleportResponseType.success)
-        end
-    end
-
     if not isRequestValid() then
         return respond(TeleportResponseType.invalid)
     end
@@ -83,9 +61,7 @@ PlayGameRequest:ConnectOnServerEvent(function(player, requestCode, gameType, ...
     local gameInfo = Games[gameType]
 
     if gameInfo.gameJoinType == GameJoinType.initial then
-        PlayerData.yieldUntilHopReady(player)
 
-        evaluateSuccess(Teleport.teleportToGame(player, gameType))
     elseif gameInfo.gameJoinType == GameJoinType.public then
 
     elseif gameInfo.gameJoinType == GameJoinType.hosting then
