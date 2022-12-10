@@ -21,10 +21,10 @@ for enum, entranceComponents in pairs(Entrances.groups) do
             if player and not playersTouched[player] then
                 playersTouched[player] = true
 
-                PlayerData.yieldUntilHopReady(player)
+                local success = Teleport.toLocation(player, enum)
 
-                if not (Teleport.teleportToLocation(player, enum) or Teleport.rejoin({player})) then
-                    player:Kick("Failed to teleport. Please rejoin the game. (err code E1)")
+                if not success then
+                    -- Stuff to do if teleport fails
                 end
             end
         end
