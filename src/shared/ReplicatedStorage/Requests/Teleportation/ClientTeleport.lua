@@ -36,9 +36,9 @@ local player = Players.LocalPlayer
 
 local TeleportRequest = ReplicaCollection.get("TeleportRequest")
 
-local Teleport = {}
+local ClientTeleport = {}
 
-function Teleport.request(teleportRequestType, ...)
+function ClientTeleport.request(teleportRequestType, ...)
     assert(Table.hasValue(TeleportRequestType, teleportRequestType), "Teleport.request() called with invalid teleportRequestType: " .. tostring(teleportRequestType))
 
     local response = ReplicaRequest.new(TeleportRequest, teleportRequestType, ...)
@@ -46,15 +46,15 @@ function Teleport.request(teleportRequestType, ...)
     return response
 end
 
-function Teleport.toWorld(worldIndex)
+function ClientTeleport.toWorld(worldIndex)
     if LiveServerData.isWorldFull(worldIndex) then
         return TeleportResponseType.full
     end
 
-    return Teleport.request(TeleportRequestType.toWorld, worldIndex)
+    return ClientTeleport.request(TeleportRequestType.toWorld, worldIndex)
 end
 
-function Teleport.toLocation(locationEnum)
+function ClientTeleport.toLocation(locationEnum)
     if ServerTypeGroups.serverInGroup(ServerGroupEnum.hasWorldInfo) then
         local localWorldIndex do
             if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
@@ -82,11 +82,11 @@ function Teleport.toLocation(locationEnum)
             return TeleportResponseType.full
         end
 
-        return Teleport.request(TeleportRequestType.toLocation, locationEnum)
+        return ClientTeleport.request(TeleportRequestType.toLocation, locationEnum)
     end
 end
 
-function Teleport.toFriend(playerId)
+function ClientTeleport.toFriend(playerId)
     local friendLocations = FriendLocations:get()
     local friendLocation = friendLocations[playerId]
 
@@ -106,13 +106,13 @@ function Teleport.toFriend(playerId)
                 return TeleportResponseType.invalid
             end
 
-            return Teleport.request(TeleportRequestType.toFriend, playerId)
+            return ClientTeleport.request(TeleportRequestType.toFriend, playerId)
         elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isParty, serverType) then
             if LiveServerData.isPartyFull(friendLocation.partyType, friendLocation.partyIndex) then
                 return TeleportResponseType.full
             end
 
-            return Teleport.request(TeleportRequestType.toFriend, playerId)
+            return ClientTeleport.request(TeleportRequestType.toFriend, playerId)
         else
             return TeleportResponseType.invalid
         end
@@ -121,7 +121,7 @@ function Teleport.toFriend(playerId)
     end
 end
 
-function Teleport.toParty(partyType)
+function ClientTeleport.toParty(partyType)
     local activeParty = ActiveParties.getActiveParty()
 
     if activeParty then
@@ -129,13 +129,13 @@ function Teleport.toParty(partyType)
             return TeleportResponseType.disabled
         end
 
-        return Teleport.request(TeleportRequestType.toParty, partyType)
+        return ClientTeleport.request(TeleportRequestType.toParty, partyType)
     else
         return TeleportResponseType.invalid
     end
 end
 
-function Teleport.toHome(homeOwnerUserId)
+function ClientTeleport.toHome(homeOwnerUserId)
     if ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome) then
         local LocalHomeInfo = require(ReplicatedStorage.Home.Server.LocalHomeInfo)
 
@@ -145,8 +145,8 @@ function Teleport.toHome(homeOwnerUserId)
     end
 
     if homeOwnerUserId == player.UserId then
-        return Teleport.request(TeleportRequestType.toHome, homeOwnerUserId)
+        return ClientTeleport.request(TeleportRequestType.toHome, homeOwnerUserId)
     end
 end
 
-return Teleport
+return ClientTeleport
