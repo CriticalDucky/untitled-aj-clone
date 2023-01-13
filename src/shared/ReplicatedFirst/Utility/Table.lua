@@ -106,7 +106,7 @@ end
 function Table.merge(...) -- merges multiple tables into one, later tables overwrite earlier tables
     local merged = {}
 
-    for _, t in pairs({...}) do
+    for _, t in ipairs({...}) do
         for k, v in pairs(t) do
             merged[k] = v
         end
@@ -135,7 +135,16 @@ function Table.compare(t1, t2) -- compares two tables recursively, returns true 
     return true
 end
 
-function Table.recursiveIterate(t, callback) -- iterates through a table recursively, calling the callback with the path and value of each item
+
+--[[ 
+    Iterates through a table recursively, calling the callback with the path and value of each item:
+    ```lua
+    Table.recursiveIterate({a = {b = {c = 1}}}, function(path, value)
+        print(path, value)
+    end)
+    ```
+]]
+function Table.recursiveIterate(t, callback)
     local function recursiveIterate(t1, path)
         for k, v in pairs(t1) do
             local newPath = Table.copy(path)
@@ -266,20 +275,52 @@ function Table.indexOf(t, value) -- returns the index of the value in the table,
     return nil
 end
 
+function Table.callAll(t, ...) -- calls all functions in the table with the given arguments
+    for _, v in pairs(t) do
+        if type(v) == "function" then
+            v(...)
+        end
+    end
+end
 
-local testTable = { -- has keys of all types and values of all types and many depths
-    a = {
-        b = 1,
-        c = "hello",
-        d = false,
-        ["2"] = "number key",
-        [1] = "number value",
-    },
-    b = 1,
-    c = "hello",
-    d = false,
-    ["2"] = "number key",
-    [1] = "number value",
-}
+function Table.append(...) -- appends multiple tables together in order. If a value in the tuple is not a table, it is ignored
+    local appended = {}
+
+    for _, t in pairs({...}) do
+        if type(t) == "table" then
+            for _, v in pairs(t) do
+                table.insert(appended, v)
+            end
+        end
+    end
+
+    return appended
+end
+
+function Table.setProps(object, props) -- sets the properties of an object to the values in the table
+    for k, v in pairs(props) do
+        object[k] = v
+    end
+end
+
+function Table.build(length, callback) -- builds a table with the given length, calling the callback with the index and returning the value
+    local t = {}
+
+    for i = 1, length do
+        t[i] = callback(i)
+    end
+
+    return t
+end
+
+function Table.map(t, callback) -- maps a table to a new table using the callback
+    local mapped = {}
+
+    for k, v in pairs(t) do
+        mapped[k] = callback(k, v)
+    end
+
+    return mapped
+end
 
 return Table
