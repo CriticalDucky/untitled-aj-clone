@@ -30,7 +30,6 @@ local Locations = require(serverFolder:WaitForChild("Locations"))
 local FriendLocations = require(serverFolder:WaitForChild("FriendLocations"))
 local LocalWorldOrigin = require(serverFolder:WaitForChild("LocalWorldOrigin"))
 local ActiveParties = require(serverFolder:WaitForChild("ActiveParties"))
-local PrintEnum = require(utilityFolder:WaitForChild("PrintEnum"))
 
 local player = Players.LocalPlayer
 
