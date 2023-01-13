@@ -8,12 +8,17 @@ local replicatedStorageShared = ReplicatedStorage.Shared
 local enumsFolder = replicatedStorageShared.Enums
 local serverFolder = replicatedStorageShared.Server
 
-local ServerTypeEnum = require(enumsFolder.ServerType)
-local Locations = require(serverFolder.Locations)
-local Parties = require(serverFolder.Parties)
-local Games = require(serverFolder.Games)
-local GameSettings = require(replicatedFirstShared.Settings.GameSettings)
+local ServerTypeEnum = require(enumsFolder:WaitForChild("ServerType"))
+local Locations = require(serverFolder:WaitForChild("Locations"))
+local Parties = require(serverFolder:WaitForChild("Parties"))
+local Games = require(serverFolder:WaitForChild("Games"))
+local GameSettings = require(replicatedFirstShared:WaitForChild("Settings"):WaitForChild("GameSettings"))
+local Promise = require(replicatedFirstShared:WaitForChild("Utility"):WaitForChild("Promise"))
 
+local ClientServerData = require(serverFolder:WaitForChild("ClientServerData"))
+
+local isServer = RunService:IsServer()
+local isClient = RunService:IsClient()
 
 local serverType do
     for _, locationInfo in pairs(Locations.info) do
@@ -43,8 +48,22 @@ local serverType do
     end
 end
 
-local localServerInfo = {}
+local LocalServerInfo = {}
 
-localServerInfo.serverType = serverType
+LocalServerInfo.serverType = serverType
 
-return localServerInfo
+function LocalServerInfo.getServerInfo()
+    if isServer then
+        local ServerStorage = game:GetService("ServerStorage")
+
+        local serverStorageShared = ServerStorage.Shared
+
+        local ServerData = require(serverStorageShared.ServerManagement.ServerData)
+
+        return ServerData.traceServerInfo()
+    elseif isClient then
+        return ClientServerData.getServerInfo()
+    end
+end
+
+return LocalServerInfo
