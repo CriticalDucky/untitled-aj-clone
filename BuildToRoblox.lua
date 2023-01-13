@@ -1,5 +1,13 @@
 ---@diagnostic disable
 
+--[[
+
+    This script *publishes* then project to Roblox. It will overwrite the existing place asset.
+
+    TESTING_MODE controls whether it will publish to the testing or production game. This is extremely dangerous.
+    It should only be changed when we want to push an update. Go through me first!
+]]
+
 local TESTING_MODE = false -- DO NOT TOUCH THIS! DANGEROUS!
 local API_COOLDOWN = 45
 local MAX_RETRIES = 4
