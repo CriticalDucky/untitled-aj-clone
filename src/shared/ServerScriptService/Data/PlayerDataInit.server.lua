@@ -14,12 +14,12 @@ local ServerTypeGroups = require(serverFolder.ServerTypeGroups)
 
 if not ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
     local PlayerData = require(dataFolder.PlayerData)
-    local InventoryManager = require(dataFolder.Inventory.InventoryManager)
 
     local function playerAdded(player)
-        if not PlayerData.init(player) then
-            Teleport.rejoin(player)
-        end
+        PlayerData.init(player)
+            :catch(function()
+                Teleport.rejoin(player, "An internal server error occurred. (err code PDF)")
+            end)
     end
 
     for _, player in pairs(Players:GetPlayers()) do
