@@ -109,7 +109,7 @@ function HomeManager.getHome(player: Player | number, slot)
     local home
 
     if type(slot) == "string" then
-        home = InventoryManager.getItemWithId(homes, slot)
+        home = InventoryManager.getItemFromId(homes, slot)
     elseif type(slot) == "number" then
         home = homes[slot]
     else -- nil
@@ -139,11 +139,6 @@ function HomeManager.getSelectedHomeIndex(player: Player | number)
 end
 
 function HomeManager.getHomeServerInfo(player)
-    export type homeServerInfo = {
-        serverCode: string,
-        privateServerId: string,
-    }
-
     for _, p in pairs(Players:GetPlayers()) do
         if p.UserId == player then
             player = p
@@ -151,7 +146,7 @@ function HomeManager.getHomeServerInfo(player)
         end
     end
 
-    local playerData = PlayerData.get(player) or PlayerData.viewPlayerData(player)
+    local playerData = PlayerData.get(player) or PlayerData.viewPlayerProfile(player)
     local profile = playerData and if playerData.profile then playerData.profile else playerData
 
     local homeServerInfo: homeServerInfo = profile and profile.Data.playerInfo.homeServerInfo
@@ -160,7 +155,7 @@ function HomeManager.getHomeServerInfo(player)
 end
 
 function HomeManager.isHomeInfoStamped(player: Player | number)
-    local playerData = PlayerData.get(player) or PlayerData.viewPlayerData(player)
+    local playerData = PlayerData.get(player) or PlayerData.viewPlayerProfile(player)
     local profile = playerData and if playerData.profile then playerData.profile else playerData
 
     if not playerData then
@@ -244,7 +239,7 @@ end
 function HomeManager.loadPlacedItem(placedItem)
     assert(isHomeServer, "HomeManager.renderPlacedItem can only be called in a home server")
 
-    local item = InventoryManager.getItemWithId(LocalHomeInfo.homeOwner, placedItem.itemId)
+    local item = InventoryManager.getItemFromId(LocalHomeInfo.homeOwner, placedItem.itemId)
     local itemInfo = Items[item.itemCategory][item.itemEnum]
     local object = getLoadedItemFromId(placedItem.itemId)
 
