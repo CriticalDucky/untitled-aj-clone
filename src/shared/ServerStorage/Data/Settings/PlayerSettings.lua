@@ -15,7 +15,7 @@ function PlayerSettings.get(player: Player | number)
     local profile do
         local playerData = PlayerData.get(player)
 
-        profile = if playerData then playerData.profile else PlayerData.viewPlayerData(player)
+        profile = if playerData then playerData.profile else PlayerData.viewPlayerProfile(player)
     end
 
     if not profile then
