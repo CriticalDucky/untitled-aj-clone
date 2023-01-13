@@ -45,9 +45,9 @@ return function(serverType, indexInfo)
             error("Invalid location enum: " .. tostring(locationEnum))
         end
     elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isParty, serverType) then
-        local partyEnum = indexInfo.partyEnum
+        local partyType = indexInfo.partyType
 
-        local partyInfo = Parties[partyEnum]
+        local partyInfo = Parties[partyType]
 
         if partyInfo then
             local populationInfo = partyInfo.populationInfo
@@ -60,12 +60,12 @@ return function(serverType, indexInfo)
                 serverFillInfo.recommended = GameSettings.party_maxRecommendedPlayers
             end
         else
-            error("Invalid party enum: " .. tostring(partyEnum))
+            error("Invalid party enum: " .. tostring(partyType))
         end
     elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isGame, serverType) then
-        local gameEnum = indexInfo.gameEnum
+        local gameType = indexInfo.gameType
 
-        local gameInfo = Games[gameEnum]
+        local gameInfo = Games[gameType]
 
         if gameInfo then
             local populationInfo = gameInfo.populationInfo
@@ -78,7 +78,7 @@ return function(serverType, indexInfo)
                 serverFillInfo.recommended = GameSettings.location_maxRecommendedPlayers
             end
         else
-            error("Invalid game enum: " .. tostring(gameEnum))
+            error("Invalid game enum: " .. tostring(gameType))
         end
     elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome, serverType) then
         serverFillInfo.max = GameSettings.home_maxNormalPlayers
