@@ -20,7 +20,8 @@ local ReplicationType = require(enumsFolder.ReplicationType)
 local Table = require(replicatedFirstUtility.Table)
 local PlayerJoinTimes = require(serverStorageSharedUtility.PlayerJoinTimes)
 local HomeLockType = require(enumsFolder.HomeLockType)
-local Event = require(replicatedFirstUtility.Event)
+local Signal = require(replicatedFirstUtility.Signal)
+local Promise = require(replicatedFirstUtility.Promise)
 
 local PROFILE_TEMPLATE = { -- Items in here can only be under a table. See:
 
@@ -115,81 +116,73 @@ local function getKey(playerId)
 end
 
 function PlayerData.new(player)
-    local newPlayerData = setmetatable({}, PlayerData)
-    newPlayerData.player = player
+    return Promise.new(function(resolve, reject)
+        local newPlayerData = setmetatable({}, PlayerData)
+        newPlayerData.player = player
 
-    local profile = ProfileStore:LoadProfileAsync(getKey(player.UserId), "ForceLoad")
+        local profile = ProfileStore:LoadProfileAsync(getKey(player.UserId), "ForceLoad")
 
-    if profile then
-        profile:AddUserId(player.UserId)
-        profile:Reconcile()
-        profile:ListenToRelease(function()
-            playerDataCollection[player] = nil
-            playerDataCreationComplete[player] = nil
-        end)
+        if profile then
+            profile:AddUserId(player.UserId)
+            profile:Reconcile()
+            profile:ListenToRelease(function()
+                playerDataCollection[player] = nil
+                playerDataCreationComplete[player] = nil
+            end)
 
-        if player:IsDescendantOf(Players) then
-            playerDataCollection[player] = newPlayerData
-            local tempDataCopy = Table.deepCopy(TEMP_DATA_TEMPLATE)
+            if player:IsDescendantOf(Players) then
+                playerDataCollection[player] = newPlayerData
+                local tempDataCopy = Table.deepCopy(TEMP_DATA_TEMPLATE)
 
-            local function getMatchingProfileProps(privacy)
-                local matchingProps = {}
-                for _, key in ipairs(PROFILE_REPLICATION[privacy]) do
-                    matchingProps[key] = profile.Data[key]
-                end
-                return matchingProps
-            end
-
-            local function getMatchingTempDataProps(privacy)
-                local matchingProps = {}
-                for k, v in pairs(tempDataCopy) do
-                    matchingProps[k] = v._replication == privacy and v or nil
-                end
-                return matchingProps
-            end
-
-            local function combineDictionaries(...)
-                local result = {}
-                for _, dictionary in ipairs({...}) do
-                    for key, value in pairs(dictionary) do
-                        result[key] = value
+                local function getMatchingProfileProps(privacy)
+                    local matchingProps = {}
+                    for _, key in ipairs(PROFILE_REPLICATION[privacy]) do
+                        matchingProps[key] = profile.Data[key]
                     end
+                    return matchingProps
                 end
-                return result
+
+                local function getMatchingTempDataProps(privacy)
+                    local matchingProps = {}
+                    for k, v in pairs(tempDataCopy) do
+                        matchingProps[k] = v._replication == privacy and v or nil
+                    end
+                    return matchingProps
+                end
+
+                local data_replicationPrivate = Table.merge(
+                    getMatchingProfileProps(ReplicationType.private),
+                    getMatchingTempDataProps(ReplicationType.private)
+                )
+
+                local data_replicationPublic = Table.merge(
+                    getMatchingProfileProps(ReplicationType.public),
+                    getMatchingTempDataProps(ReplicationType.public)
+                )
+
+                newPlayerData.profile = profile
+                newPlayerData.tempData = tempDataCopy
+
+                newPlayerData.replica_private = ReplicaService.NewReplica({
+                    ClassToken = ReplicaService.NewClassToken("PlayerDataPrivate_" .. player.UserId .. PlayerJoinTimes.getTimesJoined(player)),
+                    Data = data_replicationPrivate,
+                    Replication = player
+                })
+
+                print("Replicating data to " .. player.Name .. "...")
+
+                playerDataPublicReplica:SetValue({player.UserId}, data_replicationPublic)
+                newPlayerData.replica_public = playerDataPublicReplica
+            else
+                profile:Release()
             end
-
-            local data_replicationPrivate = combineDictionaries(
-                getMatchingProfileProps(ReplicationType.private),
-                getMatchingTempDataProps(ReplicationType.private)
-            )
-
-            local data_replicationPublic = combineDictionaries(
-                getMatchingProfileProps(ReplicationType.public),
-                getMatchingTempDataProps(ReplicationType.public)
-            )
-
-            newPlayerData.profile = profile
-            newPlayerData.tempData = tempDataCopy
-
-            newPlayerData.replica_private = ReplicaService.NewReplica({
-                ClassToken = ReplicaService.NewClassToken("PlayerDataPrivate_" .. player.UserId .. PlayerJoinTimes.getTimesJoined(player)),
-                Data = data_replicationPrivate,
-                Replication = player
-            })
-
-            print("Replicating data to " .. player.Name .. "...")
-
-            playerDataPublicReplica:SetValue({player.UserId}, data_replicationPublic)
-            newPlayerData.replica_public = playerDataPublicReplica
         else
-            profile:Release()
+            print("Failed to load profile for player " .. player.Name)
+            return reject()
         end
-    else
-        print("Failed to load profile for player " .. player.Name)
-        return
-    end
 
-    return newPlayerData
+        resolve(newPlayerData)
+    end)
 end
 
 function PlayerData:setValue(path: table, value)
@@ -296,75 +289,104 @@ end
 
 local PlayerDataManager = {}
 
-PlayerDataManager.playerDataAdded = Event.new()
+PlayerDataManager.playerDataAdded = Signal.new()
 
-function PlayerDataManager.get(player, wait)
-    local playerData = playerDataCollection[player]
+function PlayerDataManager.get(
+    player: Player | number,
+    wait: boolean
+)
+    return Promise.new(function(resolve)
+        player = Players:GetPlayerByUserId(typeof(player) == "Instance" and player.UserId or player)
 
-    if playerData then
-        return playerData
-    elseif wait and playerDataCreationComplete then
-        while not playerDataCreationComplete[player] do
-            task.wait()
-            playerData = playerDataCollection[player]
+        if not player then
+            return resolve(nil)
         end
 
-        return playerData
-    end
+        local playerData = playerDataCollection[player]
+
+        if playerData then
+            resolve(playerData)
+        elseif wait and playerDataCreationComplete then
+            while not playerDataCreationComplete[player] do
+                task.wait()
+            end
+
+            resolve(playerDataCollection[player])
+        else
+            resolve(nil)
+        end
+    end)
 end
 
-function PlayerDataManager.viewPlayerData(player, getUpdated)
+--[[
+    Returns a promise that resolves a player's view-only profile.
+    If getRaw is set to true, the promise will resolve with the base profile instead of profile.Data.
+]]
+function PlayerDataManager.viewPlayerProfile(
+    player: Player | number,
+    getUpdated: boolean,
+    getRaw: boolean
+)
     local userId = if typeof(player) == "Instance" then player.UserId else player
 
-    local profile = cachedInactiveProfiles[userId]
+    player = Players:GetPlayerByUserId(userId)
 
-    if not profile or (getUpdated and time() - profile.cachedTime > INACTIVE_PROFILE_COOLDOWN) then
-        cachedInactiveProfiles[userId] = {
-            cachedTime = time()
-        }
-
-        profile = ProfileStore:ViewProfileAsync(getKey(userId))
-        
-        if profile then
-            cachedInactiveProfiles[userId].profile = profile
-        else
-            warn("Failed to view profile")
-
-            return
-        end
+    if player and playerDataCollection[player] then
+        local profile = playerDataCollection[player].profile
+        return Promise.resolve(getRaw and profile or profile.Data)
     end
 
-    return cachedInactiveProfiles[userId].profile
+    local profileSettings = cachedInactiveProfiles[userId]
+
+    return Promise.new(function(resolve, reject)
+        if not profileSettings or (getUpdated and time() - profileSettings.cachedTime > INACTIVE_PROFILE_COOLDOWN) then
+            profileSettings = cachedInactiveProfiles[userId] or {}
+            profileSettings.cachedTime = time()
+            cachedInactiveProfiles[userId] = profileSettings
+    
+            local profile = ProfileStore:ViewProfileAsync(getKey(userId))
+            
+            if profile then
+                cachedInactiveProfiles[userId].profile = profile
+                resolve(getRaw and profile or profile.Data)
+            else
+                warn("Failed to view profile")
+    
+                reject()
+            end
+        else
+            resolve(profileSettings.profile)
+        end
+    end)
 end
 
 function PlayerDataManager.init(player)
     print("Initializing player data for " .. player.Name)
 
-    local playerData = PlayerData.new(player)
-    playerDataCreationComplete[player] = true
-    PlayerDataManager.playerDataAdded:Fire(playerData)
-    
-    return playerData
+    return PlayerData.new(player)
+        :andThen(function(playerData)
+            playerDataCreationComplete[player] = true
+            PlayerDataManager.playerDataAdded:Fire(playerData)
+        end)
 end
 
 function PlayerDataManager.yieldUntilHopReady(player)
-    local playerData = PlayerDataManager.get(player)
+    return PlayerDataManager.get(player)
+        :andThen(function(playerData)
+            local profile = playerData.profile
+            profile:Release()
 
-    if playerData then
-        local profile = playerData.profile
-        profile:Release()
+            local connection
 
-        local connection
+            connection = profile:ListenToHopReady(function()
+                connection:Disconnect()
+                connection = nil
+            end)
 
-        connection = profile:ListenToHopReady(function()
-            connection:Disconnect()
-            connection = nil
+            while connection do
+                task.wait()
+            end
         end)
-
-        while connection do
-            task.wait()
-        end
-    end
 end
 
 function PlayerDataManager.forAllPlayerData(callback)
