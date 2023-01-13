@@ -3,36 +3,40 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild("Shared")
+local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
+local utilityFolder = replicatedFirstShared:WaitForChild("Utility")
 
-local worldInfo
+local Promise = require(utilityFolder:WaitForChild("Promise"))
 
-if RunService:IsClient() then
-    local ReplicaCollection = require(replicatedStorageShared:WaitForChild("Replication"):WaitForChild("ReplicaCollection"))
+return Promise.new(function(resolve, reject)
+    if RunService:IsClient() then
+        local ReplicaCollection = require(replicatedStorageShared:WaitForChild("Replication"):WaitForChild("ReplicaCollection"))
 
-    worldInfo = ReplicaCollection.get("WorldInfo", true).Data.worldInfo
-elseif RunService:IsServer() then
-    local ServerStorage = game:GetService("ServerStorage")
+        ReplicaCollection.get("WorldInfo", true)
+            :andThen(function(worldInfoReplica)
+                resolve(worldInfoReplica.Data.worldInfo)
+            end)
+    elseif RunService:IsServer() then
+        local ServerStorage = game:GetService("ServerStorage")
 
-    local serverStorageShared = ServerStorage.Shared
-    local serverManagementFolder = serverStorageShared.ServerManagement
+        local serverStorageShared = ServerStorage.Shared
+        local serverManagementFolder = serverStorageShared.ServerManagement
 
-    local ReplicaService = require(serverStorageShared.Data.ReplicaService)
-    local ServerData = require(serverManagementFolder.ServerData)
+        local ReplicaService = require(serverStorageShared.Data.ReplicaService)
+        local ServerData = require(serverManagementFolder.ServerData)
 
-    worldInfo = ServerData.getServerInfo(ServerData.WORLDS_KEY)
+        ServerData.traceServerInfo()
+            :andThen(function(serverInfo)
+                ReplicaService.NewReplica({
+                    ClassToken = ReplicaService.NewClassToken("WorldInfo"),
+                    Data = {
+                        worldInfo = serverInfo,
+                    },
+                    Replication = "All",
+                })
 
-    ReplicaService.NewReplica({
-        ClassToken = ReplicaService.NewClassToken("WorldInfo"),
-        Data = {
-            worldInfo = worldInfo,
-        },
-        Replication = "All",
-    })
-end
-
-local localWorldInfo = {}
-
-localWorldInfo.worldIndex = worldInfo and worldInfo.worldIndex
-localWorldInfo.locationEnum = worldInfo and worldInfo.locationEnum
-
-return localWorldInfo
+                resolve(serverInfo)
+            end)
+            :catch(reject)
+    end
+end)
