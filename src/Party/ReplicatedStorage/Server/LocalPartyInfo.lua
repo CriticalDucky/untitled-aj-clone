@@ -40,5 +40,7 @@ elseif RunService:IsServer() then
     })
 end
 
+local a = {}
+
 return LocalPartyInfo
 
