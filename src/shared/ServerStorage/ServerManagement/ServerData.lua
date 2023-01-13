@@ -29,6 +29,7 @@ local Table = require(replicatedFirstUtility.Table)
 local Event = require(replicatedFirstUtility.Event)
 local PlayerData = require(serverStorageShared.Data.PlayerData)
 local ReplicaService = require(dataFolder.ReplicaService)
+local Promise = require(replicatedFirstUtility.Promise)
 
 local serverDataStore = DataStoreService:GetDataStore(SERVERS_DATASTORE)
 
@@ -47,7 +48,7 @@ local cachedData = {
     },
     [PARTIES_KEY] = {
         --[[
-            [partyEnum] = {
+            [partyType] = {
                 [partyIndex] = {
                     privateServerId = privateServerId,
                     serverCode = serverCode,
@@ -57,7 +58,7 @@ local cachedData = {
     },
     [GAMES_KEY] = {
         --[[
-            [gameEnum] = {
+            [gameType] = {
                 [gameIndex] = {
                     privateServerId = privateServerId,
                     serverCode = serverCode,
@@ -67,8 +68,6 @@ local cachedData = {
     },
 --[[
     [PrivateServerId] = {
-        privateServerId = privateServerId,
-        serverCode = serverCode,
         [any] = any
     }
 ]]
@@ -100,7 +99,7 @@ local replica = ReplicaService.NewReplica({
     Replication = "All"
 })
 
-local function retrieveDatastore(key)
+local function retrieveDatastore(key) -- WARNING: Yields; should only be called from a Promise
     if isRetrieving[key] then
         repeat task.wait() until not isRetrieving[key]
 
@@ -110,40 +109,52 @@ local function retrieveDatastore(key)
     lastDatastoreRequest[key] = time()
     isRetrieving[key] = true
 
-    local success, data = DataStore.safeGet(serverDataStore, key)
+    DataStore.safeGet(serverDataStore, key)
+        :andThen(function(data)
+            cachedData[key] = data or {}
 
-    isRetrieving[key] = false
-    
-    if success then
-        cachedData[key] = data or {}
-
-        if constantKeys[key] then
             replica:SetValue({key}, Table.copy(cachedData[key]))
-        end
-    end
+        end)
+        :catch(function()
+            warn("Failed to retrieve datastore for key: " .. key)
+        end)
+        :finally(function()
+            isRetrieving[key] = false
+        end)
 end
 
 local function newLocation(locationEnum)
-    local locationInfo = Locations.info[locationEnum]
+    local function getLocationTable()
+        return Promise.try(function()
+            local locationInfo = Locations.info[locationEnum]
 
-    local serverCode, privateServerId = TeleportService:ReserveServer(locationInfo.placeId)
+            local serverCode, privateServerId = TeleportService:ReserveServer(locationInfo.placeId)
 
-    local locationTable = {
-        serverCode = serverCode,
-        privateServerId = privateServerId,
-    }
-    
-    return locationTable
+            local locationTable = {
+                serverCode = serverCode,
+                privateServerId = privateServerId,
+            }
+
+            return locationTable
+        end)
+    end
+
+    return Promise.retry(
+        getLocationTable,
+        5
+    )
 end
 
 function ServerData.get(key)
-    local data = cachedData[key]
+    return Promise.new(function(resolve, reject)
+        local data = cachedData[key]
 
-    if not data or not Table.hasAnything(data) then
-        retrieveDatastore(key)
-    end
+        if not data then
+            retrieveDatastore(key)
+        end
 
-    return cachedData[key]
+        (if cachedData[key] then resolve else reject)(cachedData[key])
+    end)
 end
 
 function ServerData.getWorlds()
@@ -158,221 +169,252 @@ function ServerData.getGames()
     return ServerData.get(GAMES_KEY)
 end
 
+function ServerData.getWorld(worldIndex)
+    return ServerData.getWorlds()
+        :andThen(function(worlds)
+            return worlds[worldIndex]
+        end)
+end
+
+function ServerData.getParty(partyType, partyIndex)
+    return ServerData.getParties()
+        :andThen(function(parties)
+            return parties[partyType][partyIndex]
+        end)
+end
+
+function ServerData.getGame(gameType, gameIndex)
+    return ServerData.getGames()
+        :andThen(function(games)
+            return games[gameType][gameIndex]
+        end)
+end
+
+function ServerData.getLocation(worldIndex, locationEnum)
+    return ServerData.getWorld(worldIndex)
+        :andThen(function(world)
+            return world.locations[locationEnum]
+        end)
+end
+
+function ServerData.getAll()
+    return Promise.all({
+        ServerData.getWorlds(),
+        ServerData.getParties(),
+        ServerData.getGames(),
+    })
+        :andThen(function()
+            return cachedData
+        end)
+end
+
 function ServerData.update(key, transformFunction, replicaFunction)
-    local success = DataStore.safeUpdate(serverDataStore, key, transformFunction)
+    return DataStore.safeUpdate(serverDataStore, key, transformFunction)
+        :andThen(function()
+            transformFunction(cachedData[key])
 
-    local data = cachedData[key]
-
-    if success then
-        transformFunction(data)
-
-        if constantKeys[key] and replicaFunction then
-            replicaFunction()
-        end
-    end
-
-    return success
+            if constantKeys[key] and replicaFunction then
+                replicaFunction()
+            end
+        end)
 end
 
 function ServerData.addWorld()
-    local world do
-        world = {
+    return Promise.new(function(resolve, reject)
+        local world = {
             locations = {},
         }
 
+        local promiseTable = {}
+
         for enum, _ in pairs(Locations.info) do
-            world.locations[enum] = newLocation(enum)
+            local location = newLocation(enum)
+
+            table.insert(promiseTable, location)
+
+            world.locations[enum] = location
         end
-    end
 
-    return ServerData.update(
-        WORLDS_KEY,
-        function(worlds)
-            worlds = worlds or {}
+        Promise.all(promiseTable)
+            :andThenCall(resolve, world)
+            :catch(reject)
+    end)
+        :andThen(function(world)
+            return ServerData.update(
+                WORLDS_KEY,
+                function(worlds)
+                    worlds = worlds or {}
 
-            table.insert(worlds, world)
+                    table.insert(worlds, world)
 
-            return worlds
-        end,
-        function()
-            replica:ArrayInsert({WORLDS_KEY}, world)
-        end
-    ),
-    #cachedData[WORLDS_KEY]
+                    return worlds
+                end,
+                function()
+                    replica:ArrayInsert({WORLDS_KEY}, world)
+                end
+            )
+                :andThen(function()
+                    return #cachedData[WORLDS_KEY]
+                end)
+        end)
 end
 
-function ServerData.addParty(partyEnum)
-    local party do
-        local serverCode, privateServerId = TeleportService:ReserveServer(Parties[partyEnum].placeId)
+function ServerData.addParty(partyType)
+    return Promise.try(function()
+        local serverCode, privateServerId = TeleportService:ReserveServer(Parties[partyType].placeId)
 
-        party = {
+        return {
             serverCode = serverCode,
             privateServerId = privateServerId,
         }
-    end
+    end)
+        :andThen(function(party)
+            return ServerData.update(
+                PARTIES_KEY, 
+                function(parties)
+                    parties = parties or {}
 
-    return ServerData.update(
-        PARTIES_KEY, 
-        function(parties)
-            parties = parties or {}
+                    parties[partyType] = parties[partyType] or {}
 
-            parties[partyEnum] = parties[partyEnum] or {}
+                    table.insert(parties[partyType], party)
 
-            table.insert(parties[partyEnum], party)
-
-            return parties
-        end,
-        function()
-            replica:ArrayInsert({PARTIES_KEY, partyEnum}, party)
-        end
-    ),
-    #(cachedData[PARTIES_KEY][partyEnum] or {})
+                    return parties
+                end,
+                function()
+                    replica:ArrayInsert({PARTIES_KEY, partyType}, party)
+                end
+            )
+                :andThen(function()
+                    return #(cachedData[PARTIES_KEY][partyType] or {})
+                end)
+        end)
 end
 
-function ServerData.addGame(gameEnum)
-    local newGame do
-        local serverCode, privateServerId = TeleportService:ReserveServer(Games[gameEnum].placeId)
+function ServerData.addGame(gameType)
+    return Promise.try(function()
+        local serverCode, privateServerId = TeleportService:ReserveServer(Games[gameType].placeId)
 
-        newGame = {
+        return {
             serverCode = serverCode,
             privateServerId = privateServerId,
         }
-    end
+    end)
+        :andThen(function(newGame)
+            return ServerData.update(
+                GAMES_KEY, 
+                function(games)
+                    games = games or {}
 
-    return ServerData.update(
-        GAMES_KEY, 
-        function(games)
-            games = games or {}
+                    games[gameType] = games[gameType] or {}
 
-            games[gameEnum] = games[gameEnum] or {}
+                    table.insert(games[gameType], newGame)
 
-            table.insert(games[gameEnum], newGame)
-
-            return games
-        end,
-        function()
-            replica:ArrayInsert({GAMES_KEY, gameEnum}, newGame)
-        end
-    ),
-    #(cachedData[GAMES_KEY][gameEnum] or {})
+                    return games
+                end,
+                function()
+                    replica:ArrayInsert({GAMES_KEY, gameType}, newGame)
+                end
+            )
+                :andThen(function()
+                    return #(cachedData[GAMES_KEY][gameType] or {})
+                end)
+        end)
 end
 
 function ServerData.stampHomeServer(owner: Player)
-    local playerData = PlayerData.get(owner)
+    return Promise.new(function(resolve, reject)
+        local playerData = PlayerData.get(owner)
 
-    if playerData then
-        local homeServerInfo = playerData.profile.Data.playerInfo.homeServerInfo
-        local privateServerId = homeServerInfo.privateServerId
+        if playerData then
+            local homeServerInfo = playerData.profile.Data.playerInfo.homeServerInfo
+            local privateServerId = homeServerInfo.privateServerId
 
-        assert(privateServerId, "Player does not have a home server")
+            assert(privateServerId, "Player does not have a home server")
 
-        local success = DataStore.safeSet(serverDataStore, privateServerId, {
-            homeOwner = owner.UserId,
-        })
-
-        if success then
-            cachedData[privateServerId] = {
+            DataStore.safeSet(serverDataStore, privateServerId, {
                 homeOwner = owner.UserId,
-            }
+            })
+                :andThen(function()
+                    cachedData[privateServerId] = {
+                        homeOwner = owner.UserId,
+                    }
 
-            playerData:setValue({"playerInfo", "homeInfoStamped"}, true)
+                    playerData:setValue({"playerInfo", "homeInfoStamped"}, true)
 
-            return true
+                    resolve()
+                end)
+                :catch(reject)
         end
-    end
+    end)
 end
 
-function ServerData.traceServer(privateServerId)
+---@IMPORTANT: Make sure you remove support for traceServer and getServerInfo
+
+function ServerData.traceServerInfo(privateServerId: string | nil)
     privateServerId = privateServerId or game.PrivateServerId
 
-    local serverInfo = cachedData[privateServerId]
+    return Promise.resolve()
+        :andThen(function()
+            return ServerData.getAll() -- make sure data was loaded at some point
+        end)
+        :andThen(function()
+            local info
 
-    if not serverInfo or not Table.hasAnything(serverInfo) then
-        retrieveDatastore(privateServerId)
-    end
-
-    return cachedData[privateServerId]
-end
-
-function ServerData.getServerInfo(key)
-    if constantKeys[key] then
-        local data = ServerData.get(key)
-
-        local info
-
-        if key == WORLDS_KEY then
-            for i, world in ipairs(data) do
-                for enum, location in pairs(world.locations) do
-                    if location.privateServerId == game.PrivateServerId then
+            Table.recursiveIterate(cachedData, function(path, value)
+                if type(value) == "table" and value.privateServerId == privateServerId then
+                    local constantKey = path[1]
+        
+                    if constantKey == WORLDS_KEY then -- the path is [WORLDS_KEY, worldIndex, "locations", locationEnum]
                         info = {
-                            worldIndex = i,
-                            locationEnum = enum,
+                            worldIndex = path[2],
+                            locationEnum = path[4],
                         }
-
-                        break
+                    elseif constantKey == PARTIES_KEY then -- the path is [PARTIES_KEY, partyType, partyIndex]
+                        info = {
+                            partyType = path[2],
+                            partyIndex = path[3],
+                        }
+                    elseif constantKey == GAMES_KEY then -- the path is [GAMES_KEY, gameType, gameIndex]
+                        info = {
+                            gameType = path[2],
+                            gameIndex = path[3],
+                        }
                     end
                 end
+            end)
 
-                if info then
-                    break
-                end
+            return info
+        end)
+        :andThen(function(info)
+            if info then
+                return info
+            else
+                return ServerData.get(privateServerId)
             end
-        elseif key == PARTIES_KEY then
-            for _, parties in pairs(data) do
-                for i, party in ipairs(parties) do
-                    if party.privateServerId == game.PrivateServerId then
-                        info = {
-                            partyIndex = i,
-                        }
-
-                        break
-                    end
-                end
-
-                if info then
-                    break
-                end
-            end
-        elseif key == GAMES_KEY then
-            for _, games in pairs(data) do
-                for i, game in ipairs(games) do
-                    if game.privateServerId == game.PrivateServerId then
-                        info = {
-                            gameIndex = i,
-                        }
-
-                        break
-                    end
-                end
-
-                if info then
-                    break
-                end
-            end
-        end
-
-        return info
-    else
-        return ServerData.traceServer(key)
-    end
+        end)
 end
 
 function ServerData.findAvailableLocation(worldIndex, locationsExcluded)
-    assert(worldIndex, "No world index provided")
-    
-    local locationEnum
-    local worldPopulationInfo = LiveServerData.getWorldPopulationInfo(worldIndex)
+    return Promise.new(function(resolve, reject)
+        assert(worldIndex, "No world index provided")
 
-    for _, locationType in pairs(Locations.priority) do
-        if locationsExcluded and table.find(locationsExcluded, locationType) then
-            continue
-        end
+        local locationEnum
+        local worldPopulationInfo = LiveServerData.getWorldPopulationInfo(worldIndex)
 
-        if worldPopulationInfo then
-            local populationInfo = worldPopulationInfo.locations[locationType]
+        for _, locationType in pairs(Locations.priority) do
+            if locationsExcluded and table.find(locationsExcluded, locationType) then
+                continue
+            end
 
-            if populationInfo then
-                if populationInfo.recommended_emptySlots ~= 0 then
+            if worldPopulationInfo then
+                local populationInfo = worldPopulationInfo.locations[locationType]
+
+                if populationInfo then
+                    if populationInfo.recommended_emptySlots ~= 0 then
+                        locationEnum = locationType
+                        break
+                    end
+                else -- No server info, so location is available
                     locationEnum = locationType
                     break
                 end
@@ -380,179 +422,176 @@ function ServerData.findAvailableLocation(worldIndex, locationsExcluded)
                 locationEnum = locationType
                 break
             end
-        else -- No server info, so location is available
-            locationEnum = locationType
-            break
         end
-    end
 
-    return locationEnum
+        if locationEnum then
+            resolve(locationEnum)
+        else
+            reject()
+        end
+    end)
 end
 
 function ServerData.findAvailableWorld(forcedLocation, worldsExcluded)
-    local worlds = ServerData.getWorlds()
+    return ServerData.getWorlds()
+        :andThen(function(worlds)
+            local worldIndex do
+                local rarities = {}
 
-    if worlds == nil then
-        warn("No server data found")
-        return
-    end
+                for worldIndex, world in ipairs(worlds) do
+                    local worldPopulationInfo = LiveServerData.getWorldPopulationInfo(worldIndex)
 
-    local worldIndex do
-        local rarities = {}
+                    local worldIsSuitable = true
 
-        for worldIndex, world in ipairs(worlds) do
-            local worldPopulationInfo = LiveServerData.getWorldPopulationInfo(worldIndex)
-
-            local worldIsSuitable = true
-
-            if worldsExcluded and table.find(worldsExcluded, worldIndex) then
-                worldIsSuitable = false
-            end
-
-            if worldIsSuitable and worldPopulationInfo then
-                for locationEnum, _ in pairs(world.locations) do
-                    local locationPopulationInfo = worldPopulationInfo.locations[locationEnum]
-    
-                    if locationPopulationInfo and (forcedLocation == locationEnum) and (locationPopulationInfo.max_emptySlots == 0) then
+                    if worldsExcluded and table.find(worldsExcluded, worldIndex) then
                         worldIsSuitable = false
-                        break
                     end
+
+                    if worldIsSuitable and worldPopulationInfo then
+                        for locationEnum, _ in pairs(world.locations) do
+                            local locationPopulationInfo = worldPopulationInfo.locations[locationEnum]
+
+                            if locationPopulationInfo and (forcedLocation == locationEnum) and (locationPopulationInfo.max_emptySlots == 0) then
+                                worldIsSuitable = false
+                                break
+                            end
+                        end
+
+                        local success = ServerData.findAvailableLocation(worldIndex):await()
+
+                        if not success then
+                            worldIsSuitable = false
+                        end
+
+                        if worldPopulationInfo.recommended_emptySlots == 0 then
+                            worldIsSuitable = false
+                        end
+                    end
+
+                    if not worldIsSuitable then
+                        print("ServerData.findAvailableWorld: World " .. worldIndex .. " is not suitable")
+                        continue
+                    end
+
+                    local population = worldPopulationInfo and worldPopulationInfo.population or 0
+
+                    local chance do
+                        if population == 0 then
+                            chance = 0.001
+                        else
+                            chance = population
+                        end
+                    end
+
+                    print("ServerData.findAvailableWorld: World " .. worldIndex .. " has a chance of " .. chance)
+
+                    rarities[worldIndex] = chance
                 end
-    
-                if not ServerData.findAvailableLocation(worldIndex) then
-                    worldIsSuitable = false
-                end
-    
-                if worldPopulationInfo.recommended_emptySlots == 0 then
-                    worldIsSuitable = false
-                end
+
+                worldIndex = Math.weightedChance(rarities)
             end
 
-            if not worldIsSuitable then
-                print("ServerData.findAvailableWorld: World " .. worldIndex .. " is not suitable")
-                continue
+            if worldIndex == nil then
+                print("No suitable world found, creating new world")
+
+                return ServerData.addWorld()
             end
 
-            local population = worldPopulationInfo and worldPopulationInfo.population or 0
-
-            local chance do
-                if population == 0 then
-                    chance = 0.001
-                else
-                    chance = population
-                end
-            end
-
-            print("ServerData.findAvailableWorld: World " .. worldIndex .. " has a chance of " .. chance)
-
-            rarities[worldIndex] = chance
-        end
-
-        worldIndex = Math.weightedChance(rarities)
-    end
-
-    if worldIndex == nil then
-        print("No suitable world found, creating new world")
-
-        local success, worldIndex = ServerData.addWorld()
-
-        return success and worldIndex
-    end
-
-    return worldIndex
+            return worldIndex
+        end)
 end
 
-function ServerData.findAvailableParty(partyEnum)
-    local parties = ServerData.getParties(partyEnum)
-
-    if parties == nil then
-        warn("No server data found")
-        return
-    end
-
-    local partyIndex do
-        local rarities = {}
-
-        for partyIndex, party in ipairs(parties) do
-            local partyPopulationInfo = LiveServerData.getPartyPopulationInfo(partyEnum, partyIndex)
-
-            local partyIsSuitable = true
-
-            if partyPopulationInfo then
-                if partyPopulationInfo.recommended_emptySlots == 0 then
-                    partyIsSuitable = false
+function ServerData.findAvailableParty(partyType)
+    return ServerData.getParties()
+        :andThen(function(parties)
+            local partyIndex do
+                local rarities = {}
+        
+                for partyIndex, _ in ipairs(parties) do
+                    local partyPopulationInfo = LiveServerData.getPartyPopulationInfo(partyType, partyIndex)
+        
+                    local partyIsSuitable = true
+        
+                    if partyPopulationInfo then
+                        if partyPopulationInfo.recommended_emptySlots == 0 then
+                            partyIsSuitable = false
+                        end
+                    end
+        
+                    if not partyIsSuitable then
+                        print("ServerData.findAvailableParty: Party " .. partyIndex .. " is not suitable")
+                        continue
+                    end
+        
+                    local population = partyPopulationInfo and partyPopulationInfo.population or 0
+        
+                    local chance do
+                        if population == 0 then
+                            chance = 0.001
+                        else
+                            chance = population
+                        end
+                    end
+        
+                    print("ServerData.findAvailableParty: Party " .. partyIndex .. " has a chance of " .. chance)
+        
+                    rarities[partyIndex] = chance
                 end
+        
+                partyIndex = Math.weightedChance(rarities)
             end
-
-            if not partyIsSuitable then
-                print("ServerData.findAvailableParty: Party " .. partyIndex .. " is not suitable")
-                continue
+        
+            if partyIndex == nil then
+                print("No suitable party found, creating new party")
+        
+                return ServerData.addParty(partyType)
             end
-
-            local population = partyPopulationInfo and partyPopulationInfo.population or 0
-
-            local chance do
-                if population == 0 then
-                    chance = 0.001
-                else
-                    chance = population
-                end
-            end
-
-            print("ServerData.findAvailableParty: Party " .. partyIndex .. " has a chance of " .. chance)
-
-            rarities[partyIndex] = chance
-        end
-
-        partyIndex = Math.weightedChance(rarities)
-    end
-
-    if partyIndex == nil then
-        print("No suitable party found, creating new party")
-
-        local success, partyIndex = ServerData.addParty(partyEnum)
-
-        return success and partyIndex
-    end
-
-    return partyIndex
+        end)
 end
 
 function ServerData.findAvailableWorldAndLocation(forcedLocation, worldsExcluded)
-    local worlds = ServerData.getWorlds()
+    return ServerData.findAvailableWorld(forcedLocation, worldsExcluded)
+        :andThen(function(worldIndex)
+            return Promise.new(function(resolve, reject)
+                if forcedLocation then
+                    resolve(forcedLocation)
+                else
+                    ServerData.findAvailableLocation(worldIndex)
+                        :andThen(resolve)
+                        :catch(reject)
+                end
+            end)
+            :andThen(function(locationEnum)
+                return worldIndex, locationEnum
+            end)
+            :catch(function()
+                print("No available location found, creating new world")
 
-    if worlds == nil then
-        warn("No server data found")
-        return
-    end
-
-    local worldIndex = ServerData.findAvailableWorld(forcedLocation, worldsExcluded)
-    local locationEnum = forcedLocation or ServerData.findAvailableLocation(worldIndex)
-
-    print("Found world", worldIndex, "with location", locationEnum)
-
-    if locationEnum == nil then
-        print("No available location found, creating new world")
-        
-        local success, newWorldIndex = ServerData.addWorld()
-
-        if success then
-            worldIndex = newWorldIndex
-            locationEnum = ServerData.findAvailableLocation(worldIndex)
-        else -- Failed to create new world
-            warn("Failed to create new world")
-            return
-        end
-    end
-
-    return worldIndex, locationEnum
+                return ServerData.addWorld()
+                    :andThen(function(newWorldIndex)
+                        return ServerData.findAvailableLocation(newWorldIndex)
+                            :andThen(function(newLocationEnum)
+                                return newWorldIndex, newLocationEnum
+                            end)
+                    end)
+            end)
+        end)
+        :tap(function(worldIndex, locationEnum)
+            if not worldIndex or not locationEnum then
+                warn("ServerData.findAvailableWorldAndLocation: worldIndex or locationEnum is nil.")
+            else
+                print("ServerData.findAvailableWorldAndLocation: Found world " .. worldIndex .. " and location " .. locationEnum)
+            end
+        end)
 end
 
 function ServerData.reconcileWorlds() -- Never done in the live game
     local additions = {}
     local newLocations = {}
 
-    for _ = 1, #ServerData.getWorlds() do
+    local _, worlds = ServerData.getWorlds():await()
+
+    for _ = 1, #worlds do
         for locationEnum, _ in pairs(Locations.info) do
             local locationTable =  newLocations[locationEnum] or {}
             newLocations[locationEnum] = locationTable
@@ -606,13 +645,18 @@ function ServerData.reconcileWorlds() -- Never done in the live game
     )
 end
 
-
-RunService.Heartbeat:Connect(function()
-    for constantKey, _ in pairs(constantKeys) do
-        if time() - lastDatastoreRequest[constantKey] > CACHE_COOLDOWN then
-            retrieveDatastore(constantKey)
-        end
-    end
-end)
+ServerData.getAll()
+    :catch(function(err)
+        warn("Startup loading failed:", tostring(err))
+    end)
+    :finally(function()
+        RunService.Heartbeat:Connect(function()
+            for constantKey, _ in pairs(constantKeys) do
+                if time() - lastDatastoreRequest[constantKey] > CACHE_COOLDOWN then
+                    retrieveDatastore(constantKey)
+                end
+            end
+        end)
+    end)
 
 return ServerData
