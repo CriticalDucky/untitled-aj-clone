@@ -47,12 +47,6 @@ local ServerTypeGroups = {
         [ServerTypeEnum.location] = true,
         [ServerTypeEnum.game] = true,
     },
-
-    [ServerTypeGroup.needsIdentity] = {
-        [ServerTypeEnum.home] = true,
-        [ServerTypeEnum.party] = true,
-        [ServerTypeEnum.game] = true,
-    },
 }
 
 function ServerTypeGroups.serverInGroup(group, serverType)
