@@ -129,21 +129,21 @@ end
     Note: This promise will resolve with nil if the item is not found.
 ]]
 function InventoryManager.playerOwnsItems(player: Player | number, itemIds: { string | InventoryItem })
-    itemIds = Table.map(itemIds, function(itemId: string | InventoryItem)
-        return if type(itemId) == "table" then itemId.id else itemId
-    end)
+	itemIds = Table.map(itemIds, function(itemId: string | InventoryItem)
+		return if type(itemId) == "table" then itemId.id else itemId
+	end)
 
-    return Promise.all(Table.map(itemIds, function(itemId)
-        return InventoryManager.playerOwnsItem(player, itemId)
-    end)):andThen(function(results)
-        for _, result in pairs(results) do
-            if not result then
-                return false
-            end
-        end
+	return Promise.all(Table.map(itemIds, function(itemId)
+		return InventoryManager.playerOwnsItem(player, itemId)
+	end)):andThen(function(results)
+		for _, result in pairs(results) do
+			if not result then
+				return false
+			end
+		end
 
-        return true
-    end)
+		return true
+	end)
 end
 
 --[[
@@ -254,9 +254,12 @@ function InventoryManager.removeDupes(owner: Player, itemId: string | { string }
 			return InventoryManager.getItemPathFromId(owner, itemId):andThen(function(itemCategory, index)
 				return if itemCategory
 					then table.unpack({
-						itemCategory = itemCategory,
-						index = index,
-					}, playerData)
+						{
+							itemCategory = itemCategory,
+							index = index,
+						},
+						playerData,
+					})
 					else Promise.reject("Item path from id not found")
 			end)
 		end)
@@ -297,40 +300,63 @@ function InventoryManager.changeOwnerOfItems(
 		end
 
 		if currentOwner then
-            InventoryManager.playerOwnsItems(currentOwner, items):andThen(function(result)
-                if result == false then
-                    warn("Player does not own items")
+			InventoryManager.playerOwnsItems(currentOwner, items)
+				:andThen(function(result)
+					if result == false then
+						warn("Player does not own items")
 
-                    return
-                end
-            end):catch(reject)
+						return Promise.reject("Player does not own items")
+					end
+				end)
+				:catch(reject)
 
-			InventoryManager.removeDupes(currentOwner, items[1].id):andThen(function()
-                return InventoryManager.playerOwnsItems(currentOwner, items):andThen(function(result)
-                    if result == false then
-                        warn("Player does not own items")
+			InventoryManager.removeDupes(currentOwner, items[1].id)
+				:andThen(function()
+					return InventoryManager.playerOwnsItems(currentOwner, items):andThen(function(result)
+						if result == false then
+							warn("Player does not own items")
 
-                        return
-                    end
-                end)
-            end):catch(reject)
+							return Promise.reject("Player does not own items")
+						end
+					end)
+				end)
+				:catch(reject)
 		end
 
 		if newOwner and currentOwner then
-			local currentOwnerData = PlayerData.get(currentOwner)
-			local newOwnerData = PlayerData.get(newOwner)
+			Promise.all({
+				PlayerData.get(currentOwner),
+				PlayerData.get(newOwner),
+			}):andThen(function(results)
+				return if results[1] and results[2]
+					then table.unpack(results)
+					else Promise.reject("Player data not found for player: " .. currentOwner.Name .. " or " .. newOwner.Name)
+			end):andThen(function(currentOwnerData, newOwnerData)
+				return checkIfInventoryWouldBeFull():andThen(function(wouldBeFull)
+					if wouldBeFull then
+						warn("New owner's inventory would be full")
 
-			if not currentOwnerData or not newOwnerData then
-				warn("Player data not found for player: " .. currentOwner.Name .. " or " .. newOwner.Name)
+						return Promise.reject("New owner's inventory would be full")
+					end
 
-				return
-			end
+					return Promise.all({
+						Promise.all(Table.map(items, function(_, item)
+							return InventoryManager.getItemPathFromId(currentOwner, item.id):andThen(function(itemCategory, index)
+								if not itemCategory then
+									warn("Item path from id not found")
 
-			if checkIfInventoryWouldBeFull() then
-				warn("New owner's inventory would be full")
+									return Promise.reject("Item path from id not found")
+								end
 
-				return
-			end
+								return InventoryManager._removeItem(currentOwnerData, itemCategory, index)
+									:andThen(function()
+										return InventoryManager._addItem(newOwnerData, itemCategory, item)
+									end)
+							end)
+						end)),
+					})
+				end)
+			end)
 
 			for _, item in pairs(items) do
 				local itemIndex
