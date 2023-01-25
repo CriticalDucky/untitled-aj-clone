@@ -11,6 +11,7 @@ local inventoryFolder = dataFolder.Inventory
 local utilityFolder = replicatedFirstShared.Utility
 local replicatedStorageData = replicatedStorageShared.Data
 local replicatedStorageInventory = replicatedStorageData.Inventory
+local enumsFolder = replicatedStorageShared.Enums
 
 local PlayerData = require(dataFolder.PlayerData)
 local Items = require(replicatedStorageInventory.Items)
@@ -21,9 +22,16 @@ local GameSettings = require(replicatedFirstShared.Settings.GameSettings)
 local MiniId = require(utilityFolder.MiniId)
 local Promise = require(utilityFolder.Promise)
 local Types = require(utilityFolder.Types)
+local InventoryFailure = require(enumsFolder.InventoryFailure)
+local ItemCategory = require(enumsFolder.ItemCategory)
+local Param = require(utilityFolder.Param)
+local PlayerFormat = require(enumsFolder.PlayerFormat)
 
 type PlayerData = Types.PlayerData
 type InventoryItem = Types.InventoryItem
+type UserEnum = Types.UserEnum
+type PlayerParam = Types.PlayerParam
+type HomeOwnerParam = Types.HomeOwnerParam
 
 local function addPropsToItem(item: InventoryItem)
 	local itemCategory = item.itemCategory
@@ -49,7 +57,7 @@ InventoryManager.itemRemovedFromInventory = Signal.new()
 --[[
     Returns a promise with the player's inventory.
 ]]
-function InventoryManager.getInventory(player: Player | number)
+function InventoryManager.getInventory(player: PlayerParam)
 	return PlayerData.viewPlayerProfile(player, true):andThen(function(profile)
 		return profile.inventory
 	end)
@@ -58,31 +66,43 @@ end
 --[[
     Returns a promise with the player's specified inventory category.
 ]]
-function InventoryManager.getInventoryCategory(player: Player | number, itemCategory: string)
+function InventoryManager.getInventoryCategory(player: PlayerParam, itemCategory: UserEnum)
 	return InventoryManager.getInventory(player):andThen(function(inventory)
 		return inventory[itemCategory]
 	end)
 end
 
+function InventoryManager.getAccessories(player: PlayerParam)
+	return InventoryManager.getInventoryCategory(player, ItemCategory.accessory)
+end
+
+function InventoryManager.getFurniture(player: PlayerParam)
+	return InventoryManager.getInventoryCategory(player, ItemCategory.furniture)
+end
+
+function InventoryManager.getHomes(player: PlayerParam)
+	return InventoryManager.getInventoryCategory(player, ItemCategory.home)
+end
+
 --[[
     Returns a promise with the player's specified inventory item.
 ]]
-function InventoryManager.getItemFromIndex(player: Player | number, itemCategory: string, itemIndex: number)
+function InventoryManager.getItemFromIndex(player: PlayerParam, itemCategory: UserEnum, itemIndex: number)
 	return InventoryManager.getInventoryCategory(player, itemCategory):andThen(function(inventoryCategory)
 		return inventoryCategory[itemIndex]
 	end)
 end
 
---[[
+--[[	
     Returns a promise with the item from the player's inventory with the specified id.
     itemSource can be a player, userid, or inventory category.
     itemId is the id of the item to search for.
     Note: This promise will resolve with nil if the item is not found.
 ]]
-function InventoryManager.getItemFromId(itemSource: Player | table | number, itemId: string)
+function InventoryManager.getItemFromId(itemSource: PlayerParam | { InventoryItem }, itemId: string)
 	if typeof(itemSource) == "Instance" or typeof(itemSource) == "number" then
 		return InventoryManager.getInventory(itemSource):andThen(function(inventory)
-			for itemCategory: number, items: { InventoryItem } in pairs(inventory) do
+			for itemCategory: UserEnum, items: { InventoryItem } in pairs(inventory) do
 				local success, item, index = InventoryManager.getItemFromId(items, itemId):await()
 
 				if success and item then
@@ -107,8 +127,8 @@ end
     Returns a promise with the item category and index of the item with the specified id.
     Note: This promise will resolve with nil if the item is not found.
 ]]
-function InventoryManager.getItemPathFromId(player: Player | number, itemId: string)
-	return InventoryManager.getItemFromId(player, itemId):andThen(function(_, itemCategory: number, index: number)
+function InventoryManager.getItemPathFromId(player: PlayerParam, itemId: string)
+	return InventoryManager.getItemFromId(player, itemId):andThen(function(_, itemCategory: UserEnum, index: number)
 		return itemCategory, index
 	end)
 end
@@ -116,24 +136,21 @@ end
 --[[
     Returns a promise containing whether or not the player owns the specified item.
 ]]
-function InventoryManager.playerOwnsItem(player: Player | number, itemId)
+function InventoryManager.playerOwnsItem(player: PlayerParam, itemId)
 	return InventoryManager.getItemFromId(player, itemId):andThen(function(item)
 		return item ~= nil
 	end)
 end
 
 --[[
-    Returns a promise with the item from the player's inventory with the specified id.
-    itemSource can be a player, userid, or inventory category.
-    itemId is the id of the item to search for.
-    Note: This promise will resolve with nil if the item is not found.
+    Returns a promise with whether or not the player owns all of the specified items.
 ]]
-function InventoryManager.playerOwnsItems(player: Player | number, itemIds: { string | InventoryItem })
-	itemIds = Table.map(itemIds, function(itemId: string | InventoryItem)
+function InventoryManager.playerOwnsItems(player: PlayerParam, itemIds: { string | InventoryItem })
+	itemIds = Table.editValues(itemIds, function(itemId: string | InventoryItem)
 		return if type(itemId) == "table" then itemId.id else itemId
 	end)
 
-	return Promise.all(Table.map(itemIds, function(itemId)
+	return Promise.all(Table.editValues(itemIds, function(itemId)
 		return InventoryManager.playerOwnsItem(player, itemId)
 	end)):andThen(function(results)
 		for _, result in pairs(results) do
@@ -152,7 +169,7 @@ end
     - itemCategory is the category of the item to add
     - numItemsToAdd is the number of items to add (optional, defaults to 0)
 ]]
-function InventoryManager.isInventoryFull(player: Player | number, itemCategory: string, numItemsToAdd: number?)
+function InventoryManager.isInventoryFull(player: PlayerParam, itemCategory: UserEnum, numItemsToAdd: number?)
 	return InventoryManager.getInventoryCategory(player, itemCategory):andThen(function(inventory)
 		local numItems = #inventory
 
@@ -178,12 +195,25 @@ end
     - itemCategory is the category of the item to remove
     - itemIndex is the index of the item to remove
 ]]
-function InventoryManager._removeItem(playerData: PlayerData | Player, itemCategory: string, itemIndex: number)
+function InventoryManager._removeItem(playerData: PlayerParam | PlayerData, itemCategory: UserEnum, itemIndex: number)
 	assert(playerData and itemCategory and itemIndex, "InventoryManager._removeItem: Invalid arguments")
-	local player: Player = if typeof(playerData) == "Instance" then playerData else playerData.player
-	playerData = if typeof(playerData) == "Instance" then PlayerData.get(playerData) else Promise.resolve(playerData)
 
-	return playerData:andThen(function(playerData)
+	local playerPromise = if not typeof(playerData) == "table"
+		then Param.playerParam(playerData, PlayerFormat.instance)
+		else Promise.resolve(playerData.player)
+
+	local playerDataPromise = if typeof(playerData) == "table"
+		then Promise.resolve(playerData)
+		else PlayerData.get(playerData)
+
+	return Promise.all({ playerPromise, playerDataPromise }):andThen(function(results)
+		local player: Player = results[1]
+		local playerData: PlayerData = results[2]
+
+		if not playerData then
+			return Promise.reject(InventoryFailure.playerDataNotFound)
+		end
+
 		return InventoryManager.getItemFromIndex(player, itemCategory, itemIndex):andThen(function(item)
 			playerData:arrayRemove({ "inventory", itemCategory }, itemIndex)
 
@@ -198,15 +228,28 @@ end
     - itemCategory is the category of the item to add
     - item is the item to add
 ]]
-function InventoryManager._addItem(playerData: PlayerData | Player, itemCategory: string, item: InventoryItem)
+function InventoryManager._addItem(playerData: PlayerParam | PlayerData, itemCategory: UserEnum, item: InventoryItem)
 	assert(playerData and itemCategory and item, "InventoryManager._addItem: Invalid arguments")
-	local player: Player = if typeof(playerData) == "Instance" then playerData else playerData.player
-	playerData = if typeof(playerData) == "Instance" then PlayerData.get(playerData) else Promise.resolve(playerData)
 
-	return playerData:andThen(function(playerData)
+	local playerPromise = if not typeof(playerData) == "table"
+		then Param.playerParam(playerData, PlayerFormat.instance)
+		else Promise.resolve(playerData.player)
+
+	local playerDataPromise = if typeof(playerData) == "table"
+		then Promise.resolve(playerData)
+		else PlayerData.get(playerData)
+
+	return Promise.all({ playerPromise, playerDataPromise }):andThen(function(results)
+		local player: Player = results[1]
+		local playerData: PlayerData = results[2]
+
+		if not playerData then
+			return Promise.reject(InventoryFailure.playerDataNotFound)
+		end
+
 		return InventoryManager.isInventoryFull(player, itemCategory, 1):andThen(function(isFull)
 			if isFull then
-				return Promise.reject("Inventory is full")
+				return Promise.reject(InventoryFailure.inventoryFull)
 			end
 
 			InventoryManager.itemPlacingInInventory:Fire(player, itemCategory, item)
@@ -222,8 +265,8 @@ end
     - itemEnum is the enum of the item to add
     - props is a table of properties to add to the item (optional)
 ]]
-function InventoryManager.newItem(itemCategory: string, itemEnum: number, props: table?)
-	Items.getItem(itemCategory, itemEnum):andThen(function()
+function InventoryManager.newItem(itemCategory: UserEnum, itemEnum: UserEnum, props: table?)
+	return Items.getItem(itemCategory, itemEnum):andThen(function()
 		local item = addPropsToItem({
 			id = MiniId(8),
 			itemCategory = itemCategory,
@@ -239,9 +282,9 @@ end
     - owner is the player to remove dupes from
     - itemId is the id of the item to remove dupes of
 ]]
-function InventoryManager.removeDupes(owner: Player, itemId: string | { string })
+function InventoryManager.removeDupes(owner: PlayerParam, itemId: string | { string })
 	if typeof(itemId) == "table" then
-		return Promise.all(Table.map(itemId, function(_, itemId: string)
+		return Promise.all(Table.editValues(itemId, function(itemId: string)
 			return InventoryManager.removeDupes(owner, itemId)
 		end))
 	end
@@ -250,7 +293,11 @@ function InventoryManager.removeDupes(owner: Player, itemId: string | { string }
 		:andThen(function()
 			return PlayerData.get(owner)
 		end)
-		:andThen(function(playerData)
+		:andThen(function(playerData: PlayerData | nil)
+			if not playerData then
+				return Promise.reject(InventoryFailure.playerDataNotFound)
+			end
+
 			return InventoryManager.getItemPathFromId(owner, itemId):andThen(function(itemCategory, index)
 				return if itemCategory
 					then table.unpack({
@@ -260,7 +307,7 @@ function InventoryManager.removeDupes(owner: Player, itemId: string | { string }
 						},
 						playerData,
 					})
-					else Promise.reject("Item path from id not found")
+					else Promise.reject(InventoryFailure.itemNotOwned)
 			end)
 		end)
 		:andThen(function(path, playerData)
@@ -276,10 +323,23 @@ function InventoryManager.removeDupes(owner: Player, itemId: string | { string }
 		end)
 end
 
-function InventoryManager.changeOwnerOfItems(
+--[[
+	Internal function for changing the owner of items. The success of this function is not guaranteed.
+	It will return a promise that rejects if the ownership changes for any reason.
+	It rejects with an InventoryFailure enum.
+
+	- If a current owner is provided but a new owner is not, the items will be removed from the current 
+	owner's inventory.
+	- If a new owner is provided but a current owner is not, the items will be added to the new owner's
+	inventory.
+	- If both a current owner and a new owner are provided, the items will be removed from the current
+	owner's inventory and added to the new owner's inventory. If the new owner's inventory is full, the
+	promise will reject.
+]]
+function InventoryManager._changeOwnerOfItems(
 	items: { InventoryItem },
-	currentOwner: Player | nil,
-	newOwner: Player | nil
+	currentOwner: PlayerParam | nil,
+	newOwner: PlayerParam | nil
 )
 	assert(currentOwner or newOwner, "InventoryManager.changeOwnerOfItems: Both currentOwner and newOwner are nil")
 	assert(#items > 0, "InventoryManager.changeOwnerOfItems: No items to change owner of")
@@ -300,15 +360,19 @@ function InventoryManager.changeOwnerOfItems(
 		end
 
 		if currentOwner then
+			local valid = true
+
 			InventoryManager.playerOwnsItems(currentOwner, items)
 				:andThen(function(result)
 					if result == false then
 						warn("Player does not own items")
 
-						return Promise.reject("Player does not own items")
+						return Promise.reject()
 					end
 				end)
-				:catch(reject)
+				:catch(function()
+					valid = false
+				end)
 
 			InventoryManager.removeDupes(currentOwner, items[1].id)
 				:andThen(function()
@@ -316,165 +380,167 @@ function InventoryManager.changeOwnerOfItems(
 						if result == false then
 							warn("Player does not own items")
 
-							return Promise.reject("Player does not own items")
+							return Promise.reject()
 						end
 					end)
 				end)
-				:catch(reject)
+				:catch(function()
+					valid = false
+				end)
+
+			if not valid then
+				return reject(InventoryFailure.itemNotOwned)
+			end
 		end
 
 		if newOwner and currentOwner then
 			Promise.all({
 				PlayerData.get(currentOwner),
 				PlayerData.get(newOwner),
-			}):andThen(function(results)
-				return if results[1] and results[2]
-					then table.unpack(results)
-					else Promise.reject("Player data not found for player: " .. currentOwner.Name .. " or " .. newOwner.Name)
-			end):andThen(function(currentOwnerData, newOwnerData)
-				return checkIfInventoryWouldBeFull():andThen(function(wouldBeFull)
-					if wouldBeFull then
-						warn("New owner's inventory would be full")
+			})
+				:andThen(function(results)
+					return if results[1] and results[2]
+						then table.unpack(results)
+						else Promise.reject(InventoryFailure.playerDataNotFound)
+				end)
+				:andThen(function(currentOwnerData, newOwnerData)
+					return checkIfInventoryWouldBeFull():andThen(function(wouldBeFull)
+						if wouldBeFull then
+							warn("New owner's inventory would be full")
 
-						return Promise.reject("New owner's inventory would be full")
-					end
+							return Promise.reject(InventoryFailure.inventoryFull)
+						end
 
-					return Promise.all({
-						Promise.all(Table.map(items, function(_, item)
-							return InventoryManager.getItemPathFromId(currentOwner, item.id):andThen(function(itemCategory, index)
+						return Promise.all({
+							Promise.all(Table.editValues(items, function(item)
+								return InventoryManager.getItemPathFromId(currentOwner, item.id)
+									:andThen(function(itemCategory, index)
+										if not itemCategory then
+											warn("Item path from id not found")
+
+											return Promise.reject(InventoryFailure.itemNotOwned)
+										end
+
+										return InventoryManager._removeItem(currentOwnerData, itemCategory, index)
+											:andThen(function()
+												return InventoryManager._addItem(newOwnerData, itemCategory, item)
+											end)
+									end)
+							end)),
+						})
+					end)
+				end)
+				:andThen(resolve)
+				:catch(reject)
+		elseif currentOwner and not newOwner then
+			PlayerData.get(currentOwner)
+				:andThen(function(playerData: PlayerData)
+					return Promise.all(Table.editValues(items, function(item)
+						return InventoryManager.getItemPathFromId(currentOwner, item.id)
+							:andThen(function(itemCategory, index)
 								if not itemCategory then
 									warn("Item path from id not found")
 
-									return Promise.reject("Item path from id not found")
+									return Promise.reject(InventoryFailure.itemNotOwned)
 								end
 
-								return InventoryManager._removeItem(currentOwnerData, itemCategory, index)
-									:andThen(function()
-										return InventoryManager._addItem(newOwnerData, itemCategory, item)
-									end)
+								return InventoryManager._removeItem(playerData, itemCategory, index)
 							end)
-						end)),
-					})
+					end))
 				end)
-			end)
-
-			for _, item in pairs(items) do
-				local itemIndex
-				do
-					for i, v in ipairs(InventoryManager.getInventoryCategory(currentOwner, item.itemCategory)) do
-						if v.id == item.id then
-							itemIndex = i
-						end
-					end
-				end
-
-				InventoryManager._removeItem(currentOwnerData, item.itemCategory, itemIndex)
-				InventoryManager._addItem(newOwnerData, item.itemCategory, item)
-			end
-
-			return true
-		elseif currentOwner and not newOwner then
-			local playerData = PlayerData.get(currentOwner)
-
-			if not playerData then
-				warn("Player data not found for player: " .. currentOwner.Name)
-
-				return
-			end
-
-			for _, item in pairs(items) do
-				local itemIndex
-				do
-					for i, v in ipairs(InventoryManager.getInventoryCategory(currentOwner, item.itemCategory)) do
-						if v.id == item.id then
-							itemIndex = i
-						end
-					end
-				end
-
-				InventoryManager._removeItem(playerData, item.itemCategory, itemIndex)
-			end
-
-			return true
+				:andThen(resolve)
+				:catch(reject)
 		elseif not currentOwner and newOwner then
-			local playerData = PlayerData.get(newOwner)
+			PlayerData.get(newOwner)
+				:andThen(function(playerData: PlayerData)
+					return checkIfInventoryWouldBeFull():andThen(function(wouldBeFull)
+						if wouldBeFull then
+							warn("New owner's inventory would be full")
 
-			if not playerData then
-				warn("Player data not found for player: " .. newOwner.Name)
+							return Promise.reject(InventoryFailure.inventoryFull)
+						end
 
-				return
-			end
-
-			if checkIfInventoryWouldBeFull() then
-				warn("New owner's inventory would be full")
-
-				return
-			end
-
-			for _, item in pairs(items) do
-				InventoryManager._addItem(playerData, item.itemCategory, item)
-			end
-
-			return true
+						return Promise.all(Table.editValues(items, function(item)
+							return InventoryManager._addItem(playerData, item.itemCategory, item)
+						end))
+					end)
+				end)
+				:andThen(resolve)
+				:catch(reject)
 		end
 	end)
 end
 
-function InventoryManager.addItemsToInventory(items, player)
-	return InventoryManager.changeOwnerOfItems(items, nil, player)
+--[[
+	Adds an array of items to a player's inventory.
+	Wrapper for InventoryManager._changeOwnerOfItems.
+	This function can be used outside of this script. Note that all functions starting with a "_"
+	are only to be used within this script. Players must be online and in the same server.
+]]
+function InventoryManager.addItemsToInventory(items: { InventoryItem }, player: PlayerParam)
+	return InventoryManager._changeOwnerOfItems(items, nil, player)
 end
 
-function InventoryManager.removeItemsFromInventory(items, player)
-	return InventoryManager.changeOwnerOfItems(items, player, nil)
+--[[
+	Removes an array of items from a player's inventory.
+	Wrapper for InventoryManager._changeOwnerOfItems.
+	This function can be used outside of this script. Note that all functions starting with a "_"
+	are only to be used within this script. Players must be online and in the same server.
+]]
+function InventoryManager.removeItemsFromInventory(items: { InventoryItem }, player: PlayerParam)
+	return InventoryManager._changeOwnerOfItems(items, player, nil)
 end
 
-function InventoryManager.newItemInInventory(itemCategory, itemEnum, player, props)
+--[[
+	Creates a new item and puts in in the player's inventory using the specified itemCategory and itemEnum. Players must be online and in the same server.
+]]
+function InventoryManager.newItemInInventory(
+	itemCategory: UserEnum,
+	itemEnum: UserEnum,
+	player: PlayerParam,
+	props: { string: any }
+)
 	assert(itemCategory and itemEnum and player, "InventoryManager.newItemInInventory: Missing argument(s)")
 
-	local item = InventoryManager.newItem(itemCategory, itemEnum, props)
-
-	if not item then
-		warn("Failed to create new item with type " .. itemCategory .. " and id " .. itemEnum)
-
-		return
-	end
-
-	return InventoryManager.addItemsToInventory({ item }, player)
+	return InventoryManager.newItem(itemCategory, itemEnum, props):andThen(function(item)
+		return InventoryManager.addItemsToInventory({ item }, player)
+	end)
 end
 
-function InventoryManager.reconcileItems(playerData) -- Takes in the player data, and any props that are missing from any item's template are added
-	for itemCategory, items in pairs(InventoryManager.getInventory(playerData.player) or {}) do
-		local propTemplate = ItemProps[itemCategory]
+--[[
+	Takes in the player data, and any props that are missing from any item's template are added
+]]
+function InventoryManager.reconcileItems(playerData: PlayerData): nil
+	return InventoryManager.getInventory(playerData.player):andThen(function(inventory)
+		for itemCategory, items in pairs(InventoryManager.getInventory(playerData.player) or {}) do
+			local propTemplate = ItemProps[itemCategory]
 
-		if not propTemplate then
-			continue
-		end
+			if not propTemplate then
+				continue
+			end
 
-		for itemIndex, item in ipairs(items) do
-			Table.recursiveIterate(propTemplate, function(path, value)
-				local prop
+			for itemIndex, item in ipairs(items) do
+				Table.recursiveIterate(propTemplate, function(path, value)
+					local function index(t, indexPath)
+						local element = t
 
-				local function index(t, indexPath)
-					local element = t
+						for _, index in ipairs(indexPath) do
+							element = element[index]
+						end
 
-					for _, index in ipairs(indexPath) do
-						element = element[index]
+						return element
 					end
 
-					return element
-				end
-
-				prop = index(item, Table.copy(path))
-
-				if prop == nil then
-					playerData:setValue(
-						{ "inventory", itemCategory, itemIndex, table.unpack(path) },
-						Table.deepCopy(value)
-					)
-				end
-			end)
+					if index(item, Table.copy(path)) == nil then
+						playerData:setValue(
+							{ "inventory", itemCategory, itemIndex, table.unpack(path) },
+							Table.deepCopy(value)
+						)
+					end
+				end)
+			end
 		end
-	end
+	end)
 end
 
 PlayerData.forAllPlayerData(InventoryManager.reconcileItems)
