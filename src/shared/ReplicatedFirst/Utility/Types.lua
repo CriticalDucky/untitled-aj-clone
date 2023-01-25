@@ -1,3 +1,12 @@
+local ReplicatedFirst = game:GetService("ReplicatedFirst")
+local RunService = game:GetService("RunService")
+
+local Promise = require(ReplicatedFirst:WaitForChild("Shared"):WaitForChild("Utility"):WaitForChild("Promise"))
+
+local isServer = RunService:IsServer()
+
+export type UserEnum = string | number
+
 export type PlayerData = {
     setValue: (PlayerData, path: {}, value: any) -> nil,
     setValues: (PlayerData, path: {}, values: {}) -> nil,
@@ -15,9 +24,21 @@ export type HomeServerInfo = {
 
 export type InventoryItem = {
 	id: string,
-	itemCategory: string | number,
+	itemCategory: UserEnum,
 	itemEnum: string | number,
     placedItems: {}?,
+    permanent: boolean?,
 }
+
+export type PlacedItem = {
+    itemId: string,
+    pivotCFrame: CFrame | table
+}
+
+export type PlayerParam = Player | number
+
+export type HomeOwnerParam = PlayerParam | nil
+
+export type Promise = typeof(Promise.new(function() end))
 
 return nil
