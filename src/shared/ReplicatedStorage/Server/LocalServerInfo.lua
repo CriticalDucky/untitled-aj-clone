@@ -52,6 +52,7 @@ local LocalServerInfo = {}
 
 LocalServerInfo.serverType = serverType
 
+-- Gets the server info of the game. Can be called on either the client or the server.
 function LocalServerInfo.getServerInfo()
     if isServer then
         local ServerStorage = game:GetService("ServerStorage")
