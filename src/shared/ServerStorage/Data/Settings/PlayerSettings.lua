@@ -1,52 +1,55 @@
 local Players = game:GetService("Players")
 local ServerStorage = game:GetService("ServerStorage")
+local ReplicatedFirst = game:GetService("ReplicatedFirst")
+
+local utilityFolder = ReplicatedFirst.Shared.Utility
 
 local PlayerData = require(ServerStorage.Shared.Data.PlayerData)
+local Promise = require(utilityFolder.Promise)
+local Types = require(utilityFolder.Types)
+local Param = require(utilityFolder.Param)
+
+type PlayerParam = Types.PlayerParam
 
 local PlayerSettings = {}
 
-function getPlayerOrId(player)
-    return if type(player) =="number" then Players:GetPlayerByUserId(player) else player
+--[[
+    Gets the PlayerSettings table. The player does not need to be in this server.
+]]
+function PlayerSettings.get(player: PlayerParam)
+    return PlayerData.viewPlayerProfile(player, true):andThen(function(playerData)
+        if not playerData then
+            return PlayerData.viewPlayerProfile(player):andThen(function(profile)
+                return profile or Promise.reject()
+            end)
+        else
+            return playerData.profile
+        end
+    end):andThen(function(profile)
+        return profile.Data.playerSettings
+    end)
 end
 
-function PlayerSettings.get(player: Player | number)
-    player = getPlayerOrId(player)
-
-    local profile do
-        local playerData = PlayerData.get(player)
-
-        profile = if playerData then playerData.profile else PlayerData.viewPlayerProfile(player)
-    end
-
-    if not profile then
-        return
-    end
-
-    return profile.Data.playerSettings
+--[[
+    Gets a PlayerSettings setting. The player does not need to be in this server.
+]]
+function PlayerSettings.getSetting(player: PlayerParam, settingName: string)
+	return PlayerSettings.get(player):andThen(function(settings)
+        return settings[settingName]
+    end)
 end
 
-function PlayerSettings.getSetting(player: Player | number, settingName: string)
-    player = getPlayerOrId(player)
+--[[
+    Sets a PlayerSettings setting. The player must be in this server.
+]]
+function PlayerSettings.setSetting(player: PlayerParam, settingName: string, value)
+	return PlayerData.get(player, true):andThen(function(playerData)
+        if not playerData then
+            return Promise.reject()
+        end
 
-    local playerSettings = PlayerSettings.get(player)
-
-    if not playerSettings then
-        return
-    end
-
-    return playerSettings[settingName]
-end
-
-function PlayerSettings.setSetting(player: Player | number, settingName: string, value)
-    player = getPlayerOrId(player)
-
-    local playerData = PlayerData.get(player, true)
-
-    if not playerData then
-        return
-    end
-
-    playerData:setValue({"playerSettings", settingName}, value)
+        playerData:setValue({ "playerSettings", settingName }, value)
+    end)
 end
 
 return PlayerSettings
