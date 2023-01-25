@@ -323,4 +323,14 @@ function Table.map(t, callback) -- maps a table to a new table using the callbac
     return mapped
 end
 
+function Table.editValues(t, callback) -- maps a table to a new table using the callback, only passing the value
+    local mapped = {}
+
+    for k, v in pairs(t) do
+        mapped[k] = callback(v)
+    end
+
+    return mapped
+end
+
 return Table
