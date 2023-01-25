@@ -2066,9 +2066,24 @@ function Promise.onUnhandledRejection(callback)
 end
 
 Promise.resolve()
+	:andThen(function()
+		
+	end)
 	:catch(function()
-		return true
+		
 	end)
 	:andThen(function()
-		print("This should runn")
+		
+	end)
+	:catch(function()
+		
+	end)
+	:catch(function()
+		
+	end)
+	:andThen(function()
+		
+	end)
+	:andThen(function()
+		print("Done!")
 	end)
