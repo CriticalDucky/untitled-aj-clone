@@ -1,37 +1,41 @@
 local HttpService = game:GetService("HttpService")
+local ReplicatedFirst = game:GetService("ReplicatedFirst")
+
+local Promise = require(ReplicatedFirst:WaitForChild("Shared"):WaitForChild("Utility"):WaitForChild("Promise"))
 
 local ReplicaRequest = {}
 
 function ReplicaRequest.new(replica, ...)
-    if not replica then
-        warn("Replica not found")
-        return
-    end
+	assert(replica, "ReplicaRequest.new() called with nil replica")
 
-    local requestCode = HttpService:GenerateGUID(false)
+    local varargs = {...}
 
-    replica:FireServer(requestCode, ...)
+	return Promise.resolve():andThen(function()
+		local requestCode = HttpService:GenerateGUID(false)
+		local response
 
-    local response
+		local connection
+		do
+			connection = replica:ConnectOnClientEvent(function(returnedCode, ...)
+				if returnedCode == requestCode then
+					response = { ... }
+					connection:Disconnect()
+				end
+			end)
+		end
 
-    local connection do
-        connection = replica:ConnectOnClientEvent(function(returnedCode, ...)
-            if returnedCode == requestCode then
-                response = {...}
-                connection:Disconnect()
-            end
-        end)
-    end
+		replica:FireServer(requestCode, unpack(varargs))
 
-    local startTime = time()
+		local startTime = time()
 
-    while not response and time() - startTime < 5 do
-        task.wait()
-    end
+		while not response and time() - startTime < 5 do
+			task.wait()
+		end
 
-    connection:Disconnect()
+		connection:Disconnect()
 
-    return response
+		return response
+	end)
 end
 
 return ReplicaRequest
