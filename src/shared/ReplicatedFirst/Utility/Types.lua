@@ -41,4 +41,16 @@ export type HomeOwnerParam = PlayerParam | nil
 
 export type Promise = typeof(Promise.new(function() end))
 
+export type ServerIdentifier = {
+    serverType: UserEnum,
+    jobId: string?,
+    worldIndex: number?,
+    locationEnum: UserEnum?,
+    homeOwner: number?,
+    partyType: UserEnum?,
+    partyIndex: number?,
+    gameType: UserEnum?,
+    gameIndex: number?,
+}
+
 return nil
