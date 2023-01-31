@@ -7,13 +7,17 @@ local replicatedFirstShared = ReplicatedFirst.Shared
 local replicatedStorageShared = ReplicatedStorage.Shared
 local enumsFolder = replicatedStorageShared.Enums
 local serverFolder = replicatedStorageShared.Server
+local utilityFolder = replicatedFirstShared.Utility
 
 local ServerTypeEnum = require(enumsFolder:WaitForChild("ServerType"))
 local Locations = require(serverFolder:WaitForChild("Locations"))
 local Parties = require(serverFolder:WaitForChild("Parties"))
 local Games = require(serverFolder:WaitForChild("Games"))
 local GameSettings = require(replicatedFirstShared:WaitForChild("Settings"):WaitForChild("GameSettings"))
-local Promise = require(replicatedFirstShared:WaitForChild("Utility"):WaitForChild("Promise"))
+local Promise = require(utilityFolder:WaitForChild("Promise"))
+local Types = require(utilityFolder:WaitForChild("Types"))
+
+type Promise = Types.Promise
 
 local ClientServerData = require(serverFolder:WaitForChild("ClientServerData"))
 
@@ -53,7 +57,7 @@ local LocalServerInfo = {}
 LocalServerInfo.serverType = serverType
 
 -- Gets the server info of the game. Can be called on either the client or the server.
-function LocalServerInfo.getServerInfo()
+function LocalServerInfo.getServerInfo(): Promise
     if isServer then
         local ServerStorage = game:GetService("ServerStorage")
 
