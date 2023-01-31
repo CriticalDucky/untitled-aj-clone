@@ -22,7 +22,7 @@ local GameSettings = require(replicatedFirstShared.Settings.GameSettings)
 local MiniId = require(utilityFolder.MiniId)
 local Promise = require(utilityFolder.Promise)
 local Types = require(utilityFolder.Types)
-local InventoryFailure = require(enumsFolder.InventoryFailure)
+local ResponseType = require(enumsFolder.ResponseType)
 local ItemCategory = require(enumsFolder.ItemCategory)
 local Param = require(utilityFolder.Param)
 local PlayerFormat = require(enumsFolder.PlayerFormat)
@@ -211,7 +211,7 @@ function InventoryManager._removeItem(playerData: PlayerParam | PlayerData, item
 		local playerData: PlayerData = results[2]
 
 		if not playerData then
-			return Promise.reject(InventoryFailure.playerDataNotFound)
+			return Promise.reject(ResponseType.playerDataNotFound)
 		end
 
 		return InventoryManager.getItemFromIndex(player, itemCategory, itemIndex):andThen(function(item)
@@ -244,12 +244,12 @@ function InventoryManager._addItem(playerData: PlayerParam | PlayerData, itemCat
 		local playerData: PlayerData = results[2]
 
 		if not playerData then
-			return Promise.reject(InventoryFailure.playerDataNotFound)
+			return Promise.reject(ResponseType.playerDataNotFound)
 		end
 
 		return InventoryManager.isInventoryFull(player, itemCategory, 1):andThen(function(isFull)
 			if isFull then
-				return Promise.reject(InventoryFailure.inventoryFull)
+				return Promise.reject(ResponseType.fullInventory)
 			end
 
 			InventoryManager.itemPlacingInInventory:Fire(player, itemCategory, item)
@@ -295,7 +295,7 @@ function InventoryManager.removeDupes(owner: PlayerParam, itemId: string | { str
 		end)
 		:andThen(function(playerData: PlayerData | nil)
 			if not playerData then
-				return Promise.reject(InventoryFailure.playerDataNotFound)
+				return Promise.reject(ResponseType.playerDataNotFound)
 			end
 
 			return InventoryManager.getItemPathFromId(owner, itemId):andThen(function(itemCategory, index)
@@ -307,7 +307,7 @@ function InventoryManager.removeDupes(owner: PlayerParam, itemId: string | { str
 						},
 						playerData,
 					})
-					else Promise.reject(InventoryFailure.itemNotOwned)
+					else Promise.reject(ResponseType.itemNotOwned)
 			end)
 		end)
 		:andThen(function(path, playerData)
@@ -326,7 +326,7 @@ end
 --[[
 	Internal function for changing the owner of items. The success of this function is not guaranteed.
 	It will return a promise that rejects if the ownership changes for any reason.
-	It rejects with an InventoryFailure enum.
+	It rejects with an ResponseType enum.
 
 	- If a current owner is provided but a new owner is not, the items will be removed from the current 
 	owner's inventory.
@@ -389,7 +389,7 @@ function InventoryManager._changeOwnerOfItems(
 				end)
 
 			if not valid then
-				return reject(InventoryFailure.itemNotOwned)
+				return reject(ResponseType.itemNotOwned)
 			end
 		end
 
@@ -401,14 +401,14 @@ function InventoryManager._changeOwnerOfItems(
 				:andThen(function(results)
 					return if results[1] and results[2]
 						then table.unpack(results)
-						else Promise.reject(InventoryFailure.playerDataNotFound)
+						else Promise.reject(ResponseType.playerDataNotFound)
 				end)
 				:andThen(function(currentOwnerData, newOwnerData)
 					return checkIfInventoryWouldBeFull():andThen(function(wouldBeFull)
 						if wouldBeFull then
 							warn("New owner's inventory would be full")
 
-							return Promise.reject(InventoryFailure.inventoryFull)
+							return Promise.reject(ResponseType.inventoryFull)
 						end
 
 						return Promise.all({
@@ -418,7 +418,7 @@ function InventoryManager._changeOwnerOfItems(
 										if not itemCategory then
 											warn("Item path from id not found")
 
-											return Promise.reject(InventoryFailure.itemNotOwned)
+											return Promise.reject(ResponseType.itemNotOwned)
 										end
 
 										return InventoryManager._removeItem(currentOwnerData, itemCategory, index)
@@ -441,7 +441,7 @@ function InventoryManager._changeOwnerOfItems(
 								if not itemCategory then
 									warn("Item path from id not found")
 
-									return Promise.reject(InventoryFailure.itemNotOwned)
+									return Promise.reject(ResponseType.itemNotOwned)
 								end
 
 								return InventoryManager._removeItem(playerData, itemCategory, index)
@@ -457,7 +457,7 @@ function InventoryManager._changeOwnerOfItems(
 						if wouldBeFull then
 							warn("New owner's inventory would be full")
 
-							return Promise.reject(InventoryFailure.inventoryFull)
+							return Promise.reject(ResponseType.inventoryFull)
 						end
 
 						return Promise.all(Table.editValues(items, function(item)
@@ -543,6 +543,14 @@ function InventoryManager.reconcileItems(playerData: PlayerData): nil
 	end)
 end
 
-PlayerData.forAllPlayerData(InventoryManager.reconcileItems)
+PlayerData.forAllPlayerData(function(...)
+	InventoryManager.reconcileItems(...)
+		:andThen(function()
+			print("Reconciled items")
+		end)
+		:catch(function(err)
+			warn("Failed to reconcile items: " .. tostring(err))
+		end)
+end)
 
 return InventoryManager
