@@ -1,4 +1,3 @@
----@diagnostic disable: undefined-type
 --!strict
 
 --[[
