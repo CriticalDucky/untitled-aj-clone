@@ -26,10 +26,12 @@ local DataStore = require(utilityFolder.DataStore)
 local LiveServerData = require(serverFolder.LiveServerData)
 local Math = require(replicatedFirstUtility.Math)
 local Table = require(replicatedFirstUtility.Table)
-local Event = require(replicatedFirstUtility.Event)
 local PlayerData = require(serverStorageShared.Data.PlayerData)
 local ReplicaService = require(dataFolder.ReplicaService)
 local Promise = require(replicatedFirstUtility.Promise)
+local Types = require(replicatedFirstUtility.Types)
+
+type Promise = Types.Promise
 
 local serverDataStore = DataStoreService:GetDataStore(SERVERS_DATASTORE)
 
@@ -432,7 +434,7 @@ function ServerData.findAvailableLocation(worldIndex, locationsExcluded)
     end)
 end
 
-function ServerData.findAvailableWorld(forcedLocation, worldsExcluded)
+function ServerData.findAvailableWorld(forcedLocation, worldsExcluded): Promise
     return ServerData.getWorlds()
         :andThen(function(worlds)
             local worldIndex do
@@ -549,7 +551,7 @@ function ServerData.findAvailableParty(partyType)
         end)
 end
 
-function ServerData.findAvailableWorldAndLocation(forcedLocation, worldsExcluded)
+function ServerData.findAvailableWorldAndLocation(forcedLocation, worldsExcluded): Promise
     return ServerData.findAvailableWorld(forcedLocation, worldsExcluded)
         :andThen(function(worldIndex)
             return Promise.new(function(resolve, reject)
