@@ -1,86 +1,102 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local ServerStorage = game:GetService("ServerStorage")
 
 local serverStorageShared = ServerStorage.Shared
 local replicatedStorageShared = ReplicatedStorage.Shared
-local replicatedStorageHome = ReplicatedStorage.Home
+local replicatedFirstShared = ReplicatedFirst.Shared
 local dataFolder = serverStorageShared.Data
 local inventoryFolder = dataFolder.Inventory
 local enumsFolder = replicatedStorageShared.Enums
+local serverFolder = replicatedStorageShared.Server
+local utilityFolder = replicatedFirstShared.Utility
+local serverStorageSharedUtility = serverStorageShared.Utility
 
 local ReplicaService = require(dataFolder.ReplicaService)
 local HomeManager = require(inventoryFolder.HomeManager)
 local PlayerData = require(dataFolder.PlayerData)
-local LocalHomeInfo = require(replicatedStorageHome.Server.LocalHomeInfo)
-local InventoryManager = require(inventoryFolder.InventoryManager)
-local PlaceItemResponseType = require(enumsFolder.PlaceItemResponseType)
+local ResponseType = require(enumsFolder.ResponseType)
 local PlaceItemRequestType = require(enumsFolder.PlaceItemRequestType)
+local LocalServerInfo = require(serverFolder.LocalServerInfo)
+local Types = require(utilityFolder.Types)
+local Promise = require(utilityFolder.Promise)
+local ReplicaResponse = require(serverStorageSharedUtility.ReplicaResponse)
+local Param = require(utilityFolder.Param)
+
+type UserEnum = Types.UserEnum
+type Promise = Types.Promise
 
 local requestReplica = ReplicaService.NewReplica({
-    ClassToken = ReplicaService.NewClassToken("PlaceItemRequest"),
-    Replication = "All"
+	ClassToken = ReplicaService.NewClassToken("PlaceItemRequest"),
+	Replication = "All",
 })
 
-requestReplica:ConnectOnServerEvent(function(player: Player, requestCode, requestType, ...)
-    local function isRequestValid()
-        if not PlayerData.get(player) then
-            print("PlayerData not found for player " .. player.Name)
+local homeOwnerPromise: Promise = LocalServerInfo.getServerInfo():andThen(function(serverInfo)
+	return serverInfo.homeOwner
+end)
 
-            return false
-        end
+ReplicaResponse.listen(requestReplica, function(player: Player, placeItemRequestType: UserEnum, ...)
+	local vararg = {...}
 
-        if player.UserId ~= LocalHomeInfo.homeOwner then
-            print("Player " .. player.Name .. " is not the home owner")
+	return Param:expect({ player, "Player" }, { placeItemRequestType, "number", "string" }, { ..., "table" })
+		:andThen(function()
+			return homeOwnerPromise
+				:andThen(function(homeOwnerUserId)
+					return if homeOwnerUserId == player.UserId
+						then Promise.resolve()
+						else Promise.reject(ResponseType.invalid)
+				end)
+				:andThen(function()
+					return PlayerData.get(player):andThen(function(playerData)
+						return if playerData then Promise.resolve() else Promise.reject(ResponseType.invalid)
+					end)
+				end)
+				:andThen(function()
+					if placeItemRequestType == PlaceItemRequestType.place then
+						local placedItemData = unpack(vararg)
 
-            return false
-        end
+						local itemId: string, pivotCFrame: CFrame = placedItemData.itemId, placedItemData.pivotCFrame
 
-        return true
-    end
+						if typeof(itemId) ~= "string" or typeof(pivotCFrame) ~= "CFrame" then
+							warn("Invalid place item request data")
 
-    local function respond(...)
-        requestReplica:FireClient(player, requestCode, ...)
-    end
+							return Promise.reject(ResponseType.invalid)
+						end
 
-    if not isRequestValid() then
-        return respond(PlaceItemResponseType.invalid)
-    end
+						return HomeManager.addPlacedItem(itemId, pivotCFrame):catch(function(err)
+							warn(err)
 
-    if requestType == PlaceItemRequestType.place then
-        local placedItemData = ...
+							return Promise.reject(ResponseType.error)
+						end)
+					elseif placeItemRequestType == PlaceItemRequestType.remove then
+						local itemId: string = unpack(vararg)
 
-        local itemId: string, pivotCFrame: CFrame = placedItemData.itemId, placedItemData.pivotCFrame
+						if typeof(itemId) ~= "string" then
+							warn("Invalid place item request data")
 
-        if typeof(itemId) ~= "string" or typeof(pivotCFrame) ~= "CFrame" then
-            print("Invalid place item request data")
+							return Promise.reject(ResponseType.invalid)
+						end
 
-            return respond(PlaceItemResponseType.invalid)
-        end
+						return HomeManager.isItemPlaced(itemId):andThen(function(isItemPlaced)
+							return if isItemPlaced then Promise.resolve() else Promise.reject(ResponseType.invalid)
+						end):andThen(function()
+							return HomeManager.removePlacedItem(itemId):catch(function(err)
+								warn(err)
 
-        if not HomeManager.addPlacedItem(itemId, pivotCFrame) then
-            respond(PlaceItemResponseType.invalid)
-    
-            return
-        end
-    elseif requestType == PlaceItemRequestType.remove then
-        local itemId = ...
+								return Promise.reject(ResponseType.error)
+							end)
+						end)
+					else
+						warn("Invalid place item request type")
 
-        if not HomeManager.isItemPlaced(itemId) then
-            respond(PlaceItemResponseType.invalid)
-    
-            return
-        end
-
-        if not HomeManager.removePlacedItem(itemId) then
-            respond(PlaceItemResponseType.invalid)
-    
-            return
-        end
-    else
-        print("Invalid place item request type")
-
-        return respond(PlaceItemResponseType.invalid)
-    end
-
-    respond(PlaceItemResponseType.success)
+						return Promise.reject(ResponseType.invalid)
+					end
+				end)
+		end)
+		:andThen(function()
+			return Promise.resolve(ResponseType.success)
+		end)
+		:catch(function(err)
+			return Promise.resolve(err or ResponseType.error)
+		end)
 end)
