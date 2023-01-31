@@ -309,7 +309,7 @@ PlayerDataManager.playerDataAdded = Signal.new()
     Gets a player's data. If the player's data has not been loaded yet, it will wait until it has
     been loaded if wait is true.
 ]]
-function PlayerDataManager.get(player: PlayerParam, wait: boolean): Promise 
+function PlayerDataManager.get(player: PlayerParam, wait: boolean): Promise
 	return Param.playerParam(player, PlayerFormat.instance)
 		:andThen(function(instance)
 			player = instance
@@ -346,7 +346,7 @@ function PlayerDataManager.viewPlayerProfile(player: PlayerParam, getUpdated: bo
 			return if getRaw then profile else profile.Data
 		end
 
-        local userId = player.UserId
+		local userId = player.UserId
 
 		local profileSettings = cachedInactiveProfiles[userId]
 
