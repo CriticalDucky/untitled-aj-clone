@@ -8,21 +8,45 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local replicatedStorageShared = ReplicatedStorage:WaitForChild("Shared")
 local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
 local replicationFolder = replicatedStorageShared:WaitForChild("Replication")
+local utilityFolder = replicatedFirstShared:WaitForChild("Utility")
 
 local ReplicaCollection = require(replicationFolder:WaitForChild("ReplicaCollection"))
-local Promise = require(replicatedFirstShared:WaitForChild("Utility"):WaitForChild("Promise"))
-local Table = require(replicatedFirstShared:WaitForChild("Utility"):WaitForChild("Table"))
+local Promise = require(utilityFolder:WaitForChild("Promise"))
+local Table = require(utilityFolder:WaitForChild("Table"))
+local Types = require(utilityFolder:WaitForChild("Types"))
 
 local Fusion = require(replicatedFirstShared:WaitForChild("Fusion"))
 local Value = Fusion.Value
 local Observer = Fusion.Observer
 
+type ServerIdentifier = Types.ServerIdentifier
+
 local privateServerId = game.PrivateServerId
+local serverDataValue = Value({})
+
+local function find(callback: ({}) -> any)
+    return Promise.new(function(resolve)
+        local disconnect
+
+        local function find()
+            local serverData = serverDataValue:get()
+
+            local result = callback(serverData)
+
+            if result then
+                disconnect()
+                resolve(result)
+            end
+        end
+
+        disconnect = Observer(serverDataValue):onChange(find)
+
+        find()
+    end)
+end
 
 local replicaPromise = ReplicaCollection.get("ServerData", true)
     :andThen(function(replica)
-        local serverDataValue = Fusion.Value(replica.Data)
-
         replica:ListenToRaw(function()
             serverDataValue:set(replica.Data)
         end)
@@ -75,40 +99,96 @@ local serverInfoPromise = replicaPromise
         end)
     end)
 
+--[[
+    You might notice that ClientServerData functions return both promises and values. This is because UI will use the values (for within computed values)
+    and other stuff will use the promises (for when the server data is needed).
+]]
+
 local ClientServerData = {}
 
 function ClientServerData.get()
-    return ClientServerData:get()
+    return serverDataValue:get()
 end
 
+--[[
+    Returns the worlds table from the server data.
+    !! THIS DOES NOT RETURN A PROMISE !!
+]]
 function ClientServerData.getWorlds()
-    return ClientServerData:get()[WORLDS_KEY]
+    return serverDataValue:get()[WORLDS_KEY]
 end
 
+--[[ 
+    Returns the parties table from the server data.
+    !! THIS DOES NOT RETURN A PROMISE !!
+]]
 function ClientServerData.getParties()
-    return ClientServerData:get()[PARTIES_KEY]
+    return serverDataValue:get()[PARTIES_KEY]
 end
 
+--[[ 
+    Returns the games table from the server data.
+    !! THIS DOES NOT RETURN A PROMISE !!
+]]
 function ClientServerData.getGames()
-    return ClientServerData:get()[GAMES_KEY]
+    return serverDataValue:get()[GAMES_KEY]
 end
 
+--[[
+    Returns a promise that resolves the server data.
+]]
 function ClientServerData.promise()
     return replicaPromise
 end
 
+--[[
+    Returns a promise that resolves the worlds table.
+]]
+function ClientServerData.promiseWorlds()
+    return find(function(serverData)
+        return serverData[WORLDS_KEY]
+    end)
+end
+
+--[[
+    Returns a promise that resolves the parties table.
+]]
+function ClientServerData.promiseParties()
+    return find(function(serverData)
+        return serverData[PARTIES_KEY]
+    end)
+end
+
+--[[
+    Returns a promise that resolves the games table.
+]]
+function ClientServerData.promiseGames()
+    return find(function(serverData)
+        return serverData[GAMES_KEY]
+    end)
+end
+
+--[[
+    Returns a boolean indicating whether world has a specific location.
+    !! THIS DOES NOT RETURN A PROMISE !!
+]]
 function ClientServerData.worldHasLocation(worldIndex, locationEnum)
     local worlds = ClientServerData.getWorlds()
 
-    if worlds[worldIndex] then
+    if worlds and worlds[worldIndex] then
         local locations = worlds[worldIndex].locations
 
         if locations[locationEnum] then
             return true
         end
     end
+
+    return false
 end
 
+--[[
+    Returns a promise that resolves the serverInfo.
+]]
 function ClientServerData.getServerInfo()
     return serverInfoPromise
 end
