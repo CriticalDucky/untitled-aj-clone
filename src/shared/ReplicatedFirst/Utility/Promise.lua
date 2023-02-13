@@ -1902,6 +1902,20 @@ function Promise.prototype:now(rejectionValue)
 end
 
 --[=[
+	Gets the value of this Promise, or a rejection value if the Promise is rejected.
+	Does not return a Promise.
+	Safe to use in computeds,
+	does not yield or throw errors.
+]=]
+function Promise.prototype:get(rejectionValue: any)
+	return self
+		:catch(function()
+			return Promise.resolve(rejectionValue)
+		end)
+		:expect()
+end
+
+--[=[
 	Repeatedly calls a Promise-returning function up to `times` number of times, until the returned Promise resolves.
 
 	If the amount of retries is exceeded, the function will return the latest rejected Promise.
