@@ -9,7 +9,7 @@ local ClientPlayerData = require(dataFolder:WaitForChild("ClientPlayerData"))
 local Fusion = require(replicatedFirstShared:WaitForChild("Fusion"))
 local Computed = Fusion.Computed
 
-local playerData = ClientPlayerData.getLocalPlayerData(true)
+local playerData = ClientPlayerData.getData(true)
 
 local FriendLocations = Computed(function()
     return playerData:get().friendLocations.locations
