@@ -4,4 +4,5 @@ return {
     toFriend = 3,
     toParty = 4,
     toHome = 5,
+    rejoin = 6,
 }
