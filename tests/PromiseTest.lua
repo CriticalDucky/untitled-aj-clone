@@ -1481,14 +1481,14 @@ function Promise.prototype:_finally(traceback, finallyHandler)
 					handlerPromise = callbackReturn
 
 					callbackReturn
-					:finally(function(status)
-						if status ~= Promise.Status.Rejected then
-							resolve(self)
-						end
-					end)
-					:catch(function(...)
-						reject(...)
-					end)
+						:finally(function(status)
+							if status ~= Promise.Status.Rejected then
+								resolve(self)
+							end
+						end)
+						:catch(function(...)
+							reject(...)
+						end)
 				else
 					resolve(self)
 				end
@@ -1617,14 +1617,14 @@ function Promise.prototype:awaitStatus()
 		local thread = coroutine.running()
 
 		self
-		:finally(function()
-			task.spawn(thread)
-		end)
-		-- The finally promise can propagate rejections, so we attach a catch handler to prevent the unhandled
-		-- rejection warning from appearing
-		:catch(
-			function() end
-		)
+			:finally(function()
+				task.spawn(thread)
+			end)
+			-- The finally promise can propagate rejections, so we attach a catch handler to prevent the unhandled
+			-- rejection warning from appearing
+			:catch(
+				function() end
+			)
 
 		coroutine.yield()
 	end
@@ -1902,6 +1902,20 @@ function Promise.prototype:now(rejectionValue)
 end
 
 --[=[
+	Gets the value of this Promise, or a rejection value if the Promise is rejected.
+	Does not return a Promise.
+	Safe to use in computeds,
+	does not yield or throw errors.
+]=]
+function Promise.prototype:get(rejectionValue: any)
+	return self:now()
+		:catch(function()
+			return Promise.resolve(rejectionValue)
+		end)
+		:expect()
+end
+
+--[=[
 	Repeatedly calls a Promise-returning function up to `times` number of times, until the returned Promise resolves.
 
 	If the amount of retries is exceeded, the function will return the latest rejected Promise.
@@ -2065,25 +2079,14 @@ function Promise.onUnhandledRejection(callback)
 	end
 end
 
-Promise.resolve()
-	:andThen(function()
-		
-	end)
-	:catch(function()
-		
-	end)
-	:andThen(function()
-		
-	end)
-	:catch(function()
-		
-	end)
-	:catch(function()
-		
-	end)
-	:andThen(function()
-		
-	end)
-	:andThen(function()
-		print("Done!")
-	end)
+print(os.clock())
+Promise.new(function(resolve)
+	task.wait(1)
+
+	resolve()
+end):catch(function()
+	return 2
+end):now():catch(function(val)
+	print(val)
+end)
+print(os.clock())
