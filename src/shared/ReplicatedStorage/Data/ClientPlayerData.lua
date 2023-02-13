@@ -5,105 +5,140 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local replicatedStorageShared = ReplicatedStorage:WaitForChild("Shared")
 local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
 local replicationFolder = replicatedStorageShared:WaitForChild("Replication")
+local utilityFolder = replicatedFirstShared:WaitForChild("Utility")
+local enumsFolder = replicatedStorageShared:WaitForChild("Enums")
 
 local ReplicaCollection = require(replicationFolder:WaitForChild("ReplicaCollection"))
 local Fusion = require(replicatedFirstShared:WaitForChild("Fusion"))
-local Table = require(replicatedFirstShared:WaitForChild("Utility"):WaitForChild("Table"))
+local Table = require(utilityFolder:WaitForChild("Table"))
+local Promise = require(utilityFolder:WaitForChild("Promise"))
+local Types = require(utilityFolder:WaitForChild("Types"))
+local Param = require(utilityFolder:WaitForChild("Param"))
+local PlayerFormat = require(enumsFolder:WaitForChild("PlayerFormat"))
+
+type LocalPlayerParam = Types.LocalPlayerParam
 
 local Value = Fusion.Value
 
-local publicDataReplica = ReplicaCollection.get("PlayerDataPublic", true)
+local publicDataReplicaPromise = ReplicaCollection.get("PlayerDataPublic", true)
 
 local playerDataTables = {}
 local connections = {}
 local publicDataLoaded = {}
 
 local function addConnection(connection, player)
-    connections[player] = connections[player] or {}
-    table.insert(connections[player], connection)
+	connections[player] = connections[player] or {}
+	table.insert(connections[player], connection)
 end
 
 local function removeAllConnections(player)
-    if connections[player] then
-        for _, connection in ipairs(connections[player]) do
-            connection:Disconnect()
-        end
-        connections[player] = nil
-    end
+	if connections[player] then
+		for _, connection in ipairs(connections[player]) do
+			connection:Disconnect()
+		end
+		connections[player] = nil
+	end
 end
 
 local playerData = {}
 
-function playerData.add(player)
-    local function connect(connection)
-        addConnection(connection, player)
-    end
+--[[
+    Only for use by ClientPlayerDataInit.client.lua
+]]
+function playerData.add(player: Player)
+	local publicDataReplica = publicDataReplicaPromise:expect()
 
-    local data = {}
-    local userIdKey = tostring(player.UserId)
+	local function connect(connection)
+		addConnection(connection, player)
+	end
 
-    local function onReplicaChange()
-        local value = data.value or Value()
+	local data = {}
+	local userIdKey = tostring(player.UserId)
 
-        if publicDataReplica.Data[userIdKey] then
-            publicDataLoaded[userIdKey] = true
-        end
+	local function onReplicaChange()
+		local value = data.value or Value()
 
-        if player == Players.LocalPlayer then
-            for key, value in pairs(data._privateReplica.Data) do
-                data._mergeTable[key] = value
-            end
+		if publicDataReplica.Data[userIdKey] then
+			publicDataLoaded[userIdKey] = true
+		end
 
-            if publicDataLoaded[userIdKey] then
-                for key, value in pairs(publicDataReplica.Data[userIdKey]) do
-                    data._mergeTable[key] = value
-                end
-            end
+		if player == Players.LocalPlayer then
+			for key, value in pairs(data._privateReplica.Data) do
+				data._mergeTable[key] = value
+			end
 
-            value:set(data._mergeTable)
-        else
-            value:set(publicDataReplica.Data[userIdKey])
-        end
+			if publicDataLoaded[userIdKey] then
+				for key, value in pairs(publicDataReplica.Data[userIdKey]) do
+					data._mergeTable[key] = value
+				end
+			end
 
-        data.value = value
-    end
+			value:set(data._mergeTable)
+		else
+			value:set(publicDataReplica.Data[userIdKey])
+		end
 
-    if player == Players.LocalPlayer then
-        data._privateReplica = ReplicaCollection.get("PlayerDataPrivate", true)
-        connect(data._privateReplica:ListenToRaw(onReplicaChange))
-        data._mergeTable = {}
-    end
+		data.value = value
+	end
 
-    connect(publicDataReplica:ListenToRaw(onReplicaChange))
+	if player == Players.LocalPlayer then
+		data._privateReplica = ReplicaCollection.get("PlayerDataPrivate", true):expect()
+		connect(data._privateReplica:ListenToRaw(onReplicaChange))
+		data._mergeTable = {}
+	end
 
-    playerDataTables[player] = data
+	connect(publicDataReplica:ListenToRaw(onReplicaChange))
 
-    onReplicaChange()
+	playerDataTables[player] = data
+
+	onReplicaChange()
 end
 
-function playerData.getData(player, wait)
-    local lastPrint = time()
+--[[
+    Gets a player's data, if it exists.
+    It does not return a promise, so it's safe for state objects.
+    It can return nil, so make sure to check for that.
+]]
+function playerData.getData(player: LocalPlayerParam)
+	player = Param.localPlayerParamNow(player, PlayerFormat.instance)
 
-    while wait and not (playerDataTables[player] and playerDataTables[player].value and publicDataLoaded[tostring(player.UserId)]) do
-        -- only print once every 5 seconds
-        if time() - lastPrint > 5 then
-            lastPrint = time()
-            warn("Waiting for player data for " .. player.Name)
-        end
-        
-        task.wait()
-    end
+	return player
+		and playerDataTables[player]
+		and playerDataTables[player].value
+		and playerDataTables[player].value:get()
+end
 
-    return playerDataTables[player].value
+--[[
+    Gets a player's data, if it exists.
+    It returns a promise, so it's not safe for state objects.
+]]
+function playerData.promiseData(player: LocalPlayerParam)
+	return Param.localPlayerParam(player):andThen(function(player)
+		local lastPrint = time()
+
+		while
+			not (
+				playerDataTables[player]
+				and playerDataTables[player].value
+				and publicDataLoaded[tostring(player.UserId)]
+			)
+		do
+			-- only print once every 5 seconds
+			if time() - lastPrint > 5 then
+				lastPrint = time()
+				warn("Waiting for player data for " .. player.Name)
+			end
+
+			task.wait()
+		end
+
+		return (playerDataTables[player].value)
+	end)
 end
 
 Players.PlayerRemoving:Connect(function(player)
-    removeAllConnections(player)
-    playerDataTables[player] = nil
+	removeAllConnections(player)
+	playerDataTables[player] = nil
 end)
-
-function playerData.getLocalPlayerData(wait)
-    return playerData.getData(Players.LocalPlayer, wait)
-end
 
 return playerData
