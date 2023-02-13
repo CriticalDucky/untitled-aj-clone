@@ -12,6 +12,7 @@ local enumsFolder = replicatedStorageShared:WaitForChild("Enums")
 
 local Fusion = require(replicatedFirstShared:WaitForChild("Fusion"))
 local ClientTeleport = require(requestsFolder:WaitForChild("Teleportation"):WaitForChild("ClientTeleport"))
+local ClientServerData = require(serverFolder:WaitForChild("ClientServerData"))
 local ServerTypeGroups = require(serverFolder:WaitForChild("ServerTypeGroups"))
 local ServerGroupEnum = require(enumsFolder:WaitForChild("ServerGroup"))
 
@@ -30,12 +31,14 @@ local unwrap = Fusion.unwrap
 local player = Players.LocalPlayer
 
 local component = function(props)
-    local visible = true
+    local visible = Value(false)
 
     if ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome) then
-        local LocalHomeInfo = require(ReplicatedStorage.Home.Server.LocalHomeInfo)
-
-        visible = if player.UserId == LocalHomeInfo.homeOwner then false else visible
+        ClientServerData.getServerInfo():andThen(function(serverInfo)
+            visible:set(serverInfo.homeOwner ~= player.UserId)
+        end)
+    else
+        visible:set(true)
     end
 
     return New "TextButton" {
