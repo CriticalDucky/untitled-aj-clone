@@ -21,6 +21,8 @@ local ActiveParties = require(serverFolder.ActiveParties)
 local ReplicaResponse = require(serverStorageSharedUtility.ReplicaResponse)
 local Param = require(utilityFolder.Param)
 local Promise = require(utilityFolder.Promise)
+local ServerGroupEnum = require(enumsFolder.ServerGroup)
+local ServerTypeGroups = require(serverFolder.ServerTypeGroups)
 
 local TeleportRequest = ReplicaService.NewReplica({
     ClassToken = ReplicaService.NewClassToken("TeleportRequest"),
@@ -29,6 +31,10 @@ local TeleportRequest = ReplicaService.NewReplica({
 
 ReplicaResponse.listen(TeleportRequest, function(player: Player, teleportRequestType, ...)
     local vararg = {...}
+
+    if ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
+        return Promise.reject(ResponseType.invalid)
+    end
 
     return Param.expect({teleportRequestType, "number"}):andThen(function()
         if teleportRequestType == TeleportRequestType.toWorld then
@@ -65,6 +71,8 @@ ReplicaResponse.listen(TeleportRequest, function(player: Player, teleportRequest
             return Param.expect({homeOwnerUserId, "number"}):andThen(function()
                 return Teleport.toHome(player, homeOwnerUserId)
             end)
+        elseif teleportRequestType == TeleportRequestType.rejoin then
+            return Teleport.rejoin(player, "An unknown error occured on the client. (err code C1)")
         else
             warn("Invalid request: teleportRequestType is nil or invalid")
     
