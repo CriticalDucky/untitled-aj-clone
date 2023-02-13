@@ -2,8 +2,11 @@ local utilityFolder = game:GetService("ReplicatedFirst"):WaitForChild("Shared"):
 
 local ServerUnixTime = require(utilityFolder:WaitForChild("ServerUnixTime"))
 local Current = require(utilityFolder:WaitForChild("Current"))
+local Types = require(utilityFolder:WaitForChild("Types"))
 
-local function getUnixFromInfo(timeInfo)
+type TimeRange = Types.TimeRange
+
+local function getUnixFromTimeInfo(timeInfo): number
     if type(timeInfo) == "function" then
         timeInfo = timeInfo()
     end
@@ -29,7 +32,7 @@ end
 local TimeRange = {}
 TimeRange.__index = TimeRange
 
-function TimeRange.new(introduction, closing)
+function TimeRange.new(introduction, closing): TimeRange
     local self = setmetatable({}, TimeRange)
 
     self.introduction = introduction
@@ -46,7 +49,7 @@ function TimeRange.newGroup(timeRanges)
     return self
 end
 
-function TimeRange:isInRange(time)
+function TimeRange:isInRange(time: number)
     local time = time or ServerUnixTime.evaluateTime()
 
     if self.timeRanges then
@@ -58,7 +61,7 @@ function TimeRange:isInRange(time)
 
         return false
     else
-        return time >= getUnixFromInfo(self.introduction) and time <= getUnixFromInfo(self.closing)
+        return time >= getUnixFromTimeInfo(self.introduction) and time <= getUnixFromTimeInfo(self.closing)
     end
 end
 
@@ -80,7 +83,7 @@ function TimeRange:distanceToClosing(time)
 
         return distance
     else
-        return getUnixFromInfo(self.closing) - time
+        return getUnixFromTimeInfo(self.closing) - time
     end
 end
 
@@ -106,7 +109,7 @@ function TimeRange:distanceToIntroduction(time)
             return distance
         end
     else
-        return math.max(getUnixFromInfo(self.introduction) - time, 0)
+        return math.max(getUnixFromTimeInfo(self.introduction) - time, 0)
     end
 end
 
