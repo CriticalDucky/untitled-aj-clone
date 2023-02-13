@@ -14,6 +14,8 @@ local LocalServerInfo = require(serverFolder:WaitForChild("LocalServerInfo"))
 local Promise = require(utilityFolder:WaitForChild("Promise"))
 local ResponseType = require(enumsFolder:WaitForChild("ResponseType"))
 
+type Promise = Types.Promise
+
 local serverInfoPromise = LocalServerInfo.getServerInfo()
 
 local Param = {}
@@ -28,8 +30,8 @@ local Param = {}
 	```
 ]]
 function Param.expect(...) -- desired types are put after the object in a list. Example: {1, "number", "string"}
-	local t = {...}
-	
+	local t = { ... }
+
 	for _, v in ipairs(t) do
 		local obj = v[1]
 		local types = table.remove(v, 1) and v
@@ -55,11 +57,24 @@ function Param.expect(...) -- desired types are put after the object in a list. 
 	return Promise.resolve()
 end
 
-function Param.playerParam(playerParam: Types.PlayerParam, format: Types.UserEnum, useHomeOwner: boolean): Types.Promise
+--[[
+	This function takes in a playerParam, a format, and two booleans. that indicate the behavior of when playerParam is nil.
+	Returns a promise, so it's not safe to use in stateObjects.
+]]
+function Param.playerParam(
+	playerParam: Types.PlayerParam,
+	format: Types.UserEnum,
+	useHomeOwner: boolean,
+	useLocalPlayer: boolean
+): Promise
 	return (if useHomeOwner then serverInfoPromise else Promise.resolve())
 		:andThen(function(serverInfo)
 			if useHomeOwner then
 				return Param.playerParam(serverInfo.homeOwner, format, false)
+			end
+
+			if useLocalPlayer then
+				return Param.playerParam(Players.LocalPlayer, format, false)
 			end
 
 			local paramType = typeof(playerParam)
@@ -77,6 +92,48 @@ function Param.playerParam(playerParam: Types.PlayerParam, format: Types.UserEnu
 			warn("Param.playerParam failed:", err)
 			return Promise.reject(err)
 		end)
+end
+
+--[[
+	Wrapper for Param.playerParam that uses a local player param. Should only be used on the client.
+	Unsafe for state objects.
+]]
+function Param.localPlayerParam(playerParam: Types.LocalPlayerParam, format: Types.UserEnum): Promise
+	return Param.playerParam(playerParam, format, false, true)
+end
+
+--[[
+	Wrapper for Param.playerParam that does not yield.
+	Safe for state objects.
+	Note: This function will return nil if the promise is rejected. Make the necessary checks.
+]]
+function Param.playerParamNow(
+	playerParam: Types.PlayerParam,
+	format: Types.UserEnum,
+	useHomeOwner: boolean,
+	useLocalPlayer: boolean
+)
+	local result
+
+	Param.playerParam(playerParam, format, useHomeOwner, useLocalPlayer)
+		:now()
+		:andThen(function(player)
+			result = player
+		end)
+		:catch(function()
+			result = nil
+		end)
+
+	return result
+end
+
+--[[
+	Wrapper for Param.playerParam that uses a local player param. Should only be used on the client.
+	Safe for state objects as it does not yield.
+	Note: This function will return nil if the promise is rejected. Make the necessary checks.
+]]
+function Param.localPlayerParamNow(playerParam: Types.LocalPlayerParam, format: Types.UserEnum)
+	return Param.playerParamNow(playerParam, format, false, true)
 end
 
 return Param
