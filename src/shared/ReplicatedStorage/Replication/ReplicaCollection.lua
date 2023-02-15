@@ -27,7 +27,7 @@ local classes = {
     "ServerData",
 }
 
-local inclusiveClasses = {
+local inclusiveClasses = { -- Classes that can be found inside a string. For example, "PlayerDataPrivate" can be found inside "PlayerDataPrivate_1234567890"
     "PlayerDataPrivate"
 }
 
