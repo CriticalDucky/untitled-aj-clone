@@ -1907,8 +1907,11 @@ end
 	Safe to use in computeds,
 	does not yield or throw errors.
 ]=]
-function Promise.prototype:get(rejectionValue: any)
-	return self:now()
+function Promise.prototype:getNow(rejectionValue: any)
+	return self:catch(function()
+		return Promise.resolve(rejectionValue)
+	end)
+		:now()
 		:catch(function()
 			return Promise.resolve(rejectionValue)
 		end)
@@ -2079,14 +2082,40 @@ function Promise.onUnhandledRejection(callback)
 	end
 end
 
-print(os.clock())
-Promise.new(function(resolve)
-	task.wait(1)
+-- print(os.clock())
+-- Promise.new(function(resolve)
+-- 	task.wait(1)
 
-	resolve()
-end):catch(function()
-	return 2
-end):now():catch(function(val)
-	print(val)
+-- 	resolve()
+-- end):catch(function()
+-- 	return 2
+-- end):now():catch(function(val)
+-- 	print(val)
+-- end)
+-- print(os.clock())
+
+local Fusion = require(game:GetService("ReplicatedFirst"):WaitForChild("Shared"):WaitForChild("Fusion"))
+local Value = Fusion.Value
+local Computed = Fusion.Computed
+local Observer = Fusion.Observer
+
+local value = Value(1)
+
+local function getValueInPromise() -- test the nuance of this
+	return Promise.resolve(value:get()):andThen(function(val)
+		task.wait()
+		return val
+	end)
+end
+
+local valueComputed = Computed(function()
+	return getValueInPromise():getNow()
 end)
-print(os.clock())
+
+Observer(valueComputed):onChange(function()
+	print("valueComputed changed to", valueComputed:get())
+end)
+
+value:set(2)
+task.wait(1)
+value:set(3)

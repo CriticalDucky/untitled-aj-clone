@@ -1907,8 +1907,11 @@ end
 	Safe to use in computeds,
 	does not yield or throw errors.
 ]=]
-function Promise.prototype:get(rejectionValue: any)
-	return self
+function Promise.prototype:getNow(rejectionValue: any)
+	return self:catch(function()
+		return Promise.resolve(rejectionValue)
+	end)
+		:now()
 		:catch(function()
 			return Promise.resolve(rejectionValue)
 		end)
