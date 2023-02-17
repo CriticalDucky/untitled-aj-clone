@@ -24,8 +24,8 @@ type ServerIdentifier = Types.ServerIdentifier
 local privateServerId = game.PrivateServerId
 local serverDataValue = Value({})
 
-local function find(callback: ({}) -> any)
-    return Promise.new(function(resolve)
+local function find(callback: ({}) -> any) -- Merger of Fusion and Promise
+    return Promise.new(function(resolve, reject, onCancel)
         local disconnect
 
         local function find()
@@ -42,6 +42,11 @@ local function find(callback: ({}) -> any)
         disconnect = Observer(serverDataValue):onChange(find)
 
         find()
+
+        onCancel(function()
+            disconnect()
+            reject()
+        end)
     end)
 end
 
@@ -106,45 +111,17 @@ local serverInfoPromise = replicaPromise
 
 local ClientServerData = {}
 
-function ClientServerData.get()
-    return serverDataValue:get()
-end
-
---[[
-    Returns the worlds table from the server data.
-    !! THIS DOES NOT RETURN A PROMISE !!
-]]
-function ClientServerData.getWorlds()
-    return serverDataValue:get()[WORLDS_KEY]
-end
-
---[[ 
-    Returns the parties table from the server data.
-    !! THIS DOES NOT RETURN A PROMISE !!
-]]
-function ClientServerData.getParties()
-    return serverDataValue:get()[PARTIES_KEY]
-end
-
---[[ 
-    Returns the games table from the server data.
-    !! THIS DOES NOT RETURN A PROMISE !!
-]]
-function ClientServerData.getGames()
-    return serverDataValue:get()[GAMES_KEY]
-end
-
 --[[
     Returns a promise that resolves the server data.
 ]]
-function ClientServerData.promise()
+function ClientServerData.get()
     return replicaPromise
 end
 
 --[[
     Returns a promise that resolves the worlds table.
 ]]
-function ClientServerData.promiseWorlds()
+function ClientServerData.getWorlds()
     return find(function(serverData)
         return serverData[WORLDS_KEY]
     end)
@@ -153,7 +130,7 @@ end
 --[[
     Returns a promise that resolves the parties table.
 ]]
-function ClientServerData.promiseParties()
+function ClientServerData.getParties()
     return find(function(serverData)
         return serverData[PARTIES_KEY]
     end)
@@ -162,28 +139,19 @@ end
 --[[
     Returns a promise that resolves the games table.
 ]]
-function ClientServerData.promiseGames()
+function ClientServerData.getGames()
     return find(function(serverData)
         return serverData[GAMES_KEY]
     end)
 end
 
 --[[
-    Returns a boolean indicating whether world has a specific location.
-    !! THIS DOES NOT RETURN A PROMISE !!
+    Returns a promise resolving to a boolean indicating whether world has a specific location.
 ]]
 function ClientServerData.worldHasLocation(worldIndex, locationEnum)
-    local worlds = ClientServerData.getWorlds()
-
-    if worlds and worlds[worldIndex] then
-        local locations = worlds[worldIndex].locations
-
-        if locations[locationEnum] then
-            return true
-        end
-    end
-
-    return false
+    ClientServerData.getWorlds():andThen(function(worlds)
+        return worlds[worldIndex] and worlds[worldIndex].locations[locationEnum]
+    end)
 end
 
 --[[
