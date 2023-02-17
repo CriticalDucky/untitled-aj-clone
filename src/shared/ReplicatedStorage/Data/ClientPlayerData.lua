@@ -1,6 +1,7 @@
 local Players = game:GetService("Players")
 local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TextService = game:GetService("TextService")
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild("Shared")
 local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
@@ -17,6 +18,9 @@ local Param = require(utilityFolder:WaitForChild("Param"))
 local PlayerFormat = require(enumsFolder:WaitForChild("PlayerFormat"))
 
 type LocalPlayerParam = Types.LocalPlayerParam
+type InventoryCategory = Types.InventoryCategory
+type Promise = Types.Promise
+type ProfileData = Types.ProfileData
 
 local Value = Fusion.Value
 
@@ -99,40 +103,46 @@ end
     It does not return a promise, so it's safe for state objects.
     It can return nil, so make sure to check for that.
 ]]
-function playerData.getData(player: LocalPlayerParam)
-	player = Param.localPlayerParamNow(player, PlayerFormat.instance)
-
-	return player
-		and playerDataTables[player]
-		and playerDataTables[player].value
-		and playerDataTables[player].value:get()
-end
 
 --[[
     Gets a player's data, if it exists.
     It returns a promise, so it's not safe for state objects.
 ]]
-function playerData.promiseData(player: LocalPlayerParam)
-	return Param.localPlayerParam(player):andThen(function(player)
-		local lastPrint = time()
+function playerData.getData(player: LocalPlayerParam)
+	return Promise.new(function(resolve, reject, onCancel)
+		Param.localPlayerParam(player)
+			:andThen(function(player)
+				local lastPrint = time()
+				local stop = false
 
-		while
-			not (
-				playerDataTables[player]
-				and playerDataTables[player].value
-				and publicDataLoaded[tostring(player.UserId)]
-			)
-		do
-			-- only print once every 5 seconds
-			if time() - lastPrint > 5 then
-				lastPrint = time()
-				warn("Waiting for player data for " .. player.Name)
-			end
+				onCancel(function()
+					stop = true
+				end)
 
-			task.wait()
-		end
+				while
+					not (
+						playerDataTables[player]
+						and playerDataTables[player].value
+						and publicDataLoaded[tostring(player.UserId)]
+					) and not stop
+				do
+					-- only print once every 5 seconds
+					if time() - lastPrint > 5 then
+						lastPrint = time()
+						warn("Waiting for player data for " .. player.Name)
+					end
 
-		return (playerDataTables[player].value)
+					task.wait()
+				end
+
+				if stop then
+					return Promise.reject()
+				end
+
+				return playerDataTables[player].value:get()
+			end)
+			:andThen(resolve)
+			:catch(reject)
 	end)
 end
 
