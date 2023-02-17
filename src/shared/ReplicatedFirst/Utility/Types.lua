@@ -3,12 +3,24 @@ local RunService = game:GetService("RunService")
 
 local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
 local utilityFolder = replicatedFirstShared:WaitForChild("Utility")
+local settingsFolder = replicatedFirstShared:WaitForChild("Settings")
 
 local Promise = require(utilityFolder:WaitForChild("Promise"))
+local GameSettings = require(settingsFolder:WaitForChild("GameSettings"))
+local Table = require(utilityFolder:WaitForChild("Table"))
 
-local isServer = RunService:IsServer()
+local profileTemplate = GameSettings.profileTemplate
+local tempDataTemplate = GameSettings.tempDataTemplate
+
+export type ProfileData = typeof(profileTemplate) & typeof(tempDataTemplate)
+export type Inventory = typeof(profileTemplate.inventory)
+export type InventoryCategory = { InventoryItem }
 
 export type UserEnum = string | number
+
+export type Profile = {
+	Data: ProfileData,
+}
 
 export type PlayerData = {
 	setValue: (PlayerData, path: {}, value: any) -> nil,
@@ -17,7 +29,7 @@ export type PlayerData = {
 	arraySet: (PlayerData, path: {}, index: number, value: any) -> nil,
 	arrayRemove: (PlayerData, path: {}, index: number) -> nil,
 	player: Player,
-	profile: table,
+	profile: Profile,
 }
 
 export type TimeRange = {
@@ -39,9 +51,9 @@ export type TimeInfo = number | (
 }
 
 export type PartyUnit = {
-    partyType: UserEnum,
-    halfHourId: number,
-    time: TimeRange,
+	partyType: UserEnum,
+	halfHourId: number,
+	time: TimeRange,
 }
 
 export type HomeServerInfo = {
