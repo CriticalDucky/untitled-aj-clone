@@ -19,73 +19,23 @@ local ReplicaService = require(serverStorageSharedData.ReplicaService)
 local ReplicationType = require(enumsFolder.ReplicationType)
 local Table = require(replicatedFirstUtility.Table)
 local PlayerJoinTimes = require(serverStorageSharedUtility.PlayerJoinTimes)
-local HomeLockType = require(enumsFolder.HomeLockType)
 local Signal = require(replicatedFirstUtility.Signal)
 local Promise = require(replicatedFirstUtility.Promise)
 local Types = require(replicatedFirstUtility.Types)
 local Param = require(replicatedFirstUtility.Param)
 local PlayerFormat = require(enumsFolder.PlayerFormat)
+local GameSettings = require(replicatedFirstShared.Settings.GameSettings)
 
+type PlayerData = Types.PlayerData
 type PlayerParam = Types.PlayerParam
 type Promise = Types.Promise
 
-local PROFILE_TEMPLATE = { -- Items in here can only be under a table. See:
+local profileTemplate = GameSettings.profileTemplate
+profileTemplate.currency._replication = ReplicationType.server
 
-	-- NOTE TO FUTURE SELF: adding stuff here also requires adding it to PROFILE_REPLICATION below
+local tempDataTemplate = GameSettings.tempDataTemplate
 
-	currency = {
-		money = 0,
-	},
-
-	inventory = {
-		accessories = {},
-		homeItems = {},
-		homes = {},
-	},
-
-	playerInfo = { -- stuff that never changes
-		homeServerInfo = {
-			privateServerId = nil,
-			serverCode = nil,
-		},
-		homeInfoStamped = false,
-	},
-
-	playerSettings = {
-		findOpenWorld = true,
-		homeLock = HomeLockType.unlocked,
-		selectedHome = nil,
-	},
-}
-
-local PROFILE_REPLICATION = {
-	[ReplicationType.private] = { -- private data is only sent to the client that owns the profile
-		"currency",
-		"inventory",
-	},
-
-	[ReplicationType.public] = { -- public data is replicated to everyone
-		"playerSettings",
-	},
-}
-
-local TEMP_DATA_TEMPLATE
-do
-	local dictionaries = {}
-
-	local function iterate(_, instance)
-		if instance:IsA("ModuleScript") and instance.Name == "TempDataTemplate" then
-			table.insert(dictionaries, require(instance))
-		end
-	end
-
-	table.foreachi(ServerStorage:GetDescendants(), iterate)
-	table.foreachi(ServerScriptService:GetDescendants(), iterate)
-
-	TEMP_DATA_TEMPLATE = Table.merge(table.unpack(dictionaries))
-end
-
-local ProfileStore = ProfileService.GetProfileStore("PlayerData", PROFILE_TEMPLATE)
+local ProfileStore = ProfileService.GetProfileStore("PlayerData", GameSettings.profileTemplate)
 
 local playerDataPublicReplica = ReplicaService.NewReplica({
 	ClassToken = ReplicaService.NewClassToken("PlayerDataPublic"),
@@ -100,20 +50,12 @@ local cachedInactiveProfiles = {}
 local PlayerData = {}
 PlayerData.__index = PlayerData
 
-local function getReplicationType(index)
-	for replicationType, keys in pairs(PROFILE_REPLICATION) do
-		if table.find(keys, index) then
-			return replicationType
-		end
-	end
+local function getReplicationType(profileIndex)
+	assert(profileTemplate[profileIndex] or tempDataTemplate[profileIndex], "Invalid profile index: " .. profileIndex)
 
-	for key, value in pairs(TEMP_DATA_TEMPLATE) do
-		if index == key then
-			return value._replication
-		end
-	end
-
-	return ReplicationType.server
+	return profileTemplate[profileIndex]._replication
+		or tempDataTemplate[profileIndex]._replication
+		or ReplicationType.server
 end
 
 local function getKey(playerId)
@@ -124,7 +66,7 @@ end
     Sets up a new PlayerData object for the given player.
 ]]
 function PlayerData.new(player: PlayerParam)
-	Param.playerParam(player, PlayerFormat.instance):andThen(function(instance)
+	return Param.playerParam(player, PlayerFormat.instance):andThen(function(instance)
 		player = instance
 
 		return Promise.new(function(resolve, reject)
@@ -143,21 +85,29 @@ function PlayerData.new(player: PlayerParam)
 
 				if player:IsDescendantOf(Players) then
 					playerDataCollection[player] = newPlayerData
-					local tempDataCopy = Table.deepCopy(TEMP_DATA_TEMPLATE)
+					local tempDataCopy = Table.deepCopy(tempDataTemplate)
 
 					local function getMatchingProfileProps(privacy)
 						local matchingProps = {}
-						for _, key in ipairs(PROFILE_REPLICATION[privacy]) do
-							matchingProps[key] = profile.Data[key]
+
+						for propName, prop in pairs(profile.Data) do
+							if prop._replication == privacy then
+								matchingProps[propName] = prop
+							end
 						end
+
 						return matchingProps
 					end
 
 					local function getMatchingTempDataProps(privacy)
 						local matchingProps = {}
-						for k, v in pairs(tempDataCopy) do
-							matchingProps[k] = v._replication == privacy and v or nil
+
+						for propName, prop in pairs(tempDataCopy) do
+							if prop._replication == privacy then
+								matchingProps[propName] = prop
+							end
 						end
+
 						return matchingProps
 					end
 
@@ -402,7 +352,7 @@ function PlayerDataManager.yieldUntilHopReady(player)
 	end)
 end
 
-function PlayerDataManager.forAllPlayerData(callback)
+function PlayerDataManager.forAllPlayerData(callback: (PlayerData) -> nil)
 	for _, playerData in pairs(playerDataCollection) do
 		callback(playerData)
 	end
