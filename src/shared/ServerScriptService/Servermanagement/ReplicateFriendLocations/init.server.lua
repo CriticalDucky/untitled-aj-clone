@@ -11,9 +11,12 @@ local serverUtility = serverStorageShared.Utility
 local PlayerLocation = require(serverUtility.PlayerLocation)
 local GetFriends = require(utilityFolder.GetFriends)
 local PlayerData = require(dataFolder.PlayerData)
+local Types = require(utilityFolder.Types)
 
-Players.PlayerAdded:Connect(function(player)
-    local playerData = PlayerData.get(player, true)
+type PlayerData = Types.PlayerData
+
+PlayerData.forAllPlayerData(function(playerData)
+    local player = playerData.player
 
     local friends = GetFriends(player.UserId)
 
