@@ -47,6 +47,13 @@ local component = function(props)
         Size = UDim2.fromOffset(75, 75),
         LayoutOrder = 50,
         Visible = visible,
+        BackgroundColor3 = Computed(function()
+            if errored:get() then
+                return Color3.fromRGB(255, 102, 102)
+            else
+                return Color3.fromRGB(255, 255, 255)
+            end
+        end),
 
         Text = "Home",
         Font = Enum.Font.Gotham,
