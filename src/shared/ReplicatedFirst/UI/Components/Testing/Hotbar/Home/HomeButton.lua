@@ -15,6 +15,7 @@ local ClientTeleport = require(requestsFolder:WaitForChild("Teleportation"):Wait
 local ClientServerData = require(serverFolder:WaitForChild("ClientServerData"))
 local ServerTypeGroups = require(serverFolder:WaitForChild("ServerTypeGroups"))
 local ServerGroupEnum = require(enumsFolder:WaitForChild("ServerGroup"))
+local ReponseType = require(enumsFolder:WaitForChild("ResponseType"))
 
 local Value = Fusion.Value
 local New = Fusion.New
@@ -32,6 +33,7 @@ local player = Players.LocalPlayer
 
 local component = function(props)
     local visible = Value(false)
+    local errored = Value(false)
 
     if ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome) then
         ClientServerData.getServerInfo():andThen(function(serverInfo)
@@ -51,7 +53,11 @@ local component = function(props)
         TextSize = 18,
 
         [OnEvent "MouseButton1Click"] = function()
-            ClientTeleport.toHome(player.UserId)
+            ClientTeleport.toHome(player.UserId):andThen(function(response)
+                if response ~= ReponseType.success then
+                    errored:set(true)
+                end
+            end)
         end,
 
         [Children] = {
