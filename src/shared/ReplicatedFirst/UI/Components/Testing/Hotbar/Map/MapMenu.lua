@@ -1,21 +1,22 @@
-local ReplicatedFirst = game:GetService("ReplicatedFirst")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Players = game:GetService("Players")
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
+local ReplicatedStorage = game:GetService "ReplicatedStorage"
+local Players = game:GetService "Players"
 
-local replicatedStorageShared = ReplicatedStorage:WaitForChild("Shared")
-local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
-local UIFolder = replicatedFirstShared:WaitForChild("UI")
-local utilityFolder = replicatedFirstShared:WaitForChild("Utility")
-local serverFolder = replicatedStorageShared:WaitForChild("Server")
-local requestsFolder = replicatedStorageShared:WaitForChild("Requests")
-local enumsFolder = replicatedStorageShared:WaitForChild("Enums")
+local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
+local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
+local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
+local serverFolder = replicatedStorageShared:WaitForChild "Server"
+local requestsFolder = replicatedStorageShared:WaitForChild "Requests"
+local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
 
-local Component = require(utilityFolder:WaitForChild("GetComponent"))
-local Fusion = require(replicatedFirstShared:WaitForChild("Fusion"))
-local Locations = require(serverFolder:WaitForChild("Locations"))
-local ClientTeleport = require(requestsFolder:WaitForChild("Teleportation"):WaitForChild("ClientTeleport"))
-local ServerTypeGroups = require(serverFolder:WaitForChild("ServerTypeGroups"))
-local ServerGroupEnum = require(enumsFolder:WaitForChild("ServerGroup"))
+local Component = require(utilityFolder:WaitForChild "GetComponent")
+local Fusion = require(replicatedFirstShared:WaitForChild "Fusion")
+local Locations = require(serverFolder:WaitForChild "Locations")
+local ClientTeleport = require(requestsFolder:WaitForChild("Teleportation"):WaitForChild "ClientTeleport")
+local ServerTypeGroups = require(serverFolder:WaitForChild "ServerTypeGroups")
+local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
+local ResponseType = require(enumsFolder:WaitForChild "ResponseType")
+local LocalServerInfo = require(serverFolder:WaitForChild "LocalServerInfo")
 
 local Value = Fusion.Value
 local New = Fusion.New
@@ -30,89 +31,107 @@ local Hydrate = Fusion.Hydrate
 local unwrap = Fusion.unwrap
 
 local component = function(props)
-    local locationButtons = {}
+	local locationButtons = {}
 
-    local open = Value(false)
+	local open = Value(false)
 
-    for priority, locationEnum in pairs(Locations.priority) do
-        local location = Locations.info[locationEnum]
+	for priority, locationEnum in pairs(Locations.priority) do
+		local location = Locations.info[locationEnum]
 
-        local button = New "TextButton" {
-            BackgroundColor3 = Color3.fromRGB(0, 0, 0),
-            LayoutOrder = priority,
+		local hasErrored = Value(false)
 
-            Text = location.name,
-            TextSize = 18,
-            TextWrapped = true,
-            TextColor3 = Color3.fromRGB(255, 255, 255),
+		local function onResponse(response)
+			if response ~= ResponseType.success then
+				hasErrored:set(true)
+			end
+		end
 
-            [OnEvent "MouseButton1Click"] = function()
-                if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
-                    local locationServerFolder = ReplicatedStorage:WaitForChild("Location"):WaitForChild("Server")
-                    local LocalWorldInfo = require(locationServerFolder:WaitForChild("LocalWorldInfo"))
+		local button = New "TextButton" {
+			BackgroundColor3 = Computed(function()
+				if hasErrored:get() then
+					return Color3.fromRGB(255, 0, 0)
+				else
+					return Color3.fromRGB(0, 0, 0)
+				end
+			end),
+			LayoutOrder = priority,
 
-                    if LocalWorldInfo.locationEnum == locationEnum then
-                        open:set(false)
-                    else
-                        ClientTeleport.toLocation(locationEnum)
-                    end
-                else
-                    ClientTeleport.toLocation(locationEnum)
-                end
-            end
-        }
+			Text = location.name,
+			TextSize = 18,
+			TextWrapped = true,
+			TextColor3 = Color3.fromRGB(255, 255, 255),
 
-        table.insert(locationButtons, button)
-    end
+			[OnEvent "MouseButton1Click"] = function()
+				if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
+					local serverInfo = LocalServerInfo.getServerInfo():getNow()
+
+					if not serverInfo then
+						return
+					end
+
+					if LocalServerInfo.locationEnum == locationEnum then
+						open:set(false)
+					else
+						ClientTeleport.toLocation(locationEnum):finally(onResponse)
+					end
+				else
+					ClientTeleport.toLocation(locationEnum):finally(onResponse)
+				end
+			end,
+		}
+
+		table.insert(locationButtons, button)
+	end
 
 	local map = New "Frame" {
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Size = UDim2.new(0, 400, 0, 400),
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        Visible = open,
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Size = UDim2.new(0, 400, 0, 400),
+		Position = UDim2.new(0.5, 0, 0.5, 0),
+		Visible = open,
 
-        [Children] = {
-            New "Frame" {
-                Size = UDim2.fromScale(1, 1),
-                BackgroundTransparency = 1,
+		[Children] = {
+			New "Frame" {
+				Size = UDim2.fromScale(1, 1),
+				BackgroundTransparency = 1,
 
-                [Children] = {
-                    New "UIGridLayout" {
-                        CellSize = UDim2.new(0, 100, 0, 100),
-                        FillDirection = Enum.FillDirection.Horizontal,
-                        SortOrder = Enum.SortOrder.LayoutOrder,
-                        StartCorner = Enum.StartCorner.TopLeft,
-                    },
+				[Children] = {
+					New "UIGridLayout" {
+						CellSize = UDim2.new(0, 100, 0, 100),
+						FillDirection = Enum.FillDirection.Horizontal,
+						SortOrder = Enum.SortOrder.LayoutOrder,
+						StartCorner = Enum.StartCorner.TopLeft,
+					},
 
-                    locationButtons
-                }
-            },
+					locationButtons,
+				},
+			},
 
-            Component "ExitButton" {
-                value = open,
-            },
-        }
-    }
+			Component "ExitButton" {
+				value = open,
+			},
+		},
+	}
 
-    return map, New "TextButton" {
-        Size = UDim2.fromOffset(75, 75),
-        LayoutOrder = 100,
-        Visible = true,
+	return map,
+		New "TextButton" {
+			Size = UDim2.fromOffset(75, 75),
+			LayoutOrder = 100,
+			Visible = true,
 
-        Text = "Map",
-        Font = Enum.Font.Gotham,
-        TextSize = 18,
+			Text = "Map",
+			Font = Enum.Font.Gotham,
+			TextSize = 18,
 
-        [OnEvent "MouseButton1Click"] = function()
-            open:set(not open:get())
-        end,
+			[OnEvent "MouseButton1Click"] = function()
+				open:set(not open:get())
+			end,
 
-        [Children] = {
-            New "UICorner" {
-                CornerRadius = UDim.new(0, 5)
-            },
-        },
-    }
+			[Children] = {
+				New "UICorner" {
+					CornerRadius = UDim.new(0, 5),
+				},
+			},
+		}
 end
 
 return component
