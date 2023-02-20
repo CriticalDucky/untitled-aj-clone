@@ -1,14 +1,14 @@
-local HttpService = game:GetService("HttpService")
-local ReplicatedFirst = game:GetService("ReplicatedFirst")
+local HttpService = game:GetService "HttpService"
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
 
-local Promise = require(ReplicatedFirst:WaitForChild("Shared"):WaitForChild("Utility"):WaitForChild("Promise"))
+local Promise = require(ReplicatedFirst:WaitForChild("Shared"):WaitForChild("Utility"):WaitForChild "Promise")
 
 local ReplicaRequest = {}
 
 function ReplicaRequest.new(replica, ...)
 	assert(replica, "ReplicaRequest.new() called with nil replica")
 
-    local varargs = {...}
+	local varargs = { ... }
 
 	return Promise.resolve():andThen(function()
 		local requestCode = HttpService:GenerateGUID(false)
