@@ -350,8 +350,6 @@ function ServerData.stampHomeServer(owner: Player)
     end)
 end
 
----@IMPORTANT: Make sure you remove support for traceServer and getServerInfo
-
 function ServerData.traceServerInfo(privateServerId: string | nil)
     privateServerId = privateServerId or game.PrivateServerId
 
