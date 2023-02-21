@@ -2094,28 +2094,10 @@ end
 -- end)
 -- print(os.clock())
 
-local Fusion = require(game:GetService("ReplicatedFirst"):WaitForChild("Shared"):WaitForChild("Fusion"))
-local Value = Fusion.Value
-local Computed = Fusion.Computed
-local Observer = Fusion.Observer
-
-local value = Value(1)
-
-local function getValueInPromise() -- test the nuance of this
-	return Promise.resolve(value:get()):andThen(function(val)
-		task.wait()
-		return val
-	end)
-end
-
-local valueComputed = Computed(function()
-	return getValueInPromise():getNow()
+Promise.new(function(resolve)
+	resolve(5)
+end):catch(function()
+	return 2
+end):andThen(function(val)
+	print(val)
 end)
-
-Observer(valueComputed):onChange(function()
-	print("valueComputed changed to", valueComputed:get())
-end)
-
-value:set(2)
-task.wait(1)
-value:set(3)
