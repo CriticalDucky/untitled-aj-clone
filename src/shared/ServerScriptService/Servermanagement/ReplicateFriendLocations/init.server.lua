@@ -21,10 +21,12 @@ PlayerData.forAllPlayerData(function(playerData)
     local friends = GetFriends(player.UserId)
 
     for _, friend in pairs(friends) do
-        local friendLocation = PlayerLocation.get(friend.Id)
-
-        if friendLocation then
-            playerData:setValue({"friendLocations", "locations", friend.Id}, friendLocation)
-        end
+        PlayerLocation.get(friend.Id):andThen(function(location)
+            if location then
+                playerData:setValue({"friendLocations", "locations", friend.Id}, location)
+            end
+        end):catch(function(err)
+            warn("Error getting friend location: " .. err)
+        end)
     end
 end)
