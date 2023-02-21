@@ -20,6 +20,7 @@ local Value = Fusion.Value
 local Observer = Fusion.Observer
 
 type ServerIdentifier = Types.ServerIdentifier
+type Promise = Types.Promise
 
 local privateServerId = game.PrivateServerId
 local serverDataValue = Value({})
@@ -114,14 +115,14 @@ local ClientServerData = {}
 --[[
     Returns a promise that resolves the server data.
 ]]
-function ClientServerData.get()
+function ClientServerData.get(): Promise
     return replicaPromise
 end
 
 --[[
     Returns a promise that resolves the worlds table.
 ]]
-function ClientServerData.getWorlds()
+function ClientServerData.getWorlds(): Promise
     return find(function(serverData)
         return serverData[WORLDS_KEY]
     end)
@@ -130,7 +131,7 @@ end
 --[[
     Returns a promise that resolves the parties table.
 ]]
-function ClientServerData.getParties()
+function ClientServerData.getParties(): Promise
     return find(function(serverData)
         return serverData[PARTIES_KEY]
     end)
@@ -139,7 +140,7 @@ end
 --[[
     Returns a promise that resolves the games table.
 ]]
-function ClientServerData.getGames()
+function ClientServerData.getGames(): Promise
     return find(function(serverData)
         return serverData[GAMES_KEY]
     end)
@@ -148,7 +149,7 @@ end
 --[[
     Returns a promise resolving to a boolean indicating whether world has a specific location.
 ]]
-function ClientServerData.worldHasLocation(worldIndex, locationEnum)
+function ClientServerData.worldHasLocation(worldIndex, locationEnum): Promise
     ClientServerData.getWorlds():andThen(function(worlds)
         return worlds[worldIndex] and worlds[worldIndex].locations[locationEnum]
     end)
@@ -157,7 +158,7 @@ end
 --[[
     Returns a promise that resolves the serverInfo.
 ]]
-function ClientServerData.getServerInfo()
+function ClientServerData.getServerInfo(): Promise
     return serverInfoPromise
 end
 
