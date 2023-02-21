@@ -423,11 +423,7 @@ function ServerData.findAvailableWorld(forcedLocation, worldsExcluded): Promise
 		do
 			local rarities = {}
 
-            print(worlds, typeof(worlds), if typeof(worlds) == "Instance" then worlds.ClassName else 0)
-
 			for worldIndex, world in ipairs(worlds) do
-                print("worldIndex", worldIndex)
-
 				local success, worldPopulationInfo = LiveServerData.getWorldPopulationInfo(worldIndex):await()
 
 				if not success then
@@ -481,7 +477,7 @@ function ServerData.findAvailableWorld(forcedLocation, worldsExcluded): Promise
 					end
 				end
 
-				print("ServerData.findAvailableWorld: World " .. worldIndex .. " has a chance of " .. chance)
+				-- print("ServerData.findAvailableWorld: World " .. worldIndex .. " has a chance of " .. chance)
 
 				rarities[worldIndex] = chance
 			end
