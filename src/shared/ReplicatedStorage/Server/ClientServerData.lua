@@ -105,11 +105,6 @@ local serverInfoPromise = replicaPromise
         end)
     end)
 
---[[
-    You might notice that ClientServerData functions return both promises and values. This is because UI will use the values (for within computed values)
-    and other stuff will use the promises (for when the server data is needed).
-]]
-
 local ClientServerData = {}
 
 --[[
