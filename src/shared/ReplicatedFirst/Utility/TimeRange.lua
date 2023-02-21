@@ -50,7 +50,7 @@ function TimeRange.newGroup(timeRanges)
 end
 
 function TimeRange:isInRange(time: number)
-    local time = time or ServerUnixTime.evaluateTime()
+    local time = time or ServerUnixTime.get()
 
     if self.timeRanges then
         for _, timeRange in ipairs(self.timeRanges) do
@@ -66,7 +66,7 @@ function TimeRange:isInRange(time: number)
 end
 
 function TimeRange:distanceToClosing(time)
-    local time = time or ServerUnixTime.evaluateTime()
+    local time = time or ServerUnixTime.get()
 
     if self.timeRanges then
         local distance = 0
@@ -88,7 +88,7 @@ function TimeRange:distanceToClosing(time)
 end
 
 function TimeRange:distanceToIntroduction(time)
-    local time = time or ServerUnixTime.evaluateTime()
+    local time = time or ServerUnixTime.get()
 
     if self.timeRanges then
         local distance = math.huge

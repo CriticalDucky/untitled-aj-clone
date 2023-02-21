@@ -30,11 +30,11 @@ local function getPossiblePartiesFromHalfHour(halfHour)
 end
 
 local function getWeekId(time)
-	return math.floor((time or ServerUnixTime.evaluateTime()) / 604800)
+	return math.floor((time or ServerUnixTime.get()) / 604800)
 end
 
 local function getHalfHourId(time)
-	return math.floor((time or ServerUnixTime.evaluateTime()) / 1800)
+	return math.floor((time or ServerUnixTime.get()) / 1800)
 end
 
 local function createWeekPartySchedule(weekId)

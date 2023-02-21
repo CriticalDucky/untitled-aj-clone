@@ -1,7 +1,7 @@
 local ServerUnixTime = require(game:GetService("ReplicatedFirst"):WaitForChild("Shared"):WaitForChild("Utility"):WaitForChild("ServerUnixTime"))
 
 local function date(string)
-    return tonumber(os.date(string, ServerUnixTime.evaluateTime()))
+    return tonumber(os.date(string, ServerUnixTime.get()))
 end
 
 local function currentYear()
