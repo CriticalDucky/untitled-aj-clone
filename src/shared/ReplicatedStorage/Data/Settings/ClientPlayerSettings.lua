@@ -14,6 +14,9 @@ type LocalPlayerParam = Types.LocalPlayerParam
 
 local ClientPlayerSettings = {}
 
+--[[
+	Gets a player's setting. If the player is not available, this will return nil.
+]]
 function ClientPlayerSettings.getSetting(settingName: string, playerParam: LocalPlayerParam)
 	return ClientPlayerData.getData(playerParam):andThen(function(data)
 		local playerSettings = data.playerSettings
