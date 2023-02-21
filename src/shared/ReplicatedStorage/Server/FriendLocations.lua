@@ -22,7 +22,7 @@ local playerData = ClientPlayerData.getData()
 local FriendLocations = Computed(function()
     local data: ProfileData = playerData:getNow()
 
-    return Table.safeIndex(data, "friendLocations", "locations") :: {[string]: ServerIdentifier}
+    return Table.safeIndex(data, "friendLocations", "locations") :: {[string]: ServerIdentifier} or {}
 end)
 
 return FriendLocations
