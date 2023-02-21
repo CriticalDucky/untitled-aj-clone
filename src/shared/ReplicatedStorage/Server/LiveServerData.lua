@@ -20,6 +20,9 @@ local Table = require(utilityFolder.Table)
 local GetServerFillInfo = require(serverFolder.GetServerFillInfo)
 local Promise = require(utilityFolder.Promise)
 local Signal = require(utilityFolder.Signal)
+local Types = require(utilityFolder.Types)
+
+type Promise = Types.Promise
 
 local Fusion = require(replicatedFirstShared.Fusion)
 local Value = Fusion.Value
@@ -232,7 +235,7 @@ elseif isClient then
 	end)
 end
 
-function LiveServerData.get(serverType, indexInfo)
+function LiveServerData.get(serverType, indexInfo): Promise
 	return Promise.all({
 		Promise.new(function(resolve)
 			if time() < WAIT_TIME then
@@ -285,14 +288,14 @@ function LiveServerData.get(serverType, indexInfo)
 		end)
 end
 
-function LiveServerData.getLocation(worldIndex, locationEnum)
+function LiveServerData.getLocation(worldIndex, locationEnum): Promise
 	return LiveServerData.get(ServerTypeEnum.location, {
 		worldIndex = worldIndex,
 		locationEnum = locationEnum,
 	})
 end
 
-function LiveServerData.getPopulationInfo(serverType, indexInfo)
+function LiveServerData.getPopulationInfo(serverType, indexInfo): Promise
 	return LiveServerData.get(serverType, indexInfo):andThen(function(serverData)
 		if serverData then
 			local serverInfoPlayers = serverData.players
@@ -308,14 +311,14 @@ function LiveServerData.getPopulationInfo(serverType, indexInfo)
 	end)
 end
 
-function LiveServerData.getLocationPopulationInfo(worldIndex, locationEnum)
+function LiveServerData.getLocationPopulationInfo(worldIndex, locationEnum): Promise
 	return LiveServerData.getPopulationInfo(ServerTypeEnum.location, {
 		worldIndex = worldIndex,
 		locationEnum = locationEnum,
 	})
 end
 
-function LiveServerData.getWorldPopulationInfo(worldIndex)
+function LiveServerData.getWorldPopulationInfo(worldIndex): Promise
 	return LiveServerData.get(ServerTypeEnum.location):andThen(function(worlds)
 		local worldTable = worlds[worldIndex]
 
@@ -353,49 +356,49 @@ function LiveServerData.getWorldPopulationInfo(worldIndex)
 	end)
 end
 
-function LiveServerData.getWorldPopulation(worldIndex)
+function LiveServerData.getWorldPopulation(worldIndex): Promise
 	return LiveServerData.getWorldPopulationInfo(worldIndex):andThen(function(worldPopulationInfo)
 		return if worldPopulationInfo then worldPopulationInfo.population else 0
 	end)
 end
 
-function LiveServerData.getPartyPopulationInfo(partyType, partyIndex)
+function LiveServerData.getPartyPopulationInfo(partyType, partyIndex): Promise
 	return LiveServerData.getPopulationInfo(ServerTypeEnum.party, {
 		partyType = partyType,
 		partyIndex = partyIndex,
 	})
 end
 
-function LiveServerData.getHomePopulationInfo(homeOwner)
+function LiveServerData.getHomePopulationInfo(homeOwner): Promise
 	return LiveServerData.getPopulationInfo(ServerTypeEnum.home, {
 		homeOwner = homeOwner,
 	})
 end
 
-function LiveServerData.getGamePopulationInfo(gameType, gameIndex: number | string)
+function LiveServerData.getGamePopulationInfo(gameType, gameIndex: number | string): Promise
 	return LiveServerData.getPopulationInfo(ServerTypeEnum.game, {
 		gameType = gameType,
 		gameIndex = gameIndex,
 	})
 end
 
-function LiveServerData.getPartyServers(partyType)
+function LiveServerData.getPartyServers(partyType): Promise
 	return LiveServerData.get(ServerTypeEnum.party):andThen(function(partyData)
 		return partyData[partyType] or {}
 	end)
 end
 
-function LiveServerData.getHomeServers()
+function LiveServerData.getHomeServers(): Promise
 	return LiveServerData.get(ServerTypeEnum.home)
 end
 
-function LiveServerData.getGameServers(gameType)
+function LiveServerData.getGameServers(gameType): Promise
 	return LiveServerData.get(ServerTypeEnum.game):andThen(function(gameData)
 		return gameData[gameType] or {}
 	end)
 end
 
-function LiveServerData.isWorldFull(worldIndex, numPlayersToAdd)
+function LiveServerData.isWorldFull(worldIndex, numPlayersToAdd): Promise
 	numPlayersToAdd = numPlayersToAdd or 0
 
 	return LiveServerData.getWorldPopulationInfo(worldIndex):andThen(function(worldPopulationInfo)
@@ -403,7 +406,7 @@ function LiveServerData.isWorldFull(worldIndex, numPlayersToAdd)
 	end)
 end
 
-function LiveServerData.isLocationFull(worldIndex, locationEnum, numPlayersToAdd)
+function LiveServerData.isLocationFull(worldIndex, locationEnum, numPlayersToAdd):Promise
 	numPlayersToAdd = numPlayersToAdd or 0
 
 	return LiveServerData.getLocationPopulationInfo(worldIndex, locationEnum):andThen(function(locationPopulationInfo)
@@ -413,7 +416,7 @@ function LiveServerData.isLocationFull(worldIndex, locationEnum, numPlayersToAdd
 	end)
 end
 
-function LiveServerData.isPartyFull(partyType, partyIndex, numPlayersToAdd)
+function LiveServerData.isPartyFull(partyType, partyIndex, numPlayersToAdd): Promise
 	numPlayersToAdd = numPlayersToAdd or 0
 
 	return LiveServerData.getPartyPopulationInfo(partyType, partyIndex):andThen(function(partyPopulationInfo)
@@ -421,7 +424,7 @@ function LiveServerData.isPartyFull(partyType, partyIndex, numPlayersToAdd)
 	end)
 end
 
-function LiveServerData.isHomeFull(homeOwner, numPlayersToAdd)
+function LiveServerData.isHomeFull(homeOwner, numPlayersToAdd): Promise
 	numPlayersToAdd = numPlayersToAdd or 0
 
 	return LiveServerData.getHomePopulationInfo(homeOwner):andThen(function(homePopulationInfo)
