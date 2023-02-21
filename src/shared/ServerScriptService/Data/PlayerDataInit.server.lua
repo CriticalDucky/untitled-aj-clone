@@ -17,7 +17,8 @@ if not ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
 
     local function playerAdded(player)
         PlayerData.init(player)
-            :catch(function()
+            :catch(function(err)
+                warn("Error initializing player data: " .. tostring(err))
                 Teleport.rejoin(player, "An internal server error occurred. (err code PDF)")
             end)
     end

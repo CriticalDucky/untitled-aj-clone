@@ -2094,10 +2094,10 @@ end
 -- end)
 -- print(os.clock())
 
-Promise.new(function(resolve)
-	resolve(5)
-end):catch(function()
-	return 2
-end):andThen(function(val)
-	print(val)
-end)
+Promise.reject()
+	:catch(function()
+
+	end)
+	:andThen(function()
+		print"this should not print"
+	end)

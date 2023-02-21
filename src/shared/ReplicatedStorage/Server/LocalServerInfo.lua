@@ -19,8 +19,6 @@ local Types = require(utilityFolder:WaitForChild("Types"))
 
 type Promise = Types.Promise
 
-local ClientServerData = require(serverFolder:WaitForChild("ClientServerData"))
-
 local isServer = RunService:IsServer()
 local isClient = RunService:IsClient()
 
@@ -49,7 +47,7 @@ local serverType do
 
     if not serverType then
         serverType = ServerTypeEnum.routing
-    end
+end
 end
 
 local LocalServerInfo = {}
@@ -67,6 +65,8 @@ function LocalServerInfo.getServerInfo(): Promise
 
         return ServerData.traceServerInfo()
     elseif isClient then
+        local ClientServerData = require(serverFolder:WaitForChild("ClientServerData"))
+
         return ClientServerData.getServerInfo()
     end
 end

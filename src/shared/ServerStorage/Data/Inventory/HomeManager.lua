@@ -1,11 +1,11 @@
 local LOADED_ITEM_ATTRIBUTE = "ItemId" -- This is the attribute that is set on items that are loaded into the game
 local UPDATE_INTERVAL = 60 -- The time between each home update for home servers
 
-local Players = game:GetService("Players")
-local ReplicatedFirst = game:GetService("ReplicatedFirst")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ServerStorage = game:GetService("ServerStorage")
-local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService "Players"
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
+local ReplicatedStorage = game:GetService "ReplicatedStorage"
+local ServerStorage = game:GetService "ServerStorage"
+local TeleportService = game:GetService "TeleportService"
 
 local serverStorageShared = ServerStorage.Shared
 local replicatedFirstShared = ReplicatedFirst.Shared
@@ -48,14 +48,22 @@ type Promise = Types.Promise
 type PlayerData = Types.PlayerData
 
 local isHomeServer = ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome)
-local homeOwnerPromise = LocalServerInfo.getServerInfo():andThen(function(serverInfo: HomeServerInfo)
-	return serverInfo.homeOwner or Promise.reject("Not a home server")
-end)
+local isRoutingServer = ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting)
 local initalLoad = false
+
+local homeOwnerPromise
+do
+	if not isRoutingServer then
+		homeOwnerPromise = LocalServerInfo.getServerInfo():andThen(function(serverInfo: HomeServerInfo)
+			return serverInfo.homeOwner or Promise.reject "Not a home server"
+		end)
+	end
+end
+
 local placedItemsFolder
 do
 	if isHomeServer then
-		placedItemsFolder = workspace:FindFirstChild("PlacedItems") or Instance.new("Folder")
+		placedItemsFolder = workspace:FindFirstChild "PlacedItems" or Instance.new "Folder"
 		placedItemsFolder.Name = "PlacedItems"
 		placedItemsFolder.Parent = workspace
 	end
@@ -247,12 +255,12 @@ function HomeManager.canPlaceItem(itemId: string, pivotCFrame: CFrame): Promise
 			local isPlacedItemsFull, playerOwnsItem = unpack(results)
 
 			if isPlacedItemsFull then
-				warn("HomeManager.placeItem: Placed items is full")
+				warn "HomeManager.placeItem: Placed items is full"
 				return false
 			end
 
 			if not playerOwnsItem then
-				warn("HomeManager.placeItem: player does not own item")
+				warn "HomeManager.placeItem: player does not own item"
 				return false
 			end
 
@@ -271,7 +279,7 @@ function HomeManager.loadPlacedItem(placedItem: PlacedItem)
 
 		return InventoryManager.getItemFromId(homeOwner, placedItem.itemId):andThen(function(item)
 			if item == nil then
-				return Promise.reject("Item does not exist in inventory")
+				return Promise.reject "Item does not exist in inventory"
 			end
 
 			return Items.getFurnitureItem(item.itemEnum):andThen(function(info)
@@ -308,16 +316,16 @@ function HomeManager.addPlacedItem(itemId: string, pivotCFrame: CFrame)
 	return homeOwnerPromise:andThen(function(homeOwner: number)
 		return Promise.all({
 			PlayerData.get(homeOwner):andThen(function(playerData)
-				return playerData or Promise.reject("Player data not found")
+				return playerData or Promise.reject "Player data not found"
 			end),
 			HomeManager.getPlacedItemFromId(itemId, homeOwner),
 			HomeManager.getPlacedItems(homeOwner),
 			HomeManager.getSelectedHomeIndex(homeOwner):andThen(function(selectedHomeIndex)
-				return selectedHomeIndex or Promise.reject("Selected home index not found")
+				return selectedHomeIndex or Promise.reject "Selected home index not found"
 			end),
 			HomeManager.canPlaceItem(itemId, pivotCFrame):andThen(function(canPlaceItem)
 				if not canPlaceItem then
-					return Promise.reject("Cannot place item")
+					return Promise.reject "Cannot place item"
 				end
 			end),
 		}):andThen(function(results)
@@ -335,7 +343,7 @@ function HomeManager.addPlacedItem(itemId: string, pivotCFrame: CFrame)
 				local placedItemIndex = table.find(placedItems, placedItem)
 
 				if not placedItemIndex then
-					return Promise.reject("Placed item not found")
+					return Promise.reject "Placed item not found"
 				end
 
 				playerData:arraySet(path, placedItemIndex, placedItem)
@@ -355,25 +363,25 @@ function HomeManager.removePlacedItem(itemId: string, player: HomeOwnerParam)
 	return Param.playerParam(player, PlayerFormat.userId, true):andThen(function(homeOwner)
 		return Promise.all({
 			PlayerData.get(player):andThen(function(playerData)
-				return playerData or Promise.reject("Player data not found")
+				return playerData or Promise.reject "Player data not found"
 			end),
 			HomeManager.getPlacedItemFromId(itemId, homeOwner),
 			HomeManager.getPlacedItems(homeOwner),
 			HomeManager.getSelectedHomeIndex(homeOwner):andThen(function(selectedHomeIndex)
-				return selectedHomeIndex or Promise.reject("Selected home index not found")
+				return selectedHomeIndex or Promise.reject "Selected home index not found"
 			end),
 		}):andThen(function(results)
 			local playerData: PlayerData, placedItem: PlacedItem | nil, placedItems: { PlacedItem }, selectedHomeIndex: number =
 				table.unpack(results)
 
 			if not placedItem then
-				return Promise.reject("Placed item not found")
+				return Promise.reject "Placed item not found"
 			end
 
 			local placedItemIndex = table.find(placedItems, placedItem)
 
 			if not placedItemIndex then
-				return Promise.reject("Placed item index not found")
+				return Promise.reject "Placed item index not found"
 			end
 
 			local path = { "inventory", "homes", selectedHomeIndex, "placedItems" }

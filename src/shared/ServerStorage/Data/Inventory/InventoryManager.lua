@@ -1,7 +1,7 @@
-local Players = game:GetService("Players")
-local ReplicatedFirst = game:GetService("ReplicatedFirst")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ServerStorage = game:GetService("ServerStorage")
+local Players = game:GetService "Players"
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
+local ReplicatedStorage = game:GetService "ReplicatedStorage"
+local ServerStorage = game:GetService "ServerStorage"
 
 local replicatedFirstShared = ReplicatedFirst.Shared
 local replicatedStorageShared = ReplicatedStorage.Shared
@@ -119,7 +119,7 @@ function InventoryManager.getItemFromId(itemSource: PlayerParam | { InventoryIte
 
 		return Promise.resolve(nil)
 	else
-		error("InventoryManager.searchWithId: Invalid argument #1")
+		error "InventoryManager.searchWithId: Invalid argument #1"
 	end
 end
 
@@ -267,11 +267,11 @@ end
 ]]
 function InventoryManager.newItem(itemCategory: UserEnum, itemEnum: UserEnum, props: table?)
 	return Items.getItem(itemCategory, itemEnum):andThen(function()
-		local item = addPropsToItem({
+		local item = addPropsToItem {
 			id = MiniId(8),
 			itemCategory = itemCategory,
 			itemEnum = itemEnum,
-		})
+		}
 
 		return if props then Table.merge(if table.isfrozen(props) then Table.deepCopy(props) else props, item) else item
 	end)
@@ -300,13 +300,13 @@ function InventoryManager.removeDupes(owner: PlayerParam, itemId: string | { str
 
 			return InventoryManager.getItemPathFromId(owner, itemId):andThen(function(itemCategory, index)
 				return if itemCategory
-					then table.unpack({
+					then table.unpack {
 						{
 							itemCategory = itemCategory,
 							index = index,
 						},
 						playerData,
-					})
+					}
 					else Promise.reject(ResponseType.itemNotOwned)
 			end)
 		end)
@@ -360,35 +360,27 @@ function InventoryManager._changeOwnerOfItems(
 		end
 
 		if currentOwner then
-			local valid = true
-
-			InventoryManager.playerOwnsItems(currentOwner, items)
-				:andThen(function(result)
+			local success = Promise.all({
+				InventoryManager.playerOwnsItems(currentOwner, items):andThen(function(result)
 					if result == false then
-						warn("Player does not own items")
+						warn "Player does not own items"
 
 						return Promise.reject()
 					end
-				end)
-				:catch(function()
-					valid = false
-				end)
+				end),
 
-			InventoryManager.removeDupes(currentOwner, items[1].id)
-				:andThen(function()
+				InventoryManager.removeDupes(currentOwner, items[1].id):andThen(function()
 					return InventoryManager.playerOwnsItems(currentOwner, items):andThen(function(result)
 						if result == false then
-							warn("Player does not own items")
+							warn "Player does not own items"
 
 							return Promise.reject()
 						end
 					end)
-				end)
-				:catch(function()
-					valid = false
-				end)
+				end),
+			}):await()
 
-			if not valid then
+			if not success then
 				return reject(ResponseType.itemNotOwned)
 			end
 		end
@@ -406,17 +398,17 @@ function InventoryManager._changeOwnerOfItems(
 				:andThen(function(currentOwnerData, newOwnerData)
 					return checkIfInventoryWouldBeFull():andThen(function(wouldBeFull)
 						if wouldBeFull then
-							warn("New owner's inventory would be full")
+							warn "New owner's inventory would be full"
 
 							return Promise.reject(ResponseType.inventoryFull)
 						end
 
-						return Promise.all({
+						return Promise.all {
 							Promise.all(Table.editValues(items, function(item)
 								return InventoryManager.getItemPathFromId(currentOwner, item.id)
 									:andThen(function(itemCategory, index)
 										if not itemCategory then
-											warn("Item path from id not found")
+											warn "Item path from id not found"
 
 											return Promise.reject(ResponseType.itemNotOwned)
 										end
@@ -427,7 +419,7 @@ function InventoryManager._changeOwnerOfItems(
 											end)
 									end)
 							end)),
-						})
+						}
 					end)
 				end)
 				:andThen(resolve)
@@ -439,7 +431,7 @@ function InventoryManager._changeOwnerOfItems(
 						return InventoryManager.getItemPathFromId(currentOwner, item.id)
 							:andThen(function(itemCategory, index)
 								if not itemCategory then
-									warn("Item path from id not found")
+									warn "Item path from id not found"
 
 									return Promise.reject(ResponseType.itemNotOwned)
 								end
@@ -455,7 +447,7 @@ function InventoryManager._changeOwnerOfItems(
 				:andThen(function(playerData: PlayerData)
 					return checkIfInventoryWouldBeFull():andThen(function(wouldBeFull)
 						if wouldBeFull then
-							warn("New owner's inventory would be full")
+							warn "New owner's inventory would be full"
 
 							return Promise.reject(ResponseType.inventoryFull)
 						end
@@ -546,7 +538,7 @@ end
 PlayerData.forAllPlayerData(function(...)
 	InventoryManager.reconcileItems(...)
 		:andThen(function()
-			print("Reconciled items")
+			print "Reconciled items"
 		end)
 		:catch(function(err)
 			warn("Failed to reconcile items: " .. tostring(err))

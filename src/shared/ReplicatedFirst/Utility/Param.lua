@@ -13,10 +13,9 @@ local Types = require(utilityFolder:WaitForChild "Types")
 local LocalServerInfo = require(serverFolder:WaitForChild "LocalServerInfo")
 local Promise = require(utilityFolder:WaitForChild "Promise")
 local ResponseType = require(enumsFolder:WaitForChild "ResponseType")
+local Table = require(utilityFolder:WaitForChild "Table")
 
 type Promise = Types.Promise
-
-local serverInfoPromise = LocalServerInfo.getServerInfo()
 
 local Param = {}
 
@@ -32,9 +31,9 @@ local Param = {}
 function Param.expect(...) -- desired types are put after the object in a list. Example: {1, "number", "string"}
 	local t = { ... }
 
-	for _, v in ipairs(t) do
+	for _, v: {} in ipairs(t) do
 		local obj = v[1]
-		local types = table.remove(v, 1) and v
+		local types = { select(2, unpack(v)) }
 
 		assert(#types > 0, "No types provided")
 
@@ -50,7 +49,7 @@ function Param.expect(...) -- desired types are put after the object in a list. 
 		end
 
 		if not found then
-			return Promise.reject(ResponseType.invalid)
+			return Promise.reject(ResponseType.invalid, t)
 		end
 	end
 
@@ -67,38 +66,56 @@ function Param.playerParam(
 	useHomeOwner: boolean,
 	useLocalPlayer: boolean
 ): Promise
+	print("Param.playerParamcf", playerParam, format, useHomeOwner, useLocalPlayer)
+
 	return Param.expect(
-		{ playerParam, "Player", "number" },
+		{ playerParam, "Player", "number", "nil" },
 		{ format, "string", "number" },
-		{ useHomeOwner, "boolean" },
-		{ useLocalPlayer, "boolean" }
-	):andThen(function()
-		return (if useHomeOwner then serverInfoPromise else Promise.resolve())
-			:andThen(function(serverInfo)
-				if useHomeOwner then
-					return Param.playerParam(serverInfo.homeOwner, format, false)
-				end
+		{ useHomeOwner, "boolean", "nil" },
+		{ useLocalPlayer, "boolean", "nil" }
+	)
+		:catch(function(err, ...)
+			warn "Param.playerParam failed: invalid arguments"
+			Table.print(...)
+			return Promise.reject(ResponseType.invalid)
+		end)
+		:andThen(function()
+			return (if useHomeOwner then LocalServerInfo.getServerInfo() else Promise.resolve())
+				:andThen(function(serverInfo)
+					if useHomeOwner and not playerParam then
+						if not serverInfo.homeOwner then
+							warn "Param.playerParam failed: useHomeOwner is true, but this isnt a home server"
+							return Promise.reject(ResponseType.invalid)
+						end
 
-				if useLocalPlayer then
-					return Param.playerParam(Players.LocalPlayer, format, false)
-				end
+						return Param.playerParam(serverInfo.homeOwner, format, false)
+					end
 
-				local paramType = typeof(playerParam)
+					if useLocalPlayer and not playerParam then
+						return Param.playerParam(Players.LocalPlayer, format, false)
+					end
 
-				if format == PlayerFormat.instance then
-					return if paramType == "Instance" then paramType else Players:GetPlayerByUserId(paramType)
-				elseif format == PlayerFormat.userId then
-					return if paramType == "number" then paramType else playerParam.UserId
-				end
-			end)
-			:andThen(function(player)
-				return player or Promise.reject(ResponseType.invalid)
-			end)
-			:catch(function(err)
-				warn("Param.playerParam failed:", err)
-				return Promise.reject(err)
-			end)
-	end)
+					local paramType = typeof(playerParam)
+					print("Param.playerParam", paramType, format)
+
+					if format == PlayerFormat.instance then
+						return if paramType == "Instance" then playerParam else Players:GetPlayerByUserId(playerParam)
+					elseif format == PlayerFormat.userId then
+						return if paramType == "number" then playerParam else playerParam.UserId
+					end
+
+					warn("Param.playerParam failed: invalid format: " .. format, typeof(format), paramType)
+				end)
+				:andThen(function(player)
+					return player or Promise.reject(ResponseType.invalid)
+				end)
+				:catch(function(err)
+					warn("Param.playerParam failed:", err)
+					print(useHomeOwner, useLocalPlayer)
+					print(debug.traceback())
+					return Promise.reject(err)
+				end)
+		end)
 end
 
 --[[
@@ -106,6 +123,7 @@ end
 	Unsafe for state objects.
 ]]
 function Param.localPlayerParam(playerParam: Types.LocalPlayerParam, format: Types.UserEnum): Promise
+	warn("WHY IS THIS BEING CALLED?!?!?", playerParam)
 	return Param.playerParam(playerParam, format, false, true)
 end
 

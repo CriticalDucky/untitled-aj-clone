@@ -19,7 +19,9 @@ if not ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
     local function playerAdded(player)
         Promise.try(function()
             ClientPlayerData.add(player)
-        end):catch(function()
+        end):catch(function(err)
+            warn("Error initializing player data: " .. tostring(err))
+
             ClientTeleport.rejoin()
         end)
         

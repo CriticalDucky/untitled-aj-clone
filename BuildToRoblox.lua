@@ -6,6 +6,10 @@
 
     TESTING_MODE controls whether it will publish to the testing or production game. This is extremely dangerous.
     It should only be changed when we want to push an update. Go through me first!
+
+    SETUP:
+
+    Add a folder called "BuiltProjects" to the root of your project. This is where the built projects will be stored.
 ]]
 
 local TESTING_MODE = false -- DO NOT TOUCH THIS! DANGEROUS!

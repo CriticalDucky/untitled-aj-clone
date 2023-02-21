@@ -63,7 +63,8 @@ function Authorize.toWorld(worldIndex: number)
 		:andThen(function(isWorldFull: boolean)
 			return if isWorldFull then Promise.reject(ResponseType.full) else Promise.resolve()
 		end)
-		:catch(function()
+		:catch(function(err)
+			warn("ClientTeleport.toWorld() failed with error: " .. tostring(err))
 			return Promise.reject(ResponseType.error)
 		end)
 end
@@ -76,7 +77,8 @@ function Authorize.toLocation(locationEnum: number)
 		:andThen(function()
 			if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
 				return ClientServerData.getServerInfo()
-					:catch(function()
+					:catch(function(err)
+						warn("ClientTeleport.toLocation() failed with error 1: " .. tostring(err))
 						return Promise.reject(ResponseType.error)
 					end)
 					:andThen(function(serverInfo)
@@ -87,7 +89,8 @@ function Authorize.toLocation(locationEnum: number)
 						return serverInfo.worldIndex
 					end)
 			elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.hasWorldOrigin) then
-				return WorldOrigin.get(player):catch(function()
+				return WorldOrigin.get(player):catch(function(err)
+					warn("ClientTeleport.toLocation() failed with error 2: " .. tostring(err))
 					return Promise.reject(ResponseType.error)
 				end)
 			else
@@ -102,7 +105,8 @@ function Authorize.toLocation(locationEnum: number)
 		end)
 		:andThen(function(localWorldIndex)
 			return LiveServerData.isLocationFull(localWorldIndex, locationEnum, 1)
-				:catch(function()
+				:catch(function(err)
+					warn("ClientTeleport.toLocation() failed with error 3: " .. tostring(err))
 					return Promise.reject(ResponseType.error)
 				end)
 				:andThen(function(isLocationFull: boolean)
@@ -120,6 +124,8 @@ function Authorize.toLocation(locationEnum: number)
 				warn("ClientTeleport.toLocation() failed with unknown error: " .. tostring(response))
 				return Promise.reject(ResponseType.error)
 			end
+
+			return Promise.reject(response)
 		end)
 end
 
@@ -165,6 +171,8 @@ function Authorize.toFriend(playerId: number)
 				warn("ClientTeleport.toFriend() failed with unknown error: " .. tostring(response))
 				return Promise.reject(ResponseType.error)
 			end
+
+			return Promise.reject(response)
 		end)
 end
 
@@ -182,6 +190,8 @@ function Authorize.toParty(partyType: number)
 				warn("ClientTeleport.toParty() failed with unknown error: " .. tostring(response))
 				return Promise.reject(ResponseType.error)
 			end
+
+			return Promise.reject(response)
 		end)
 end
 
@@ -215,6 +225,8 @@ function Authorize.toHome(homeOwnerUserId: number)
 				warn("ClientTeleport.toHome() failed with unknown error: " .. tostring(response))
 				return Promise.reject(ResponseType.error)
 			end
+
+			return Promise.reject(response)
 		end)
 end
 

@@ -7,7 +7,7 @@ local Promise = require(game:GetService("ReplicatedFirst").Shared.Utility.Promis
 local DataStore = {}
 
 function DataStore.safeUpdate(dataStore, key, transformFunction, extra)
-    print("DATASTORE: safeUpdate")
+    print("DATASTORE: safeUpdate", key)
 
     local function try()
         return Promise.try(function()
@@ -16,9 +16,6 @@ function DataStore.safeUpdate(dataStore, key, transformFunction, extra)
     end
 
     return Promise.retry(try, DATASTORE_MAX_RETRIES)
-        :andThen(function(...)
-            return Promise.resolve(select(2, ...))
-        end)
         :catch(function(err)
             warn("Failed to update data store:", tostring(err))
             return Promise.reject(err)
@@ -26,7 +23,7 @@ function DataStore.safeUpdate(dataStore, key, transformFunction, extra)
 end
 
 function DataStore.safeSet(dataStore, key, value, extra)
-    print("DATASTORE: safeSet")
+    print("DATASTORE: safeSet", key)
 
     local function try()
         return Promise.try(function()
@@ -35,9 +32,6 @@ function DataStore.safeSet(dataStore, key, value, extra)
     end
 
     return Promise.retry(try, DATASTORE_MAX_RETRIES)
-        :andThen(function(...)
-            return Promise.resolve(select(2, ...))
-        end)
         :catch(function(err)
             warn("Failed to set data store:", tostring(err))
             return Promise.reject(err)
@@ -47,6 +41,17 @@ end
 function DataStore.safeGet(dataStore, key, extra)
     print("DATASTORE: safeGet", key)
 
+    Promise.resolve()
+    :andThen(function()
+        return Promise.reject()
+    end)
+
+    Promise.new(function(resolve, reject)
+        resolve()
+    end):andThen(function()
+        return Promise.reject()
+    end)
+
     local function try()
         return Promise.try(function()
             return dataStore:GetAsync(key, extra)
@@ -54,9 +59,6 @@ function DataStore.safeGet(dataStore, key, extra)
     end
 
     return Promise.retry(try, DATASTORE_MAX_RETRIES)
-        :andThen(function(...)
-            return Promise.resolve(select(2, ...))
-        end)
         :catch(function(err)
             warn("Failed to get data store:", tostring(err))
             return Promise.reject(err)
@@ -64,7 +66,7 @@ function DataStore.safeGet(dataStore, key, extra)
 end
 
 function DataStore.safeRemove(dataStore, key, extra)
-    print("DATASTORE: safeRemove")
+    print("DATASTORE: safeRemove", key)
 
     local function try()
         return Promise.try(function()
@@ -73,9 +75,6 @@ function DataStore.safeRemove(dataStore, key, extra)
     end
 
     return Promise.retry(try, DATASTORE_MAX_RETRIES)
-        :andThen(function(...)
-            return Promise.resolve(select(2, ...))
-        end)
         :catch(function(err)
             warn("Failed to remove data store:", tostring(err))
             return Promise.reject(err)

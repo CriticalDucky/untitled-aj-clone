@@ -97,6 +97,7 @@ ReplicaResponse.listen(requestReplica, function(player: Player, placeItemRequest
 			return Promise.resolve(ResponseType.success)
 		end)
 		:catch(function(err)
+			warn("PlaceItemRequest error: ", tostring(err))
 			return Promise.resolve(err or ResponseType.error)
 		end)
 end)

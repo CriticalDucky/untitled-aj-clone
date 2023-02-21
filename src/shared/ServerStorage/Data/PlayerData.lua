@@ -1,10 +1,10 @@
 local INACTIVE_PROFILE_COOLDOWN = 30 -- seconds
 
-local Players = game:GetService("Players")
-local ReplicatedFirst = game:GetService("ReplicatedFirst")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ServerScriptService = game:GetService("ServerScriptService")
-local ServerStorage = game:GetService("ServerStorage")
+local Players = game:GetService "Players"
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
+local ReplicatedStorage = game:GetService "ReplicatedStorage"
+local ServerScriptService = game:GetService "ServerScriptService"
+local ServerStorage = game:GetService "ServerStorage"
 
 local replicatedFirstShared = ReplicatedFirst.Shared
 local replicatedStorageShared = ReplicatedStorage.Shared
@@ -35,13 +35,15 @@ profileTemplate.currency._replication = ReplicationType.server
 
 local tempDataTemplate = GameSettings.tempDataTemplate
 
-local ProfileStore = ProfileService.GetProfileStore("PlayerData", GameSettings.profileTemplate)
+local ProfileStore = Promise.resolve():andThen(function()
+	return ProfileService.GetProfileStore("PlayerData", GameSettings.profileTemplate)
+end)
 
-local playerDataPublicReplica = ReplicaService.NewReplica({
-	ClassToken = ReplicaService.NewClassToken("PlayerDataPublic"),
+local playerDataPublicReplica = ReplicaService.NewReplica {
+	ClassToken = ReplicaService.NewClassToken "PlayerDataPublic",
 	Data = {},
 	Replication = "All",
-})
+}
 
 local playerDataCreationComplete = {}
 local playerDataCollection = {}
@@ -72,6 +74,8 @@ function PlayerData.new(player: PlayerParam)
 		return Promise.new(function(resolve, reject)
 			local newPlayerData = setmetatable({}, PlayerData)
 			newPlayerData.player = player
+
+			ProfileStore = ProfileStore:expect()
 
 			local profile = ProfileStore:LoadProfileAsync(getKey(player.UserId), "ForceLoad")
 
@@ -124,13 +128,13 @@ function PlayerData.new(player: PlayerParam)
 					newPlayerData.profile = profile
 					newPlayerData.tempData = tempDataCopy
 
-					newPlayerData.replica_private = ReplicaService.NewReplica({
+					newPlayerData.replica_private = ReplicaService.NewReplica {
 						ClassToken = ReplicaService.NewClassToken(
 							"PlayerDataPrivate_" .. player.UserId .. PlayerJoinTimes.getTimesJoined(player)
 						),
 						Data = data_replicationPrivate,
 						Replication = player,
-					})
+					}
 
 					print("Replicating data to " .. player.Name .. "...")
 
@@ -280,7 +284,7 @@ function PlayerDataManager.get(player: PlayerParam, wait: boolean): Promise
 		end)
 		:timeout(20, "Timed out waiting for player data to load")
 		:catch(function(err)
-			warn("Failed to get player data for player " .. player.Name .. ": " .. err)
+			warn("Failed to get player data for player " .. player.Name .. ": " .. tostring(err))
 			return Promise.reject()
 		end)
 end
@@ -308,13 +312,13 @@ function PlayerDataManager.viewPlayerProfile(player: PlayerParam, getUpdated: bo
 				profileSettings.cachedTime = time()
 				cachedInactiveProfiles[userId] = profileSettings
 
-				local profile = ProfileStore:ViewProfileAsync(getKey(userId))
+				local profile = ProfileStore:expect():ViewProfileAsync(getKey(userId))
 
 				if profile then
 					cachedInactiveProfiles[userId].profile = profile
 					resolve(getRaw and profile or profile.Data)
 				else
-					warn("Failed to view profile")
+					warn "Failed to view profile"
 
 					reject()
 				end

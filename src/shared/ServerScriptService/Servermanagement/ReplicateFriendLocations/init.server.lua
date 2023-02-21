@@ -26,7 +26,7 @@ PlayerData.forAllPlayerData(function(playerData)
                 playerData:setValue({"friendLocations", "locations", friend.Id}, location)
             end
         end):catch(function(err)
-            warn("Error getting friend location: " .. err)
+            warn("Error getting friend location: " .. tostring(err))
         end)
     end
 end)
