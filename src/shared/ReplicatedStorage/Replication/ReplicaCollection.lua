@@ -25,6 +25,7 @@ local classes = {
     "GameIndex",
     "LiveServerData",
     "ServerData",
+    "PrivateServerInfo"
 }
 
 local inclusiveClasses = { -- Classes that can be found inside a string. For example, "PlayerDataPrivate" can be found inside "PlayerDataPrivate_1234567890"
@@ -55,7 +56,7 @@ end
 
 local replicaCollection = {}
 
-function replicaCollection.get(class, wait) -- class must be either a string or a player
+function replicaCollection.get(class) -- class must be either a string or a player
     assert(type(class) == "string", "ReplicaCollection.get: class must be a string")
     assert(table.find(classes, class) or getInclusiveClass(class), "ReplicaCollection.get: class must be a valid class")
 
@@ -64,7 +65,7 @@ function replicaCollection.get(class, wait) -- class must be either a string or 
 
         local lastPrint = time()
 
-        while wait and not replicas[class] do
+        while not replicas[class] do
             task.wait()
 
             if time() - lastPrint > 5 then

@@ -224,7 +224,7 @@ if isServer then
 elseif isClient then
 	local ReplicaCollection = require(replicatedStorageShared.Replication.ReplicaCollection)
 
-	dataPromise = ReplicaCollection.get("LiveServerData", true):andThen(function(replica)
+	dataPromise = ReplicaCollection.get("LiveServerData"):andThen(function(replica)
 		local dataValue = Value(replica.Data)
 
 		replica:ListenToRaw(function()

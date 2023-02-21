@@ -24,7 +24,7 @@ type ProfileData = Types.ProfileData
 
 local Value = Fusion.Value
 
-local publicDataReplicaPromise = ReplicaCollection.get("PlayerDataPublic", true)
+local publicDataReplicaPromise = ReplicaCollection.get("PlayerDataPublic")
 
 local playerDataTables = {}
 local connections = {}

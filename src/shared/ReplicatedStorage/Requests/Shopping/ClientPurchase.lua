@@ -21,7 +21,7 @@ function Purchase.request(shopEnum, itemIndex)
 	assert(shopEnum and Shops[shopEnum], "shop must be a valid shop type")
 	assert(itemIndex and Shops[shopEnum].items[itemIndex], "item must be a valid item")
 
-	return ReplicaCollection.get("PurchaseRequest", true):andThen(function(purchaseRequest)
+	return ReplicaCollection.get("PurchaseRequest"):andThen(function(purchaseRequest)
 		return ReplicaRequest.new(purchaseRequest, shopEnum, itemIndex)
 	end)
 end

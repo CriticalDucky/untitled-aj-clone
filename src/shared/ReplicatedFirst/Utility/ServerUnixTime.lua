@@ -10,7 +10,7 @@ local ServerUnixTime = {}
 if RunService:IsClient() then
     local ReplicaCollection = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Replication"):WaitForChild("ReplicaCollection"))
 
-    ReplicaCollection.get("ServerUnixTime", true):andThen(function(timeReplica)
+    ReplicaCollection.get("ServerUnixTime"):andThen(function(timeReplica)
         timeValue:set(timeReplica.Data.time or os.time())
 
         timeReplica:ListenToChange({"time"}, function(newTime)
