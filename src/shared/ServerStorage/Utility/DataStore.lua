@@ -41,17 +41,6 @@ end
 function DataStore.safeGet(dataStore, key, extra)
     print("DATASTORE: safeGet", key)
 
-    Promise.resolve()
-    :andThen(function()
-        return Promise.reject()
-    end)
-
-    Promise.new(function(resolve, reject)
-        resolve()
-    end):andThen(function()
-        return Promise.reject()
-    end)
-
     local function try()
         return Promise.try(function()
             return dataStore:GetAsync(key, extra)
