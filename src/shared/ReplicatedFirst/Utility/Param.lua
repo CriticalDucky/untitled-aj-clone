@@ -123,7 +123,6 @@ end
 	Unsafe for state objects.
 ]]
 function Param.localPlayerParam(playerParam: Types.LocalPlayerParam, format: Types.UserEnum): Promise
-	warn("WHY IS THIS BEING CALLED?!?!?", playerParam)
 	return Param.playerParam(playerParam, format, false, true)
 end
 
