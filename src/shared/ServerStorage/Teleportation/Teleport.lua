@@ -473,7 +473,7 @@ end
 function Authorize.toPlayer(players: { Player } | Player, targetPlayer: number)
 	players = if type(players) == "table" then players else { players }
 
-	PlayerLocation.get(targetPlayer):andThen(function(serverIdentifier: ServerIdentifier)
+	return PlayerLocation.get(targetPlayer):andThen(function(serverIdentifier: ServerIdentifier)
 		local serverType = serverIdentifier.serverType
 
 		for _, playerInServer in pairs(Players:GetPlayers()) do
@@ -544,7 +544,7 @@ function Teleport.toLocation(
 
 			teleportOptions.ReservedServerAccessCode = location.serverCode
 
-			return Teleport.go(players, placeId, teleportOptions, onSuccess, onFail)
+			return Teleport.go(players, placeId, teleportOptions, onFail, onSuccess)
 		end)
 	end)
 end
@@ -725,6 +725,8 @@ function Teleport.rejoin(
 
 	local targetPlayer = players[1]
 
+	warn("REJOIN: " .. reason)
+
 	return Teleport.getOptions(targetPlayer, {
 		rejoinReason = reason,
 	}):andThen(function(teleportOptions: TeleportOptions)
@@ -746,7 +748,7 @@ end
     Always specify a reason.
 ]]
 function Teleport.bootServer(reason)
-	local serverBootingEnabled = false
+	local serverBootingEnabled = true
 
 	if not serverBootingEnabled then
 		error("SERVER BOOT: " .. reason)
