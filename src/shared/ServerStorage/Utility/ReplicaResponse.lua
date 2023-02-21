@@ -14,7 +14,7 @@ local ReplicaResponse = {}
 	Values returned from the callback will be passed to the client.
 ]]
 function ReplicaResponse.listen(requestReplica, callback: (Player, any) -> Promise)
-	requestReplica.OnServerEvent:Connect(function(player, requestCode, ...)
+	requestReplica:ConnectOnServerEvent(function(player, requestCode, ...)
 		callback(player, ...):finally(function(...)
 			requestReplica:FireClient(player, requestCode, ...)
 		end)
