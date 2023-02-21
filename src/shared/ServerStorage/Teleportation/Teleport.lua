@@ -144,6 +144,10 @@ function Teleport.go(
 						else print "Teleported!"
 				end);
 
+				if not success then
+					warn("Minor error while teleporting players. Will retry.", result)
+				end
+
 				(if success then resolveAttempt else rejectAttempt)(result)
 			end)
 		end
