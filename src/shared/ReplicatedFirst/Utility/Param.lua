@@ -66,17 +66,15 @@ function Param.playerParam(
 	useHomeOwner: boolean,
 	useLocalPlayer: boolean
 ): Promise
-	print("Param.playerParamcf", playerParam, format, useHomeOwner, useLocalPlayer)
-
 	return Param.expect(
 		{ playerParam, "Player", "number", "nil" },
 		{ format, "string", "number" },
 		{ useHomeOwner, "boolean", "nil" },
 		{ useLocalPlayer, "boolean", "nil" }
 	)
-		:catch(function(err, ...)
+		:catch(function(err)
 			warn "Param.playerParam failed: invalid arguments"
-			Table.print(...)
+			Table.print(err)
 			return Promise.reject(ResponseType.invalid)
 		end)
 		:andThen(function()
@@ -96,7 +94,6 @@ function Param.playerParam(
 					end
 
 					local paramType = typeof(playerParam)
-					print("Param.playerParam", paramType, format)
 
 					if format == PlayerFormat.instance then
 						return if paramType == "Instance" then playerParam else Players:GetPlayerByUserId(playerParam)
@@ -111,8 +108,6 @@ function Param.playerParam(
 				end)
 				:catch(function(err)
 					warn("Param.playerParam failed:", err)
-					print(useHomeOwner, useLocalPlayer)
-					print(debug.traceback())
 					return Promise.reject(err)
 				end)
 		end)

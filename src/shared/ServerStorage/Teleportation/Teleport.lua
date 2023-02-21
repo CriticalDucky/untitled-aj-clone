@@ -58,8 +58,6 @@ Teleport.Authorize = Authorize
     If the player is in a location server, the locationFrom will be set to the location of the server.
 ]]
 function Teleport.getOptions(player: Player, teleportData)
-	print("Teleport.getOptions", player, teleportData)
-
 	return WorldOrigin.get(player)
 		:andThen(function(worldIndex)
 			if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
