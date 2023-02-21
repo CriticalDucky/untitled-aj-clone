@@ -25,7 +25,7 @@ end
 local function playerAdded(player: Player)
 	local followUserId = player.FollowUserId
 
-	if followUserId == 0 then
+	if followUserId == 0 or Players:GetPlayerByUserId(followUserId) then
 		routeToWorld(player)
 	elseif followUserId ~= 0 then
 		Teleport.Authorize

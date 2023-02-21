@@ -473,7 +473,7 @@ end
 function Authorize.toPlayer(players: { Player } | Player, targetPlayer: number)
 	players = if type(players) == "table" then players else { players }
 
-	PlayerLocation.get(targetPlayer):andThen(function(serverIdentifier: ServerIdentifier)
+	return PlayerLocation.get(targetPlayer):andThen(function(serverIdentifier: ServerIdentifier)
 		local serverType = serverIdentifier.serverType
 
 		for _, playerInServer in pairs(Players:GetPlayers()) do
