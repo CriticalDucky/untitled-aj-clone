@@ -1,39 +1,39 @@
-local Players = game:GetService("Players")
-local ReplicatedFirst = game:GetService("ReplicatedFirst")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService "Players"
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
+local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
-local replicatedStorageShared = ReplicatedStorage:WaitForChild("Shared")
-local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
-local replicationFolder = replicatedStorageShared:WaitForChild("Replication")
-local requestsFolder = replicatedStorageShared:WaitForChild("Requests")
-local serverFolder = replicatedStorageShared:WaitForChild("Server")
-local utilityFolder = replicatedFirstShared:WaitForChild("Utility")
-local enumsFolder = replicatedStorageShared:WaitForChild("Enums")
-local dataFolder = replicatedStorageShared:WaitForChild("Data")
+local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
+local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
+local replicationFolder = replicatedStorageShared:WaitForChild "Replication"
+local requestsFolder = replicatedStorageShared:WaitForChild "Requests"
+local serverFolder = replicatedStorageShared:WaitForChild "Server"
+local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
+local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
+local dataFolder = replicatedStorageShared:WaitForChild "Data"
 
 local ServerTypeGroups = require(serverFolder.ServerTypeGroups)
 local ServerGroupEnum = require(enumsFolder.ServerGroup)
 
-local ReplicaCollection = require(replicationFolder:WaitForChild("ReplicaCollection"))
-local ReplicaRequest = require(requestsFolder:WaitForChild("ReplicaRequest"))
-local ClientServerData = require(serverFolder:WaitForChild("ClientServerData"))
-local LiveServerData = require(serverFolder:WaitForChild("LiveServerData"))
-local ClientPlayerSettings = require(dataFolder:WaitForChild("Settings"):WaitForChild("ClientPlayerSettings"))
-local Table = require(utilityFolder:WaitForChild("Table"))
-local TeleportRequestType = require(enumsFolder:WaitForChild("TeleportRequestType"))
-local ResponseType = require(enumsFolder:WaitForChild("ResponseType"))
-local Locations = require(serverFolder:WaitForChild("Locations"))
-local FriendLocations = require(serverFolder:WaitForChild("FriendLocations"))
-local WorldOrigin = require(serverFolder:WaitForChild("WorldOrigin"))
-local ActiveParties = require(serverFolder:WaitForChild("ActiveParties"))
-local Promise = require(utilityFolder:WaitForChild("Promise"))
-local Types = require(utilityFolder:WaitForChild("Types"))
+local ReplicaCollection = require(replicationFolder:WaitForChild "ReplicaCollection")
+local ReplicaRequest = require(requestsFolder:WaitForChild "ReplicaRequest")
+local ClientServerData = require(serverFolder:WaitForChild "ClientServerData")
+local LiveServerData = require(serverFolder:WaitForChild "LiveServerData")
+local ClientPlayerSettings = require(dataFolder:WaitForChild("Settings"):WaitForChild "ClientPlayerSettings")
+local Table = require(utilityFolder:WaitForChild "Table")
+local TeleportRequestType = require(enumsFolder:WaitForChild "TeleportRequestType")
+local ResponseType = require(enumsFolder:WaitForChild "ResponseType")
+local Locations = require(serverFolder:WaitForChild "Locations")
+local FriendLocations = require(serverFolder:WaitForChild "FriendLocations")
+local WorldOrigin = require(serverFolder:WaitForChild "WorldOrigin")
+local ActiveParties = require(serverFolder:WaitForChild "ActiveParties")
+local Promise = require(utilityFolder:WaitForChild "Promise")
+local Types = require(utilityFolder:WaitForChild "Types")
 
 type ServerIdentifier = Types.ServerIdentifier
 
 local player = Players.LocalPlayer
 
-local TeleportRequest = ReplicaCollection.get("TeleportRequest")
+local TeleportRequest = ReplicaCollection.get "TeleportRequest"
 
 local ClientTeleport = {}
 local Authorize = {}
@@ -91,7 +91,7 @@ function Authorize.toLocation(locationEnum: number)
 					return Promise.reject(ResponseType.error)
 				end)
 			else
-				warn("ClientTeleport.toLocation() called on server without world info")
+				warn "ClientTeleport.toLocation() called on server without world info"
 				return Promise.reject(ResponseType.error)
 			end
 		end)
