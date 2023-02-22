@@ -90,9 +90,9 @@ local constantKeys = {
 }
 
 local retrievedKeys = {
-    [WORLDS_KEY] = false,
-    [PARTIES_KEY] = false,
-    [GAMES_KEY] = false,
+	[WORLDS_KEY] = false,
+	[PARTIES_KEY] = false,
+	[GAMES_KEY] = false,
 }
 
 local isRetrieving = {}
@@ -134,6 +134,10 @@ local function retrieveDatastore(key) -- WARNING: Yields; should only be called 
 		end)
 end
 
+-- Attempts to reserve a server for a new location.
+--
+-- Returns a promise that resolves with a table containing the server code and private server id or rejects with
+-- nothing.
 local function newLocation(locationEnum)
 	local function getLocationTable()
 		return Promise.try(function()
@@ -154,16 +158,12 @@ local function newLocation(locationEnum)
 end
 
 function ServerData.get(key)
-	assert(typeof(key) == "string" and key ~= "", "Key must be provided to get data " .. debug.traceback())
+	assert(typeof(key) == "string" and key ~= "", "Key must be provided to get data")
 
 	return Promise.new(function(resolve, reject)
-		local data = cachedData[key]
+		if not retrievedKeys[key] then retrieveDatastore(key) end
 
-		if not data or not retrievedKeys[key] then
-			retrieveDatastore(key)
-		end
-
-		(if cachedData[key] then resolve else reject)(cachedData[key])
+		resolve(cachedData[key])
 	end)
 end
 
@@ -217,9 +217,7 @@ function ServerData.update(key, transformFunction, replicaFunction)
 	return DataStore.safeUpdate(serverDataStore, key, transformFunction):andThen(function()
 		transformFunction(cachedData[key])
 
-		if constantKeys[key] and replicaFunction then
-			replicaFunction()
-		end
+		if constantKeys[key] and replicaFunction then replicaFunction() end
 	end)
 end
 
@@ -331,7 +329,8 @@ function ServerData.stampHomeServer(playerData: PlayerData)
 	end)
 end
 
-function ServerData.traceServerInfo(privateServerId: string | nil)
+--
+function ServerData.traceServerInfo(privateServerId: string?)
 	privateServerId = privateServerId or game.PrivateServerId
 
 	return Promise.resolve()
@@ -364,14 +363,7 @@ function ServerData.traceServerInfo(privateServerId: string | nil)
 				end
 			end)
 
-			return info
-		end)
-		:andThen(function(info)
-			if info then
-				return info
-			else
-				return ServerData.get(privateServerId)
-			end
+			return info or ServerData.get(privateServerId)
 		end)
 end
 
@@ -382,14 +374,10 @@ function ServerData.findAvailableLocation(worldIndex, locationsExcluded)
 		local locationEnum
 		local success, worldPopulationInfo = LiveServerData.getWorldPopulationInfo(worldIndex):await()
 
-		if not success then
-			return reject(ResponseType.error)
-		end
+		if not success then return reject(ResponseType.error) end
 
 		for _, locationType in pairs(Locations.priority) do
-			if locationsExcluded and table.find(locationsExcluded, locationType) then
-				continue
-			end
+			if locationsExcluded and table.find(locationsExcluded, locationType) then continue end
 
 			if worldPopulationInfo then
 				local populationInfo = worldPopulationInfo.locations[locationType]
@@ -426,15 +414,11 @@ function ServerData.findAvailableWorld(forcedLocation, worldsExcluded): Promise
 			for worldIndex, world in ipairs(worlds) do
 				local success, worldPopulationInfo = LiveServerData.getWorldPopulationInfo(worldIndex):await()
 
-				if not success then
-					return Promise.reject(ResponseType.error)
-				end
+				if not success then return Promise.reject(ResponseType.error) end
 
 				local worldIsSuitable = true
 
-				if worldsExcluded and table.find(worldsExcluded, worldIndex) then
-					worldIsSuitable = false
-				end
+				if worldsExcluded and table.find(worldsExcluded, worldIndex) then worldIsSuitable = false end
 
 				if worldIsSuitable and worldPopulationInfo then
 					for locationEnum, _ in pairs(world.locations) do
@@ -452,13 +436,9 @@ function ServerData.findAvailableWorld(forcedLocation, worldsExcluded): Promise
 
 					local success = ServerData.findAvailableLocation(worldIndex):await()
 
-					if not success then
-						worldIsSuitable = false
-					end
+					if not success then worldIsSuitable = false end
 
-					if worldPopulationInfo.recommended_emptySlots == 0 then
-						worldIsSuitable = false
-					end
+					if worldPopulationInfo.recommended_emptySlots == 0 then worldIsSuitable = false end
 				end
 
 				if not worldIsSuitable then
@@ -488,7 +468,7 @@ function ServerData.findAvailableWorld(forcedLocation, worldsExcluded): Promise
 		if worldIndex == nil then
 			print "No suitable world found, creating new world"
 
-            Table.print(worlds, "worlds")
+			Table.print(worlds, "worlds")
 
 			return ServerData.addWorld()
 		end
@@ -507,16 +487,12 @@ function ServerData.findAvailableParty(partyType)
 				local success, partyPopulationInfo = LiveServerData.getPartyPopulationInfo(partyType, partyIndex)
 					:await()
 
-				if not success then
-					continue
-				end
+				if not success then continue end
 
 				local partyIsSuitable = true
 
 				if partyPopulationInfo then
-					if partyPopulationInfo.recommended_emptySlots == 0 then
-						partyIsSuitable = false
-					end
+					if partyPopulationInfo.recommended_emptySlots == 0 then partyIsSuitable = false end
 				end
 
 				if not partyIsSuitable then
@@ -656,9 +632,7 @@ ServerData.getAll()
 	:finally(function()
 		RunService.Heartbeat:Connect(function()
 			for constantKey, _ in pairs(constantKeys) do
-				if time() - lastDatastoreRequest[constantKey] > CACHE_COOLDOWN then
-					retrieveDatastore(constantKey)
-				end
+				if time() - lastDatastoreRequest[constantKey] > CACHE_COOLDOWN then retrieveDatastore(constantKey) end
 			end
 		end)
 	end)
