@@ -110,7 +110,7 @@ end
 ]]
 function playerData.getData(player: LocalPlayerParam)
 	return Promise.new(function(resolve, reject, onCancel)
-		Param.localPlayerParam(player)
+		Param.localPlayerParam(player, PlayerFormat.instance)
 			:andThen(function(player)
 				local lastPrint = time()
 				local stop = false
