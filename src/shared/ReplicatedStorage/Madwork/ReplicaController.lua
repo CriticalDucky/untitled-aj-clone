@@ -516,7 +516,9 @@ end
 -- Write handlers:
 
 local function ReplicaSetValue(replica_id, path_array, value)
-	Table.deepToNumberKeys(value)
+	if type(value) == "table" then
+		Table.deepToNumberKeys(value)
+	end
 
 	local replica = Replicas[replica_id]
 	-- Getting path pointer and listener table:
