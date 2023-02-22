@@ -8,11 +8,13 @@ local ReplicaService = require(dataFolder.ReplicaService)
 local timeReplica = ReplicaService.NewReplica({
     ClassToken = ReplicaService.NewClassToken("ServerUnixTime"),
     Data = {
-        time = os.time()
+        timeInfo = {
+            unix = os.time()
+        }
     },
     Replication = "All"
 })
 
 while task.wait(180) do
-    timeReplica:SetValue({"time"}, os.time())
+    timeReplica:SetValue({"timeInfo", "unix"}, os.time())
 end

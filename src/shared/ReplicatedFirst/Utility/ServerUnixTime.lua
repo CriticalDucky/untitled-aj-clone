@@ -11,9 +11,9 @@ if RunService:IsClient() then
     local ReplicaCollection = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Replication"):WaitForChild("ReplicaCollection"))
 
     ReplicaCollection.get("ServerUnixTime"):andThen(function(timeReplica)
-        timeValue:set(timeReplica.Data.time or os.time())
+        timeValue:set(timeReplica.Data.timeInfo.unix or os.time())
 
-        timeReplica:ListenToChange({"time"}, function(newTime)
+        timeReplica:ListenToChange({"timeInfo", "unix"}, function(newTime)
             timeValue:set(newTime)
         end)
     end)
