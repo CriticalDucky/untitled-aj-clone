@@ -329,7 +329,8 @@ function ServerData.stampHomeServer(playerData: PlayerData)
 	end)
 end
 
-function ServerData.traceServerInfo(privateServerId: string | nil)
+--
+function ServerData.traceServerInfo(privateServerId: string?)
 	privateServerId = privateServerId or game.PrivateServerId
 
 	return Promise.resolve()
@@ -362,14 +363,7 @@ function ServerData.traceServerInfo(privateServerId: string | nil)
 				end
 			end)
 
-			return info
-		end)
-		:andThen(function(info)
-			if info then
-				return info
-			else
-				return ServerData.get(privateServerId)
-			end
+			return info or ServerData.get(privateServerId)
 		end)
 end
 
