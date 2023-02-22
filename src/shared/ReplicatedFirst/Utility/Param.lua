@@ -73,8 +73,9 @@ function Param.playerParam(
 		{ useLocalPlayer, "boolean", "nil" }
 	)
 		:catch(function(err)
-			warn "Param.playerParam failed: invalid arguments"
-			Table.print(err)
+			warn("Param.playerParam failed: invalid arguments", err)
+			print(debug.traceback())
+			print(playerParam, format, useHomeOwner, useLocalPlayer)
 			return Promise.reject(ResponseType.invalid)
 		end)
 		:andThen(function()
