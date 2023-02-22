@@ -125,16 +125,12 @@ function Teleport.go(
 		if teleportOptions == nil then
 			local success, options = Teleport.getOptions(players[1]):await()
 
-			if not success then
-				return Promise.reject(ResponseType.teleportError)
-			end
+			if not success then return Promise.reject(ResponseType.teleportError) end
 
 			teleportOptions = options
 		end
 
-		if _triesLeft and _triesLeft <= 0 then
-			return reject(ResponseType.teleportError)
-		end
+		if _triesLeft and _triesLeft <= 0 then return reject(ResponseType.teleportError) end
 
 		local function attemptTeleport()
 			return Promise.new(function(resolveAttempt, rejectAttempt)
@@ -142,11 +138,9 @@ function Teleport.go(
 					return if not TESTING_DONT_TELEPORT
 						then TeleportService:TeleportAsync(placeId, players, teleportOptions)
 						else print "Teleported!"
-				end);
+				end)
 
-				if not success then
-					warn("Minor error while teleporting players. Will retry.", result)
-				end
+				if not success then warn("Minor error while teleporting players. Will retry.", result) end
 
 				(if success then resolveAttempt else rejectAttempt)(result)
 			end)
@@ -278,27 +272,23 @@ function Authorize.toLocation(players: { Player } | Player, locationEnum, worldI
 						end)
 				else
 					if ServerTypeGroups.serverInGroup(ServerGroupEnum.isWorldBased) then
-						WorldOrigin.get(targetPlayer)
-							:andThen(function(worldIndexOrigin)
-								return LiveServerData.isLocationFull(worldIndexOrigin, locationEnum, #players)
-									:andThen(function(isFull)
-										if isFull then
-											return PlayerSettings.getSetting(targetPlayer, "findOpenWorld")
-												:andThen(function(findOpenWorld)
-													if findOpenWorld then
-														return ServerData.findAvailableWorld(locationEnum)
-															:andThen(function(worldIndexOrigin)
-																worldIndex = worldIndexOrigin
-
-																return Promise.resolve()
-															end)
-													else
-														warn "locationTable.teleportToLocation: location is full"
-														return Promise.reject(ResponseType.full)
-													end
-												end)
-										end
-									end)
+						Promise.all({
+							WorldOrigin.get(targetPlayer),
+							PlayerSettings.getSetting(targetPlayer, "findOpenWorld"),
+						})
+							:andThen(function(results)
+								return LiveServerData.isLocationFull(results[1], locationEnum, #players), results[2]
+							end)
+							:andThen(function(isFull, findOpenWorld)
+								if isFull and findOpenWorld then
+									return ServerData.findAvailableWorld(locationEnum)
+										:andThen(function(worldIndexOrigin)
+											return worldIndexOrigin
+										end)
+								elseif isFull then
+									warn "locationTable.teleportToLocation: location is full"
+									return Promise.reject(ResponseType.full)
+								end
 							end)
 							:andThen(function()
 								local world = worlds[worldIndex]
@@ -319,9 +309,7 @@ function Authorize.toLocation(players: { Player } | Player, locationEnum, worldI
 							:catch(function(err)
 								warn("locationTable.teleportToLocation: error: " .. tostring(err))
 
-								if not Table.hasValue(ResponseType, err) then
-									err = ResponseType.teleportError
-								end
+								if not Table.hasValue(ResponseType, err) then err = ResponseType.teleportError end
 
 								reject(err)
 							end)
@@ -433,25 +421,19 @@ function Authorize.toHome(player: Player, homeOwnerUserId: number)
 		then Promise.resolve()
 		else Promise.all {
 			LiveServerData.isHomeFull(homeOwnerUserId):andThen(function(isHomeFull)
-				if isHomeFull then
-					return Promise.reject(ResponseType.full)
-				end
+				if isHomeFull then return Promise.reject(ResponseType.full) end
 
 				return Promise.resolve()
 			end),
 			HomeManager.getLockStatus(homeOwnerUserId):andThen(function(homeLockType)
-				if homeLockType == HomeLockType.locked then
-					return Promise.reject(ResponseType.invalid)
-				end
+				if homeLockType == HomeLockType.locked then return Promise.reject(ResponseType.invalid) end
 
 				if homeLockType == HomeLockType.friendsOnly then
 					local success, isFriendsWith = pcall(function()
 						return player:IsFriendsWith(homeOwnerUserId)
 					end)
 
-					if not success or not isFriendsWith then
-						return Promise.reject(ResponseType.invalid)
-					end
+					if not success or not isFriendsWith then return Promise.reject(ResponseType.invalid) end
 				end
 
 				return Promise.resolve()
@@ -496,9 +478,7 @@ function Authorize.toPlayer(players: { Player } | Player, targetPlayer: number)
 					return Promise.resolve(serverType, serverIdentifier.partyType, serverIdentifier.partyIndex)
 				end)
 		elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome, serverType) then
-			if #players > 1 then
-				return Promise.reject(ResponseType.invalid)
-			end
+			if #players > 1 then return Promise.reject(ResponseType.invalid) end
 
 			return Authorize.toHome(players[1], serverIdentifier.homeOwner):andThen(function()
 				return Promise.resolve(serverType, serverIdentifier.homeOwner)
@@ -693,9 +673,7 @@ function Teleport.toPlayer(
 
 			return Teleport.toParty(players, partyType, partyIndex, onFail, onSuccess)
 		elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome, serverType) then
-			if #players > 1 then
-				return Promise.reject(ResponseType.invalid)
-			end
+			if #players > 1 then return Promise.reject(ResponseType.invalid) end
 
 			return Teleport.toHome(players[1], targetPlayer, onFail, onSuccess)
 		elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isGame, serverType) then
@@ -750,9 +728,7 @@ end
 function Teleport.bootServer(reason)
 	local serverBootingEnabled = true
 
-	if not serverBootingEnabled then
-		error("SERVER BOOT: " .. reason)
-	end
+	if not serverBootingEnabled then error("SERVER BOOT: " .. reason) end
 
 	local rejoinFailedText = "[REJOIN FAILED] " .. (reason or "Unspecified reason")
 
