@@ -35,7 +35,7 @@ profileTemplate.currency._replication = ReplicationType.server
 
 local tempDataTemplate = GameSettings.tempDataTemplate
 
-local ProfileStore = Promise.resolve():andThen(function()
+local ProfileStore = Promise.try(function()
 	return ProfileService.GetProfileStore("PlayerData", GameSettings.profileTemplate)
 end)
 
@@ -72,9 +72,9 @@ function PlayerData.new(player: Player)
 		local newPlayerData = setmetatable({}, PlayerData)
 		newPlayerData.player = player
 
-		ProfileStore = ProfileStore:expect()
+		local profileStore = ProfileStore:expect()
 
-		local profile = ProfileStore:LoadProfileAsync(getKey(player.UserId), "ForceLoad")
+		local profile = profileStore:LoadProfileAsync(getKey(player.UserId), "ForceLoad")
 
 		if profile then
 			profile:AddUserId(player.UserId)
