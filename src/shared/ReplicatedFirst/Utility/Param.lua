@@ -19,15 +19,14 @@ type Promise = Types.Promise
 
 local Param = {}
 
---[[
-	Takes in a list of lists. Each list begins with an object, and the rest of the list is a list of possible types for that object.
-	Possible types can also be instances.
-	This will return a rejected promise if any objects are not of the correct type.
-	Example:
-	```lua
-	Param.expect({1, "number"}, {"hello", "string"}, {true, "boolean", "Part"}) -- returns a rejected promise
-	```
-]]
+
+--	Takes in a list of lists. Each list begins with an object, and the rest of the list is a list of possible types for that object.
+--	Possible types can also be instances.
+--	This will return a rejected promise if any objects are not of the correct type.
+--	Example:
+--	```lua
+--	Param.expect({1, "number"}, {"hello", "string"}, {true, "boolean", "Part"}) -- returns a rejected promise
+--	```
 function Param.expect(...) -- desired types are put after the object in a list. Example: {1, "number", "string"}
 	local t = { ... }
 
@@ -56,13 +55,11 @@ function Param.expect(...) -- desired types are put after the object in a list. 
 	return Promise.resolve()
 end
 
---[[
-	This function takes in a playerParam, a playerFormat, and two booleans.
-	* playerParam can be a Player instance, a userId, or nil.
-	* playerFormat can be PlayerFormat.instance or PlayerFormat.userId. This determines what the function returns.
-	* useHomeOwner is a boolean that determines whether or not to use the home owner of the server if playerParam is nil.
-	* useLocalPlayer is a boolean that determines whether or not to use the local player if playerParam is nil.
-]]
+--	This function takes in a playerParam, a playerFormat, and two booleans.
+--	* playerParam can be a Player instance, a userId, or nil.
+--	* playerFormat can be PlayerFormat.instance or PlayerFormat.userId. This determines what the function returns.
+--	* useHomeOwner is a boolean that determines whether or not to use the home owner of the server if playerParam is nil.
+--	* useLocalPlayer is a boolean that determines whether or not to use the local player if playerParam is nil.
 function Param.playerParam(
 	playerParam: Types.PlayerParam,
 	format: Types.UserEnum,
