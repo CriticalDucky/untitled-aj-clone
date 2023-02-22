@@ -57,8 +57,11 @@ function Param.expect(...) -- desired types are put after the object in a list. 
 end
 
 --[[
-	This function takes in a playerParam, a format, and two booleans. that indicate the behavior of when playerParam is nil.
-	Returns a promise, so it's not safe to use in stateObjects.
+	This function takes in a playerParam, a playerFormat, and two booleans.
+	* playerParam can be a Player instance, a userId, or nil.
+	* playerFormat can be PlayerFormat.instance or PlayerFormat.userId. This determines what the function returns.
+	* useHomeOwner is a boolean that determines whether or not to use the home owner of the server if playerParam is nil.
+	* useLocalPlayer is a boolean that determines whether or not to use the local player if playerParam is nil.
 ]]
 function Param.playerParam(
 	playerParam: Types.PlayerParam,
