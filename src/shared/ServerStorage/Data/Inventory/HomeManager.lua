@@ -46,19 +46,11 @@ type InventoryItem = Types.InventoryItem
 type PlacedItem = Types.PlacedItem
 type Promise = Types.Promise
 type PlayerData = Types.PlayerData
+type ServerIdentifier = Types.ServerIdentifier
 
 local isHomeServer = ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome)
 local isRoutingServer = ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting)
 local initalLoad = false
-
-local homeOwnerPromise
-do
-	if not isRoutingServer then
-		homeOwnerPromise = LocalServerInfo.getServerInfo():andThen(function(serverInfo: HomeServerInfo)
-			return serverInfo.homeOwner or Promise.reject "Not a home server"
-		end)
-	end
-end
 
 local placedItemsFolder
 do
@@ -67,6 +59,12 @@ do
 		placedItemsFolder.Name = "PlacedItems"
 		placedItemsFolder.Parent = workspace
 	end
+end
+
+local function homeOwnerPromise()
+	return LocalServerInfo.getServerInfo():andThen(function(serverInfo: ServerIdentifier)
+		return serverInfo.homeOwner or Promise.reject "Not a home server"
+	end)
 end
 
 --[[
@@ -247,7 +245,7 @@ end
 	Can only be called in a home server.
 ]]
 function HomeManager.canPlaceItem(itemId: string, pivotCFrame: CFrame): Promise
-	return homeOwnerPromise:andThen(function(homeOwner: number)
+	return homeOwnerPromise():andThen(function(homeOwner: number)
 		return Promise.all({
 			HomeManager.isPlacedItemsFull(homeOwner, 1),
 			InventoryManager.playerOwnsItem(homeOwner, itemId),
@@ -273,7 +271,7 @@ end
 	Loads (or places), a placed item into the home server.
 ]]
 function HomeManager.loadPlacedItem(placedItem: PlacedItem)
-	return homeOwnerPromise:andThen(function(homeOwner: number)
+	return homeOwnerPromise():andThen(function(homeOwner: number)
 		local itemId: string = placedItem.itemId
 		local pivotCFrame: CFrame = Serialization.deserialize(placedItem.pivotCFrame)
 
@@ -313,7 +311,7 @@ end
 	Adds/creates a placed item in a player's placedItems. The item is loaded right after.
 ]]
 function HomeManager.addPlacedItem(itemId: string, pivotCFrame: CFrame)
-	return homeOwnerPromise:andThen(function(homeOwner: number)
+	return homeOwnerPromise():andThen(function(homeOwner: number)
 		return Promise.all({
 			PlayerData.get(homeOwner):andThen(function(playerData)
 				return playerData or Promise.reject "Player data not found"
