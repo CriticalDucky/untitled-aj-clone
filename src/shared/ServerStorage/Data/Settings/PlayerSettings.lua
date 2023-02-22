@@ -1,13 +1,16 @@
 local Players = game:GetService("Players")
 local ServerStorage = game:GetService("ServerStorage")
 local ReplicatedFirst = game:GetService("ReplicatedFirst")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local utilityFolder = ReplicatedFirst.Shared.Utility
+local enumsFolder = ReplicatedStorage.Shared.Enums
 
 local PlayerData = require(ServerStorage.Shared.Data.PlayerData)
 local Promise = require(utilityFolder.Promise)
 local Types = require(utilityFolder.Types)
 local Param = require(utilityFolder.Param)
+local ResponseType = require(enumsFolder.ResponseType)
 
 type PlayerParam = Types.PlayerParam
 
@@ -17,16 +20,8 @@ local PlayerSettings = {}
     Gets the PlayerSettings table. The player does not need to be in this server.
 ]]
 function PlayerSettings.get(player: PlayerParam)
-    return PlayerData.viewPlayerProfile(player, true):andThen(function(playerData)
-        if not playerData then
-            return PlayerData.viewPlayerProfile(player):andThen(function(profile)
-                return profile or Promise.reject()
-            end)
-        else
-            return playerData.profile
-        end
-    end):andThen(function(profile)
-        return profile.Data.playerSettings
+    return PlayerData.viewPlayerProfile(player, true):andThen(function(profile)
+        return if profile then profile.playerSettings else Promise.reject(ResponseType.error)
     end)
 end
 
