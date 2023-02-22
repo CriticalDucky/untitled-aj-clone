@@ -67,89 +67,85 @@ end
 --[[
     Sets up a new PlayerData object for the given player.
 ]]
-function PlayerData.new(player: PlayerParam)
-	return Param.playerParam(player, PlayerFormat.instance):andThen(function(instance)
-		player = instance
+function PlayerData.new(player: Player)
+	return Promise.new(function(resolve, reject)
+		local newPlayerData = setmetatable({}, PlayerData)
+		newPlayerData.player = player
 
-		return Promise.new(function(resolve, reject)
-			local newPlayerData = setmetatable({}, PlayerData)
-			newPlayerData.player = player
+		ProfileStore = ProfileStore:expect()
 
-			ProfileStore = ProfileStore:expect()
+		local profile = ProfileStore:LoadProfileAsync(getKey(player.UserId), "ForceLoad")
 
-			local profile = ProfileStore:LoadProfileAsync(getKey(player.UserId), "ForceLoad")
+		if profile then
+			profile:AddUserId(player.UserId)
+			profile:Reconcile()
+			profile:ListenToRelease(function()
+				playerDataCollection[player] = nil
+				playerDataCreationComplete[player] = nil
+			end)
 
-			if profile then
-				profile:AddUserId(player.UserId)
-				profile:Reconcile()
-				profile:ListenToRelease(function()
-					playerDataCollection[player] = nil
-					playerDataCreationComplete[player] = nil
-				end)
+			if player:IsDescendantOf(Players) then
+				playerDataCollection[player] = newPlayerData
+				local tempDataCopy = Table.deepCopy(tempDataTemplate)
 
-				if player:IsDescendantOf(Players) then
-					playerDataCollection[player] = newPlayerData
-					local tempDataCopy = Table.deepCopy(tempDataTemplate)
+				local function getMatchingProfileProps(privacy)
+					local matchingProps = {}
 
-					local function getMatchingProfileProps(privacy)
-						local matchingProps = {}
-
-						for propName, prop in pairs(profile.Data) do
-							if prop._replication == privacy then
-								matchingProps[propName] = prop
-							end
+					for propName, prop in pairs(profile.Data) do
+						if prop._replication == privacy then
+							matchingProps[propName] = prop
 						end
-
-						return matchingProps
 					end
 
-					local function getMatchingTempDataProps(privacy)
-						local matchingProps = {}
-
-						for propName, prop in pairs(tempDataCopy) do
-							if prop._replication == privacy then
-								matchingProps[propName] = prop
-							end
-						end
-
-						return matchingProps
-					end
-
-					local data_replicationPrivate = Table.merge(
-						getMatchingProfileProps(ReplicationType.private),
-						getMatchingTempDataProps(ReplicationType.private)
-					)
-
-					local data_replicationPublic = Table.merge(
-						getMatchingProfileProps(ReplicationType.public),
-						getMatchingTempDataProps(ReplicationType.public)
-					)
-
-					newPlayerData.profile = profile
-					newPlayerData.tempData = tempDataCopy
-
-					newPlayerData.replica_private = ReplicaService.NewReplica {
-						ClassToken = ReplicaService.NewClassToken(
-							"PlayerDataPrivate_" .. player.UserId .. PlayerJoinTimes.getTimesJoined(player)
-						),
-						Data = data_replicationPrivate,
-						Replication = player,
-					}
-
-					print("Replicating data to " .. player.Name .. "...")
-
-					playerDataPublicReplica:SetValue({ player.UserId }, data_replicationPublic)
-					newPlayerData.replica_public = playerDataPublicReplica
-				else
-					profile:Release()
+					return matchingProps
 				end
-			else
-				print("Failed to load profile for player " .. player.Name)
-				return reject()
-			end
 
-			resolve(newPlayerData)
-		end)
+				local function getMatchingTempDataProps(privacy)
+					local matchingProps = {}
+
+					for propName, prop in pairs(tempDataCopy) do
+						if prop._replication == privacy then
+							matchingProps[propName] = prop
+						end
+					end
+
+					return matchingProps
+				end
+
+				local data_replicationPrivate = Table.merge(
+					getMatchingProfileProps(ReplicationType.private),
+					getMatchingTempDataProps(ReplicationType.private)
+				)
+
+				local data_replicationPublic = Table.merge(
+					getMatchingProfileProps(ReplicationType.public),
+					getMatchingTempDataProps(ReplicationType.public)
+				)
+
+				newPlayerData.profile = profile
+				newPlayerData.tempData = tempDataCopy
+
+				newPlayerData.replica_private = ReplicaService.NewReplica {
+					ClassToken = ReplicaService.NewClassToken(
+						"PlayerDataPrivate_" .. player.UserId .. PlayerJoinTimes.getTimesJoined(player)
+					),
+					Data = data_replicationPrivate,
+					Replication = player,
+				}
+
+				print("Replicating data to " .. player.Name .. "...")
+
+				playerDataPublicReplica:SetValue({ player.UserId }, data_replicationPublic)
+				newPlayerData.replica_public = playerDataPublicReplica
+			else
+				profile:Release()
+			end
+		else
+			print("Failed to load profile for player " .. player.Name)
+			return reject()
+		end
+
+		resolve(newPlayerData)
 	end)
 end
 
