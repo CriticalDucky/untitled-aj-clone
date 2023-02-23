@@ -58,7 +58,7 @@ InventoryManager.itemRemovedFromInventory = Signal.new()
     Returns a promise with the player's inventory.
 ]]
 function InventoryManager.getInventory(player: PlayerParam)
-	return PlayerData.viewPlayerProfile(player, true):andThen(function(profile)
+	return PlayerData.viewPlayerProfile(player):andThen(function(profile)
 		return profile.inventory
 	end)
 end

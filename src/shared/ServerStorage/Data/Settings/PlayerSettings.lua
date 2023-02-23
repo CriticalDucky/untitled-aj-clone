@@ -20,7 +20,7 @@ local PlayerSettings = {}
     Gets the PlayerSettings table. The player does not need to be in this server.
 ]]
 function PlayerSettings.get(player: PlayerParam)
-    return PlayerData.viewPlayerProfile(player, true):andThen(function(profile)
+    return PlayerData.viewPlayerProfile(player):andThen(function(profile)
         return if profile then profile.playerSettings else Promise.reject(ResponseType.error)
     end)
 end

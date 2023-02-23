@@ -175,7 +175,7 @@ end
 ]]
 function HomeManager.getHomeServerInfo(player: HomeOwnerParam)
 	return Param.playerParam(player, PlayerFormat.userId, true):andThen(function(userId)
-		return PlayerData.viewPlayerProfile(userId, true):andThen(function(profile)
+		return PlayerData.viewPlayerProfile(userId):andThen(function(profile)
 			return profile.playerInfo.homeServerInfo
 		end)
 	end)
@@ -186,7 +186,7 @@ end
 ]]
 function HomeManager.isHomeInfoStamped(player: HomeOwnerParam)
 	return Param.playerParam(player, PlayerFormat.userId, true):andThen(function(userId)
-		return PlayerData.viewPlayerProfile(userId, true):andThen(function(profile)
+		return PlayerData.viewPlayerProfile(userId):andThen(function(profile)
 			return profile.playerInfo.homeInfoStamped
 		end)
 	end)
