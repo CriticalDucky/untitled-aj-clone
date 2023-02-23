@@ -15,9 +15,13 @@ local ReplicaResponse = {}
 ]]
 function ReplicaResponse.listen(requestReplica, callback: (Player, any) -> Promise)
 	requestReplica:ConnectOnServerEvent(function(player, requestCode, ...)
-		callback(player, ...):finally(function(...)
+		local function onResponse(...)
 			requestReplica:FireClient(player, requestCode, ...)
-		end)
+		end
+
+		callback(player, ...)
+			:andThen(onResponse)
+			:catch(onResponse)
 	end)
 end
 
