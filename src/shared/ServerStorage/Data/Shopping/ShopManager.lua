@@ -12,7 +12,7 @@ local replicatedShoppingFolder = replicatedStorageSharedData.ShopInfo
 
 local ActiveShops = require(shoppingFolder.ActiveShops)
 local Shops = require(replicatedShoppingFolder.Shops)
-local PlayerData = require(dataFolder.PlayerData)
+local PlayerDataManager = require(dataFolder.PlayerDataManager)
 local InventoryManager = require(inventoryFolder.InventoryManager)
 local Items = require(replicatedStorageSharedData.Inventory.Items)
 local Currency = require(dataFolder.Currency.Currency)
@@ -24,7 +24,7 @@ function ShopManager.playerCanBuyItem(player, shopEnum, itemIndex)
     local shopItem = shopInfoTable.items[itemIndex]
     local itemInfo = Items[shopItem.itemCategory][shopItem.item]
 
-    local playerData = PlayerData.get(player)
+    local playerData = PlayerDataManager.get(player)
 
     if not ActiveShops[shopEnum] then
         warn("Shop is not active")

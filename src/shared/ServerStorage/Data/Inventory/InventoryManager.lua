@@ -13,7 +13,7 @@ local replicatedStorageData = replicatedStorageShared.Data
 local replicatedStorageInventory = replicatedStorageData.Inventory
 local enumsFolder = replicatedStorageShared.Enums
 
-local PlayerData = require(dataFolder.PlayerData)
+local PlayerDataManager = require(dataFolder.PlayerDataManager)
 local Items = require(replicatedStorageInventory.Items)
 local Table = require(utilityFolder.Table)
 local Signal = require(utilityFolder.Signal)
@@ -58,7 +58,7 @@ InventoryManager.itemRemovedFromInventory = Signal.new()
     Returns a promise with the player's inventory.
 ]]
 function InventoryManager.getInventory(player: PlayerParam)
-	return PlayerData.viewPlayerProfile(player):andThen(function(profile)
+	return PlayerDataManager.viewPlayerProfile(player):andThen(function(profile)
 		return profile.inventory
 	end)
 end
@@ -204,7 +204,7 @@ function InventoryManager._removeItem(playerData: PlayerParam | PlayerData, item
 
 	local playerDataPromise = if typeof(playerData) == "table"
 		then Promise.resolve(playerData)
-		else PlayerData.get(playerData)
+		else PlayerDataManager.get(playerData)
 
 	return Promise.all({ playerPromise, playerDataPromise }):andThen(function(results)
 		local player: Player = results[1]
@@ -237,7 +237,7 @@ function InventoryManager._addItem(playerData: PlayerParam | PlayerData, itemCat
 
 	local playerDataPromise = if typeof(playerData) == "table"
 		then Promise.resolve(playerData)
-		else PlayerData.get(playerData)
+		else PlayerDataManager.get(playerData)
 
 	return Promise.all({ playerPromise, playerDataPromise }):andThen(function(results)
 		local player: Player = results[1]
@@ -291,7 +291,7 @@ function InventoryManager.removeDupes(owner: PlayerParam, itemId: string | { str
 
 	return Promise.resolve()
 		:andThen(function()
-			return PlayerData.get(owner)
+			return PlayerDataManager.get(owner)
 		end)
 		:andThen(function(playerData: PlayerData | nil)
 			if not playerData then
@@ -387,8 +387,8 @@ function InventoryManager._changeOwnerOfItems(
 
 		if newOwner and currentOwner then
 			Promise.all({
-				PlayerData.get(currentOwner),
-				PlayerData.get(newOwner),
+				PlayerDataManager.get(currentOwner),
+				PlayerDataManager.get(newOwner),
 			})
 				:andThen(function(results)
 					return if results[1] and results[2]
@@ -425,7 +425,7 @@ function InventoryManager._changeOwnerOfItems(
 				:andThen(resolve)
 				:catch(reject)
 		elseif currentOwner and not newOwner then
-			PlayerData.get(currentOwner)
+			PlayerDataManager.get(currentOwner)
 				:andThen(function(playerData: PlayerData)
 					return Promise.all(Table.editValues(items, function(item)
 						return InventoryManager.getItemPathFromId(currentOwner, item.id)
@@ -443,7 +443,7 @@ function InventoryManager._changeOwnerOfItems(
 				:andThen(resolve)
 				:catch(reject)
 		elseif not currentOwner and newOwner then
-			PlayerData.get(newOwner)
+			PlayerDataManager.get(newOwner)
 				:andThen(function(playerData: PlayerData)
 					return checkIfInventoryWouldBeFull():andThen(function(wouldBeFull)
 						if wouldBeFull then
@@ -535,7 +535,7 @@ function InventoryManager.reconcileItems(playerData: PlayerData): nil
 	end)
 end
 
-PlayerData.forAllPlayerData(function(...)
+PlayerDataManager.forAllPlayerData(function(...)
 	InventoryManager.reconcileItems(...)
 		:andThen(function()
 			print "Reconciled items"

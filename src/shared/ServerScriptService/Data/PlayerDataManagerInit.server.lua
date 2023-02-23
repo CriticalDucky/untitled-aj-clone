@@ -13,10 +13,10 @@ local ServerGroupEnum = require(enumsFolder.ServerGroup)
 local ServerTypeGroups = require(serverFolder.ServerTypeGroups)
 
 if not ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
-    local PlayerData = require(dataFolder.PlayerData)
+    local PlayerDataManager = require(dataFolder.PlayerDataManager)
 
     local function playerAdded(player)
-        PlayerData.init(player)
+        PlayerDataManager.init(player)
             :catch(function(err)
                 warn("Error initializing player data: " .. tostring(err))
                 Teleport.rejoin(player, "An internal server error occurred. (err code PDF)")

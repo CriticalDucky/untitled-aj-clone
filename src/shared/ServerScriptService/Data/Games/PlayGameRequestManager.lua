@@ -13,13 +13,11 @@ local serverFolder = replicatedStorageShared.Server
 local dataFolder = serverStorageShared.Data
 
 local GameType = require(enumsFolder.GameType)
-local PlayGameResponseType = require(enumsFolder.PlayGameResponseType)
 local Table = require(utilityFolder.Table)
 local Games = require(serverFolder.Games)
 local ReplicaService = require(dataFolder.ReplicaService)
 local Teleport = require(serverStorageShared.Teleportation.Teleport)
-local TeleportResponseType = require(enumsFolder.TeleportResponseType)
-local PlayerData = require(dataFolder.PlayerData)
+local PlayerDataManager = require(dataFolder.PlayerDataManager)
 local GameJoinType = require(enumsFolder.GameJoinType)
 
 local PlayGameRequest = ReplicaService.NewReplica({
@@ -29,7 +27,7 @@ local PlayGameRequest = ReplicaService.NewReplica({
 
 PlayGameRequest:ConnectOnServerEvent(function(player, requestCode, gameType, ...)
     local function isRequestValid()
-        if not PlayerData.get(player) then
+        if not PlayerDataManager.get(player) then
             return false
         end
 
