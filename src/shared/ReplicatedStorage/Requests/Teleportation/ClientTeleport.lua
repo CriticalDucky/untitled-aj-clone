@@ -51,7 +51,9 @@ function ClientTeleport._request(teleportRequestType, ...)
 	local vararg = { ... }
 
 	return TeleportRequest:andThen(function(replica)
-		return ReplicaRequest.new(replica, teleportRequestType, unpack(vararg))
+		return ReplicaRequest.new(replica, teleportRequestType, unpack(vararg)):andThen(function(response)
+			return unpack(response)
+		end)
 	end)
 end
 
