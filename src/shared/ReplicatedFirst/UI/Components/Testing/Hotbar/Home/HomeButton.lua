@@ -65,6 +65,7 @@ local component = function(props)
 		[OnEvent "MouseButton1Click"] = function()
 			ClientTeleport.toHome(player.UserId):andThen(function(response)
 				if response ~= ReponseType.success then
+					warn("Failed to teleport to home:", response)
 					errored:set(true)
 				end
 			end)
