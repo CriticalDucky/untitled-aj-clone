@@ -14,7 +14,7 @@ local serverStorageSharedUtility = serverStorageShared.Utility
 
 local ReplicaService = require(dataFolder.ReplicaService)
 local HomeManager = require(inventoryFolder.HomeManager)
-local PlayerData = require(dataFolder.PlayerData)
+local PlayerDataManager = require(dataFolder.PlayerDataManager)
 local ResponseType = require(enumsFolder.ResponseType)
 local PlaceItemRequestType = require(enumsFolder.PlaceItemRequestType)
 local LocalServerInfo = require(serverFolder.LocalServerInfo)
@@ -47,7 +47,7 @@ ReplicaResponse.listen(requestReplica, function(player: Player, placeItemRequest
 						else Promise.reject(ResponseType.invalid)
 				end)
 				:andThen(function()
-					return PlayerData.get(player):andThen(function(playerData)
+					return PlayerDataManager.get(player):andThen(function(playerData)
 						return if playerData then Promise.resolve() else Promise.reject(ResponseType.invalid)
 					end)
 				end)

@@ -52,21 +52,20 @@ local cachedInactiveProfiles = {}
 local PlayerData = {}
 PlayerData.__index = PlayerData
 
-local function getReplicationType(profileIndex)
-	assert(profileTemplate[profileIndex] or tempDataTemplate[profileIndex], "Invalid profile index: " .. profileIndex)
+-- For the given property of a profile or temp data, returns the replication type.
+local function getReplicationType(prop)
+	assert(profileTemplate[prop] or tempDataTemplate[prop], "Invalid profile index: " .. prop)
 
-	return profileTemplate[profileIndex]._replication
-		or tempDataTemplate[profileIndex]._replication
-		or ReplicationType.server
+	return profileTemplate[prop]._replication or tempDataTemplate[prop]._replication or ReplicationType.server
 end
 
 local function getKey(playerId)
 	return "Player_" .. playerId
 end
 
---[[
-    Sets up a new PlayerData object for the given player.
-]]
+-- Sets up a new `PlayerData` object for the given player.
+--
+-- Loads the player's profile and manages replicas for the player's data.
 function PlayerData.new(player: Player)
 	return Promise.new(function(resolve, reject)
 		local newPlayerData = setmetatable({}, PlayerData)
@@ -88,13 +87,13 @@ function PlayerData.new(player: Player)
 				playerDataCollection[player] = newPlayerData
 				local tempDataCopy = Table.deepCopy(tempDataTemplate)
 
+				-- Merge the player's profile data with the temp data and separate by replication type for the replicas.
+
 				local function getMatchingProfileProps(privacy)
 					local matchingProps = {}
 
 					for propName, prop in pairs(profile.Data) do
-						if prop._replication == privacy then
-							matchingProps[propName] = prop
-						end
+						if prop._replication == privacy then matchingProps[propName] = prop end
 					end
 
 					return matchingProps
@@ -104,9 +103,7 @@ function PlayerData.new(player: Player)
 					local matchingProps = {}
 
 					for propName, prop in pairs(tempDataCopy) do
-						if prop._replication == privacy then
-							matchingProps[propName] = prop
-						end
+						if prop._replication == privacy then matchingProps[propName] = prop end
 					end
 
 					return matchingProps
@@ -122,8 +119,12 @@ function PlayerData.new(player: Player)
 					getMatchingTempDataProps(ReplicationType.public)
 				)
 
+				-- Set values for new player data object.
+
 				newPlayerData.profile = profile
 				newPlayerData.tempData = tempDataCopy
+
+				-- Set up replicas.
 
 				newPlayerData.replica_private = ReplicaService.NewReplica {
 					ClassToken = ReplicaService.NewClassToken(
@@ -149,6 +150,7 @@ function PlayerData.new(player: Player)
 	end)
 end
 
+-- Sets the data at the given path to the given value in the relevant replica.
 function PlayerData:setValue(path: table, value)
 	local replicationType = getReplicationType(path[1])
 
@@ -169,6 +171,7 @@ function PlayerData:setValue(path: table, value)
 	end
 end
 
+-- Sets the data at the given path to the given values in the relevant replica.
 function PlayerData:setValues(path, values)
 	local replicationType = getReplicationType(path[1])
 
@@ -191,6 +194,7 @@ function PlayerData:setValues(path, values)
 	end
 end
 
+-- Inserts the given value into the array at the given path in the relevant replica.
 function PlayerData:arrayInsert(path, value)
 	local replicationType = getReplicationType(path[1])
 
@@ -211,6 +215,7 @@ function PlayerData:arrayInsert(path, value)
 	end
 end
 
+-- Sets the value at the given index in the array at the given path in the relevant replica.
 function PlayerData:arraySet(path, index, value)
 	local replicationType = getReplicationType(path[1])
 
@@ -231,13 +236,14 @@ function PlayerData:arraySet(path, index, value)
 	end
 end
 
+-- Removes the value at the given index in the array at the given path in the relevant replica.
 function PlayerData:arrayRemove(path, index)
 	local replicationType = getReplicationType(path[1])
 
 	if replicationType == ReplicationType.public then
 		table.insert(path, 1, self.player)
 
-		self.replica_public:ArrayInsert(path, index)
+		self.replica_public:ArrayRemove(path, index)
 	elseif replicationType == ReplicationType.private then
 		self.replica_private:ArrayRemove(path, index)
 	else
@@ -255,10 +261,8 @@ local PlayerDataManager = {}
 
 PlayerDataManager.playerDataAdded = Signal.new()
 
---[[
-    Gets a player's data. If the player's data has not been loaded yet, it will wait until it has
-    been loaded if wait is true.
-]]
+-- Returns a `Promise` that resolves with a player's data. If wait is true and the player's data has not been loaded
+-- yet, it will wait until it has been loaded.
 function PlayerDataManager.get(player: PlayerParam, wait: boolean): Promise
 	return Param.playerParam(player, PlayerFormat.instance)
 		:andThen(function(instance)
@@ -278,16 +282,15 @@ function PlayerDataManager.get(player: PlayerParam, wait: boolean): Promise
 				return nil
 			end
 		end)
-		:timeout(20, "Timed out waiting for player data to load")
 		:catch(function(err)
 			warn("Failed to get player data for player " .. player.Name .. ": " .. tostring(err))
 			return Promise.reject()
 		end)
 end
 
---[[
-    Returns a promise that resolves a player's view-only profile data.
-]]
+-- Returns a `Promise` that resolves with a read-only copy of a player's view-only profile data.
+-- 
+-- This method is useful for viewing a player's profile even when it's not loaded.
 function PlayerDataManager.viewPlayerProfile(player: PlayerParam)
 	return Param.playerParam(player, PlayerFormat.instance):andThen(function(player: Player)
 		if playerDataCollection[player] then
@@ -324,6 +327,7 @@ function PlayerDataManager.viewPlayerProfile(player: PlayerParam)
 	end)
 end
 
+-- Initializes a player's data.
 function PlayerDataManager.init(player)
 	print("Initializing player data for " .. player.Name)
 
@@ -333,6 +337,7 @@ function PlayerDataManager.init(player)
 	end)
 end
 
+-- Releases the player's profile and returns a `Promise` that resolves when the profile is hop ready.
 function PlayerDataManager.yieldUntilHopReady(player)
 	return PlayerDataManager.get(player):andThen(function(playerData)
 		local profile = playerData.profile
@@ -351,6 +356,8 @@ function PlayerDataManager.yieldUntilHopReady(player)
 	end)
 end
 
+-- Calls a given function for all `PlayerData` instances and connects it to an event that calls it for any future
+-- `PlayerData` instances. Returns that connection.
 function PlayerDataManager.forAllPlayerData(callback: (PlayerData) -> nil)
 	for _, playerData in pairs(playerDataCollection) do
 		callback(playerData)

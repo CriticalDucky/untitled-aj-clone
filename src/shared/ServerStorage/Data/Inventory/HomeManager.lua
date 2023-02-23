@@ -20,7 +20,7 @@ local serverFolder = replicatedStorageShared.Server
 local utilityFolder = replicatedFirstShared.Utility
 
 local InventoryManager = require(inventoryServerStorage.InventoryManager)
-local PlayerData = require(dataServerStorage.PlayerData)
+local PlayerDataManager = require(dataServerStorage.PlayerDataManager)
 local Items = require(inventoryReplicatedStorage.Items)
 local ItemCategory = require(enums.ItemCategory)
 local HomeType = require(enums.HomeType)
@@ -175,7 +175,7 @@ end
 ]]
 function HomeManager.getHomeServerInfo(player: HomeOwnerParam)
 	return Param.playerParam(player, PlayerFormat.userId, true):andThen(function(userId)
-		return PlayerData.viewPlayerProfile(userId):andThen(function(profile)
+		return PlayerDataManager.viewPlayerProfile(userId):andThen(function(profile)
 			return profile.playerInfo.homeServerInfo
 		end)
 	end)
@@ -186,7 +186,7 @@ end
 ]]
 function HomeManager.isHomeInfoStamped(player: HomeOwnerParam)
 	return Param.playerParam(player, PlayerFormat.userId, true):andThen(function(userId)
-		return PlayerData.viewPlayerProfile(userId):andThen(function(profile)
+		return PlayerDataManager.viewPlayerProfile(userId):andThen(function(profile)
 			return profile.playerInfo.homeInfoStamped
 		end)
 	end)
@@ -313,7 +313,7 @@ end
 function HomeManager.addPlacedItem(itemId: string, pivotCFrame: CFrame)
 	return homeOwnerPromise():andThen(function(homeOwner: number)
 		return Promise.all({
-			PlayerData.get(homeOwner):andThen(function(playerData)
+			PlayerDataManager.get(homeOwner):andThen(function(playerData)
 				return playerData or Promise.reject "Player data not found"
 			end),
 			HomeManager.getPlacedItemFromId(itemId, homeOwner),
@@ -360,7 +360,7 @@ end
 function HomeManager.removePlacedItem(itemId: string, player: HomeOwnerParam)
 	return Param.playerParam(player, PlayerFormat.userId, true):andThen(function(homeOwner)
 		return Promise.all({
-			PlayerData.get(player):andThen(function(playerData)
+			PlayerDataManager.get(player):andThen(function(playerData)
 				return playerData or Promise.reject "Player data not found"
 			end),
 			HomeManager.getPlacedItemFromId(itemId, homeOwner),
@@ -438,7 +438,7 @@ function HomeManager.unloadHome()
 	end)
 end
 
-PlayerData.forAllPlayerData(function(playerData: PlayerData)
+PlayerDataManager.forAllPlayerData(function(playerData: PlayerData)
 	local player = playerData.player
 
 	InventoryManager.getHomes(player)

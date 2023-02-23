@@ -10,12 +10,12 @@ local serverUtility = serverStorageShared.Utility
 
 local PlayerLocation = require(serverUtility.PlayerLocation)
 local GetFriends = require(utilityFolder.GetFriends)
-local PlayerData = require(dataFolder.PlayerData)
+local PlayerDataManager = require(dataFolder.PlayerDataManager)
 local Types = require(utilityFolder.Types)
 
 type PlayerData = Types.PlayerData
 
-PlayerData.forAllPlayerData(function(playerData)
+PlayerDataManager.forAllPlayerData(function(playerData)
     local player = playerData.player
 
     local friends = GetFriends(player.UserId):expect()

@@ -3,7 +3,7 @@ local ServerStorage = game:GetService("ServerStorage")
 local serverStorageShared = ServerStorage.Shared
 local dataFolder = serverStorageShared.Data
 
-local PlayerData = require(dataFolder.PlayerData)
+local PlayerDataManager = require(dataFolder.PlayerDataManager)
 
 local lastCurrencyChange = {
     --[[
@@ -17,7 +17,7 @@ local lastCurrencyChange = {
 local Currency = {}
 
 function Currency.get(player, currencyType)
-    local playerData = PlayerData.get(player)
+    local playerData = PlayerDataManager.get(player)
     
     if not playerData then
         return
@@ -37,7 +37,7 @@ end
 function Currency.increment(player, currencyType, amount)
     assert(player and currencyType and amount, "Currency.increment: Missing argument(s)")
 
-    local playerData = PlayerData.get(player)
+    local playerData = PlayerDataManager.get(player)
     
     if not playerData then
         return
