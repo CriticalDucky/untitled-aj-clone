@@ -634,9 +634,9 @@ function Teleport.toHome(
 
 	return Authorize.toHome(player, homeOwnerUserId):andThen(function(homeServerInfo: HomeServerInfo)
 		return Teleport.getOptions(player):andThen(function(teleportOptions: TeleportOptions)
-			teleportOptions.HomePlaceId = homeOwnerUserId
+			teleportOptions.ReservedServerAccessCode = homeServerInfo.serverCode
 
-			return Teleport.go(player, GameSettings.homePlaceId, teleportOptions, onSuccess, onFail)
+			return Promise.resolve(ResponseType.success)-- Teleport.go(player, GameSettings.homePlaceId, teleportOptions, onSuccess, onFail)
 		end)
 	end)
 end
