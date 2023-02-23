@@ -328,6 +328,8 @@ function Table.deepFreeze(t)
 	end
 
 	deepFreeze(t)
+
+	return t
 end
 
 return Table
