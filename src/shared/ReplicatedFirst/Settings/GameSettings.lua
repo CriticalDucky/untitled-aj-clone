@@ -1,4 +1,4 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
 local enumsFolder = ReplicatedStorage.Shared.Enums
 
@@ -6,7 +6,7 @@ local ItemCategory = require(enumsFolder.ItemCategory)
 local HomeLockType = require(enumsFolder.HomeLockType)
 local ReplicationType = require(enumsFolder.ReplicationType)
 
-return { -- Constants for the game
+local gameSettings = { -- Constants for the game
 	location_maxPlayers = 20, -- The max amount of players that can be in a location at once
 	location_maxRecommendedPlayers = 15, -- The recommended amount of players in a location at once
 	world_maxRecommendedPlayers = 50, -- The recommended amount of players in a world at once
@@ -26,12 +26,10 @@ return { -- Constants for the game
 	routePlaceId = 10189729412, -- The place ID of the routing server
 	profileTemplate = { -- Items in here can only be under a table. Add a _replication field to decide who can see it. If it's not there, it's not replicated
 		currency = {
-			_replication = ReplicationType.private,
 			money = 0,
 		},
 
 		inventory = {
-			_replication = ReplicationType.public,
 			accessories = {},
 			homeItems = {},
 			homes = {},
@@ -46,7 +44,6 @@ return { -- Constants for the game
 		},
 
 		playerSettings = {
-			_replication = ReplicationType.public,
 			findOpenWorld = true,
 			homeLock = HomeLockType.unlocked,
 			selectedHome = nil,
@@ -54,8 +51,15 @@ return { -- Constants for the game
 	},
 	tempDataTemplate = {
 		friendLocations = {
-			_replication = ReplicationType.private,
-			locations = {}
-		}
+			locations = {},
+		},
+	},
+	dataKeyReplication = { -- Keys that have a private replicationType are replicated to the client, but not to other players. Public replicates to everyone. Absent keys are not replicated.
+		currency = ReplicationType.private,
+		inventory = ReplicationType.public,
+		playerSettings = ReplicationType.public,
+		friendLocations = ReplicationType.private,
 	},
 }
+
+return gameSettings
