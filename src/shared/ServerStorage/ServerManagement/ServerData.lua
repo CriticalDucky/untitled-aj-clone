@@ -105,7 +105,8 @@ local replica = ReplicaService.NewReplica {
 	Replication = "All",
 }
 
-local function retrieveDatastore(key) -- WARNING: Yields; should only be called from a Promise
+-- **WARNING** &mdash; Yields. Should only be called from a `Promise`.
+local function retrieveDatastore(key)
 	assert(key, "Key must be provided to retrieve datastore")
 
 	if isRetrieving[key] then
@@ -130,7 +131,7 @@ local function retrieveDatastore(key) -- WARNING: Yields; should only be called 
 		end)
 		:finally(function()
 			isRetrieving[key] = false
-            retrievedKeys[key] = true
+			retrievedKeys[key] = true
 		end)
 end
 
@@ -157,52 +158,63 @@ local function newLocation(locationEnum)
 	return Promise.retry(getLocationTable, 5)
 end
 
+-- Returns a `Promise` that resolves with the data retrieved from the given key.
+--
+-- **ISSUE** &mdash; This function assumes `retrieveDatastore()` is successful.
 function ServerData.get(key)
 	assert(typeof(key) == "string" and key ~= "", "Key must be provided to get data")
 
-	return Promise.new(function(resolve, reject)
+	return Promise.new(function(resolve)
 		if not retrievedKeys[key] then retrieveDatastore(key) end
 
 		resolve(cachedData[key])
 	end)
 end
 
+-- Returns a `Promise` that resolves with worlds data.
 function ServerData.getWorlds()
 	return ServerData.get(WORLDS_KEY)
 end
 
+-- Returns a `Promise` that resolves with parties data.
 function ServerData.getParties()
 	return ServerData.get(PARTIES_KEY)
 end
 
+-- Returns a `Promise` that resolves with games data.
 function ServerData.getGames()
 	return ServerData.get(GAMES_KEY)
 end
 
+-- Returns a `Promise` that resolves with the world data at the given index.
 function ServerData.getWorld(worldIndex)
 	return ServerData.getWorlds():andThen(function(worlds)
 		return worlds[worldIndex]
 	end)
 end
 
+-- Returns a `Promise` that resolves with the party data of a specific party type at the given index.
 function ServerData.getParty(partyType, partyIndex)
 	return ServerData.getParties():andThen(function(parties)
 		return parties[partyType][partyIndex]
 	end)
 end
 
+-- Returns a `Promise` that resolves with the game data of a specific game type at the given index.
 function ServerData.getGame(gameType, gameIndex)
 	return ServerData.getGames():andThen(function(games)
 		return games[gameType][gameIndex]
 	end)
 end
 
+-- Returns a `Promise` that resolves with the location data of a specific world and location type.
 function ServerData.getLocation(worldIndex, locationEnum)
 	return ServerData.getWorld(worldIndex):andThen(function(world)
 		return world.locations[locationEnum]
 	end)
 end
 
+-- Returns a `Promise` that resolves with all data.
 function ServerData.getAll()
 	return Promise.all({
 		ServerData.getWorlds(),
@@ -213,6 +225,13 @@ function ServerData.getAll()
 	end)
 end
 
+-- Attempts to update the data at the given key using the given transform function.
+--
+-- Returns a `Promise` that resolves on success or rejects on failure.
+--
+-- **TODO**
+-- * Should be private.
+-- * Should not require a replica function.
 function ServerData.update(key, transformFunction, replicaFunction)
 	return DataStore.safeUpdate(serverDataStore, key, transformFunction):andThen(function()
 		transformFunction(cachedData[key])
@@ -221,8 +240,11 @@ function ServerData.update(key, transformFunction, replicaFunction)
 	end)
 end
 
+-- Attempts to add a world, returning a `Promise` that resolves with the index of the new world.
+--
+-- **TODO** &mdash; Desynchronize location creation.
 function ServerData.addWorld()
-	return Promise.new(function(resolve, reject)
+	return Promise.new(function(resolve)
 		local world = {
 			locations = {},
 		}
@@ -255,6 +277,8 @@ function ServerData.addWorld()
 		end)
 end
 
+-- Attempts to add a party server, returning a `Promise` that resolves with the index of the new party of the given
+-- type.
 function ServerData.addParty(partyType)
 	return Promise.try(function()
 		local serverCode, privateServerId = TeleportService:ReserveServer(Parties[partyType].placeId)
@@ -275,11 +299,13 @@ function ServerData.addParty(partyType)
 		end, function()
 			replica:ArrayInsert({ PARTIES_KEY, partyType }, party)
 		end):andThen(function()
-			return #(cachedData[PARTIES_KEY][partyType] or {})
+			return #cachedData[PARTIES_KEY][partyType]
 		end)
 	end)
 end
 
+-- Attempts to add a minigame server, returning a `Promise` that resolves with the index of the new minigame of the
+-- given type.
 function ServerData.addGame(gameType)
 	return Promise.try(function()
 		local serverCode, privateServerId = TeleportService:ReserveServer(Games[gameType].placeId)
@@ -300,7 +326,7 @@ function ServerData.addGame(gameType)
 		end, function()
 			replica:ArrayInsert({ GAMES_KEY, gameType }, newGame)
 		end):andThen(function()
-			return #(cachedData[GAMES_KEY][gameType] or {})
+			return #cachedData[GAMES_KEY][gameType]
 		end)
 	end)
 end
