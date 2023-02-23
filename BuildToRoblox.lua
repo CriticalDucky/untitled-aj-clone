@@ -41,9 +41,7 @@ for _, fileName in pairs(files) do
 			id = servePlaceIds[1]
 		end
 
-		if id then
-			projectsToBuild[fileName] = id
-		end
+		if id then projectsToBuild[fileName] = id end
 	end
 end
 
@@ -81,12 +79,10 @@ for projectName, placeId in pairs(projectsToBuild) do
 			retries = retries + 1
 		until success or retries >= MAX_RETRIES
 
-		if retries >= MAX_RETRIES then
-			error "Too many retries, aborting!"
-		end
+		if retries >= MAX_RETRIES then error "Too many retries, aborting!" end
 	end
 
 	print ""
 end
 
-print "Successfully built all projects!"
+print("Successfully built all projects!\n" .. os.date "%I:%M %p")
