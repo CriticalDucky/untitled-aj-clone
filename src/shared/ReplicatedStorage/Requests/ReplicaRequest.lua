@@ -5,6 +5,8 @@ local Promise = require(ReplicatedFirst:WaitForChild("Shared"):WaitForChild("Uti
 
 local ReplicaRequest = {}
 
+-- Creates a new ReplicaRequest using the given replica. It will FireServer the given arguments, and then wait for the response.
+-- The response is a table of elements returned by the server. This is all wrapped in a Promise.
 function ReplicaRequest.new(replica, ...)
 	assert(replica, "ReplicaRequest.new() called with nil replica")
 
