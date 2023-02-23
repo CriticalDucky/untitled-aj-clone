@@ -316,4 +316,22 @@ function Table.editValues(t, callback) -- maps a table to a new table using the 
 	return mapped
 end
 
+local a = {1, 2, 3}
+table.freeze(a) -- freezes the table
+a[1] = 4 -- error
+
+function Table.deepFreeze(t)
+	local function deepFreeze(t1)
+		for _, v in pairs(t1) do
+			if type(v) == "table" then
+				deepFreeze(v)
+			end
+		end
+
+		table.freeze(t1)
+	end
+
+	deepFreeze(t)
+end
+
 return Table
