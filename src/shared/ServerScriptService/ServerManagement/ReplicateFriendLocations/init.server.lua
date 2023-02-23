@@ -18,7 +18,7 @@ type PlayerData = Types.PlayerData
 PlayerData.forAllPlayerData(function(playerData)
     local player = playerData.player
 
-    local friends = GetFriends(player.UserId)
+    local friends = GetFriends(player.UserId):expect()
 
     for _, friend in pairs(friends) do
         PlayerLocation.get(friend.Id):andThen(function(location)
