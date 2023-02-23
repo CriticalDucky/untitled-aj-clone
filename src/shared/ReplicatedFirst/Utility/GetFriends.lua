@@ -18,10 +18,11 @@ local Param = require(utilityFolder:WaitForChild("Param"))
 local PlayerFormat = require(enumsFolder:WaitForChild("PlayerFormat"))
 
 type LocalPlayerParam = Types.LocalPlayerParam
+type Promise = Types.Promise
 
 local cachedFriends = {}
 
-local getFriends = function(player: LocalPlayerParam)
+local getFriends = function(player: LocalPlayerParam): Promise
 	return Param.localPlayerParam(player, PlayerFormat.userId):andThen(function(userId)
 		local function fetchFriends()
 			local function iterPageItems(pages: FriendPages)
@@ -59,7 +60,7 @@ local getFriends = function(player: LocalPlayerParam)
 			return list
 		end
 
-		return Promise.resolve(cachedFriends[player]) or Promise.try(fetchFriends)
+		return if cachedFriends[player] then Promise.resolve(cachedFriends[player]) else Promise.try(fetchFriends)
 	end)
 end
 
