@@ -538,7 +538,8 @@ local function ReplicaSetValue(replica_id, path_array, value)
 	end)
 	if not succes then
 		print(replica_id, value)
-		Table.print(path_array)
+		Table.print(path_array, "path_array")
+		Table.print(value, "value")
 		error(err)
 	end
 	pointer[key] = value
