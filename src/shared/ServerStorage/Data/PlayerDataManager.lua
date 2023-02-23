@@ -31,12 +31,10 @@ type PlayerParam = Types.PlayerParam
 type Promise = Types.Promise
 
 local profileTemplate = GameSettings.profileTemplate
-profileTemplate.currency._replication = ReplicationType.server
-
 local tempDataTemplate = GameSettings.tempDataTemplate
 
 local ProfileStore = Promise.try(function()
-	return ProfileService.GetProfileStore("PlayerData", GameSettings.profileTemplate)
+	return ProfileService.GetProfileStore("PlayerData", profileTemplate)
 end)
 
 local playerDataPublicReplica = ReplicaService.NewReplica {
@@ -54,9 +52,7 @@ PlayerData.__index = PlayerData
 
 -- For the given property of a profile or temp data, returns the replication type.
 local function getReplicationType(prop)
-	assert(profileTemplate[prop] or tempDataTemplate[prop], "Invalid profile index: " .. prop)
-
-	return profileTemplate[prop]._replication or tempDataTemplate[prop]._replication or ReplicationType.server
+	return GameSettings.dataKeyReplication[prop]
 end
 
 local function getKey(playerId)
@@ -93,7 +89,7 @@ function PlayerData.new(player: Player)
 					local matchingProps = {}
 
 					for propName, prop in pairs(profile.Data) do
-						if prop._replication == privacy then matchingProps[propName] = prop end
+						matchingProps[propName] = if GameSettings.dataKeyReplication[propName] == privacy then prop else nil
 					end
 
 					return matchingProps
@@ -103,7 +99,7 @@ function PlayerData.new(player: Player)
 					local matchingProps = {}
 
 					for propName, prop in pairs(tempDataCopy) do
-						if prop._replication == privacy then matchingProps[propName] = prop end
+						matchingProps[propName] = if GameSettings.dataKeyReplication[propName] == privacy then prop else nil
 					end
 
 					return matchingProps
