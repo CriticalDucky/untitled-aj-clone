@@ -286,14 +286,13 @@ function PlayerDataManager.get(player: PlayerParam, wait: boolean): Promise
 end
 
 --[[
-    Returns a promise that resolves a player's view-only profile.
-    If getRaw is set to true, the promise will resolve with the base profile instead of profile.Data.
+    Returns a promise that resolves a player's view-only profile data.
 ]]
-function PlayerDataManager.viewPlayerProfile(player: PlayerParam, getUpdated: boolean, getRaw: boolean)
+function PlayerDataManager.viewPlayerProfile(player: PlayerParam)
 	return Param.playerParam(player, PlayerFormat.instance):andThen(function(player: Player)
 		if playerDataCollection[player] then
 			local profile = playerDataCollection[player].profile
-			return if getRaw then profile else profile.Data
+			return Table.deepFreeze(Table.deepCopy(profile.Data))
 		end
 
 		local userId = player.UserId
@@ -302,7 +301,7 @@ function PlayerDataManager.viewPlayerProfile(player: PlayerParam, getUpdated: bo
 
 		return Promise.new(function(resolve, reject)
 			if
-				not profileSettings or (getUpdated and time() - profileSettings.cachedTime > INACTIVE_PROFILE_COOLDOWN)
+				not profileSettings or (time() - profileSettings.cachedTime > INACTIVE_PROFILE_COOLDOWN)
 			then
 				profileSettings = cachedInactiveProfiles[userId] or {}
 				profileSettings.cachedTime = time()
@@ -312,14 +311,14 @@ function PlayerDataManager.viewPlayerProfile(player: PlayerParam, getUpdated: bo
 
 				if profile then
 					cachedInactiveProfiles[userId].profile = profile
-					resolve(getRaw and profile or profile.Data)
+					resolve(Table.deepFreeze(Table.deepCopy(profile.Data)))
 				else
 					warn "Failed to view profile"
 
 					reject()
 				end
 			else
-				resolve(profileSettings.profile)
+				resolve(Table.deepFreeze(Table.deepCopy(profileSettings.profile.Data)))
 			end
 		end)
 	end)
