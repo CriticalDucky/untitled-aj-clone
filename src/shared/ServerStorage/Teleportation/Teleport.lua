@@ -746,4 +746,10 @@ function Teleport.bootServer(reason)
 	boot()
 end
 
+-- Returns a `Promise` that attempts to reserve a server and retries a limited number of times if it fails. Rejects if
+-- it fails to reserve a server.
+function Teleport.safeReserveServer(placeId)
+	return Promise.retry(Promise.promisify(TeleportService.ReserveServer), MAX_RETRIES, TeleportService, placeId)
+end
+
 return Teleport
