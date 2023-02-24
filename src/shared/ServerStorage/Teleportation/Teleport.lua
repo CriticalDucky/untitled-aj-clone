@@ -5,8 +5,6 @@ local FLOOD_DELAY = 5
 local RETRY_DELAY = 2
 local MAX_RETRIES = 5
 
-local BadgeService = game:GetService "BadgeService"
-local DataStoreService = game:GetService "DataStoreService"
 local Players = game:GetService "Players"
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local TeleportService = game:GetService "TeleportService"
@@ -21,11 +19,9 @@ local serverManagement = serverStorageShared.ServerManagement
 local serverFolder = replicatedStorageShared.Server
 local enumsFolder = replicatedStorageShared.Enums
 local serverUtility = serverStorageShared.Utility
-local teleportationFolder = serverStorageShared.Teleportation
 
 local Locations = require(serverFolder.Locations)
 local Parties = require(serverFolder.Parties)
-local Games = require(serverFolder.Games)
 local ServerGroupEnum = require(enumsFolder.ServerGroup)
 local ServerTypeGroups = require(serverFolder.ServerTypeGroups)
 local LocalServerInfo = require(serverFolder.LocalServerInfo)
