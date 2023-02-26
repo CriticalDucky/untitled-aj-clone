@@ -86,6 +86,8 @@ local component = function(props)
 					if response == ResponseType.success then
 						errored:set(true)
 					end
+				end):catch(function()
+					errored:set(true)
 				end)
 			end,
 			layoutOrder = layoutOrder,
