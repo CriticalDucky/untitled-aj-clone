@@ -112,7 +112,7 @@ local component = function(props)
 
 					if activeParty.time:isInRange() then
 						ClientTeleport.toParty(activeParty.partyType):andThen(function(response)
-							if response.responseType ~= ResponseType.success then
+							if response ~= ResponseType.success then
 								errored:set(true)
 							end
 						end)
