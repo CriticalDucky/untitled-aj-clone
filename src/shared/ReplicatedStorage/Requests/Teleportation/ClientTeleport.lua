@@ -52,7 +52,7 @@ function ClientTeleport._request(teleportRequestType, ...)
 
 	return TeleportRequest:andThen(function(replica)
 		return ReplicaRequest.new(replica, teleportRequestType, unpack(vararg)):andThen(function(response)
-			print("ClientTeleport._request() response: ", unpack(response))
+			Table.print(response, "ClientTeleport._request() response:", true)
 			return unpack(response)
 		end)
 	end)
