@@ -4,7 +4,10 @@ local DEBUG = true
 
 local DATASTORE_MAX_RETRIES = 10
 
-local Promise = require(game:GetService("ReplicatedFirst").Shared.Utility.Promise)
+local utilityFolder = game:GetService("ReplicatedFirst").Shared.Utility
+
+local Promise = require(utilityFolder.Promise)
+local Table = require(utilityFolder.Table)
 
 local DataStore = {}
 
