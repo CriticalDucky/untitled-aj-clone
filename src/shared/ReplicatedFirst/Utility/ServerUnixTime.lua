@@ -35,13 +35,13 @@ if RunService:IsClient() then
         return timeValue:get()
     end
 
-    ServerUnixTime.__call = getUnixTime
-    ServerUnixTime.time = getUnixTime
+    ServerUnixTime.__call = getUnixTime -- Alternate way to get the server's unix time.
+    ServerUnixTime.time = getUnixTime -- Alternate way to get the server's unix time.
 end
 
 if RunService:IsServer() then
     RunService.Heartbeat:Connect(function()
-        timeValue:set(os.time())
+        timeValue:set(os.time()) -- Only update the time value on the server, as the client's time will be updated by the server's time.
     end)
 end
 
