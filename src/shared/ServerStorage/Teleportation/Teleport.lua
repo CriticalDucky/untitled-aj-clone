@@ -372,9 +372,9 @@ end
 ]]
 function Authorize.toParty(players: { Player } | Player, partyType: number, partyIndex: number | nil)
 	assert(players and partyType, "Teleport.toParty: missing argument")
-	players = if type(players) == "table" then players else { players };
+	players = if type(players) == "table" then players else { players }
 
-	(partyIndex and Promise.resolve(partyIndex) or ServerData.findAvailableParty(partyType))
+	return (partyIndex and Promise.resolve(partyIndex) or ServerData.findAvailableParty(partyType))
 		:andThen(function(partyIndex)
 			return LiveServerData.isPartyFull(partyType, partyIndex, #players)
 				:andThen(function(isFull)
@@ -394,7 +394,7 @@ function Authorize.toParty(players: { Player } | Player, partyType: number, part
 			return ServerData.getParty(partyType, partyIndex)
 				:andThen(function(party)
 					if not party then
-						warn "Teleport.toParty: party does not exist"
+						warn("Teleport.toParty: party does not exist", partyType, partyIndex)
 						return Promise.reject(ResponseType.invalid)
 					end
 
@@ -617,6 +617,9 @@ end
 	Returns a promise that resolves a table of promises, where the key is the player and the value is a promise
 	that resolves the player's teleport response.
 ]]
+
+local TO_HOME_ENABLED = true -- This setting enables or disables the teleport to home feature for debugging purposes.
+
 function Teleport.toHome(
 	player: Player,
 	homeOwnerUserId: number,
@@ -632,7 +635,9 @@ function Teleport.toHome(
 		return Teleport.getOptions(player):andThen(function(teleportOptions: TeleportOptions)
 			teleportOptions.ReservedServerAccessCode = homeServerInfo.serverCode
 
-			return Promise.resolve(ResponseType.success)-- Teleport.go(player, GameSettings.homePlaceId, teleportOptions, onSuccess, onFail)
+			return if TO_HOME_ENABLED
+				then Teleport.go(player, GameSettings.homePlaceId, teleportOptions, onSuccess, onFail)
+				else Promise.resolve(ResponseType.success)
 		end)
 	end)
 end
