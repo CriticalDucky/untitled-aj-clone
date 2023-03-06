@@ -63,7 +63,7 @@ function LocalServerInfo.getServerInfo(): Promise
 
         local ServerData = require(serverStorageShared.ServerManagement.ServerData)
 
-        return ServerData.traceServerInfo()
+        return ServerData.getServerInfo()
     elseif isClient then
         local ClientServerData = require(serverFolder:WaitForChild("ClientServerData"))
 
