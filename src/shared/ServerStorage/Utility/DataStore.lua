@@ -11,9 +11,19 @@ local Table = require(utilityFolder.Table)
 
 local DataStore = {}
 
--- Attempts to update the value in the specified key, automatically retrying if it fails.
---
--- Returns a `Promise` that either resolves with the results of `UpdateAsync()` or rejects with the error.
+--[[
+Attempts to update the value in the specified key, automatically retrying if it fails.
+
+Yields and returns the success and the error (if there is one) of `UpdateAsync()`.
+
+```lua
+local success, result = DataStore.safeUpdate(dataStore, key, function(value)
+	-- value is the current value in the datastore
+	-- return the new value to set
+	return value + 1
+end
+```
+---]]
 function DataStore.safeUpdate(dataStore: GlobalDataStore, key: string, transformFunction: (any) -> any)
 	assert(typeof(dataStore) == "Instance" and dataStore:IsA "GlobalDataStore", "dataStore must be a GlobalDataStore")
 	assert(typeof(key) == "string", "key must be a string")
@@ -27,15 +37,18 @@ function DataStore.safeUpdate(dataStore: GlobalDataStore, key: string, transform
 		end)
 	end
 
-	return Promise.retry(try, DATASTORE_MAX_RETRIES):catch(function(err)
-		warn("Failed to update data store:", tostring(err))
-		return Promise.reject(err)
-	end)
+	return Promise.retry(try, DATASTORE_MAX_RETRIES):await()
 end
 
--- Attempts to set the value in the specified key, automatically retrying if it fails.
---
--- Returns a `Promise` that either resolves with the results of `SetAsync()` or rejects with the error.
+--[[
+	Attempts to set the value in the specified key, automatically retrying if it fails.
+
+	Yields and returns the success and the error (if there is one) of `SetAsync()`.
+
+	```lua
+	local success, result = DataStore.safeSet(dataStore, key, value)
+	```
+]]
 function DataStore.safeSet(
 	dataStore: GlobalDataStore,
 	key: string,
@@ -59,15 +72,19 @@ function DataStore.safeSet(
 		end)
 	end
 
-	return Promise.retry(try, DATASTORE_MAX_RETRIES):catch(function(err)
-		warn("Failed to set data store:", tostring(err))
-		return Promise.reject(err)
-	end)
+	return Promise.retry(try, DATASTORE_MAX_RETRIES):await()
 end
 
--- Attempts to get the value in the specified key, automatically retrying if it fails.
---
--- Returns a `Promise` that either resolves with the results of `GetAsync()` or rejects with the error.
+
+--[[
+	Attempts to get the value in the specified key, automatically retrying if it fails.
+
+	Yields and returns the success and value (or error response if success is false) of `GetAsync()`.
+
+	```lua
+	local success, data = DataStore.safeGet(dataStore, key) -- data is the error response if success is false
+	```
+]]
 function DataStore.safeGet(dataStore: GlobalDataStore, key: string)
 	assert(typeof(dataStore) == "Instance" and dataStore:IsA "GlobalDataStore", "dataStore must be a GlobalDataStore")
 	assert(typeof(key) == "string", "key must be a string")
@@ -80,15 +97,19 @@ function DataStore.safeGet(dataStore: GlobalDataStore, key: string)
 		end)
 	end
 
-	return Promise.retry(try, DATASTORE_MAX_RETRIES):catch(function(err)
-		warn("Failed to get data store:", tostring(err))
-		return Promise.reject(err)
-	end)
+	return Promise.retry(try, DATASTORE_MAX_RETRIES):await()
 end
 
--- Attempts to remove the value in the specified key, automatically retrying if it fails.
---
--- Returns a `Promise` that either resolves with the results of `RemoveAsync()` or rejects with the error.
+
+--[[
+	Attempts to remove the value in the specified key, automatically retrying if it fails.
+
+	Yields and returns the success and the error (if there is one) of `RemoveAsync()`.
+
+	```lua
+	local success, result = DataStore.safeRemove(dataStore, key)
+	```
+]]
 function DataStore.safeRemove(dataStore: GlobalDataStore, key: string)
 	assert(typeof(dataStore) == "Instance" and dataStore:IsA "GlobalDataStore", "dataStore must be a GlobalDataStore")
 	assert(typeof(key) == "string", "key must be a string")
@@ -101,10 +122,7 @@ function DataStore.safeRemove(dataStore: GlobalDataStore, key: string)
 		end)
 	end
 
-	return Promise.retry(try, DATASTORE_MAX_RETRIES):catch(function(err)
-		warn("Failed to remove data store:", tostring(err))
-		return Promise.reject(err)
-	end)
+	return Promise.retry(try, DATASTORE_MAX_RETRIES):await()
 end
 
 return DataStore
