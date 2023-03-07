@@ -836,7 +836,7 @@ function ServerData.reconcileWorlds()
 			local locationTable = newLocations[locationEnum] or {}
 			newLocations[locationEnum] = locationTable
 
-			table.insert(locationTable, newLocation(locationEnum))
+			table.insert(locationTable, select(2, newLocation(locationEnum)))
 		end
 	end
 
