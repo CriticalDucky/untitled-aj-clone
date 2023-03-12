@@ -51,25 +51,42 @@ This script manages, stores, and retrieves data from the Servers datastore.
 			...
 		}
 	},
-    [PrivateServerId] = {
-        [any] = any
+	[PrivateServerId] = {
+		[any] = any
 		-- privateServerId and serverCode don't need to be stored here because
 		-- servers use their privateServerId as the means of identifying themselves.
 		-- serverCodes are likely stored elsewhere because you would rarely need to
-		-- get the serverCode if you already have the privateServerId. (that's not how this game is structured)
-    }
+		-- get the serverCode if you already have the privateServerId. (that's how this game is structured)
+	}
+}
+```
+A serverIdentifier is a table that includes information about how to locate serverInfo within cachedData.
+It's used for servers to identify themselves and for scripts like LiveServerData to find the serverInfo of a server.
+
+Structure of serverIdentifier:
+```lua
+export type ServerIdentifier = {
+	serverType: UserEnum, -- The type of server (location, party, game, etc.)
+	jobId: string?, -- The jobId of the server (routing servers)
+	worldIndex: number?, -- The index of the world the server is in (location servers)
+	locationEnum: UserEnum?, -- The location of the server (location servers)
+	homeOwner: number?, -- The userId of the player who owns the home (home servers)
+	partyType: UserEnum?, -- The type of party the server is for (party servers)
+	partyIndex: number?, -- The index of the party the server is for (party servers)
+	gameType: UserEnum?, -- The type of game the server is for (game servers)
+	gameIndex: number?, -- The index of the game the server is for (game servers)
 }
 ```
 
 --]]
 
---#region Imports
 local SERVERS_DATASTORE = "Servers"
 local WORLDS_KEY = "worlds"
 local PARTIES_KEY = "parties"
 local GAMES_KEY = "games"
 local CACHE_COOLDOWN = 30
 
+--#region Imports
 local DataStoreService = game:GetService "DataStoreService"
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local RunService = game:GetService "RunService"
@@ -108,40 +125,40 @@ local serverDataStore = DataStoreService:GetDataStore(SERVERS_DATASTORE)
 local cachedData = {
 	[WORLDS_KEY] = {
 		--[[
-            [worldIndex] = {
-                locations = {
-                    [locationEnum] = {
-                        privateServerId = privateServerId,
-                        serverCode = serverCode,
-                    }
-                }
-            }
-        ]]
+			[worldIndex] = {
+				locations = {
+					[locationEnum] = {
+						privateServerId = privateServerId,
+						serverCode = serverCode,
+					}
+				}
+			}
+		]]
 	},
 	[PARTIES_KEY] = {
 		--[[
-            [partyType] = {
-                [partyIndex] = {
-                    privateServerId = privateServerId,
-                    serverCode = serverCode,
-                }
-            }
-        ]]
+			[partyType] = {
+				[partyIndex] = {
+					privateServerId = privateServerId,
+					serverCode = serverCode,
+				}
+			}
+		]]
 	},
 	[GAMES_KEY] = {
 		--[[
-            [gameType] = {
-                [gameIndex] = {
-                    privateServerId = privateServerId,
-                    serverCode = serverCode,
-                }
-            }
-        ]]
+			[gameType] = {
+				[gameIndex] = {
+					privateServerId = privateServerId,
+					serverCode = serverCode,
+				}
+			}
+		]]
 	},
 	--[[
-    [PrivateServerId] = {
-        [any] = any
-    }
+	[PrivateServerId] = {
+		[any] = any
+	}
 ]]
 }
 
@@ -514,21 +531,21 @@ function ServerData.stampHomeServer(playerData: PlayerData)
 end
 
 --[[
-	Attempts to get a server's info from the cache based on the provided privateServerId.
+	Attempts to get a server's identifier from the cache based on the provided privateServerId.
 	If the server is not in the cache, it will be fetched from the datastore.
 
 	Note the difference between this and ServerData.get. This function returns this:
 	```lua
-	{
-		serverType: UserEnum, -- Always present
-		jobId: string?, -- Routing servers
-		worldIndex: number?, -- Location servers
-		locationEnum: UserEnum?, -- Location servers
-		homeOwner: number?, -- Home servers
-		partyType: UserEnum?, -- Party servers
-		partyIndex: number?, --  Party servers
-		gameType: UserEnum?, -- Game servers
-		gameIndex: number?, -- Game servers
+	export type ServerIdentifier = {
+		serverType: UserEnum, -- The type of server (world, party, game, home)
+		jobId: string?, -- The jobId of the server (only for routing servers)
+		worldIndex: number?, -- The index of the world in the worlds table (only for location servers)
+		locationEnum: UserEnum?, -- The location enum of the location (only for location servers)
+		homeOwner: number?, -- The UserId of the home owner (only for home servers)
+		partyType: UserEnum?, -- The type of party (only for party servers)
+		partyIndex: number?, -- The index of the party in the party type table (only for party servers)
+		gameType: UserEnum?, -- The type of game (only for game servers)
+		gameIndex: number?, -- The index of the game in the game type table (only for game servers)
 	}
 	```
 	This info is what actually characterizes the server instead of it being a serverCode or privateServerId.
@@ -537,7 +554,7 @@ end
 
 	**TODO**: Make function naming clearer.
 ]]
-function ServerData.getServerInfo(privateServerId: string?)
+function ServerData.getServerIdentifier(privateServerId: string)
 	privateServerId = privateServerId or game.PrivateServerId
 
 	local success, result = ServerData.getAll()
@@ -578,7 +595,7 @@ function ServerData.getServerInfo(privateServerId: string?)
 
 	if not success then warn("Failed to get server info: ", serverInfo) end
 
-	return if success and serverInfo and Table.hasAnything(serverInfo) then serverInfo else false
+	return if success and serverInfo and Table.hasAnything(serverInfo) then (serverInfo) else false
 end
 
 --[[
@@ -799,7 +816,9 @@ function ServerData.findAvailableWorldAndLocation(forcedLocation: UserEnum, worl
 		success, locationEnum = ServerData.findAvailableLocation(worldIndex)
 
 		if not success then
-			warn("ServerData.findAvailableWorldAndLocation: Error finding available location: " .. tostring(locationEnum))
+			warn(
+				"ServerData.findAvailableWorldAndLocation: Error finding available location: " .. tostring(locationEnum)
+			)
 			return success, locationEnum
 		end
 	end
@@ -810,10 +829,7 @@ function ServerData.findAvailableWorldAndLocation(forcedLocation: UserEnum, worl
 		return false, "worldIndex or locationEnum is nil"
 	else
 		print(
-			"ServerData.findAvailableWorldAndLocation: Found world "
-				.. worldIndex
-				.. " and location "
-				.. locationEnum
+			"ServerData.findAvailableWorldAndLocation: Found world " .. worldIndex .. " and location " .. locationEnum
 		)
 	end
 
@@ -872,9 +888,7 @@ end
 task.spawn(function() -- Update the cache now and then every CACHE_COOLDOWN seconds
 	local success, response = ServerData.getAll()
 
-	if not success then
-		warn("ServerData.getAll: Error getting all data: " .. tostring(response))
-	end
+	if not success then warn("ServerData.getAll: Error getting all data: " .. tostring(response)) end
 
 	RunService.Heartbeat:Connect(function()
 		for constantKey, _ in pairs(constantKeys) do
