@@ -31,7 +31,7 @@ local requestReplica = ReplicaService.NewReplica({
 	Replication = "All",
 })
 
-local homeOwnerPromise: Promise = LocalServerInfo.getServerInfo():andThen(function(serverInfo)
+local homeOwnerPromise: Promise = LocalServerInfo.getServerIdentifier():andThen(function(serverInfo)
 	return serverInfo.homeOwner
 end)
 
