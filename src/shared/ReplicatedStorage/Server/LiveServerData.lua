@@ -1,11 +1,108 @@
+--[[
+	This script is responsible for managiging live data that every server reports.
+	It also provides utility functions for interfacing with the data.
+
+	All live servers report:
+		- Their population (player count)
+		- UserIds of players in the server
+
+	Cached live data is stored in a table that, on the highest level, is split into
+	sections based on the server type. Each section contains a table of data that
+	is specific to that server type.
+
+	For example, the routing server type has a table of job IDs, and each job ID has
+	a table of server info. Refer to ServerData.lua to learn more about the indecies
+	that reference server info.
+
+	Server info generally looksl ike this:
+
+	```lua
+	serverInfo = {
+		players = {
+			userIds
+		},
+		[any] = any
+	}
+	```
+
+	```lua
+	local cachedData = {
+		[ServerTypeEnum.routing] = {
+			[jobId] = {
+				serverInfo
+			}
+		},
+
+		[ServerTypeEnum.location] = {
+			[worldIndex] = {
+				[locationEnum] = {
+					serverInfo
+				}
+			}
+		},
+
+		[ServerTypeEnum.home] = {
+			[homeOwner] = {
+				serverInfo
+			}
+		},
+
+		[ServerTypeEnum.party] = {
+			[partyType] = {
+				[partyIndex] = {
+					serverInfo
+				}
+			}
+		},
+
+		[ServerTypeEnum.game] = {
+			[gameType] = {
+				[gameIndex] | [privateServerId] = { -- TODO: Give private and public game servers their own tables
+					serverInfo
+				}
+			}
+		},
+	}
+	```
+	
+	This script can be required from both the client and server.
+	If required on the client, all functions will return values that
+	can be used in Computeds that dynamically update.
+
+	NOTE: This script represents data the is an approximation of reality.
+	Because of this, don't rely on this for an critical actions, such as
+	affecting a player's currency or inventory.
+
+	Example usage:
+	```lua
+	local LiveServerData = require(game.ReplicatedStorage.Shared.Server.LiveServerData)
+
+	local worldIndex = 1 -- The index of the world
+	local locationEnum = 2 -- The enum of the location
+
+	local success, isFull = LiveServerData.isLocationFull(worldIndex, locationEnum, playersToJoin)
+	local success, populationInfo = LiveServerData.getLocationPopulationInfo(worldIndex, locationEnum)
+
+	if success then
+		-- A scenario where the server is full
+		print(isFull and (populationInfo.max_emptySlots == 0)) --> true
+		print(populationInfo.recommended_emptySlots) --> 0
+		print(populationInfo.population) --> 20 (if this is the max # of players)
+	end
+
+	```
+]]
+
 local BROADCAST_CHANNEL = "Servers"
-local BROADCAST_COOLDOWN = 10
+local BROADCAST_COOLDOWN = 5
 local BROADCAST_COOLDOWN_PADDING = 2
 local WAIT_TIME = BROADCAST_COOLDOWN + BROADCAST_COOLDOWN_PADDING
+local DEBUG = false
 
-local RunService = game:GetService("RunService")
-local ReplicatedFirst = game:GetService("ReplicatedFirst")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+--#region Imports
+local RunService = game:GetService "RunService"
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
+local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
 local replicatedFirstShared = ReplicatedFirst.Shared
 local replicatedStorageShared = ReplicatedStorage.Shared
@@ -18,25 +115,32 @@ local ServerTypeEnum = require(enumsFolder.ServerType)
 local GameSettings = require(replicatedFirstShared.Settings.GameSettings)
 local Table = require(utilityFolder.Table)
 local GetServerFillInfo = require(serverFolder.GetServerFillInfo)
+local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
+local ServerTypeGroups = require(serverFolder:WaitForChild "ServerTypeGroups")
+local Games = require(serverFolder:WaitForChild "Games")
+local Parties = require(serverFolder:WaitForChild "Parties")
+local Locations = require(serverFolder:WaitForChild "Locations")
 local Promise = require(utilityFolder.Promise)
 local Signal = require(utilityFolder.Signal)
 local Types = require(utilityFolder.Types)
+local LocationType = require(enumsFolder:WaitForChild "LocationType")
 
 type Promise = Types.Promise
+type ServerIdentifier = Types.ServerIdentifier
+type UserEnum = Types.UserEnum
 
 local Fusion = require(replicatedFirstShared.Fusion)
 local Value = Fusion.Value
 local unwrap = Fusion.unwrap
 
-local isClient = RunService:IsClient()
-local isServer = RunService:IsServer()
+--#endregion
 
 local LiveServerData = {}
 
-local dataPromise
+local dataValue
 
-if isServer then
-	local ServerStorage = game:GetService("ServerStorage")
+if RunService:IsServer() then
+	local ServerStorage = game:GetService "ServerStorage"
 
 	local serverStorageShared = ServerStorage.Shared
 	local messagingFolder = serverStorageShared.Messaging
@@ -50,57 +154,60 @@ if isServer then
 	local cachedData = {
 		[ServerTypeEnum.routing] = {
 			--[[
-                [jobId] = {
-                    serverInfo
-                }
-            ]]
+				[jobId] = {
+					serverInfo
+				}
+			]]
 		},
 
 		[ServerTypeEnum.location] = {
 			--[[
-                [worldIndex] = {
-                    [locationEnum] = {
-                        serverInfo
-                    }
-                }
-            ]]
+				[worldIndex] = {
+					[locationEnum] = {
+						serverInfo
+					}
+				}
+			]]
 		},
 
 		[ServerTypeEnum.home] = {
 			--[[
-                [homeOwner] = {
-                    serverInfo
-                }
-            ]]
+				[homeOwner] = {
+					serverInfo
+				}
+			]]
 		},
 
 		[ServerTypeEnum.party] = {
 			--[[
-                [partyType] = {
-                    [partyIndex] = {
-                        serverInfo
-                    }
-                }
-            ]]
+				[partyType] = {
+					[partyIndex] = {
+						serverInfo
+					}
+				}
+			]]
 		},
 
 		[ServerTypeEnum.game] = {
 			--[[
-                [gameType] = {
-                    [gameIndex] | [privateServerId] = {
-                        serverInfo
-                    }
-                }
-            ]]
+				[gameType] = {
+					[gameIndex] | [privateServerId] = {
+						serverInfo
+					}
+				}
+			]]
 		},
 	}
 
-	dataPromise = Promise.resolve(cachedData)
+	dataValue = cachedData
 
+	--[[
+		The purpose of this function is to remove playerIds from the cached data that's sent to the client.
+		This is necessary because if an influencer streams gameplay, fans could use the streamer's playerId to find out
+		where they are in the game.
+	]]
 	local function filterServerInfo(serverInfo)
-		if not serverInfo then
-			return nil
-		end
+		if not serverInfo then return nil end
 
 		local newTable = {}
 
@@ -121,22 +228,65 @@ if isServer then
 		return newTable
 	end
 
-	local replica = ReplicaService.NewReplica({
-		ClassToken = ReplicaService.NewClassToken("LiveServerData"),
-		Data = filterServerInfo(Table.deepCopy(cachedData)),
+	local replica = ReplicaService.NewReplica {
+		ClassToken = ReplicaService.NewClassToken "LiveServerData",
+		Data = filterServerInfo(Table.deepCopy(cachedData)), -- Copying cached data to prevent it from being modified
 		Replication = "All",
-	})
+	}
 
-	LiveServerData.ServerInfoUpdated = Signal.new()
+	LiveServerData.ServerInfoUpdated = Signal.new() -- This signal is fired when the server info is updated.
 
-	function LiveServerData.setCachedData(serverType, indexInfo, serverInfo)
+	--[[
+		Server exclusive function.
+		Used by LiveServerDataPublisher.lua to broadcast this server's data to all other servers.
+
+		* `serverInfo` is a table that contains the server information (e.g. players)
+		* `indexInfo` is a table that contains the index information (e.g. worldIndex, locationEnum, etc.)
+	]]
+	function LiveServerData.publish(serverIdentifier: ServerIdentifier, serverInfo: table)
+		assert(serverIdentifier, "serverIdentifier is nil")
+		assert(serverIdentifier.serverType, "serverIdentifier.serverType is nil")
+
+		lastBroadcast = time()
+
+		Message.publish(BROADCAST_CHANNEL, {
+			serverInfo = serverInfo,
+			serverIdentifier = serverIdentifier,
+		})
+	end
+
+	--[[
+		Used by LiveServerDataPublisher.lua to check if it's okay to broadcast this server's data to all other servers.
+	]]
+	function LiveServerData.canPublish()
+		return time() - lastBroadcast >= BROADCAST_COOLDOWN
+	end
+
+	-- Here we're listening for messages from other servers and updating the cached data.
+	Message.subscribe(BROADCAST_CHANNEL, function(message)
+		-- Runs every time a message is received from any server broadcasting in BROADCAST_CHANNEL
+
+		-- Recieved from LiveServerData.publish from another server:
+		local message = message.Data :: {
+			serverInfo: table,
+			serverIdentifier: ServerIdentifier,
+		}
+
+		if DEBUG then print "LiveServerData: Received message from server" end
+
+		local serverIdentifier = message.serverIdentifier
+		local serverType = serverIdentifier.serverType
+		local serverInfo = message.serverInfo
+
+		assert(serverType and serverIdentifier and serverInfo, "LiveServerData: Received invalid message from server")
+
 		local cachedServerType = cachedData[serverType]
 
-		if serverType == ServerTypeEnum.routing then
-			cachedServerType[indexInfo.jobId] = serverInfo
+		if serverType == ServerTypeEnum.routing then -- Each server type will have different means of storing data in the cache.
+			cachedServerType[serverIdentifier.jobId] = serverInfo
 		elseif serverType == ServerTypeEnum.location then
-			local worldIndex = indexInfo.worldIndex
-			local locationEnum = indexInfo.locationEnum
+			local worldIndex = serverIdentifier.worldIndex
+			local locationEnum = serverIdentifier.locationEnum
 
 			local worldTable = cachedServerType[worldIndex] or {}
 
@@ -151,14 +301,14 @@ if isServer then
 
 			replica:SetValue({ serverType, worldIndex, locationEnum }, filterServerInfo(Table.deepCopy(serverInfo)))
 		elseif serverType == ServerTypeEnum.home then
-			local homeOwner = indexInfo.homeOwner
+			local homeOwner = serverIdentifier.homeOwner
 
 			cachedServerType[homeOwner] = serverInfo
 
 			replica:SetValue({ serverType, homeOwner }, filterServerInfo(Table.deepCopy(serverInfo)))
 		elseif serverType == ServerTypeEnum.party then
-			local partyType = indexInfo.partyType
-			local partyIndex = indexInfo.partyIndex
+			local partyType = serverIdentifier.partyType
+			local partyIndex = serverIdentifier.partyIndex
 
 			local partyTable = cachedServerType[partyType] or {}
 
@@ -173,8 +323,8 @@ if isServer then
 
 			replica:SetValue({ serverType, partyType, partyIndex }, filterServerInfo(Table.deepCopy(serverInfo)))
 		elseif serverType == ServerTypeEnum.game then
-			local gameType = indexInfo.gameType
-			local gameIndex = indexInfo.gameIndex
+			local gameType = serverIdentifier.gameType
+			local gameIndex = serverIdentifier.gameIndex
 
 			local gameTable = cachedServerType[gameType] or {}
 
@@ -189,247 +339,461 @@ if isServer then
 
 			replica:SetValue({ serverType, gameType, gameIndex }, filterServerInfo(Table.deepCopy(serverInfo)))
 		else
-			error("LiveServerData: Message received with invalid server type")
+			error "LiveServerData: Message received with invalid server type"
 		end
 
-		LiveServerData.ServerInfoUpdated:Fire(serverType, indexInfo, serverInfo)
-	end
-
-	function LiveServerData.publish(serverInfo, indexInfo)
-		if not indexInfo then
-			warn("LiveServerData: Attempted to publish with invalid data")
-			return
-		end
-
-		lastBroadcast = time()
-
-		Message.publish(BROADCAST_CHANNEL, {
-			serverType = LocalServerInfo.serverType,
-			serverInfo = serverInfo,
-			indexInfo = indexInfo,
-		})
-	end
-
-	function LiveServerData.canPublish()
-		return time() - lastBroadcast >= BROADCAST_COOLDOWN
-	end
-
-	Message.subscribe(BROADCAST_CHANNEL, function(message)
-		local message = message.Data
-
-		print("LiveServerData: Received message from server")
-
-		LiveServerData.setCachedData(message.serverType, message.indexInfo, message.serverInfo)
+		LiveServerData.ServerInfoUpdated:Fire(serverType, serverIdentifier, serverInfo)
 	end)
-elseif isClient then
+elseif RunService:IsClient() then -- Client
 	local ReplicaCollection = require(replicatedStorageShared.Replication.ReplicaCollection)
 
-	dataPromise = ReplicaCollection.get("LiveServerData"):andThen(function(replica)
-		local dataValue = Value(replica.Data)
+	local replicaData = ReplicaCollection.get("LiveServerData").Data
 
-		replica:ListenToRaw(function()
-			dataValue:set(replica.Data)
-		end)
+	dataValue = Value(replicaData) -- Simple convenience for UI development
+	-- Because of this, whenever we call any of the functions below,
+	-- UI will dynamically update when the data is updated (as long as it's called from a Computed).
 
-		return dataValue
+	replicaData:ListenToRaw(function()
+		dataValue:set(replicaData)
 	end)
 end
 
-function LiveServerData.get(serverType, indexInfo): Promise
-	return Promise.all({
-		Promise.new(function(resolve)
-			if time() < WAIT_TIME then
-				task.wait(WAIT_TIME - time())
-			end
+--[[
+	Since servers broadcast their data every WAIT_TIME seconds,
+	we need to wait for that time to pass before we can get an accurate representation of data
+	from all the servers.
 
-			resolve()
-		end),
-		dataPromise,
-	})
-		:andThen(function(resultArray)
-			return unwrap(resultArray[2])
-		end)
-		:andThen(function(data)
-			local serverTypeData = data[serverType]
+	Why don't I just have this built in to the get function?
 
-			if not serverType then
-				return data
-			end
+	* Fusion Computeds cant yield, so UI scripts need to implement their own
+	loading functionalities.
 
-			if not indexInfo then
-				return serverTypeData
-			end
+	* However, I can safely do this in the get function for the server.
+]]
+function LiveServerData.initialWait()
+	if time() < WAIT_TIME then task.wait(WAIT_TIME - time()) end
+end
 
-			if serverType == ServerTypeEnum.routing then
-				return serverTypeData[indexInfo.jobId]
-			elseif serverType == ServerTypeEnum.location then
-				local worldTable = serverTypeData[indexInfo.worldIndex]
+--[[
+	Gets the live server data for the given serverIdentifier.
+	If a serverType is provided instead, it will return the whole data table for that serverType.
+	
+	Consider using the helper functions for convenience.
 
-				if worldTable then
-					return worldTable[indexInfo.locationEnum]
+
+	Will return nil if the specified server is not live.
+	If the server is live, it will return this:
+	```lua
+	serverInfo = {
+		players = {
+			userIds
+		},
+		[any] = any
+	}
+	```
+]]
+function LiveServerData.get(
+	serverIdentifier: ServerIdentifier | UserEnum
+): nil | {} | { players: { [number]: number }, [any]: any }
+	if RunService:IsServer() then LiveServerData.initialWait() end -- See LiveServerData.initialWait comment above
+
+	local data = unwrap(dataValue)
+
+	if not serverIdentifier then return data end
+
+	local serverType = if typeof(serverIdentifier) == "table" then serverIdentifier.serverType else serverIdentifier
+	local serverTypeData = data[serverType]
+
+	if typeof(serverIdentifier) ~= "table" then return serverTypeData end
+
+	if serverType == ServerTypeEnum.routing then
+		return serverTypeData[serverIdentifier.jobId]
+	elseif serverType == ServerTypeEnum.location then
+		local worldTable = serverTypeData[serverIdentifier.worldIndex]
+
+		if worldTable then return worldTable[serverIdentifier.locationEnum] end
+	elseif serverType == ServerTypeEnum.home then
+		return serverTypeData[serverIdentifier.homeOwner]
+	elseif serverType == ServerTypeEnum.party then
+		local partyTable = serverTypeData[serverIdentifier.partyType]
+
+		if partyTable then return partyTable[serverIdentifier.partyIndex] end
+	elseif serverType == ServerTypeEnum.game then
+		local gameTable = serverTypeData[serverIdentifier.gameType]
+
+		if gameTable then
+			return gameTable[serverIdentifier.gameIndex] or gameTable[serverIdentifier.privateServerId]
+		end
+	else
+		error "LiveServerData: Message received with invalid server type"
+	end
+end
+
+--[[
+	Gets the location live server info for the given worldIndex and locationEnum.
+]]
+function LiveServerData.getLocation(worldIndex, locationEnum)
+	return LiveServerData.get {
+		serverType = ServerTypeEnum.location,
+		worldIndex = worldIndex,
+		locationEnum = locationEnum,
+	}
+end
+
+--[[
+	Gets the compiled population info for the given serverIdentifier.
+
+
+	Population info looks like this:
+	```lua
+	{
+		population = number,
+		recommended_emptySlots = number,
+		max_emptySlots = number,
+	}
+	```
+	where `population` is the number of players on the server,
+	`recommended_emptySlots` is the number of empty slots recommended for the server to fill up,
+	and `max_emptySlots` is the maximum number of empty slots the server has left.
+	Recommended empty slots will always either be higher or equal to max empty slots.
+
+	To get the population info for a whole world, pass in a ServerIdentifier that leaves the locationEnum field nil:
+	```lua
+	local worldPopulationInfo = LiveServerData.getPopulationInfo {
+		serverType = ServerTypeEnum.location,
+		worldIndex = 1,
+	}
+	```
+	
+	This will return the population info for the whole world:
+	```lua
+	{
+		population = number,
+		recommended_emptySlots = number,
+		max_emptySlots = number,
+
+		locations = {
+			[LocationEnum] = {
+				population = number,
+				recommended_emptySlots = number,
+				max_emptySlots = number,
+			}
+		}
+	}
+	```
+
+	This is how you could check if a server is full:
+	```lua
+	local populationInfo = LiveServerData.getPopulationInfo(serverIdentifier)
+	
+	if populationInfo.max_emptySlots == 0 then -- Will error if the specified server is not live
+		-- Server is full
+	end
+	```
+
+	**Will return nil** if the specified server is not live.
+]]
+function LiveServerData.getPopulationInfo(serverIdentifier: ServerIdentifier)
+	local serverType = serverIdentifier.serverType
+
+	if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation, serverType) then
+		local locationEnum = serverIdentifier.locationEnum
+
+		if locationEnum == nil then
+			-- This is a request for the whole world's population info
+			local worldIndex = serverIdentifier.worldIndex
+			local worldTable = LiveServerData.get(ServerTypeEnum.location)[worldIndex]
+			local worldPopulationInfo
+
+			if worldTable and Table.hasAnything(worldTable) then -- If the world is live
+				worldPopulationInfo = {
+					population = 0,
+					recommended_emptySlots = 0,
+					max_emptySlots = 0,
+
+					locations = {},
+				}
+
+				local priorityPopulation = 0 -- The population of locations where players can spawn
+
+				for locationEnum, _ in pairs(worldTable) do
+					local populationInfo = LiveServerData.getLocationPopulationInfo(worldIndex, locationEnum)
+
+					if populationInfo then
+						local population = populationInfo.population
+
+						worldPopulationInfo.population += population
+						worldPopulationInfo.locations[locationEnum] = populationInfo
+
+						if table.find(Locations.priority, locationEnum) then
+							priorityPopulation += population
+						end
+					end
 				end
-			elseif serverType == ServerTypeEnum.home then
-				return serverTypeData[indexInfo.homeOwner]
-			elseif serverType == ServerTypeEnum.party then
-				local partyTable = serverTypeData[indexInfo.partyType]
 
-				if partyTable then
-					return partyTable[indexInfo.partyIndex]
-				end
-			elseif serverType == ServerTypeEnum.game then
-				local gameTable = serverTypeData[indexInfo.gameType]
+				worldPopulationInfo.recommended_emptySlots =
+					math.max(Locations.getWorldRecommendedPlayerCount() - priorityPopulation, 0)
+				worldPopulationInfo.max_emptySlots =
+					math.max(Locations.getWorldMaxPlayerCount() - priorityPopulation, 0)
+			end
 
-				if gameTable then
-					return gameTable[indexInfo.gameIndex] or gameTable[indexInfo.privateServerId]
+			return worldPopulationInfo
+		end
+	end
+
+	local serverInfo = LiveServerData.get(serverIdentifier)
+
+	if serverInfo then
+		local serverInfoPlayers = serverInfo.players
+		local population = if type(serverInfoPlayers) == "table" then #serverInfoPlayers else serverInfoPlayers
+
+		local serverFillInfo = {
+			max = 0,
+			recommended = 0,
+		}
+
+		if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation, serverType) then
+			local locationEnum = serverIdentifier.locationEnum
+
+			local locationInfo = Locations.info[locationEnum]
+
+			if locationInfo then
+				local populationInfo = locationInfo.populationInfo
+
+				if populationInfo then
+					serverFillInfo.max = populationInfo.max
+					serverFillInfo.recommended = populationInfo.recommended
+				else
+					serverFillInfo.max = GameSettings.location_maxPlayers
+					serverFillInfo.recommended = GameSettings.location_maxRecommendedPlayers
 				end
 			else
-				error("LiveServerData: Message received with invalid server type")
+				error("Invalid location enum: " .. tostring(locationEnum))
 			end
-		end)
+		elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isParty, serverType) then
+			local partyType = serverIdentifier.partyType
+
+			local partyInfo = Parties[partyType]
+
+			if partyInfo then
+				local populationInfo = partyInfo.populationInfo
+
+				if populationInfo then
+					serverFillInfo.max = populationInfo.max
+					serverFillInfo.recommended = populationInfo.recommended
+				else
+					serverFillInfo.max = GameSettings.party_maxPlayers
+					serverFillInfo.recommended = GameSettings.party_maxRecommendedPlayers
+				end
+			else
+				error("Invalid party enum: " .. tostring(partyType))
+			end
+		elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isGame, serverType) then
+			local gameType = serverIdentifier.gameType
+
+			local gameInfo = Games[gameType]
+
+			if gameInfo then
+				local populationInfo = gameInfo.populationInfo
+
+				if populationInfo then
+					serverFillInfo.max = populationInfo.max
+					serverFillInfo.recommended = populationInfo.recommended
+				else
+					serverFillInfo.max = GameSettings.location_maxPlayers
+					serverFillInfo.recommended = GameSettings.location_maxRecommendedPlayers
+				end
+			else
+				error("Invalid game enum: " .. tostring(gameType))
+			end
+		elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome, serverType) then
+			serverFillInfo.max = GameSettings.home_maxNormalPlayers
+		else
+			error("Invalid server type: " .. tostring(serverType))
+		end
+
+		return {
+			population = population,
+			recommended_emptySlots = math.max(serverFillInfo.recommended - population, 0),
+			max_emptySlots = math.max(serverFillInfo.max - population, 0),
+		}
+	end
 end
 
-function LiveServerData.getLocation(worldIndex, locationEnum): Promise
-	return LiveServerData.get(ServerTypeEnum.location, {
+--[[
+	Gets the population info for the given worldIndex and locationEnum.
+	Wrapper for LiveServerData.getPopulationInfo.
+
+	Can return nil if the location is not live.
+]]
+function LiveServerData.getLocationPopulationInfo(worldIndex, locationEnum)
+	return LiveServerData.getPopulationInfo {
+		serverType = ServerTypeEnum.location,
 		worldIndex = worldIndex,
 		locationEnum = locationEnum,
-	})
+	}
 end
 
-function LiveServerData.getPopulationInfo(serverType, indexInfo): Promise
-	return LiveServerData.get(serverType, indexInfo):andThen(function(serverData)
-		if serverData then
-			local serverInfoPlayers = serverData.players
-			local population = if type(serverInfoPlayers) == "table" then #serverInfoPlayers else serverInfoPlayers
-			local fillInfo = GetServerFillInfo(serverType, indexInfo)
+--[[
+	Gets the population info for the given partyType and partyIndex.
+	Wrapper for LiveServerData.getPopulationInfo for party servers.
 
-			return {
-				population = population,
-				recommended_emptySlots = fillInfo.recommended and math.max(fillInfo.recommended - population, 0),
-				max_emptySlots = math.max(fillInfo.max - population, 0),
-			}
-		end
-	end)
-end
-
-function LiveServerData.getLocationPopulationInfo(worldIndex, locationEnum): Promise
-	return LiveServerData.getPopulationInfo(ServerTypeEnum.location, {
-		worldIndex = worldIndex,
-		locationEnum = locationEnum,
-	})
-end
-
-function LiveServerData.getWorldPopulationInfo(worldIndex): Promise
-	return LiveServerData.get(ServerTypeEnum.location):andThen(function(worlds)
-		local worldTable = worlds[worldIndex]
-
-		if worldTable then
-			local worldPopulationInfo = {
-				population = 0,
-				recommended_emptySlots = 0,
-				max_emptySlots = 0,
-
-				locations = {},
-			}
-
-			local promises = {}
-
-			for locationEnum, _ in pairs(worldTable) do
-				table.insert(
-					promises,
-					LiveServerData.getLocationPopulationInfo(worldIndex, locationEnum):andThen(function(populationInfo)
-						if populationInfo then
-							worldPopulationInfo.population += populationInfo.population
-							worldPopulationInfo.max_emptySlots += populationInfo.max_emptySlots
-							worldPopulationInfo.locations[locationEnum] = populationInfo
-						end
-					end)
-				)
-			end
-
-			worldPopulationInfo.recommended_emptySlots =
-				math.max(GameSettings.world_maxRecommendedPlayers - worldPopulationInfo.population, 0)
-
-			return Promise.all(promises):andThen(function()
-				return worldPopulationInfo
-			end)
-		end
-	end)
-end
-
-function LiveServerData.getWorldPopulation(worldIndex): Promise
-	return LiveServerData.getWorldPopulationInfo(worldIndex):andThen(function(worldPopulationInfo)
-		return if worldPopulationInfo then worldPopulationInfo.population else 0
-	end)
-end
-
-function LiveServerData.getPartyPopulationInfo(partyType, partyIndex): Promise
-	return LiveServerData.getPopulationInfo(ServerTypeEnum.party, {
+	Can return nil if the party is not live.
+]]
+function LiveServerData.getPartyPopulationInfo(partyType, partyIndex)
+	return LiveServerData.getPopulationInfo {
+		serverType = ServerTypeEnum.party,
 		partyType = partyType,
 		partyIndex = partyIndex,
-	})
+	}
 end
 
-function LiveServerData.getHomePopulationInfo(homeOwner): Promise
-	return LiveServerData.getPopulationInfo(ServerTypeEnum.home, {
+--[[
+	Gets the population info for the given home server.
+	Wrapper for LiveServerData.getPopulationInfo for home servers.
+
+	Can return nil if the home is not live.
+]]
+function LiveServerData.getHomePopulationInfo(homeOwner)
+	return LiveServerData.getPopulationInfo {
+		serverType = ServerTypeEnum.home,
 		homeOwner = homeOwner,
-	})
+	}
 end
 
-function LiveServerData.getGamePopulationInfo(gameType, gameIndex: number | string): Promise
-	return LiveServerData.getPopulationInfo(ServerTypeEnum.game, {
+--[[
+	Gets the population info for the given gameType and gameIndex.
+	Wrapper for LiveServerData.getPopulationInfo for game servers.
+
+	Can return nil if the game is not live.
+]]
+function LiveServerData.getGamePopulationInfo(gameType, gameIndex: number | string)
+	return LiveServerData.getPopulationInfo {
+		serverType = ServerTypeEnum.game,
 		gameType = gameType,
 		gameIndex = gameIndex,
-	})
+	}
 end
 
-function LiveServerData.getPartyServers(partyType): Promise
-	return LiveServerData.get(ServerTypeEnum.party):andThen(function(partyData)
-		return partyData[partyType] or {}
-	end)
+--[[
+	Gets the population info for the given worldIndex.
+	Wrapper for LiveServerData.getPopulationInfo.
+
+	Can return nil if the world is not live.
+]]
+function LiveServerData.getWorldPopulationInfo(worldIndex)
+	return LiveServerData.getPopulationInfo {
+		serverType = ServerTypeEnum.location,
+		worldIndex = worldIndex,
+	}
 end
 
-function LiveServerData.getHomeServers(): Promise
+--[[
+	Gets the compiled player count for the given worldIndex.
+]]
+function LiveServerData.getWorldPopulation(worldIndex)
+	local worldPopulationInfo = LiveServerData.getWorldPopulationInfo(worldIndex)
+
+	return if worldPopulationInfo then worldPopulationInfo.population else 0
+end
+
+--[[
+	Gets the parties table for the given party type.
+	Servers not live will not be included in the table.
+
+	Can return nil if no parties of the given type are live.
+]]
+function LiveServerData.getPartyServers(partyType)
+	local partyData = LiveServerData.get(ServerTypeEnum.party)
+
+	if partyData then return partyData[partyType] end
+end
+
+--[[
+	Gets the home servers table.
+
+	```lua
+	{
+		[UserId] = {
+			serverData
+		}
+	}
+	```
+
+	Servers not live will not be included in the table, and if no home servers are live, this will return nil.
+]]
+function LiveServerData.getHomeServers()
 	return LiveServerData.get(ServerTypeEnum.home)
 end
 
-function LiveServerData.getGameServers(gameType): Promise
-	return LiveServerData.get(ServerTypeEnum.game):andThen(function(gameData)
-		return gameData[gameType] or {}
-	end)
+--[[
+	Gets the games table for the given game type.
+	Servers not live will not be included in the table.
+
+	Can return nil if no games of the given type are live.
+]]
+function LiveServerData.getGameServers(gameType)
+	local gameData = LiveServerData.get(ServerTypeEnum.game)
+
+	if gameData then return gameData[gameType] end
 end
 
-function LiveServerData.isWorldFull(worldIndex, numPlayersToAdd): Promise
+--[[
+	Returns a boolean indicating if the specified location is full.
+	Optionally, you can specify the number of players you plan to add to the location.
+
+	Will return false if the location is not live (makes sense, right?)
+]]
+function LiveServerData.isLocationFull(worldIndex, locationEnum, numPlayersToAdd: number)
 	numPlayersToAdd = numPlayersToAdd or 0
 
-	return LiveServerData.getWorldPopulationInfo(worldIndex):andThen(function(worldPopulationInfo)
-		return if worldPopulationInfo and worldPopulationInfo.max_emptySlots - numPlayersToAdd <= 0 then true else false
-	end)
+	local locationPopulationInfo = LiveServerData.getLocationPopulationInfo(worldIndex, locationEnum)
+
+	return if locationPopulationInfo and locationPopulationInfo.max_emptySlots - numPlayersToAdd <= 0
+		then true
+		else false
 end
 
-function LiveServerData.isLocationFull(worldIndex, locationEnum, numPlayersToAdd):Promise
-	numPlayersToAdd = numPlayersToAdd or 0
+--[[
+	Returns a boolean indicating if the specified world is full.
+	Optionally, you can specify the number of players you plan to add to the world.
 
-	return LiveServerData.getLocationPopulationInfo(worldIndex, locationEnum):andThen(function(locationPopulationInfo)
-		return if locationPopulationInfo and locationPopulationInfo.max_emptySlots - numPlayersToAdd <= 0
-			then true
-			else false
-	end)
+	Will return false if the world is not live (makes sense, right?)
+]]
+function LiveServerData.isWorldFull(worldIndex, numPlayersToAdd: number)
+	return LiveServerData.isLocationFull(worldIndex, nil, numPlayersToAdd)
 end
 
-function LiveServerData.isPartyFull(partyType, partyIndex, numPlayersToAdd): Promise
+--[[
+	Returns a boolean indicating if the specified party is full.
+	Optionally, you can specify the number of players you plan to add to the party.
+
+	Will return false if the party is not live (makes sense, right?)
+]]
+function LiveServerData.isPartyFull(partyType, partyIndex, numPlayersToAdd: number)
 	numPlayersToAdd = numPlayersToAdd or 0
 
-	return LiveServerData.getPartyPopulationInfo(partyType, partyIndex):andThen(function(partyPopulationInfo)
-		return if partyPopulationInfo and partyPopulationInfo.max_emptySlots - numPlayersToAdd <= 0 then true else false
-	end)
+	local partyPopulationInfo = LiveServerData.getPartyPopulationInfo(partyType, partyIndex)
+
+	return if partyPopulationInfo and partyPopulationInfo.max_emptySlots - numPlayersToAdd <= 0
+		then true
+		else false
 end
 
-function LiveServerData.isHomeFull(homeOwner, numPlayersToAdd): Promise
+--[[
+	Returns a boolean indicating if the specified home is full.
+	Optionally, you can specify the number of players you plan to add to the home.
+
+	Will return false if the game is not live (makes sense, right?)
+]]
+function LiveServerData.isHomeFull(homeOwner, numPlayersToAdd: number)
 	numPlayersToAdd = numPlayersToAdd or 0
 
-	return LiveServerData.getHomePopulationInfo(homeOwner):andThen(function(homePopulationInfo)
-		return if homePopulationInfo and homePopulationInfo.max_emptySlots - numPlayersToAdd <= 0 then true else false
-	end)
+	local homePopulationInfo = LiveServerData.getHomePopulationInfo(homeOwner)
+
+	return if homePopulationInfo and homePopulationInfo.max_emptySlots - numPlayersToAdd <= 0
+		then true
+		else false
 end
 
 return LiveServerData
