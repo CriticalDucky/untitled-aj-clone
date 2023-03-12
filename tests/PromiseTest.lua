@@ -2081,23 +2081,3 @@ function Promise.onUnhandledRejection(callback)
 		end
 	end
 end
-
--- print(os.clock())
--- Promise.new(function(resolve)
--- 	task.wait(1)
-
--- 	resolve()
--- end):catch(function()
--- 	return 2
--- end):now():catch(function(val)
--- 	print(val)
--- end)
--- print(os.clock())
-
-Promise.reject()
-	:catch(function()
-
-	end)
-	:andThen(function()
-		print"this should not print"
-	end)
