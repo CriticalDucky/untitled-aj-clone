@@ -62,7 +62,7 @@ do
 end
 
 local function homeOwnerPromise()
-	return LocalServerInfo.getServerInfo():andThen(function(serverInfo: ServerIdentifier)
+	return LocalServerInfo.getServerIdentifier():andThen(function(serverInfo: ServerIdentifier)
 		return serverInfo.homeOwner or Promise.reject "Not a home server"
 	end)
 end

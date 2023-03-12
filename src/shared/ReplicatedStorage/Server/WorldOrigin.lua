@@ -40,7 +40,7 @@ function WorldOrigin.get(player: LocalPlayerParam): Promise -- Gets the world or
 		end
 
 		if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
-			return LocalServerInfo.getServerInfo():andThen(function(serverInfo)
+			return LocalServerInfo.getServerIdentifier():andThen(function(serverInfo)
 				return serverInfo.worldIndex
 			end)
 		elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.hasWorldOrigin) then

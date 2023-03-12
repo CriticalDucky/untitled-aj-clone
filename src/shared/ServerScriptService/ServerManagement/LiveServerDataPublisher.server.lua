@@ -24,7 +24,7 @@ Promise.resolve()
                 jobId = game.JobId,
             }
         elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
-            return LocalServerInfo.getServerInfo()
+            return LocalServerInfo.getServerIdentifier()
                 :andThen(function(serverInfo)
                     return {
                         worldIndex = serverInfo.worldIndex,
@@ -32,14 +32,14 @@ Promise.resolve()
                     }
                 end)
         elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome) then
-            return LocalServerInfo.getServerInfo()
+            return LocalServerInfo.getServerIdentifier()
                 :andThen(function(serverInfo)
                     return {
                         homeOwner = serverInfo.homeOwner,
                     }
                 end)
         elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isParty) then
-            return LocalServerInfo.getServerInfo()
+            return LocalServerInfo.getServerIdentifier()
                 :andThen(function(serverInfo)
                     return {
                         partyType = serverInfo.partyType,
@@ -47,7 +47,7 @@ Promise.resolve()
                     }
                 end)
         elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isGame) then
-            return LocalServerInfo.getServerInfo()
+            return LocalServerInfo.getServerIdentifier()
                 :andThen(function(serverInfo)
                     return {
                         gameType = serverInfo.gameType,

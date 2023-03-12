@@ -13,7 +13,7 @@ local ServerGroupEnum = require(enumsFolder.ServerGroup)
 local ServerTypeGroups = require(serverFolder.ServerTypeGroups)
 
 if not ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
-    LocalServerInfo.getServerInfo()
+    LocalServerInfo.getServerIdentifier()
         :catch(function(err)
             warn("Error getting server info: " .. tostring(err))
             Teleport.bootServer("An internal server error occurred. Please try again later. (err code SCF1)")

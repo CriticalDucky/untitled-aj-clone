@@ -79,7 +79,7 @@ function Param.playerParam(
 			return Promise.reject(ResponseType.invalid)
 		end)
 		:andThen(function()
-			return (if useHomeOwner then LocalServerInfo.getServerInfo() else Promise.resolve())
+			return (if useHomeOwner then LocalServerInfo.getServerIdentifier() else Promise.resolve())
 				:andThen(function(serverInfo)
 					if useHomeOwner and not playerParam then
 						if not serverInfo.homeOwner then

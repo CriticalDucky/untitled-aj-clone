@@ -12,7 +12,7 @@ local requestsFolder = replicatedStorageShared:WaitForChild "Requests"
 
 local Component = require(utilityFolder:WaitForChild "GetComponent")
 local Fusion = require(replicatedFirstShared:WaitForChild "Fusion")
-local ClientServerData = require(serverFolder:WaitForChild "ClientServerData")
+local ReplicatedServerData = require(serverFolder:WaitForChild "ReplicatedServerData")
 local LiveServerData = require(serverFolder:WaitForChild "LiveServerData")
 local WorldNames = require(serverFolder:WaitForChild "WorldNames")
 local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
@@ -76,7 +76,8 @@ local component = function(props)
 
         Observer(open):onChange(function()
             if open:get() then
-                layoutOrder:set(worldIndex - LiveServerData.getWorldPopulation(worldIndex):getNow(0) * 10000)
+
+                layoutOrder:set(worldIndex - LiveServerData.getWorldPopulation(worldIndex) * 10000)
             end
         end)
 
@@ -94,13 +95,13 @@ local component = function(props)
 			text = WorldNames.get(worldIndex),
 			size = UDim2.new(1, 0, 0, 50),
 			visible = Computed(function()
-				local currentWorlds = ClientServerData.getWorlds():getNow()
+				local currentWorlds = ReplicatedServerData.getWorlds():getNow()
 
                 if not currentWorlds then
                     return false
                 end
 
-                local population = LiveServerData.getWorldPopulation(worldIndex):getNow()
+                local population = LiveServerData.getWorldPopulation(worldIndex)
 
                 if not population then
 					return false
@@ -111,7 +112,7 @@ local component = function(props)
 					local emptyWorlds = 0
 
 					for index, _ in ipairs(currentWorlds) do
-						if LiveServerData.getWorldPopulation(index):getNow() == 0 then
+						if LiveServerData.getWorldPopulation(index) == 0 then
 							emptyWorlds += 1
 						end
 
@@ -129,7 +130,7 @@ local component = function(props)
 				local isDifferentWorld
 				do
 					if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
-						local serverInfo = ClientServerData.getServerInfo():getNow()
+						local serverInfo = ReplicatedServerData.getServerIdentifier():getNow()
 
                         if serverInfo then
                             isDifferentWorld = serverInfo.worldIndex ~= worldIndex
@@ -164,7 +165,7 @@ local component = function(props)
 					BackgroundTransparency = 1,
 
 					Text = Computed(function()
-						return LiveServerData.getWorldPopulation(worldIndex):getNow() or 0
+						return LiveServerData.getWorldPopulation(worldIndex)
 					end),
 					TextColor3 = Computed(function()
 						return if errored:get() then Color3.fromRGB(255, 0, 0) else Color3.fromRGB(0, 0, 0)
@@ -178,7 +179,7 @@ local component = function(props)
 	end
 
 	local worldButtons = Computed(function()
-		local currentWorlds = ClientServerData.getWorlds():getNow()
+		local currentWorlds = ReplicatedServerData.getWorlds():getNow()
 
 		local worldButtons = {}
 

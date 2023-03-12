@@ -16,7 +16,7 @@ local ServerGroupEnum = require(enumsFolder.ServerGroup)
 
 local ReplicaCollection = require(replicationFolder:WaitForChild "ReplicaCollection")
 local ReplicaRequest = require(requestsFolder:WaitForChild "ReplicaRequest")
-local ClientServerData = require(serverFolder:WaitForChild "ClientServerData")
+local ReplicatedServerData = require(serverFolder:WaitForChild "ReplicatedServerData")
 local LiveServerData = require(serverFolder:WaitForChild "LiveServerData")
 local ClientPlayerSettings = require(dataFolder:WaitForChild("Settings"):WaitForChild "ClientPlayerSettings")
 local Table = require(utilityFolder:WaitForChild "Table")
@@ -79,7 +79,7 @@ function Authorize.toLocation(locationEnum: number)
 	return Promise.resolve()
 		:andThen(function()
 			if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
-				return ClientServerData.getServerInfo()
+				return ReplicatedServerData.getServerIdentifier()
 					:catch(function(err)
 						warn("ClientTeleport.toLocation() failed with error 1: " .. tostring(err))
 						return Promise.reject(ResponseType.error)
@@ -102,7 +102,7 @@ function Authorize.toLocation(locationEnum: number)
 			end
 		end)
 		:andThen(function(localWorldIndex)
-			return if ClientServerData.worldHasLocation(localWorldIndex, locationEnum)
+			return if ReplicatedServerData.worldHasLocation(localWorldIndex, locationEnum)
 				then localWorldIndex
 				else Promise.reject(ResponseType.invalid)
 		end)
@@ -143,7 +143,7 @@ function Authorize.toFriend(playerId: number)
 
 				if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation, serverType) then
 					if
-						not ClientServerData.worldHasLocation(friendLocation.worldIndex, friendLocation.locationEnum)
+						not ReplicatedServerData.worldHasLocation(friendLocation.worldIndex, friendLocation.locationEnum)
 					then
 						return Promise.reject(ResponseType.invalid)
 					end
@@ -202,7 +202,7 @@ function Authorize.toHome(homeOwnerUserId: number)
 	return Promise.resolve()
 		:andThen(function()
 			if ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome) then
-				return ClientServerData.getServerInfo():andThen(function(serverInfo: ServerIdentifier)
+				return ReplicatedServerData.getServerIdentifier():andThen(function(serverInfo: ServerIdentifier)
 					if serverInfo.homeOwner == homeOwnerUserId then
 						return Promise.reject(ResponseType.alreadyInPlace)
 					end

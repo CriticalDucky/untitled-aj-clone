@@ -7,17 +7,12 @@ local replicatedFirstShared = ReplicatedFirst.Shared
 local replicatedStorageShared = ReplicatedStorage.Shared
 local enumsFolder = replicatedStorageShared.Enums
 local serverFolder = replicatedStorageShared.Server
-local utilityFolder = replicatedFirstShared.Utility
 
 local ServerTypeEnum = require(enumsFolder:WaitForChild("ServerType"))
 local Locations = require(serverFolder:WaitForChild("Locations"))
 local Parties = require(serverFolder:WaitForChild("Parties"))
 local Games = require(serverFolder:WaitForChild("Games"))
 local GameSettings = require(replicatedFirstShared:WaitForChild("Settings"):WaitForChild("GameSettings"))
-local Promise = require(utilityFolder:WaitForChild("Promise"))
-local Types = require(utilityFolder:WaitForChild("Types"))
-
-type Promise = Types.Promise
 
 local isServer = RunService:IsServer()
 local isClient = RunService:IsClient()
@@ -54,8 +49,27 @@ local LocalServerInfo = {}
 
 LocalServerInfo.serverType = serverType
 
--- Gets the server info of the game. Can be called on either the client or the server.
-function LocalServerInfo.getServerInfo(): Promise
+--[[
+	Returns the serverIdentifier of the server this script is running on.
+    Can either be called on the server or the client.
+
+	Structure:
+
+	```lua
+	export type ServerIdentifier = {
+		serverType: UserEnum, -- The type of server (location, party, game, etc.)
+		jobId: string?, -- The jobId of the server (routing servers)
+		worldIndex: number?, -- The index of the world the server is in (location servers)
+		locationEnum: UserEnum?, -- The location of the server (location servers)
+		homeOwner: number?, -- The userId of the player who owns the home (home servers)
+		partyType: UserEnum?, -- The type of party the server is for (party servers)
+		partyIndex: number?, -- The index of the party the server is for (party servers)
+		gameType: UserEnum?, -- The type of game the server is for (game servers)
+		gameIndex: number?, -- The index of the game the server is for (game servers)
+	}
+	```
+]]
+function LocalServerInfo.getServerIdentifier()
     if isServer then
         local ServerStorage = game:GetService("ServerStorage")
 
@@ -63,11 +77,11 @@ function LocalServerInfo.getServerInfo(): Promise
 
         local ServerData = require(serverStorageShared.ServerManagement.ServerData)
 
-        return ServerData.getServerInfo()
+        return ServerData.getServerIdentifier()
     elseif isClient then
-        local ClientServerData = require(serverFolder:WaitForChild("ClientServerData"))
+        local ReplicatedServerData = require(serverFolder:WaitForChild("ReplicatedServerData"))
 
-        return ClientServerData.getServerInfo()
+        return ReplicatedServerData.getServerIdentifier()
     end
 end
 

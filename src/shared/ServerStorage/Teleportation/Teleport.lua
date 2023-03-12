@@ -57,7 +57,7 @@ function Teleport.getOptions(player: Player, teleportData)
 	return WorldOrigin.get(player)
 		:andThen(function(worldIndex)
 			if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
-				return LocalServerInfo.getServerInfo():andThen(function(serverInfo)
+				return LocalServerInfo.getServerIdentifier():andThen(function(serverInfo)
 					return worldIndex, serverInfo.locationEnum
 				end)
 			else

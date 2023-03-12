@@ -63,7 +63,7 @@ local component = function(props)
 
 			[OnEvent "MouseButton1Click"] = function()
 				if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
-					local serverInfo = LocalServerInfo.getServerInfo():getNow()
+					local serverInfo = LocalServerInfo.getServerIdentifier():getNow()
 
 					if not serverInfo then
 						return
