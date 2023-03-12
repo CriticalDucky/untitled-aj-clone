@@ -16,8 +16,6 @@ local Types = require(utilityFolder:WaitForChild "Types")
 
 type UserEnum = Types.UserEnum
 
-local PlaceItemRequest = ReplicaCollection.get "PlaceItemRequest"
-
 local PlaceItem = {}
 
 --[[
@@ -28,6 +26,8 @@ function PlaceItem._request(placeItemRequestType: UserEnum, info: { itemId: stri
 		Table.hasValue(PlaceItemRequestType, placeItemRequestType),
 		"PlaceItem.request() called with invalid placeItemRequestType: " .. tostring(placeItemRequestType)
 	)
+
+	local PlaceItemRequest = ReplicaCollection.get "PlaceItemRequest"
 
 	return PlaceItemRequest:andThen(function(PlaceItemRequest)
 		return ReplicaRequest.new(PlaceItemRequest, placeItemRequestType, info)
