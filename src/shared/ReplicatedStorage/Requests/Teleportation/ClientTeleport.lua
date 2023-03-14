@@ -1,3 +1,8 @@
+--[[
+	Provides client access to teleportation requests.
+]]
+
+--#region Imports
 local Players = game:GetService "Players"
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
@@ -21,28 +26,29 @@ local LiveServerData = require(serverFolder:WaitForChild "LiveServerData")
 local ClientPlayerSettings = require(dataFolder:WaitForChild("Settings"):WaitForChild "ClientPlayerSettings")
 local Table = require(utilityFolder:WaitForChild "Table")
 local TeleportRequestType = require(enumsFolder:WaitForChild "TeleportRequestType")
-local ResponseType = require(enumsFolder:WaitForChild "ResponseType")
+local TeleportResponseType = require(enumsFolder:WaitForChild "TeleportResponseType")
 local Locations = require(serverFolder:WaitForChild "Locations")
 local FriendLocations = require(serverFolder:WaitForChild "FriendLocations")
 local WorldOrigin = require(serverFolder:WaitForChild "WorldOrigin")
 local ActiveParties = require(serverFolder:WaitForChild "ActiveParties")
 local Promise = require(utilityFolder:WaitForChild "Promise")
 local Types = require(utilityFolder:WaitForChild "Types")
+local LocalServerInfo = require(serverFolder:WaitForChild "LocalServerInfo")
 
 type ServerIdentifier = Types.ServerIdentifier
+type UserEnum = Types.UserEnum
+--#endregion
 
 local player = Players.LocalPlayer
-
-local TeleportRequest = ReplicaCollection.get "TeleportRequest"
 
 local ClientTeleport = {}
 local Authorize = {}
 
 --[[
 	The general function for making a teleport request.
-	Wrapped by other functions in this module, this is not for external use.
+	Wrapped by other functions in this module.
 ]]
-function ClientTeleport._request(teleportRequestType, ...)
+local function requestTeleport(teleportRequestType, ...)
 	assert(
 		Table.hasValue(TeleportRequestType, teleportRequestType),
 		"Teleport.request() called with invalid teleportRequestType: " .. tostring(teleportRequestType)
@@ -50,221 +56,267 @@ function ClientTeleport._request(teleportRequestType, ...)
 
 	local vararg = { ... }
 
-	return TeleportRequest:andThen(function(replica)
-		return ReplicaRequest.new(replica, teleportRequestType, unpack(vararg)):andThen(function(response)
-			Table.print(response, "ClientTeleport._request() response:", true)
-			return unpack(response)
-		end)
-	end)
+	local TeleportRequest = ReplicaCollection.get "TeleportRequest"
+
+	local response = ReplicaRequest.new(TeleportRequest, teleportRequestType, unpack(vararg))
+
+	Table.print(response, "request() response:", true)
+	return unpack(response)
 end
 
 --[[
 	Authorize a teleport to a world.
+
+	Returns a boolean indicating whether the teleport is allowed, and a TeleportResponseType if not.
+
+	```lua
+	local isAllowed, responseType = Authorize.toWorld(worldIndex)
+	```
+
+	Authorization allows for knowing whether a teleport is allowed without actually performing the teleport.
 ]]
 function Authorize.toWorld(worldIndex: number)
-	return LiveServerData.isWorldFull(worldIndex, 1)
-		:andThen(function(isWorldFull: boolean)
-			return if isWorldFull then Promise.reject(ResponseType.full) else Promise.resolve()
-		end)
-		:catch(function(err)
-			warn("ClientTeleport.toWorld() failed with error: " .. tostring(err))
-			return Promise.reject(ResponseType.error)
-		end)
+	local isWorldFull = LiveServerData.isWorldFull(worldIndex, 1)
+
+	if isWorldFull then
+		return false, TeleportResponseType.full
+	else
+		return true
+	end
 end
 
 --[[
 	Authorize a teleport to a location.
+
+	Returns a boolean indicating whether the teleport is allowed, and a TeleportResponseType if not.
+
+	```lua
+	local isAllowed, teleportResponseType = Authorize.toLocation(locationEnum)
+	```
+
+	Authorization allows for knowing whether a teleport is allowed without actually performing the teleport.
 ]]
-function Authorize.toLocation(locationEnum: number)
-	return Promise.resolve()
-		:andThen(function()
-			if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
-				return ReplicatedServerData.getServerIdentifier()
-					:catch(function(err)
-						warn("ClientTeleport.toLocation() failed with error 1: " .. tostring(err))
-						return Promise.reject(ResponseType.error)
-					end)
-					:andThen(function(serverInfo)
-						if locationEnum == serverInfo.locationEnum then
-							return Promise.reject(ResponseType.alreadyInPlace)
-						end
+function Authorize.toLocation(locationEnum: UserEnum)
+	local localWorldIndex -- The world index of the server we're on (or the world origin if we're in a game, party, or home)
 
-						return serverInfo.worldIndex
-					end)
-			elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.hasWorldOrigin) then
-				return WorldOrigin.get(player):catch(function(err)
-					warn("ClientTeleport.toLocation() failed with error 2: " .. tostring(err))
-					return Promise.reject(ResponseType.error)
-				end)
-			else
-				warn "ClientTeleport.toLocation() called on server without world info"
-				return Promise.reject(ResponseType.error)
-			end
-		end)
-		:andThen(function(localWorldIndex)
-			return if ReplicatedServerData.worldHasLocation(localWorldIndex, locationEnum)
-				then localWorldIndex
-				else Promise.reject(ResponseType.invalid)
-		end)
-		:andThen(function(localWorldIndex)
-			return LiveServerData.isLocationFull(localWorldIndex, locationEnum, 1)
-				:catch(function(err)
-					warn("ClientTeleport.toLocation() failed with error 3: " .. tostring(err))
-					return Promise.reject(ResponseType.error)
-				end)
-				:andThen(function(isLocationFull: boolean)
-					return (if isLocationFull then Promise.reject(ResponseType.full) else Promise.resolve()):catch(
-						function()
-							return ClientPlayerSettings.promiseSetting("findOpenWorld"):andThen(function(setting)
-								return if setting then Promise.resolve() else Promise.reject(ResponseType.full)
-							end)
-						end
-					)
-				end)
-		end)
-		:catch(function(response)
-			if not Table.hasValue(ResponseType, response) then
-				warn("ClientTeleport.toLocation() failed with unknown error: " .. tostring(response))
-				return Promise.reject(ResponseType.error)
-			end
+	if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
+		local serverIdentifier = LocalServerInfo.getServerIdentifier()
 
-			return Promise.reject(response)
-		end)
+		if locationEnum == serverIdentifier.locationEnum then return false, TeleportResponseType.alreadyInPlace end
+
+		localWorldIndex = serverIdentifier.worldIndex
+	elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.hasWorldOrigin) then
+		localWorldIndex = WorldOrigin.get(player)
+	else
+		error "ClientTeleport.toLocation() called on server without world info"
+	end
+
+	if not ReplicatedServerData.worldHasLocation(localWorldIndex, locationEnum) then
+		return false, TeleportResponseType.invalid -- The replicated server data might not have replicated yet, so we can't be sure
+	end
+
+	if LiveServerData.isLocationFull(localWorldIndex, locationEnum, 1) then
+		local setting = ClientPlayerSettings.getSetting("findOpenWorld", nil, true) -- nil means use local player, true means wait for setting to load
+
+		if setting then
+			return true
+		else
+			return false, TeleportResponseType.full
+		end
+	end
+
+	return true
 end
 
+--[[
+	Authorize a teleport to a friend.
+
+	Returns a boolean indicating whether the teleport is allowed, and a TeleportResponseType if not.
+
+	```lua
+	local isAllowed, teleportResponseType = Authorize.toFriend(playerId)
+	```
+
+	Authorization allows for knowing whether a teleport is allowed without actually performing the teleport.
+]]
 function Authorize.toFriend(playerId: number)
-	return Promise.resolve()
-		:andThen(function()
-			local friendLocations = FriendLocations:get()
-			local friendLocation = friendLocations[playerId]
+	local friendLocation = FriendLocations.get(true)[playerId]
 
-			if friendLocation then
-				local serverType = friendLocation.serverType
+	if friendLocation then
+		local serverType = friendLocation.serverType
 
-				if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation, serverType) then
-					if
-						not ReplicatedServerData.worldHasLocation(friendLocation.worldIndex, friendLocation.locationEnum)
-					then
-						return Promise.reject(ResponseType.invalid)
-					end
-
-					if
-						LiveServerData.isLocationFull(friendLocation.worldIndex, friendLocation.locationEnum, 1)
-							:expect()
-					then
-						return Promise.reject(ResponseType.full)
-					end
-
-					if Locations.info[friendLocation.locationEnum].cantJoinPlayer then
-						return Promise.reject(ResponseType.invalid)
-					end
-				elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isParty, serverType) then
-					if LiveServerData.isPartyFull(friendLocation.partyType, friendLocation.partyIndex, 1):expect() then
-						return Promise.reject(ResponseType.full)
-					end
-				else
-					return Promise.reject(ResponseType.invalid)
-				end
-			else
-				return Promise.reject(ResponseType.invalid)
-			end
-		end)
-		:catch(function(response)
-			if not Table.hasValue(ResponseType, response) then
-				warn("ClientTeleport.toFriend() failed with unknown error: " .. tostring(response))
-				return Promise.reject(ResponseType.error)
+		if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation, serverType) then
+			if not ReplicatedServerData.worldHasLocation(friendLocation.worldIndex, friendLocation.locationEnum) then
+				return false, TeleportResponseType.invalid
 			end
 
-			return Promise.reject(response)
-		end)
+			if LiveServerData.isLocationFull(friendLocation.worldIndex, friendLocation.locationEnum, 1) then
+				return false, TeleportResponseType.full
+			end
+
+			if Locations.info[friendLocation.locationEnum].cantJoinPlayer then
+				return false, TeleportResponseType.invalid
+			end
+		elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isParty, serverType) then
+			if LiveServerData.isPartyFull(friendLocation.partyType, friendLocation.partyIndex, 1) then
+				return false, TeleportResponseType.full
+			end
+		else
+			return false, TeleportResponseType.invalid
+		end
+	else
+		return false, TeleportResponseType.invalid
+	end
 end
 
-function Authorize.toParty(partyType: number)
-	return Promise.resolve()
-		:andThen(function()
-			local activeParty = ActiveParties.getActiveParty()
+--[[
+	Authorize a teleport to a party.
 
-			if activeParty.partyType ~= partyType then
-				return Promise.reject(ResponseType.disabled)
-			end
-		end)
-		:catch(function(response)
-			if not Table.hasValue(ResponseType, response) then
-				warn("ClientTeleport.toParty() failed with unknown error: " .. tostring(response))
-				return Promise.reject(ResponseType.error)
-			end
+	Returns a boolean indicating whether the teleport is allowed, and a TeleportResponseType if not.
 
-			return Promise.reject(response)
-		end)
+	```lua
+	local isAllowed, teleportResponseType = Authorize.toParty(partyType)
+	```
+
+	Authorization allows for knowing whether a teleport is allowed without actually performing the teleport.
+]]
+function Authorize.toParty(partyType: UserEnum)
+	assert(partyType, "ClientTeleport.toParty() called with nil partyType")
+
+	local activeParty = ActiveParties.getActiveParty()
+
+	if activeParty.partyType ~= partyType then return false, TeleportResponseType.disabled end
 end
 
+--[[
+	Authorize a teleport to a home.
+
+	Returns a boolean indicating whether the teleport is allowed, and a TeleportResponseType if not.
+
+	```lua
+	local isAllowed, teleportResponseType = Authorize.toHome(homeOwnerUserId)
+	```
+
+	Authorization allows for knowing whether a teleport is allowed without actually performing the teleport.
+]]
 function Authorize.toHome(homeOwnerUserId: number)
-	return Promise.resolve()
-		:andThen(function()
-			if ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome) then
-				return ReplicatedServerData.getServerIdentifier():andThen(function(serverInfo: ServerIdentifier)
-					if serverInfo.homeOwner == homeOwnerUserId then
-						return Promise.reject(ResponseType.alreadyInPlace)
-					end
-				end)
-			end
-		end)
-		:andThen(function()
-			if homeOwnerUserId == player.UserId then
-				return Promise.resolve()
-			end
+	if ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome) then
+		local serverIdentifier = ReplicatedServerData.getServerIdentifier()
 
-			return LiveServerData.isHomeFull(homeOwnerUserId, 1):andThen(function(isFull: boolean)
-				if isFull then
-					return Promise.reject(ResponseType.full)
-				end
-			end)
-		end)
-		:andThen(function()
-			-- TODO: Check if home is private
-		end)
-		:catch(function(response)
-			if not Table.hasValue(ResponseType, response) then
-				warn("ClientTeleport.toHome() failed with unknown error: " .. tostring(response))
-				return Promise.reject(ResponseType.error)
-			end
+		if serverIdentifier.homeOwner == homeOwnerUserId then return false, TeleportResponseType.alreadyInPlace end
+	end
 
-			return Promise.reject(response)
-		end)
+	if homeOwnerUserId == player.UserId then return true end -- If we're trying to teleport to our own home, we don't need to check if it's full
+
+	if LiveServerData.isHomeFull(homeOwnerUserId, 1) then return false, TeleportResponseType.full end
+
+	-- TODO: Check if home is private
 end
 
-function ClientTeleport.toWorld(worldIndex)
-	return Authorize.toWorld(worldIndex):andThen(function()
-		return ClientTeleport._request(TeleportRequestType.toWorld, worldIndex)
-	end)
+--[[
+	Initializes a teleport request to the given world.
+	Returns the success of the request along with a TeleportResponseType if not.
+
+	```lua
+	local success, teleportResponseType = ClientTeleport.toWorld(worldIndex)
+	```
+]]
+function ClientTeleport.toWorld(worldIndex: number)
+	local isAllowed, teleportResponseType = Authorize.toWorld(worldIndex)
+
+	if isAllowed then
+		return requestTeleport(TeleportRequestType.toWorld, worldIndex)
+	else
+		return false, teleportResponseType
+	end
 end
 
-function ClientTeleport.toLocation(locationEnum: number)
-	return Authorize.toLocation(locationEnum):andThen(function()
-		return ClientTeleport._request(TeleportRequestType.toLocation, locationEnum)
-	end)
+--[[
+	Initializes a teleport request to the given location.
+	Returns the success of the request along with a TeleportResponseType if not.
+
+	```lua
+	local success, teleportResponseType = ClientTeleport.toLocation(locationEnum)
+	```
+]]
+function ClientTeleport.toLocation(locationEnum: UserEnum)
+	local isAllowed, teleportResponseType = Authorize.toLocation(locationEnum)
+
+	if isAllowed then
+		return requestTeleport(TeleportRequestType.toLocation, locationEnum)
+	else
+		return false, teleportResponseType
+	end
 end
 
-function ClientTeleport.toFriend(playerId)
-	return Authorize.toFriend(playerId):andThen(function()
-		return ClientTeleport._request(TeleportRequestType.toFriend, playerId)
-	end)
+--[[
+	Initializes a teleport request to the given friend.
+	Returns the success of the request along with a TeleportResponseType if not.
+
+	```lua
+	local success, teleportResponseType = ClientTeleport.toFriend(playerId)
+	```
+]]
+function ClientTeleport.toFriend(playerId: number)
+	local isAllowed, teleportResponseType = Authorize.toFriend(playerId)
+
+	if isAllowed then
+		return requestTeleport(TeleportRequestType.toFriend, playerId)
+	else
+		return false, teleportResponseType
+	end
 end
 
-function ClientTeleport.toParty(partyType: number)
-	return Authorize.toParty(partyType):andThen(function()
-		return ClientTeleport._request(TeleportRequestType.toParty, partyType)
-	end)
+--[[
+	Initializes a teleport request to the given party.
+	Returns the success of the request along with a TeleportResponseType if not.
+
+	```lua
+	local success, teleportResponseType = ClientTeleport.toParty(partyType)
+	```
+]]
+function ClientTeleport.toParty(partyType: UserEnum)
+	local isAllowed, teleportResponseType = Authorize.toParty(partyType)
+
+	if isAllowed then
+		return requestTeleport(TeleportRequestType.toParty, partyType)
+	else
+		return false, teleportResponseType
+	end
 end
 
+--[[
+	Initializes a teleport request to the given home.
+	Returns the success of the request along with a TeleportResponseType if not.
+
+	NOTE: Currently only supports teleporting to your own home.
+
+	```lua
+	local success, teleportResponseType = ClientTeleport.toHome(homeOwnerUserId)
+	```
+]]
 function ClientTeleport.toHome(homeOwnerUserId: number)
-	return Authorize.toHome(homeOwnerUserId):andThen(function()
-		return ClientTeleport._request(TeleportRequestType.toHome, homeOwnerUserId)
-	end)
+	local isAllowed, teleportResponseType = Authorize.toHome(homeOwnerUserId)
+
+	if isAllowed then
+		return requestTeleport(TeleportRequestType.toHome, homeOwnerUserId)
+	else
+		return false, teleportResponseType
+	end
 end
 
-function ClientTeleport.rejoin() -- No reason provided for security reasons
-	return ClientTeleport._request(TeleportRequestType.rejoin)
+--[[
+	Initializes a client-requested rejoin.
+	Guaranteed to succeed, *do not expect a response.*
+
+	No rejoin reason providable due to security reasons
+
+	```lua
+	local success, teleportResponseType = ClientTeleport.rejoin()
+	```
+]]
+function ClientTeleport.rejoin()
+	return requestTeleport(TeleportRequestType.rejoin)
 end
 
 return ClientTeleport
