@@ -1,3 +1,9 @@
+--[[
+	This script is responsible for calculating the active parties for any given session.
+	It's very messy and looking back I don't understand half the maths.
+	Just take for granted it works, not bothering cleaning it up
+]]
+
 local NO_REPEAT_ZONE = 1 / 2 -- of current active parties
 local PARTY_PADDING_MINUTES = 5 -- minutes
 
