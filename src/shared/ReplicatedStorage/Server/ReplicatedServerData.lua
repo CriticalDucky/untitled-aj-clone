@@ -238,7 +238,7 @@ end
 	}
 	```
 ]]
-function ReplicatedServerData.getServerIdentifier()
+function ReplicatedServerData.getServerIdentifier(): ServerIdentifier
 	return serverIdentifierPromise:expect()
 end
 
