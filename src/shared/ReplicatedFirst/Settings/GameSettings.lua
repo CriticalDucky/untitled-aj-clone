@@ -44,9 +44,9 @@ local gameSettings = { -- Constants for the game
 		},
 
 		playerSettings = {
-			findOpenWorld = true,
-			homeLock = HomeLockType.unlocked,
-			selectedHome = nil,
+			findOpenWorld = true, -- Whether or not the player wants to teleport to an open world if the desired location is full
+			homeLock = HomeLockType.unlocked, -- Who can access the player's home
+			selectedHome = nil, -- The home the player has selected
 		},
 	},
 	tempDataTemplate = {
