@@ -206,7 +206,7 @@ local function getKeyData(key: string)
 			task.wait()
 		until not isRetrieving[key]
 
-		return cachedData[key]
+		return true, cachedData[key]
 	end
 
 	lastDatastoreRequest[key] = time() -- Update the last time the datastore was requested.
@@ -346,7 +346,7 @@ function ServerData.getLocation(worldIndex: number, locationEnum: UserEnum)
 end
 
 -- Returns the retriaval success and cachedData. This can be used to make sure all data is retrieved before using it.
-function ServerData.getAll()
+function ServerData.getAll(): (boolean, table)
 	return Promise.all({
 		Promise.try(ServerData.getWorlds),
 		Promise.try(ServerData.getParties),
@@ -647,7 +647,7 @@ end
 
 	Returns a success value and a result that is either the world index (if it exists) or an error message.
 ]]
-function ServerData.findAvailableWorld(forcedLocation: { UserEnum }, worldsExcluded: { number }): Promise
+function ServerData.findAvailableWorld(forcedLocation: { UserEnum }, worldsExcluded: { number })
 	local success, worlds = ServerData.getWorlds()
 
 	if not success then
