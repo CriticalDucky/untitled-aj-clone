@@ -77,7 +77,7 @@ function LocalServerInfo.getServerIdentifier()
 
         local ServerData = require(serverStorageShared.ServerManagement.ServerData)
 
-        return ServerData.getServerIdentifier()
+        return select(2, ServerData.getServerIdentifier()) -- We can neglect the success value because ServerIdentifierCheck.server.lua will cover this.
     elseif isClient then
         local ReplicatedServerData = require(serverFolder:WaitForChild("ReplicatedServerData"))
 
