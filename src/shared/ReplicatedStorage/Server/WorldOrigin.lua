@@ -1,3 +1,17 @@
+--[[
+	Utility for getting the world origin of a player.
+
+	A world origin is the world index assigned to a player in case they are in a non-location place.
+	For example, if a player joins a party while in a location under world index 1, their world origin in the party will be 1.
+	This makes it easy to teleport them back to the location they were in before they joined the party.
+
+	```lua
+	local worldOrigin: number = WorldOrigin.get(player)
+	```
+]]
+
+--#region Imports
+local Players = game:GetService "Players"
 local RunService = game:GetService "RunService"
 local TeleportService = game:GetService "TeleportService"
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
@@ -12,57 +26,74 @@ local serverFolder = replicatedStorageShared:WaitForChild "Server"
 local ServerTypeGroups = require(serverFolder:WaitForChild "ServerTypeGroups")
 local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
 local LocalServerInfo = require(serverFolder:WaitForChild "LocalServerInfo")
-local Promise = require(utilityFolder:WaitForChild "Promise")
-local Param = require(utilityFolder:WaitForChild "Param")
-local Types = require(utilityFolder:WaitForChild "Types")
-local PlayerFormat = require(enumsFolder:WaitForChild "PlayerFormat")
-local ResponseType = require(enumsFolder:WaitForChild "ResponseType")
+--#endregion Imports
 
-type LocalPlayerParam = Types.LocalPlayerParam
-type Promise = Types.Promise
-
-local isClient = RunService:IsClient()
-local isServer = RunService:IsServer()
 
 local WorldOrigin = {}
 
-function WorldOrigin.get(player: LocalPlayerParam): Promise -- Gets the world origin of a player. Clients cannot get the world origin of other players. Can be nil in rare cases.
-	return Param.localPlayerParam(player, PlayerFormat.instance):andThen(function(player: Player)
-		local ServerData
-		do
-			if isServer then
-				local ServerStorage = game:GetService "ServerStorage"
+--[[
+	Gets the world origin of a player.
 
-				local serverStorageShared = ServerStorage:WaitForChild "Shared"
+	A world origin is the world index assigned to a player in a non-location place.
+	For example, if a player joins a party while in a location under world index 1, their world origin in the party will be 1.
+	This makes it easy to teleport them back to the location they were in before they joined the party.
 
-				ServerData = require(serverStorageShared.ServerManagement.ServerData)
+	If this function is called on the client, it will only return the world origin of the local player, regardless of the player parameter.
+
+	```lua
+	local worldOrigin: number = WorldOrigin.get(player)
+	```
+]]
+function WorldOrigin.get(player: number | Player | nil): number
+	local worldOrigin
+
+	local ServerData
+	do
+		if RunService:IsServer() then
+			local ServerStorage = game:GetService "ServerStorage"
+
+			local serverStorageShared = ServerStorage:WaitForChild "Shared"
+
+			ServerData = require(serverStorageShared.ServerManagement.ServerData)
+		end
+	end
+
+	if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
+		worldOrigin = LocalServerInfo.getServerIdentifier().worldIndex
+	elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.hasWorldOrigin) then
+		local teleportData
+
+		if RunService:IsClient() then
+			teleportData = TeleportService:GetLocalPlayerTeleportData()
+		elseif RunService:IsServer() then -- Player will never be nil
+			assert(player ~= nil, "Player cannot be nil on the server.")
+
+			player = if typeof(player) == "number" then Players:GetPlayerByUserId(player) else player
+
+			assert(player ~= nil, "Nonexistent player provided to WorldOrigin.get().")
+
+			teleportData = player:GetJoinData().TeleportData
+
+			if teleportData == nil or teleportData.worldOrigin == nil then
+				local success, worldIndex = ServerData.findAvailableWorld()
+
+				if success then worldOrigin = worldIndex end
 			end
 		end
 
-		if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
-			return LocalServerInfo.getServerIdentifier():andThen(function(serverInfo)
-				return serverInfo.worldIndex
-			end)
-		elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.hasWorldOrigin) then
-			local teleportData
+		worldOrigin = if teleportData then teleportData.worldOrigin else worldOrigin
+	elseif RunService:IsServer() then
+		local success, worldIndex = ServerData.findAvailableWorld()
 
-			if isClient then
-				teleportData = TeleportService:GetLocalPlayerTeleportData()
-			elseif isServer then
-				teleportData = player:GetJoinData().TeleportData
+		if success then worldOrigin = worldIndex end
+	end
 
-				if teleportData == nil or teleportData.worldOrigin == nil then
-					return ServerData.findAvailableWorld()
-				end
-			end
+	if not worldOrigin then -- Hackily guess a random world index (This is a stopgap that will rarely be used)
+		warn "WorldOrigin.get() could not find a world origin. Guessing a random world index."
+		worldOrigin = math.random(1, 10)
+	end
 
-			return Promise.resolve(teleportData and teleportData.worldOrigin)
-		elseif isServer then
-			return ServerData.findAvailableWorld()
-		end
-
-		return Promise.reject(ResponseType.invalid)
-	end)
+	return worldOrigin
 end
 
 return WorldOrigin
