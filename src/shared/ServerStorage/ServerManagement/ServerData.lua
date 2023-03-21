@@ -113,7 +113,6 @@ local Table = require(replicatedFirstUtility.Table)
 local ReplicaService = require(dataFolder.ReplicaService)
 local Promise = require(replicatedFirstUtility.Promise)
 local Types = require(replicatedFirstUtility.Types)
-local ResponseType = require(enumsFolder.ResponseType)
 
 type Promise = Types.Promise
 type PlayerData = Types.PlayerData
