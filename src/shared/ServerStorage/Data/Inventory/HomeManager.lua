@@ -1,5 +1,4 @@
 local LOADED_ITEM_ATTRIBUTE = "ItemId" -- This is the attribute that is set on items that are loaded into the game
-local UPDATE_INTERVAL = 60 -- The time between each home update for home servers
 
 local Players = game:GetService "Players"
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
@@ -35,8 +34,6 @@ local ServerData = require(serverStorageShared.ServerManagement.ServerData)
 local Promise = require(utilityFolder.Promise)
 local Types = require(utilityFolder.Types)
 local LocalServerInfo = require(serverFolder.LocalServerInfo)
-local PlayerFormat = require(enums.PlayerFormat)
-local Param = require(utilityFolder.Param)
 
 type HomeServerInfo = Types.HomeServerInfo
 type PlayerParam = Types.PlayerParam
@@ -49,122 +46,147 @@ type PlayerData = Types.PlayerData
 type ServerIdentifier = Types.ServerIdentifier
 
 local isHomeServer = ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome)
-local isRoutingServer = ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting)
 local initalLoad = false
 
 local placedItemsFolder
-do
-	if isHomeServer then
-		placedItemsFolder = workspace:FindFirstChild "PlacedItems" or Instance.new "Folder"
-		placedItemsFolder.Name = "PlacedItems"
-		placedItemsFolder.Parent = workspace
-	end
-end
-
-local function homeOwnerPromise()
-	return LocalServerInfo.getServerIdentifier():andThen(function(serverInfo: ServerIdentifier)
-		return serverInfo.homeOwner or Promise.reject "Not a home server"
-	end)
+if isHomeServer then
+	placedItemsFolder = workspace:FindFirstChild "PlacedItems" or Instance.new "Folder"
+	placedItemsFolder.Name = "PlacedItems"
+	placedItemsFolder.Parent = workspace
 end
 
 --[[
-	Gets a loaded item from an item id. This returns an instance or nil.
+	Gets a loaded item from an item id. This returns an instance or nil if the item is not loaded.
 ]]
 local function getLoadedItemFromId(itemId: string): Instance?
 	for _, placedItem in pairs(placedItemsFolder:GetChildren()) do
-		if placedItem:GetAttribute(LOADED_ITEM_ATTRIBUTE) == itemId then
-			return placedItem
-		end
+		if placedItem:GetAttribute(LOADED_ITEM_ATTRIBUTE) == itemId then return placedItem end
 	end
 end
 
+--[[
+	Gets all loaded items in the game. This returns a table of item ids to instances.
+]]
 local function getLoadedItems()
 	local loadedItems = {}
 
 	for _, placedItem in pairs(placedItemsFolder:GetChildren()) do
 		local itemId = placedItem:GetAttribute(LOADED_ITEM_ATTRIBUTE)
 
-		if itemId then
-			loadedItems[itemId] = placedItem
-		end
+		if itemId then loadedItems[itemId] = placedItem end
 	end
 
 	return loadedItems
 end
 
+--[[
+	Gets the home owner user id of the home. This returns a number or nil if the server is not a home server.
+]]
+local function getHomeOwner()
+	local serverIdentifier = LocalServerInfo.getServerIdentifier()
+
+	if serverIdentifier then return serverIdentifier.homeOwner end
+end
+
 local HomeManager = {}
 
 --[[
-	Gets the index of the home that a player is selecting. The player does not need to be in this server.
-	Can reject if getting a player's data fails.
+	Gets the index of the home that a player is selecting.
+	* `userId` is the user id of the player. If this is nil, it will use the home owner of the server.
+
+	The player does not need to be in this server.
+
+	Returns a success boolean and the index of the home that the player is selecting if successful.
 ]]
-function HomeManager.getSelectedHomeIndex(player: HomeOwnerParam)
-	return HomeManager.getSelectedHomeId(player):andThen(function(itemId)
-		return InventoryManager.getItemPathFromId(player, itemId):andThen(function(_, index)
-			return index
-		end)
-	end)
+function HomeManager.getSelectedHomeIndex(userId: number?): (boolean, number?)
+	userId = userId or getHomeOwner()
+
+	local success, itemId = HomeManager.getSelectedHomeId(userId)
+	if not success then return false end
+
+	local success, _, index = InventoryManager.getItemPathFromId(userId, itemId)
+	return success, index
 end
 
 --[[
-    Gets the itemId of a home that a player has selected. The player does not need to be in this server.
-    Can reject if getting a player's data fails.
+	Gets the itemId of a home that a player has selected.
+
+	* `userId` is the user id of the player. If this is nil, it will use the home owner of the server.
+	* The player does not need to be in this server.
+
+	Returns a success boolean and the itemId of the home that the player has selected.
 ]]
-function HomeManager.getSelectedHomeId(player: HomeOwnerParam)
-	return Param.playerParam(player, PlayerFormat.userId, true):andThen(function(userId)
-		return PlayerSettings.getSetting(userId, "selectedHome")
-	end)
+function HomeManager.getSelectedHomeId(userId: number?): (boolean, string?)
+	userId = userId or getHomeOwner()
+
+	return PlayerSettings.getSetting(userId, "selectedHome")
 end
 
 --[[
-    Sets the selected home id for the player. The player needs to be in this server.
+	Sets the selected home id for the player. The player needs to be in this server.
+	Does not return anything, but will throw an error if the player is not in this server.
 ]]
-function HomeManager.setSelectedHomeId(player: HomeOwnerParam, itemId: string)
-	return Param.playerParam(player, PlayerFormat.userId, true):andThen(function(userId)
-		return PlayerSettings.setSetting(userId, "selectedHome", itemId)
-	end)
+function HomeManager.setSelectedHomeId(userId: number?, itemId: string)
+	userId = userId or getHomeOwner()
+
+	PlayerSettings.setSetting(userId, "selectedHome", itemId)
 end
 
 --[[
-    Gets the lock status of a player's home. The player does not need to be in this server.
-    Can reject if getting a player's data fails.
+	Gets the lock status of a player's home. The player does not need to be in this server.
+
+	Returns a success boolean and the lock status of the player's home if successful.
 ]]
-function HomeManager.getLockStatus(player: HomeOwnerParam)
-	return Param.playerParam(player, PlayerFormat.userId, true):andThen(function(userId)
-		return PlayerSettings.getSetting(userId, "homeLockStatus")
-	end)
+function HomeManager.getLockStatus(userId: number?): (boolean, UserEnum?)
+	userId = userId or getHomeOwner()
+
+	return PlayerSettings.getSetting(userId, "homeLockStatus")
 end
 
 --[[
-    Sets the lock status of a player's home. The player needs to be in this server.
+	Sets the lock status (HomeLockType.lua) of a player's home. The player needs to be in this server.
+	Does not return anything, but will throw an error if the player is not in this server.
 ]]
-function HomeManager.setLockStatus(player: HomeOwnerParam, isLocked: boolean)
-	return Param.playerParam(player, PlayerFormat.userId, true):andThen(function(userId)
-		return PlayerSettings.setSetting(userId, "homeLockStatus", isLocked)
-	end)
+function HomeManager.setLockStatus(userId: number?, lockStatus: UserEnum)
+	userId = userId or getHomeOwner()
+
+	PlayerSettings.setSetting(userId, "homeLockStatus", lockStatus)
 end
 
 --[[
-    Gets the home of a player. slot can be an itemId, index, or nil.
-    The player does not need to be in this server.
-    Can reject if getting a player's data fails.
+	Gets the home of a player. `slot` can be an `itemId`, index to the homes inventory caregory, or `nil`.
+	* If `slot` is an `itemId`, it will return the home with that id.
+	* If `slot` is an index, it will return the home at that index in the homes inventory category.
+	* If `slot` is `nil`, it will return the home that the player or home owner has selected.
+	
+	The player does not need to be in this server.
+
+	Returns a success boolean and the home if successful.
+	If success is true, the home will only be nil if the player does not have the specified home.
 ]]
-function HomeManager.getHome(player: HomeOwnerParam, slot: string | number | nil): Promise
-	return InventoryManager.getHomes(player):andThen(function(homes)
-		if type(slot) == "string" then
-			return InventoryManager.getItemFromId(homes, slot)
-		elseif type(slot) == "number" then
-			return homes[slot]
-		else -- type(slot) == "nil"
-			return HomeManager.getSelectedHomeId(player):andThen(function(selectedHomeId)
-				return HomeManager.getHome(player, selectedHomeId)
-			end)
-		end
-	end)
+function HomeManager.getHome(userId: number?, slot: string | number | nil): (boolean, InventoryItem?)
+	userId = userId or getHomeOwner()
+
+	local homes = InventoryManager.getHomes(userId)
+
+	if not homes then return false end
+
+	if type(slot) == "string" then
+		return InventoryManager.getItemFromId(homes, slot)
+	elseif type(slot) == "number" then
+		return true, homes[slot]
+	else -- type(slot) == "nil"
+		local selectedHomeId = HomeManager.getSelectedHomeId(userId)
+
+		local success, item = InventoryManager.getItemFromId(homes, selectedHomeId)
+
+		return success, item -- We don't want to return the extra data from getItemFromId
+	end
 end
 
 --[[
-	Gets the home server info of a player or homeowner wrapped in a promise.
+	Gets the home server info of a player. The player does not need to be in this server.
+	If there was an error getting the player's data, this will return nil.
 
 	```lua
 	homeServerInfo = {
@@ -173,380 +195,587 @@ end
 	},
 	```
 ]]
-function HomeManager.getHomeServerInfo(player: HomeOwnerParam)
-	return Param.playerParam(player, PlayerFormat.userId, true):andThen(function(userId)
-		return PlayerDataManager.viewPlayerProfile(userId):andThen(function(profile)
-			return profile.playerInfo.homeServerInfo
-		end)
-	end)
+function HomeManager.getHomeServerInfo(userId: number?): HomeServerInfo
+	userId = userId or getHomeOwner()
+
+	local profile = PlayerDataManager.viewPlayerProfile(userId)
+
+	return profile and profile.playerInfo.homeServerInfo
 end
 
 --[[
 	Gets whether the home server info of a player or homeowner is stamped. The player does not need to be in this server.
+	Home server info is stamped when a player's home server info is set in their profile.
+
+	Essentially, we're making sure privateServerId and serverCode are not nil.
+
+	```lua
+	homeServerInfo = {
+		privateServerId = string,
+		serverCode = string,
+	},
+	```
+
+	Returns a success boolean and the stamped status of the home server info if successful.
 ]]
-function HomeManager.isHomeInfoStamped(player: HomeOwnerParam)
-	return Param.playerParam(player, PlayerFormat.userId, true):andThen(function(userId)
-		return PlayerDataManager.viewPlayerProfile(userId):andThen(function(profile)
-			return profile.playerInfo.homeInfoStamped
-		end)
-	end)
+function HomeManager.isHomeInfoStamped(userId: number?): (boolean, boolean?)
+	userId = userId or getHomeOwner()
+
+	local profile = PlayerDataManager.viewPlayerProfile(userId)
+	local homeServerInfo = HomeManager.getHomeServerInfo(userId)
+
+	if profile and homeServerInfo then
+		return true, (homeServerInfo.privateServerId and homeServerInfo.serverCode) and true or false
+	end
+
+	return false
 end
 
 --[[
-	Returns a promise with the placed items of a player's active or specified home.
+	Gets the placed items of a player's active or specified home.
+	If no player is specified, it will use the home owner of the server.
+
+	`slot` can be an `itemId`, index to the homes inventory caregory, or `nil`.
+	* If `slot` is an `itemId`, it will use the home with that id.
+	* If `slot` is an index, it will use the home at that index in the homes inventory category.
+	* If `slot` is `nil`, it will use the home that the player or home owner has selected.
+
+	Returns a success boolean and the placed items if successful.
 ]]
-function HomeManager.getPlacedItems(player: HomeOwnerParam, slot: string | number | nil)
-	return HomeManager.getHome(player, slot):andThen(function(home)
-		return home.placedItems
-	end)
+function HomeManager.getPlacedItems(userId: number, slot: string | number | nil): (boolean, { PlacedItem }?)
+	userId = userId or getHomeOwner()
+
+	local success, home = HomeManager.getHome(userId, slot)
+
+	if not success then return false end
+	assert(home, "HomeManager.getPlacedItems: No home with the specified slot was found.")
+
+	return true, home.placedItems
 end
 
 --[[
-	Returns a promise with a placed item retrieved from an itemId.
+	Gets a placed item from the given item id.
+	If no user is specified, it will use the home owner of the server.
+
+	`slot` can be an `itemId`, index to the homes inventory caregory, or `nil`.
+	* If `slot` is an `itemId`, it will use the home with that id.
+	* If `slot` is an index, it will use the home at that index in the homes inventory category.
+	* If `slot` is `nil`, it will use the home that the player or home owner has selected.
+
+	A `PlacedItem` is a table with the following structure:
+	```lua
+	PlacedItem = {
+		itemId: string,
+		pivotCFrame: CFrame | table,
+	}
+	```
+
+	Returns a success boolean and the placed item if successful.
 ]]
-function HomeManager.getPlacedItemFromId(itemId, owner: HomeOwnerParam, slot: string | number | nil)
-	return HomeManager.getPlacedItems(owner, slot):andThen(function(placedItems: { PlacedItem })
-		for _, placedItem in ipairs(placedItems) do
-			if placedItem.itemId == itemId then
-				return placedItem
-			end
-		end
-	end)
+function HomeManager.getPlacedItemFromId(
+	itemId: string,
+	userId: number?,
+	slot: string | number | nil
+): (boolean, PlacedItem?)
+	userId = userId or getHomeOwner()
+
+	local success, placedItems = HomeManager.getPlacedItems(userId, slot)
+
+	if not success then return false end
+
+	for _, placedItem in ipairs(placedItems) do
+		if placedItem.itemId == itemId then return true, placedItem end
+	end
 end
 
 --[[
-	Returns a promise with a boolean indicating whether a placed item exists in a player's active or specified home.
+	Returns a success boolean and a boolean indicating whether the given item is 
+	placed in the player's active or specified home.
+
+	If no userId is specified, it will use the home owner of the server.
+
+	`slot` can be an `itemId`, index to the homes inventory caregory, or `nil`.
+	* If `slot` is an `itemId`, it will use the home with that id.
+	* If `slot` is an index, it will use the home at that index in the homes inventory category.
+	* If `slot` is `nil`, it will use the home that the player or home owner has selected.
 ]]
-function HomeManager.isItemPlaced(itemId, owner: HomeOwnerParam, slot: string | number | nil)
-	return HomeManager.getPlacedItemFromId(itemId, owner, slot):andThen(function(placedItem)
-		return placedItem ~= nil
-	end)
+function HomeManager.isItemPlaced(itemId, userId: number?, slot: string | number | nil): (boolean, boolean?)
+	userId = userId or getHomeOwner()
+
+	local success, placedItem = HomeManager.getPlacedItemFromId(itemId, userId, slot)
+
+	if not success then return false end
+
+	return true, placedItem and true or false
 end
 
 --[[
-	Returns a promise with a boolean indicating whether a player's active or specified home is full.
+	Returns a success boolean and a boolean indicating whether the specified home is at its max placed items.
+
+	If no userId is specified, it will use the home owner of the server.
+
+	`slot` can be an `itemId`, index to the homes inventory caregory, or `nil`.
+	* If `slot` is an `itemId`, it will use the home with that id.
+	* If `slot` is an index, it will use the home at that index in the homes inventory category.
+	* If `slot` is `nil`, it will use the home that the player or home owner has selected.
 ]]
-function HomeManager.isPlacedItemsFull(player: HomeOwnerParam, numItemsToAdd, slot: string | number | nil)
-	numItemsToAdd = numItemsToAdd or 0
+function HomeManager.isPlacedItemsFull(userId: number?, numItemsToAdd: number?, slot: string | number | nil)
+	userId = userId or getHomeOwner()
+
+	local numItemsToAdd = numItemsToAdd or 0
 	local maxFurniturePlaced = GameSettings.maxFurniturePlaced
 
-	return HomeManager.getPlacedItems(player, slot):andThen(function(placedItems: { PlacedItem })
-		if #placedItems + numItemsToAdd > maxFurniturePlaced or #placedItems == maxFurniturePlaced then
-			return true
-		end
+	local success, placedItems = HomeManager.getPlacedItems(userId, slot)
 
-		return false
-	end)
+	if not success then return false end
+
+	if #placedItems + numItemsToAdd > maxFurniturePlaced or #placedItems == maxFurniturePlaced then
+		return true, true
+	end
+
+	return true, false
 end
 
 --[[
-	Returns a promise with a boolean indicating whether a player can place an item based on inventory space,
-	whether the player owns the item, and whether or not the item is floating in the air.
-	Can only be called in a home server.
+	Returns a success boolean and a boolean indicating whether an item can be placed
+	based on the provided itemId and pivotCFrame.
+
+	Conditions tested:
+	* Placed items is full
+	* Player owns item
+	* Not placed in the air
+
+	Can only be called on a home server.
 ]]
-function HomeManager.canPlaceItem(itemId: string, pivotCFrame: CFrame): Promise
-	return homeOwnerPromise():andThen(function(homeOwner: number)
-		return Promise.all({
-			HomeManager.isPlacedItemsFull(homeOwner, 1),
-			InventoryManager.playerOwnsItem(homeOwner, itemId),
-		}):andThen(function(results)
-			local isPlacedItemsFull, playerOwnsItem = unpack(results)
+function HomeManager.canPlaceItem(itemId: string, pivotCFrame: CFrame)
+	local homeOwner = getHomeOwner()
 
-			if isPlacedItemsFull then
-				warn "HomeManager.placeItem: Placed items is full"
-				return false
-			end
+	assert(homeOwner, "HomeManager.placeItem: No home owner found.")
 
-			if not playerOwnsItem then
-				warn "HomeManager.placeItem: player does not own item"
-				return false
-			end
+	local success, isPlacedItemsFull = HomeManager.isPlacedItemsFull(homeOwner, 1)
 
-			return SpacialQuery.getPartsTouchingPoint(pivotCFrame)[1] ~= nil
-		end)
-	end)
+	if not success then
+		warn "HomeManager.placeItem: No success when checking if placed items is full"
+		return false
+	end
+
+	local success, playerOwnsItem = InventoryManager.playerOwnsItem(homeOwner, itemId)
+
+	if not success then
+		warn "HomeManager.placeItem: No success when checking if player owns item"
+		return false
+	end
+
+	if isPlacedItemsFull and not playerOwnsItem then
+		warn "HomeManager.placeItem: Placed items is full or player does not own item"
+		warn("isPlacedItemsFull: " .. tostring(isPlacedItemsFull))
+		warn("playerOwnsItem: " .. tostring(playerOwnsItem))
+		return true, false
+	end
+
+	return true, SpacialQuery.getPartsTouchingPoint(pivotCFrame)[1] ~= nil
 end
 
 --[[
-	Loads (or places), a placed item into the home server.
+	Loads (or places), a placed item into the home on a home server using the given placed item.
+
+	Can only be called on a home server.
 ]]
 function HomeManager.loadPlacedItem(placedItem: PlacedItem)
-	return homeOwnerPromise():andThen(function(homeOwner: number)
-		local itemId: string = placedItem.itemId
-		local pivotCFrame: CFrame = Serialization.deserialize(placedItem.pivotCFrame)
+	assert(isHomeServer, "HomeManager.loadPlacedItem: Can only be called on a home server.")
 
-		return InventoryManager.getItemFromId(homeOwner, placedItem.itemId):andThen(function(item)
-			if item == nil then
-				return Promise.reject "Item does not exist in inventory"
-			end
+	local homeOwner = getHomeOwner()
 
-			return Items.getFurnitureItem(item.itemEnum):andThen(function(info)
-				local object = getLoadedItemFromId(itemId)
+	local itemId = placedItem.itemId
+	local pivotCFrame: CFrame = Serialization.deserialize(placedItem.pivotCFrame)
 
-				object = object or info.model:Clone()
+	local success, item = InventoryManager.getItemFromId(homeOwner, placedItem.itemId)
 
-				object:SetAttribute(LOADED_ITEM_ATTRIBUTE, itemId)
-				object:PivotTo(pivotCFrame)
-				object.Parent = placedItemsFolder
+	if not success then return false end
+	assert(item, "HomeManager.loadPlacedItem: item does not exist in inventory")
 
-				print("HomeManager.loadPlacedItem: loaded item", itemId)
-			end)
-		end)
-	end)
+	local info = Items.getFurnitureItem(item.itemEnum)
+	local object = getLoadedItemFromId(itemId)
+
+	object = object or info.model:Clone()
+
+	object:SetAttribute(LOADED_ITEM_ATTRIBUTE, itemId)
+	object:PivotTo(pivotCFrame)
+	object.Parent = placedItemsFolder
+
+	print("HomeManager.loadPlacedItem: loaded item", itemId)
+
+	return true
 end
 
 --[[
-	Unloads (or removes), a placed item from the home server.
+	Unloads (or removes), a placed item from the home server using the given placed item.
 ]]
 function HomeManager.unloadPlacedItem(placedItem: PlacedItem)
-	return Promise.try(function()
-		local object = getLoadedItemFromId(placedItem.itemId)
-		assert(object, "HomeManager.unloadPlacedItem: object not found")
+	assert(isHomeServer, "HomeManager.unloadPlacedItem: Can only be called on a home server.")
 
-		object:Destroy()
-	end)
+	local object = getLoadedItemFromId(placedItem.itemId)
+
+	if object then object:Destroy() end
 end
 
 --[[
 	Adds/creates a placed item in a player's placedItems. The item is loaded right after.
+	The placedItems table is located in every home that a player owns.
+
+	Returns a success boolean.
+
+	Can only be called on a home server.
 ]]
 function HomeManager.addPlacedItem(itemId: string, pivotCFrame: CFrame)
-	return homeOwnerPromise():andThen(function(homeOwner: number)
-		return Promise.all({
-			PlayerDataManager.get(homeOwner):andThen(function(playerData)
-				return playerData or Promise.reject "Player data not found"
-			end),
-			HomeManager.getPlacedItemFromId(itemId, homeOwner),
-			HomeManager.getPlacedItems(homeOwner),
-			HomeManager.getSelectedHomeIndex(homeOwner):andThen(function(selectedHomeIndex)
-				return selectedHomeIndex or Promise.reject "Selected home index not found"
-			end),
-			HomeManager.canPlaceItem(itemId, pivotCFrame):andThen(function(canPlaceItem)
-				if not canPlaceItem then
-					return Promise.reject "Cannot place item"
-				end
-			end),
-		}):andThen(function(results)
-			local playerData: PlayerData, placedItem: PlacedItem | nil, placedItems: { PlacedItem }, selectedHomeIndex: number =
-				table.unpack(results)
-			local isItemPlaced = placedItem ~= nil
+	local homeOwner = getHomeOwner()
+	assert(homeOwner, "HomeManager.addPlacedItem: No home owner found.")
 
-			placedItem = placedItem or {} :: PlacedItem
-			placedItem.pivotCFrame = Serialization.serialize(pivotCFrame)
-			placedItem.itemId = itemId
+	local playerData = PlayerDataManager.get(homeOwner)
+	assert(playerData, "HomeManager.addPlacedItem: No player data found.")
 
-			local path = { "inventory", "homes", selectedHomeIndex, "placedItems" }
+	local success, placedItem = HomeManager.getPlacedItemFromId(itemId, homeOwner)
 
-			if isItemPlaced then
-				local placedItemIndex = table.find(placedItems, placedItem)
+	if not success then
+		warn "HomeManager.addPlacedItem: No success when getting placed item from id"
+		return false
+	end
 
-				if not placedItemIndex then
-					return Promise.reject "Placed item not found"
-				end
+	local success, placedItems = HomeManager.getPlacedItems(homeOwner)
 
-				playerData:arraySet(path, placedItemIndex, placedItem)
-			else
-				playerData:arrayInsert(path, placedItem)
-			end
+	if not success then
+		warn "HomeManager.addPlacedItem: No success when getting placed items"
+		return false
+	end
 
-			return HomeManager.loadPlacedItem(placedItem)
-		end)
-	end)
+	local success, selectedHomeIndex = HomeManager.getSelectedHomeIndex(homeOwner)
+
+	if not selectedHomeIndex or not success then
+		warn "HomeManager.addPlacedItem: No success when getting selected home index"
+		return false
+	end
+
+	placedItem = placedItem or {} :: PlacedItem
+	placedItem.pivotCFrame = Serialization.serialize(pivotCFrame)
+	placedItem.itemId = itemId
+
+	local path = { "inventory", "homes", selectedHomeIndex, "placedItems" }
+
+	if placedItem then
+		local placedItemIndex = table.find(placedItems, placedItem)
+
+		if not placedItemIndex then
+			warn "HomeManager.addPlacedItem: Placed item not found in placed items"
+			return false
+		end
+
+		playerData:arraySet(path, placedItemIndex, placedItem)
+	else
+		playerData:arrayInsert(path, placedItem)
+	end
+
+	return HomeManager.loadPlacedItem(placedItem)
 end
 
 --[[
 	Removes a placed item from a player's placedItems. The item is unloaded right after.
+	Can be called from a non-home server.
+
+	Returns a success boolean.
 ]]
-function HomeManager.removePlacedItem(itemId: string, player: HomeOwnerParam)
-	return Param.playerParam(player, PlayerFormat.userId, true):andThen(function(homeOwner)
-		return Promise.all({
-			PlayerDataManager.get(player):andThen(function(playerData)
-				return playerData or Promise.reject "Player data not found"
-			end),
-			HomeManager.getPlacedItemFromId(itemId, homeOwner),
-			HomeManager.getPlacedItems(homeOwner),
-			HomeManager.getSelectedHomeIndex(homeOwner):andThen(function(selectedHomeIndex)
-				return selectedHomeIndex or Promise.reject "Selected home index not found"
-			end),
-		}):andThen(function(results)
-			local playerData: PlayerData, placedItem: PlacedItem | nil, placedItems: { PlacedItem }, selectedHomeIndex: number =
-				table.unpack(results)
+function HomeManager.removePlacedItem(itemId: string, userId: number?)
+	userId = userId or getHomeOwner()
 
-			if not placedItem then
-				return Promise.reject "Placed item not found"
-			end
+	local playerData = PlayerDataManager.get(userId)
+	assert(playerData, "Player data not found")
 
-			local placedItemIndex = table.find(placedItems, placedItem)
+	local success, placedItem = HomeManager.getPlacedItemFromId(itemId, userId)
+	if not success then
+		warn "Placed item not found"
+		return false
+	end
+	assert(placedItem, "Placed item not found")
 
-			if not placedItemIndex then
-				return Promise.reject "Placed item index not found"
-			end
+	local success, placedItems = HomeManager.getPlacedItems(userId)
+	if not success then
+		warn "Placed items not found"
+		return false
+	end
 
-			local path = { "inventory", "homes", selectedHomeIndex, "placedItems" }
+	local success, selectedHomeIndex = HomeManager.getSelectedHomeIndex(userId)
+	if not success or not selectedHomeIndex then
+		warn "Selected home index not found"
+		return false
+	end
 
-			playerData:arrayRemove(path, placedItemIndex)
+	local placedItemIndex = table.find(placedItems, placedItem)
+	if not placedItemIndex then
+		warn "Placed item index not found"
+		return false
+	end
 
-			return if isHomeServer then HomeManager.unloadPlacedItem(placedItem) else Promise.resolve()
-		end)
-	end)
+	local path = { "inventory", "homes", selectedHomeIndex, "placedItems" }
+
+	playerData:arrayRemove(path, placedItemIndex)
+
+	if isHomeServer then HomeManager.unloadPlacedItem(placedItem) end
+
+	return true
 end
 
 --[[
-	Loads all placed items found in a player's inventory into the workspace.
+	Loads (places) all placed items found in a player's inventory into the workspace.
+	Returns a success boolean.
 ]]
 function HomeManager.loadItems()
-	return HomeManager.getPlacedItems():andThen(function(placedItems)
-		return Promise.all(Table.editValues(placedItems, HomeManager.loadPlacedItem))
-	end)
+	assert(isHomeServer, "HomeManager.loadItems: Can only be called on a home server.")
+
+	local success, placedItems = HomeManager.getPlacedItems()
+
+	if not success then
+		warn "HomeManager.loadItems: No success when getting placed items"
+		return false
+	end
+
+	local promises = {}
+
+	for _, placedItem in pairs(placedItems) do
+		table.insert(
+			promises,
+			Promise.new(function(resolve, reject)
+				local success = HomeManager.loadPlacedItem(placedItem)
+
+				if success then
+					resolve()
+				else
+					reject()
+				end
+			end)
+		)
+	end
+
+	return Promise.all(promises):await()
 end
 
 --[[
 	Unloads all placed items found in a player's inventory from the workspace.
 ]]
 function HomeManager.unloadItems()
-	return HomeManager.getPlacedItems():andThen(function(placedItems)
-		return Promise.all(Table.editValues(placedItems, HomeManager.unloadPlacedItem))
-	end)
+	assert(isHomeServer, "HomeManager.unloadItems: Can only be called on a home server.")
+
+	local success, placedItems = HomeManager.getPlacedItems()
+
+	if not success then
+		warn "HomeManager.unloadItems: No success when getting placed items"
+		return false
+	end
+
+	for _, placedItem in pairs(placedItems) do
+		HomeManager.unloadPlacedItem(placedItem)
+	end
+
+	return true
 end
 
 --[[
-	Loads a home into the workspace.
+	Loads a home into the workspace by loading all placed items.
+
+	Returns a success boolean.
 ]]
 function HomeManager.loadHome()
-	return HomeManager.getHome():andThen(function(home: InventoryItem | nil)
-		assert(home)
+	assert(isHomeServer, "HomeManager.loadHome can only be called in a home server")
 
-		return Items.getHomeItem(home.itemEnum):andThen(function(homeInfo)
-			local modelClone = homeInfo.model:Clone()
-			modelClone.Name = "RenderedHome"
-			modelClone.Parent = workspace
+	local success, home = HomeManager.getHome()
+	if not success then
+		warn "HomeManager.loadHome: No success when getting home"
+		return false
+	end
+	assert(home, "HomeManager.loadHome: No home found")
 
-			return HomeManager.loadItems()
-		end)
-	end)
+	local homeInfo = Items.getHomeItem(home.itemEnum)
+	local modelClone = homeInfo.model:Clone()
+	modelClone.Name = "RenderedHome"
+	modelClone.Parent = workspace
+
+	return HomeManager.loadItems()
 end
 
 --[[
-	Unloads a home from the workspace.
+	Unloads a home from the workspace by deleting it.
+
+	Does not return anything.
 ]]
 function HomeManager.unloadHome()
-	return Promise.try(function()
-		assert(isHomeServer, "HomeManager.unrenderHome can only be called in a home server")
+	assert(isHomeServer, "HomeManager.unrenderHome can only be called in a home server")
 
-		workspace:FindFirstChild("RenderedHome"):Destroy()
-		placedItemsFolder:ClearAllChildren()
-	end)
+	workspace:FindFirstChild("RenderedHome"):Destroy()
+	placedItemsFolder:ClearAllChildren()
 end
 
 PlayerDataManager.forAllPlayerData(function(playerData: PlayerData)
+	local function onError() -- If initialization failed for a player
+		warn "HomeManager: Initialization failed for player."
+	end
+
 	local player = playerData.player
+	local userId = player.UserId
+	local homes = InventoryManager.getHomes(userId)
 
-	InventoryManager.getHomes(player)
-		:andThen(function(homes: { InventoryItem })
-			return Promise.resolve()
-				:andThen(function()
-					if #homes == 0 then
-						return InventoryManager.newItemInInventory(ItemCategory.home, HomeType.defaultHome, player, {
-							permanent = true,
-						})
-					end
-				end)
-				:andThen(function()
-					return HomeManager.getSelectedHomeId(player):andThen(function(selectedHomeId)
-						if not selectedHomeId or not HomeManager.getHome(player, selectedHomeId):expect() then
-							return HomeManager.setSelectedHomeId(player, homes[1].id)
-						end
-					end)
-				end)
-				:andThen(function()
-					return HomeManager.getHomeServerInfo(player):andThen(function(homeServerInfo: HomeServerInfo)
-						if not (homeServerInfo and homeServerInfo.privateServerId and homeServerInfo.serverCode) then
-							local function getReservedServer()
-								return Promise.resolve()
-									:andThen(function()
-										return TeleportService:ReserveServer(GameSettings.homePlaceId)
-									end)
-									:andThen(function(...)
-										local success, code, privateServerId = ...
+	if #homes == 0 then
+		InventoryManager.newItemInInventory(ItemCategory.home, HomeType.defaultHome, player, {
+			permanent = true, -- We don't want users to be able to delete their default home
+		})
+	end
 
-										if success and code and privateServerId then
-											return select(2, ...)
-										end
-									end)
-							end
+	local success, selectedHomeId = HomeManager.getSelectedHomeId(userId)
 
-							return Promise.retry(getReservedServer, 5):andThen(function(code, privateServerId)
-								playerData:setValue({ "playerInfo", "homeServerInfo" }, {
-									serverCode = code,
-									privateServerId = privateServerId,
-								})
-							end)
-						end
+	if not success then
+		warn "HomeManager: Failed to get selected home id"
 
-						return Promise.resolve()
-					end)
-				end)
-				:andThen(function()
-					return HomeManager.isHomeInfoStamped(player):andThen(function(isStamped)
-						if not isStamped then
-							return ServerData.stampHomeServer(player)
-						end
-					end)
-				end)
-				:andThen(function()
-					if isHomeServer and not initalLoad then
-						initalLoad = true
-						return HomeManager.loadHome()
-					end
-				end)
-				:andThen(function()
-					return HomeManager.getPlacedItems(player):andThen(function(placedItems: { PlacedItem })
-						return Promise.all(Table.editValues(placedItems, function(placedItem: PlacedItem)
-							return InventoryManager.playerOwnsItem(player, placedItem.itemId):andThen(function(owns)
-								if not owns then
-									return HomeManager.removePlacedItem(placedItem.itemId, player)
-								end
-							end)
-						end))
-					end)
-				end)
-				:andThen(function()
-					if isHomeServer then
-						return Promise.all(Table.editValues(getLoadedItems(), function(itemId)
-							return InventoryManager.playerOwnsItem(player, itemId):andThen(function(owns)
-								if not owns then
-									return HomeManager.unloadPlacedItem(itemId)
-								end
-							end)
-						end))
-					end
-				end)
+		onError()
+		return
+	end
+
+	if not selectedHomeId or not select(2, HomeManager.getHome(userId, selectedHomeId)) then
+		HomeManager.setSelectedHomeId(userId, homes[1].id)
+	end
+
+	local success, homeServerInfo = HomeManager.getHomeServerInfo(userId)
+
+	if not success then
+		warn "HomeManager: Failed to get home server info"
+
+		onError()
+		return
+	end
+
+	if not (homeServerInfo and homeServerInfo.privateServerId and homeServerInfo.serverCode) then
+		local function getReservedServer()
+			return Promise.try(function()
+				local success, code, privateServerId = TeleportService:ReserveServer(GameSettings.homePlaceId)
+
+				if success and code and privateServerId then
+					return code, privateServerId
+				else
+					return Promise.reject()
+				end
+			end)
+		end
+
+		local success = Promise.retry(getReservedServer, 5):andThen(function(code, privateServerId)
+			playerData
+				:setValue({ "playerInfo", "homeServerInfo" }, {
+					serverCode = code,
+					privateServerId = privateServerId,
+				})
+				:await()
 		end)
-		:catch(function(err)
-			warn("HomeManager PlayerData Init Fail: ", err)
-		end)
+
+		if not success then
+			warn "HomeManager: Failed to get reserved server"
+
+			onError()
+			return
+		end
+	end
+
+	local success, isStamped = HomeManager.isHomeInfoStamped(userId)
+
+	if not success then
+		warn "HomeManager: Failed to get home info stamped"
+
+		onError()
+		return
+	end
+
+	if not isStamped then
+		local success, response = ServerData.stampHomeServer(playerData)
+
+		if not success then
+			warn("HomeManager: Failed to stamp home server: " .. response)
+
+			onError()
+			return
+		end
+	end
+
+	local success, placedItems = HomeManager.getPlacedItems(userId)
+
+	if success then
+		for _, placedItem in pairs(placedItems) do
+			local success, doesOwn = InventoryManager.playerOwnsItem(userId, placedItem.itemId)
+
+			if not success then
+				warn "HomeManager: Failed to check if player owns item"
+
+				onError()
+				return
+			end
+
+			if not doesOwn then
+				HomeManager.removePlacedItem(placedItem.itemId, userId) -- We don't really care if this fails
+			end
+		end
+	else
+		warn "HomeManager: Failed to get placed items"
+
+		onError()
+		return
+	end
+
+	if isHomeServer and getHomeOwner() == userId then
+		for itemId in getLoadedItems() do
+			local success, doesOwn = InventoryManager.playerOwnsItem(userId, itemId)
+
+			if not success then
+				warn "HomeManager: Failed to check if player owns item"
+
+				onError()
+				return
+			end
+
+			if not doesOwn then
+				HomeManager.unloadPlacedItem(select(2, HomeManager.getPlacedItemFromId(itemId)))
+			end
+		end
+	end
 end)
 
 InventoryManager.itemRemovedFromInventory:Connect(
 	function(player: Player, itemCategory: UserEnum, _, item: InventoryItem)
 		if itemCategory == ItemCategory.home then
-			return HomeManager.getSelectedHomeId(player)
-				:andThen(function(selectedHomeId)
-					if selectedHomeId == item.id then
-						return HomeManager.setSelectedHomeId(player, HomeManager.getHomes(player)[1].id)
-					end
-				end)
-				:catch(function(err)
-					warn("HomeManager itemRemovedFromInventory Fail: ", err)
-				end)
-		elseif itemCategory == ItemCategory.furniture then
-			return HomeManager.isItemPlaced(item.id, player):andThen(function(isPlaced)
-				if isPlaced then
-					return HomeManager.removePlacedItem(item.id, player)
+			local success, selectedHomeId = HomeManager.getSelectedHomeId(player.UserId)
+
+			if not success then
+				warn "HomeManager itemRemovedFromInventory Fail: Failed to get selected home id"
+				return
+			end
+
+			if selectedHomeId == item.id then
+				local homes = InventoryManager.getHomes(player.UserId)
+
+				if not homes then
+					warn "HomeManager itemRemovedFromInventory Fail: Failed to get homes"
+					return
 				end
-			end)
+
+				HomeManager.setSelectedHomeId(player, homes[1].id)
+			end
+		elseif itemCategory == ItemCategory.furniture then
+			local success, isPlaced = HomeManager.isItemPlaced(item.id, player.UserId)
+
+			if not success then
+				warn "HomeManager itemRemovedFromInventory Fail: Failed to check if item is placed"
+				return
+			end
+
+			if isPlaced then
+				HomeManager.removePlacedItem(item.id, player.UserId)
+			end
 		end
 	end
 )
+
+if isHomeServer then HomeManager.loadHome() end
 
 return HomeManager
