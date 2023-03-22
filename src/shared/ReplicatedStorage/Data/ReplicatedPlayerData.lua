@@ -25,7 +25,6 @@ local Promise = require(utilityFolder:WaitForChild "Promise")
 local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
 local ServerTypeGroups = require(serverFolder:WaitForChild "ServerTypeGroups")
 
-type LocalPlayerParam = Types.LocalPlayerParam
 type InventoryCategory = Types.InventoryCategory
 type Promise = Types.Promise
 type ProfileData = Types.ProfileData
