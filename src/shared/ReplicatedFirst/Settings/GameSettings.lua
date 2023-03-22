@@ -20,6 +20,13 @@ local gameSettings = { -- Constants for the game
 		[ItemCategory.home] = 200,
 	},
 
+	-- If you add something here, make sure to add it to the InventoryItem type in src\Shared\ReplicatedFirst\Utility\Types.lua
+	itemProps = { -- Custom additional properties for each item type, if needed
+		[ItemCategory.home] = {
+			placedItems = {}, -- The items that are placed in the home
+		},
+	},
+
 	maxFurniturePlaced = 500, -- The max amount of furniture that can be placed in a home
 
 	homePlaceId = 10564407502, -- The place ID of home
@@ -37,8 +44,8 @@ local gameSettings = { -- Constants for the game
 
 		playerInfo = { -- stuff that never changes
 			homeServerInfo = {
-				privateServerId = nil,
-				serverCode = nil,
+				privateServerId = nil :: string,
+				serverCode = nil :: string,
 			},
 			homeInfoStamped = false,
 		},
