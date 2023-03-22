@@ -53,7 +53,8 @@ end
 
 local replicaCollection = {}
 
-function replicaCollection.get(class) -- class must be either a string or a player
+-- Gets the replica of the given class. Class must be a string.
+function replicaCollection.get(class: string)
 	assert(type(class) == "string", "ReplicaCollection.get: class must be a string")
 	assert(table.find(classes, class) or getInclusiveClass(class), "ReplicaCollection.get: class must be a valid class")
 
