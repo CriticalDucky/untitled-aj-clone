@@ -8,7 +8,6 @@ local utilityFolder = ReplicatedFirst:WaitForChild("Shared"):WaitForChild "Utili
 local Types = require(utilityFolder:WaitForChild "Types")
 
 type Promise = Types.Promise
-type PlayerParam = Types.PlayerParam
 
 local Param = {}
 
