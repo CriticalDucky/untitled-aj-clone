@@ -74,12 +74,6 @@ export type PlacedItem = {
 	pivotCFrame: CFrame | table,
 }
 
-export type PlayerParam = Player | number
-
-export type HomeOwnerParam = PlayerParam | nil
-
-export type LocalPlayerParam = PlayerParam | nil
-
 export type Promise = typeof(Promise.new(function() end))
 
 export type ServerIdentifier = {
