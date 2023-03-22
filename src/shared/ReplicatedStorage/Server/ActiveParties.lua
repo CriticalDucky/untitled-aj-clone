@@ -7,15 +7,16 @@
 local NO_REPEAT_ZONE = 1 / 2 -- of current active parties
 local PARTY_PADDING_MINUTES = 5 -- minutes
 
-local utilityFolder = game:GetService("ReplicatedFirst"):WaitForChild("Shared"):WaitForChild("Utility")
+local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
-local Parties =
-	require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Server"):WaitForChild("Parties"))
-local ServerUnixTime = require(utilityFolder:WaitForChild("ServerUnixTime"))
-local Table = require(utilityFolder:WaitForChild("Table"))
-local Math = require(utilityFolder:WaitForChild("Math"))
-local TimeRange = require(utilityFolder:WaitForChild("TimeRange"))
-local Types = require(utilityFolder:WaitForChild("Types"))
+local utilityFolder = game:GetService("ReplicatedFirst"):WaitForChild("Shared"):WaitForChild "Utility"
+
+local Parties = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Server"):WaitForChild "Parties")
+local ServerUnixTime = require(utilityFolder:WaitForChild "ServerUnixTime")
+local Table = require(utilityFolder:WaitForChild "Table")
+local Math = require(utilityFolder:WaitForChild "Math")
+local Time = require(utilityFolder:WaitForChild "Time")
+local Types = require(utilityFolder:WaitForChild "Types")
 
 type PartyUnit = Types.PartyUnit
 
@@ -94,7 +95,7 @@ local function createWeekPartySchedule(weekId)
 		partySchedule[halfHourId] = {
 			partyType = party,
 			halfHourId = halfHourId,
-			time = TimeRange.new(
+			time = Time.newRange(
 				halfHourIdToUnixTime(halfHourId),
 				halfHourIdToUnixTime(halfHourId + 1) - (PARTY_PADDING_MINUTES * 60)
 			),
@@ -109,9 +110,7 @@ local partySchedules = {}
 function getWeekPartySchedule(weekId)
 	weekId = weekId or getWeekId()
 
-	if not partySchedules[weekId] then
-		partySchedules[weekId] = createWeekPartySchedule(weekId)
-	end
+	if not partySchedules[weekId] then partySchedules[weekId] = createWeekPartySchedule(weekId) end
 
 	return partySchedules[weekId]
 end
