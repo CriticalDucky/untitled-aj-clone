@@ -12,7 +12,6 @@ local ReplicatedStorage = game:GetService "ReplicatedStorage"
 local utilityFolder = game:GetService("ReplicatedFirst"):WaitForChild("Shared"):WaitForChild "Utility"
 
 local Parties = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Server"):WaitForChild "Parties")
-local ServerUnixTime = require(utilityFolder:WaitForChild "ServerUnixTime")
 local Table = require(utilityFolder:WaitForChild "Table")
 local Math = require(utilityFolder:WaitForChild "Math")
 local Time = require(utilityFolder:WaitForChild "Time")
@@ -37,11 +36,11 @@ local function getPossiblePartiesFromHalfHour(halfHour)
 end
 
 local function getWeekId(time)
-	return math.floor((time or ServerUnixTime.get()) / 604800)
+	return math.floor((time or Time.getUnix()) / 604800)
 end
 
 local function getHalfHourId(time)
-	return math.floor((time or ServerUnixTime.get()) / 1800)
+	return math.floor((time or Time.getUnix()) / 1800)
 end
 
 local function createWeekPartySchedule(weekId)
