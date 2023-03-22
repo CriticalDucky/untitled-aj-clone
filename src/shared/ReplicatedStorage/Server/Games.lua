@@ -3,10 +3,10 @@ local replicatedFirstShared = game:GetService("ReplicatedFirst"):WaitForChild("S
 
 local GameTypeEnum = require(enumsFolder:WaitForChild("GameType"))
 local GameJoinType = require(enumsFolder:WaitForChild("GameJoinType"))
-local TimeRange = require(replicatedFirstShared:WaitForChild("Utility"):WaitForChild("TimeRange"))
+local Time = require(replicatedFirstShared:WaitForChild("Utility"):WaitForChild("Time"))
 
-local timeRange = TimeRange.new
-local group = TimeRange.newGroup
+local timeRange = Time.newRange
+local group = Time.newGroup
 
 --[[ Example game entry
 
