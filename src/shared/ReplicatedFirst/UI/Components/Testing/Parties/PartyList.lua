@@ -101,7 +101,7 @@ local component = function(props)
 
 				if currentParty:get().halfHourId == activeParty.halfHourId then
 					if ServerTypeGroups.serverInGroup(ServerGroupEnum.isParty) then
-						local serverInfo: ServerIdentifier = ReplicatedServerData.getServerIdentifier():getNow()
+						local serverInfo = ReplicatedServerData.getServerIdentifier()
 
 						if serverInfo and serverInfo.partyType == activeParty.partyType then
 							open:set(false)
@@ -111,11 +111,13 @@ local component = function(props)
 					end
 
 					if activeParty.time:isInRange() then
-						ClientTeleport.toParty(activeParty.partyType):andThen(function(response)
-							if response ~= ResponseType.success then
-								errored:set(true)
-							end
-						end)
+						local success, response = ClientTeleport.toParty(activeParty.partyType)
+						
+						if not success then
+							warn("Failed to teleport to party: " .. response)
+
+							errored:set(true)
+						end
 					end
 				end
 			end,
