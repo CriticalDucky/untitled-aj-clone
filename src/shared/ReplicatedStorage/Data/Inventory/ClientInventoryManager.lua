@@ -16,8 +16,6 @@ local utilityFolder = replicatedFirstShared:WaitForChild("Utility")
 local ReplicatedPlayerData = require(dataFolder:WaitForChild("ReplicatedPlayerData"))
 local Types = require(utilityFolder:WaitForChild("Types"))
 
-type Promise = Types.Promise
-type LocalPlayerParam = Types.LocalPlayerParam
 type UserEnum = Types.UserEnum
 
 local ClientInventoryManager = {}
