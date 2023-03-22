@@ -36,8 +36,6 @@ local Types = require(utilityFolder.Types)
 local LocalServerInfo = require(serverFolder.LocalServerInfo)
 
 type HomeServerInfo = Types.HomeServerInfo
-type PlayerParam = Types.PlayerParam
-type HomeOwnerParam = Types.HomeOwnerParam
 type UserEnum = Types.UserEnum
 type InventoryItem = Types.InventoryItem
 type PlacedItem = Types.PlacedItem
