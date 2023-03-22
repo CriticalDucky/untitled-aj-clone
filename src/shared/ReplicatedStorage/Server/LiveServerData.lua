@@ -377,6 +377,7 @@ end
 --[[
 	Gets the live server data for the given serverIdentifier.
 	If a serverType is provided instead, it will return the whole data table for that serverType.
+	If no serverIdentifier is provided, it will return the whole data table.
 	
 	Consider using the helper functions for convenience.
 
@@ -393,7 +394,7 @@ end
 	```
 ]]
 function LiveServerData.get(
-	serverIdentifier: ServerIdentifier | UserEnum
+	serverIdentifier: ServerIdentifier | UserEnum | nil
 ): nil | {} | { players: { [number]: number }, [any]: any }
 	if RunService:IsServer() then LiveServerData.initialWait() end -- See LiveServerData.initialWait comment above
 
