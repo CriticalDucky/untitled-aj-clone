@@ -29,13 +29,16 @@ local GameSettings = require(replicatedFirstShared.Settings.GameSettings)
 type PlayerData = Types.PlayerData
 type PlayerParam = Types.PlayerParam
 type Promise = Types.Promise
+type ProfileData = Types.ProfileData
 
 local profileTemplate = GameSettings.profileTemplate
 local tempDataTemplate = GameSettings.tempDataTemplate
 
-local ProfileStore = Promise.try(function()
-	return ProfileService.GetProfileStore("PlayerData", profileTemplate)
-end)
+local ProfileStore = Promise.retry(function()
+	return Promise.try(function()
+		return ProfileService.GetProfileStore("PlayerData", profileTemplate)
+	end)
+end, 5)
 
 local playerDataPublicReplica = ReplicaService.NewReplica {
 	ClassToken = ReplicaService.NewClassToken "PlayerDataPublic",
@@ -43,9 +46,30 @@ local playerDataPublicReplica = ReplicaService.NewReplica {
 	Replication = "All",
 }
 
-local playerDataCreationComplete = {}
-local playerDataCollection = {}
-local cachedInactiveProfiles = {}
+local playerDataCreationComplete = { -- Used to track if a player's data has been created.
+	--[[
+		[player] = boolean
+	]]
+}
+
+local playerDataCollection = { -- Collection of all player data.
+	--[[
+		[player] = PlayerData
+	]]
+}
+
+local cachedViewedProfiles = { -- Collection of all viewed profiles (See `PlayerDataManager.viewPlayerProfile`).
+	--[[
+		[playerId] = ProfileData
+	]]
+}
+
+local lastProfileCacheTime =
+	{ -- Used to track when a profile was last cached (See `PlayerDataManager.viewPlayerProfile`).
+		--[[
+		[playerId] = number
+	]]
+	}
 
 local PlayerData = {}
 PlayerData.__index = PlayerData
@@ -59,91 +83,91 @@ local function getKey(playerId)
 	return "Player_" .. playerId
 end
 
--- Sets up a new `PlayerData` object for the given player.
---
--- Loads the player's profile and manages replicas for the player's data.
-function PlayerData.new(player: Player)
-	return Promise.new(function(resolve, reject)
-		local newPlayerData = setmetatable({}, PlayerData)
-		newPlayerData.player = player
+--[[
+	Sets up a new `PlayerData` object for the given player.
 
-		local profileStore = ProfileStore:expect()
+	Loads the player's profile and manages replicas for the player's data.
 
-		local profile = profileStore:LoadProfileAsync(getKey(player.UserId), "ForceLoad")
+	Returns the new `PlayerData` object, or `false` if the player's profile failed to load.
+	It can also return `true` if the player left before the profile was loaded. Treat this as a success.
+]]
+function PlayerData.new(player: Player): PlayerData
+	local newPlayerData = setmetatable({}, PlayerData)
+	newPlayerData.player = player
 
-		if profile then
-			profile:AddUserId(player.UserId)
-			profile:Reconcile()
-			profile:ListenToRelease(function()
-				playerDataCollection[player] = nil
-				playerDataCreationComplete[player] = nil
-			end)
+	local profileStore = ProfileStore:expect()
 
-			if player:IsDescendantOf(Players) then
-				playerDataCollection[player] = newPlayerData
-				local tempDataCopy = Table.deepCopy(tempDataTemplate)
+	local profile = profileStore:LoadProfileAsync(getKey(player.UserId), "ForceLoad")
 
-				-- Merge the player's profile data with the temp data and separate by replication type for the replicas.
+	if not profile then
+		print("Failed to load profile for player " .. player.Name)
+		return false
+	end
 
-				local function getMatchingProfileProps(privacy)
-					local matchingProps = {}
+	profile:AddUserId(player.UserId)
+	profile:Reconcile()
+	profile:ListenToRelease(function()
+		playerDataCollection[player] = nil
+		playerDataCreationComplete[player] = nil
+	end)
 
-					for propName, prop in pairs(profile.Data) do
-						matchingProps[propName] = if GameSettings.dataKeyReplication[propName] == privacy then prop else nil
-					end
+	if not player:IsDescendantOf(Players) then
+		profile:Release()
+		return true -- Player left before profile was loaded; treat as success.
+	end
 
-					return matchingProps
-				end
+	playerDataCollection[player] = newPlayerData
+	local tempDataCopy = Table.deepCopy(tempDataTemplate)
 
-				local function getMatchingTempDataProps(privacy)
-					local matchingProps = {}
+	-- Merge the player's profile data with the temp data and separate by replication type for the replicas.
 
-					for propName, prop in pairs(tempDataCopy) do
-						matchingProps[propName] = if GameSettings.dataKeyReplication[propName] == privacy then prop else nil
-					end
+	local function getMatchingProfileProps(privacy)
+		local matchingProps = {}
 
-					return matchingProps
-				end
-
-				local data_replicationPrivate = Table.merge(
-					getMatchingProfileProps(ReplicationType.private),
-					getMatchingTempDataProps(ReplicationType.private)
-				)
-
-				local data_replicationPublic = Table.merge(
-					getMatchingProfileProps(ReplicationType.public),
-					getMatchingTempDataProps(ReplicationType.public)
-				)
-
-				-- Set values for new player data object.
-
-				newPlayerData.profile = profile
-				newPlayerData.tempData = tempDataCopy
-
-				-- Set up replicas.
-
-				newPlayerData.replica_private = ReplicaService.NewReplica {
-					ClassToken = ReplicaService.NewClassToken(
-						"PlayerDataPrivate_" .. player.UserId .. PlayerJoinTimes.getTimesJoined(player)
-					),
-					Data = data_replicationPrivate,
-					Replication = player,
-				}
-
-				print("Replicating data to " .. player.Name .. "...")
-
-				playerDataPublicReplica:SetValue({ player.UserId }, data_replicationPublic)
-				newPlayerData.replica_public = playerDataPublicReplica
-			else
-				profile:Release()
-			end
-		else
-			print("Failed to load profile for player " .. player.Name)
-			return reject()
+		for propName, prop in pairs(profile.Data) do
+			matchingProps[propName] = if GameSettings.dataKeyReplication[propName] == privacy then prop else nil
 		end
 
-		resolve(newPlayerData)
-	end)
+		return matchingProps
+	end
+
+	local function getMatchingTempDataProps(privacy)
+		local matchingProps = {}
+
+		for propName, prop in pairs(tempDataCopy) do
+			matchingProps[propName] = if GameSettings.dataKeyReplication[propName] == privacy then prop else nil
+		end
+
+		return matchingProps
+	end
+
+	local data_replicationPrivate =
+		Table.merge(getMatchingProfileProps(ReplicationType.private), getMatchingTempDataProps(ReplicationType.private))
+
+	local data_replicationPublic =
+		Table.merge(getMatchingProfileProps(ReplicationType.public), getMatchingTempDataProps(ReplicationType.public))
+
+	-- Set values for new player data object.
+
+	newPlayerData.profile = profile
+	newPlayerData.tempData = tempDataCopy
+
+	-- Set up replicas.
+
+	newPlayerData.replica_private = ReplicaService.NewReplica {
+		ClassToken = ReplicaService.NewClassToken(
+			"PlayerDataPrivate_" .. player.UserId .. PlayerJoinTimes.getTimesJoined(player)
+		),
+		Data = data_replicationPrivate,
+		Replication = player,
+	}
+
+	print("Replicating data to " .. player.Name .. "...")
+
+	playerDataPublicReplica:SetValue({ player.UserId }, data_replicationPublic)
+	newPlayerData.replica_public = playerDataPublicReplica
+
+	return newPlayerData
 end
 
 -- Sets the data at the given path to the given value in the relevant replica.
@@ -257,99 +281,83 @@ local PlayerDataManager = {}
 
 PlayerDataManager.playerDataAdded = Signal.new()
 
--- Returns a `Promise` that resolves with a player's data. If wait is true and the player's data has not been loaded
--- yet, it will wait until it has been loaded.
-function PlayerDataManager.get(player: PlayerParam, wait: boolean): Promise
-	return Param.playerParam(player, PlayerFormat.instance)
-		:andThen(function(instance)
-			player = instance
+--[[
+	Returns a player's data as long as the provided player is in this server.
+	Use this if you intend to modify the player's data. Otherwise, see `PlayerDataManager.viewProfileData`.
 
-			local playerData = playerDataCollection[player]
+	If `wait` is true, this method will wait until the player's data has been loaded before returning.
+	If `wait` is false, this method will return nil if the player's data has not been loaded yet.
+]]
+function PlayerDataManager.get(player: Player | number, wait: boolean): PlayerData?
+	player = if typeof(player) == "number" then Players:GetPlayerByUserId(player) else player
 
-			if playerData then
-				return playerData
-			elseif wait then
-				while not playerDataCreationComplete[player] do
-					task.wait()
-				end
+	local playerData = playerDataCollection[player]
 
-				return playerDataCollection[player]
-			else
-				return nil
-			end
-		end)
-		:catch(function(err)
-			warn("Failed to get player data for player " .. player.Name .. ": " .. tostring(err))
-			return Promise.reject()
-		end)
-end
-
--- Returns a `Promise` that resolves with a read-only copy of a player's view-only profile data.
--- 
--- This method is useful for viewing a player's profile even when it's not loaded.
-function PlayerDataManager.viewPlayerProfile(player: PlayerParam)
-	return Param.playerParam(player, PlayerFormat.instance):andThen(function(player: Player)
-		if playerDataCollection[player] then
-			local profile = playerDataCollection[player].profile
-			return Table.deepFreeze(Table.deepCopy(profile.Data))
+	if playerData then
+		return playerData
+	elseif wait then
+		while not playerDataCreationComplete[player] do
+			task.wait()
 		end
 
-		local userId = player.UserId
+		return playerDataCollection[player]
+	end
 
-		local profileSettings = cachedInactiveProfiles[userId]
-
-		return Promise.new(function(resolve, reject)
-			if
-				not profileSettings or (time() - profileSettings.cachedTime > INACTIVE_PROFILE_COOLDOWN)
-			then
-				profileSettings = cachedInactiveProfiles[userId] or {}
-				profileSettings.cachedTime = time()
-				cachedInactiveProfiles[userId] = profileSettings
-
-				local profile = ProfileStore:expect():ViewProfileAsync(getKey(userId))
-
-				if profile then
-					cachedInactiveProfiles[userId].profile = profile
-					resolve(Table.deepFreeze(Table.deepCopy(profile.Data)))
-				else
-					warn "Failed to view profile"
-
-					reject()
-				end
-			else
-				resolve(Table.deepFreeze(Table.deepCopy(profileSettings.profile.Data)))
-			end
-		end)
-	end)
+	-- Can return nil if wait is false and the player's data has not been loaded yet
 end
 
--- Initializes a player's data.
+--[[
+	Returns an offline player's read-only *profile data*.
+	Even if a player is online, this is the recommended way to get their data if you don't need to modify it.
+
+	Can return nil if loading the profile failed.
+]]
+function PlayerDataManager.viewPlayerProfile(player: Player | number): ProfileData?
+	player = if typeof(player) == "number" then Players:GetPlayerByUserId(player) else player
+
+	if playerDataCollection[player] then
+		local playerData = playerDataCollection[player]
+		return Table.deepFreeze(Table.deepCopy(playerData.profile.Data))
+	end
+
+	local userId = player.UserId
+
+	local profileData: ProfileData? = cachedViewedProfiles[userId]
+
+	if profileData and time() - lastProfileCacheTime[userId] < INACTIVE_PROFILE_COOLDOWN then return profileData end
+
+	local profile = ProfileStore:expect():ViewProfileAsync(getKey(userId))
+
+	if profile then
+		profileData = Table.deepFreeze(Table.deepCopy(profile.Data))
+		cachedViewedProfiles[userId] = profileData
+		return profileData
+	else
+		warn "Failed to view profile"
+	end
+end
+
+--[[
+	Initializes a player's data. Returns true if successful, false if not.
+	Only for use by PlayerDataManagerInit.server.lua.
+]]
 function PlayerDataManager.init(player)
 	print("Initializing player data for " .. player.Name)
 
-	return PlayerData.new(player):andThen(function(playerData)
-		playerDataCreationComplete[player] = true
-		PlayerDataManager.playerDataAdded:Fire(playerData)
-	end)
-end
+	local playerData = PlayerData.new(player)
 
--- Releases the player's profile and returns a `Promise` that resolves when the profile is hop ready.
-function PlayerDataManager.yieldUntilHopReady(player)
-	return PlayerDataManager.get(player):andThen(function(playerData)
-		local profile = playerData.profile
-		profile:Release()
-
-		local connection
-
-		connection = profile:ListenToHopReady(function()
-			connection:Disconnect()
-			connection = nil
-		end)
-
-		while connection do
-			task.wait()
+	if playerData then
+		if playerData ~= true then
+			playerDataCreationComplete[player] = true
+			PlayerDataManager.playerDataAdded:Fire(playerData)
 		end
-	end)
+
+		return true
+	else
+		warn("Failed to initialize player data for " .. player.Name)
+
+		return false
+	end
 end
 
 -- Calls a given function for all `PlayerData` instances and connects it to an event that calls it for any future
