@@ -1,67 +1,62 @@
-local itemCategory = require(game:GetService("ReplicatedStorage").Shared.Enums.ItemCategory)
-local Promise = require(game:GetService("ReplicatedFirst").Shared.Utility.Promise)
+local ItemCategory = require(game:GetService("ReplicatedStorage").Shared.Enums.ItemCategory)
+local Types = require(game:GetService("ReplicatedFirst").Shared.Utility.Types)
+
+type InventoryCategory = Types.InventoryCategory
+type InventoryItem = Types.InventoryItem
 
 local Items = {
-    [itemCategory.furniture] = require(script:WaitForChild("Furniture")),
-    [itemCategory.accessory] = require(script:WaitForChild("Accessories")),
-    [itemCategory.home] = require(script:WaitForChild("Homes")),
+	[ItemCategory.furniture] = require(script:WaitForChild "Furniture"),
+	[ItemCategory.accessory] = require(script:WaitForChild "Accessories"),
+	[ItemCategory.home] = require(script:WaitForChild "Homes"),
 }
 
 --[[
-    Returns a promise that resolves with the furniture category
+    Returns the furniture category
 ]]
-function Items.getFurniture()
-    return Promise.resolve(Items[itemCategory.furniture])
+function Items.getFurniture(): InventoryCategory
+	return Items[ItemCategory.furniture]
 end
 
 --[[
-    Returns a promise that resolves with the accessories category
+    Returns the accessories category
 ]]
-function Items.getAccessories()
-    return Promise.resolve(Items[itemCategory.accessory])
+function Items.getAccessories(): InventoryCategory
+	return Items[ItemCategory.accessory]
 end
 
 --[[
-    Returns a promise that resolves with the homes category
+    Returns the homes category
 ]]
-function Items.getHomes()
-    return Promise.resolve(Items[itemCategory.home])
+function Items.getHomes(): InventoryCategory
+	return Items[ItemCategory.home]
 end
 
 --[[
-    Returns a promise that resolves with a furniture item
+    Returns a furniture item from the given furniture enum
 ]]
 function Items.getFurnitureItem(furnitureEnum)
-    return Items.getFurniture():andThen(function(furniture)
-        return furniture[furnitureEnum]
-    end)
+	return Items.getFurniture()[furnitureEnum]
 end
 
 --[[
-    Returns a promise that resolves with an accessory item
+    Returns an accessory item from the given accessory enum
 ]]
 function Items.getAccessoryItem(accessoryEnum)
-    return Items.getAccessories():andThen(function(accessories)
-        return accessories[accessoryEnum]
-    end)
+	return Items.getAccessories()[accessoryEnum]
 end
 
 --[[
-    Returns a promise that resolves with a home item
+    Returns a home item from the given home enum
 ]]
 function Items.getHomeItem(homeEnum)
-    return Items.getHomes():andThen(function(homes)
-        return homes[homeEnum]
-    end)
+	return Items.getHomes()[homeEnum]
 end
 
 --[[
-    Returns a promise that resolves with an item
+    Returns an item from the given item category and item enum
 ]]
-function Items.getItem(itemCategory, itemEnum)
-    return Promise.try(function()
-        return Items[itemCategory][itemEnum]
-    end)
+function Items.getItem(itemCategory, itemEnum): InventoryItem
+	return Items[itemCategory] and Items[itemCategory][itemEnum]
 end
 
 return Items
