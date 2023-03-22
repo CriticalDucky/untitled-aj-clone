@@ -39,8 +39,12 @@ local component = function(props)
 	local errored = Value(false)
 
 	if ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome) then
-		ReplicatedServerData.getServerIdentifier():andThen(function(serverInfo: ServerIdentifier)
-			visible:set(serverInfo.homeOwner ~= player.UserId)
+		task.spawn(function()
+			local serverIdentifier = ReplicatedServerData.getServerIdentifier()
+
+			if serverIdentifier then
+				visible:set(serverIdentifier.homeOwner ~= player.UserId)
+			end
 		end)
 	else
 		visible:set "true"
@@ -63,12 +67,12 @@ local component = function(props)
 		TextSize = 18,
 
 		[OnEvent "MouseButton1Click"] = function()
-			ClientTeleport.toHome(player.UserId):andThen(function(response)
-				if response ~= ReponseType.success then
-					warn("Failed to teleport to home:", response)
-					errored:set(true)
-				end
-			end)
+			local success, response = ClientTeleport.toHome(player.UserId)
+
+			if not success then
+				warn("Failed to teleport to home:", response)
+				errored:set(true)
+			end
 		end,
 
 		[Children] = {
