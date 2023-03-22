@@ -34,14 +34,23 @@ local component = function(props)
 	local locationButtons = {}
 
 	local open = Value(false)
+	local enabled = Value(false)
+
+	task.spawn(function()
+		LocalServerInfo.getServerIdentifier()
+
+		enabled:set(true)
+	end)
 
 	for priority, locationEnum in pairs(Locations.priority) do
 		local location = Locations.info[locationEnum]
 
 		local hasErrored = Value(false)
 
-		local function onResponse(response)
-			if response ~= ResponseType.success then
+		local function onResponse(success, response)
+			if not success then
+				warn("Failed to teleport to location: " .. tostring(response))
+
 				hasErrored:set(true)
 			end
 		end
@@ -63,7 +72,7 @@ local component = function(props)
 
 			[OnEvent "MouseButton1Click"] = function()
 				if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
-					local serverInfo = LocalServerInfo.getServerIdentifier():getNow()
+					local serverInfo = LocalServerInfo.getServerIdentifier()
 
 					if not serverInfo then
 						return
@@ -72,10 +81,10 @@ local component = function(props)
 					if LocalServerInfo.locationEnum == locationEnum then
 						open:set(false)
 					else
-						ClientTeleport.toLocation(locationEnum):finally(onResponse)
+						onResponse(ClientTeleport.toLocation(locationEnum))
 					end
 				else
-					ClientTeleport.toLocation(locationEnum):finally(onResponse)
+					onResponse(ClientTeleport.toLocation(locationEnum))
 				end
 			end,
 		}
@@ -87,7 +96,9 @@ local component = function(props)
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Size = UDim2.new(0, 400, 0, 400),
 		Position = UDim2.new(0.5, 0, 0.5, 0),
-		Visible = open,
+		Visible = Computed(function()
+			return open:get() and enabled:get()
+		end),
 
 		[Children] = {
 			New "Frame" {
