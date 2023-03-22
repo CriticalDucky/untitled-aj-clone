@@ -1,6 +1,6 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ReplicatedFirst = game:GetService("ReplicatedFirst")
-local ServerStorage = game:GetService("ServerStorage")
+local ReplicatedStorage = game:GetService "ReplicatedStorage"
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
+local ServerStorage = game:GetService "ServerStorage"
 
 local serverStorageShared = ServerStorage.Shared
 local replicatedStorageShared = ReplicatedStorage.Shared
@@ -15,89 +15,92 @@ local serverStorageSharedUtility = serverStorageShared.Utility
 local ReplicaService = require(dataFolder.ReplicaService)
 local HomeManager = require(inventoryFolder.HomeManager)
 local PlayerDataManager = require(dataFolder.PlayerDataManager)
-local ResponseType = require(enumsFolder.ResponseType)
+local PlaceItemResponseType = require(enumsFolder.PlaceItemResponseType)
 local PlaceItemRequestType = require(enumsFolder.PlaceItemRequestType)
 local LocalServerInfo = require(serverFolder.LocalServerInfo)
 local Types = require(utilityFolder.Types)
-local Promise = require(utilityFolder.Promise)
 local ReplicaResponse = require(serverStorageSharedUtility.ReplicaResponse)
 local Param = require(utilityFolder.Param)
 
 type UserEnum = Types.UserEnum
 type Promise = Types.Promise
 
-local requestReplica = ReplicaService.NewReplica({
-	ClassToken = ReplicaService.NewClassToken("PlaceItemRequest"),
+local requestReplica = ReplicaService.NewReplica {
+	ClassToken = ReplicaService.NewClassToken "PlaceItemRequest",
 	Replication = "All",
-})
+}
 
-local homeOwnerPromise: Promise = LocalServerInfo.getServerIdentifier():andThen(function(serverInfo)
-	return serverInfo.homeOwner
-end)
+local function getHomeOwner()
+	local serverIdentifier = LocalServerInfo.getServerIdentifier()
+
+	if serverIdentifier then return serverIdentifier.homeOwner end
+end
 
 ReplicaResponse.listen(requestReplica, function(player: Player, placeItemRequestType: UserEnum, ...)
-	local vararg = {...}
+	if not Param.expect({ player, "Player" }, { placeItemRequestType, "number", "string" }, { ..., "table" }) then
+		warn "PlaceItemRequest: Invalid parameters"
+		return PlaceItemResponseType.invalid
+	end
 
-	return Param:expect({ player, "Player" }, { placeItemRequestType, "number", "string" }, { ..., "table" })
-		:andThen(function()
-			return homeOwnerPromise
-				:andThen(function(homeOwnerUserId)
-					return if homeOwnerUserId == player.UserId
-						then Promise.resolve()
-						else Promise.reject(ResponseType.invalid)
-				end)
-				:andThen(function()
-					return PlayerDataManager.get(player):andThen(function(playerData)
-						return if playerData then Promise.resolve() else Promise.reject(ResponseType.invalid)
-					end)
-				end)
-				:andThen(function()
-					if placeItemRequestType == PlaceItemRequestType.place then
-						local placedItemData = unpack(vararg)
+	local homeOwnerUserId = getHomeOwner()
 
-						local itemId: string, pivotCFrame: CFrame = placedItemData.itemId, placedItemData.pivotCFrame
+	if not homeOwnerUserId then
+		warn "PlaceItemRequest: No home owner"
+		return PlaceItemResponseType.invalid
+	elseif homeOwnerUserId ~= player.UserId then
+		warn "PlaceItemRequest: Not home owner"
+		return PlaceItemResponseType.invalid
+	end
 
-						if typeof(itemId) ~= "string" or typeof(pivotCFrame) ~= "CFrame" then
-							warn("Invalid place item request data")
+	local playerData = PlayerDataManager.get(player)
 
-							return Promise.reject(ResponseType.invalid)
-						end
+	if not playerData then
+		warn "PlaceItemRequest: Invalid player data"
+		return PlaceItemResponseType.invalid
+	end
 
-						return HomeManager.addPlacedItem(itemId, pivotCFrame):catch(function(err)
-							warn(err)
+	if placeItemRequestType == PlaceItemRequestType.place then
+		local itemId, pivotCFrame = ...
 
-							return Promise.reject(ResponseType.error)
-						end)
-					elseif placeItemRequestType == PlaceItemRequestType.remove then
-						local itemId: string = unpack(vararg)
+		if not Param.expect({ itemId, "string" }, { pivotCFrame, "CFrame" }) then
+			warn "PlaceItemRequest: Invalid place item request data"
+			return PlaceItemResponseType.invalid
+		end
 
-						if typeof(itemId) ~= "string" then
-							warn("Invalid place item request data")
+		local success = HomeManager.addPlacedItem(itemId, pivotCFrame)
 
-							return Promise.reject(ResponseType.invalid)
-						end
+		if not success then
+			warn "PlaceItemRequest: Error placing item"
+			return PlaceItemResponseType.error
+		end
+	elseif placeItemRequestType == PlaceItemRequestType.remove then
+		local itemId = ...
 
-						return HomeManager.isItemPlaced(itemId):andThen(function(isItemPlaced)
-							return if isItemPlaced then Promise.resolve() else Promise.reject(ResponseType.invalid)
-						end):andThen(function()
-							return HomeManager.removePlacedItem(itemId):catch(function(err)
-								warn(err)
+		if not Param.expect { itemId, "string" } then
+			warn "PlaceItemRequest: Invalid remove item request data"
+			return PlaceItemResponseType.invalid
+		end
 
-								return Promise.reject(ResponseType.error)
-							end)
-						end)
-					else
-						warn("Invalid place item request type")
+		local success, isItemPlaced = HomeManager.isItemPlaced(itemId)
 
-						return Promise.reject(ResponseType.invalid)
-					end
-				end)
-		end)
-		:andThen(function()
-			return Promise.resolve(ResponseType.success)
-		end)
-		:catch(function(err)
-			warn("PlaceItemRequest error: ", tostring(err))
-			return Promise.resolve(err or ResponseType.error)
-		end)
+		if not isItemPlaced then
+			warn "PlaceItemRequest: Item not placed"
+			return PlaceItemResponseType.invalid
+		elseif not success then
+			warn "PlaceItemRequest: Error checking if item is placed"
+			return PlaceItemResponseType.error
+		end
+
+		local success = HomeManager.removePlacedItem(itemId)
+
+		if not success then
+			warn "PlaceItemRequest: Error removing item"
+			return PlaceItemResponseType.error
+		end
+	else
+		warn "PlaceItemRequest: Invalid place item request type"
+		return PlaceItemResponseType.invalid
+	end
+
+	return PlaceItemResponseType.success
 end)
