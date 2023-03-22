@@ -22,12 +22,9 @@ local PlayerJoinTimes = require(serverStorageSharedUtility.PlayerJoinTimes)
 local Signal = require(replicatedFirstUtility.Signal)
 local Promise = require(replicatedFirstUtility.Promise)
 local Types = require(replicatedFirstUtility.Types)
-local Param = require(replicatedFirstUtility.Param)
-local PlayerFormat = require(enumsFolder.PlayerFormat)
 local GameSettings = require(replicatedFirstShared.Settings.GameSettings)
 
 type PlayerData = Types.PlayerData
-type PlayerParam = Types.PlayerParam
 type Promise = Types.Promise
 type ProfileData = Types.ProfileData
 
