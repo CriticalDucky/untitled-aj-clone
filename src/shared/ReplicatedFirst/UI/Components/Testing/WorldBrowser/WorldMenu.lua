@@ -20,6 +20,7 @@ local ServerTypeGroups = require(serverFolder:WaitForChild "ServerTypeGroups")
 local ClientTeleport = require(requestsFolder:WaitForChild("Teleportation"):WaitForChild "ClientTeleport")
 local WorldOrigin = require(serverFolder:WaitForChild "WorldOrigin")
 local ResponseType = require(enumsFolder:WaitForChild "ResponseType")
+local Promise = require(utilityFolder:WaitForChild "Promise")
 
 local Value = Fusion.Value
 local New = Fusion.New
@@ -36,6 +37,21 @@ local Cleanup = Fusion.Cleanup
 
 local component = function(props)
 	local open = Value(false)
+	local enabled = Value(false)
+
+	Promise.all({
+		Promise.new(function(resolve)
+			ReplicatedServerData.getServerIdentifier()
+			resolve()
+		end),
+
+		Promise.new(function(resolve)
+			LiveServerData.initialWait()
+			resolve()
+		end),
+	}):andThen(function()
+		enabled:set(true)
+	end)
 
 	local function button(buttonProps: table)
 		return New "TextButton" {
@@ -51,13 +67,9 @@ local component = function(props)
 				local onClick = buttonProps.onClick
 				local enabled = buttonProps.enabled
 
-				if onClick then
-					onClick()
-				end
+				if onClick then onClick() end
 
-				if enabled then
-					enabled:set(not enabled:get())
-				end
+				if enabled then enabled:set(not enabled:get()) end
 			end,
 
 			[Children] = {
@@ -72,40 +84,29 @@ local component = function(props)
 
 	local function worldButton(worldIndex)
 		local errored = Value(false)
-        local layoutOrder = Value(0)
+		local layoutOrder = Value(0)
 
-        Observer(open):onChange(function()
-            if open:get() then
-
-                layoutOrder:set(worldIndex - LiveServerData.getWorldPopulation(worldIndex) * 10000)
-            end
-        end)
+		Observer(open):onChange(function()
+			if open:get() then
+ layoutOrder:set(worldIndex - LiveServerData.getWorldPopulation(worldIndex) * 10000) end
+		end)
 
 		local button = button {
 			onClick = function()
-				ClientTeleport.toWorld(worldIndex):andThen(function(response)
-					if response == ResponseType.success then
-						errored:set(true)
-					end
-				end):catch(function()
+				local success, response = ClientTeleport.toWorld(worldIndex)
+
+				if not success then
 					errored:set(true)
-				end)
+					warn("Failed to teleport to world " .. worldIndex .. ": " .. response)
+				end
 			end,
 			layoutOrder = layoutOrder,
 			text = WorldNames.get(worldIndex),
 			size = UDim2.new(1, 0, 0, 50),
 			visible = Computed(function()
-				local currentWorlds = ReplicatedServerData.getWorlds():getNow()
+				local currentWorlds = ReplicatedServerData.getWorlds()
 
-                if not currentWorlds then
-                    return false
-                end
-
-                local population = LiveServerData.getWorldPopulation(worldIndex)
-
-                if not population then
-					return false
-				end
+				if not currentWorlds then return false end
 
 				local isFirstThreeEmptyWorlds = false
 				do
@@ -121,37 +122,35 @@ local component = function(props)
 							break
 						end
 
-						if emptyWorlds >= 3 then
-							break
-						end
+						if emptyWorlds >= 3 then break end
 					end
 				end
 
 				local isDifferentWorld
 				do
 					if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
-						local serverInfo = ReplicatedServerData.getServerIdentifier():getNow()
+						local serverIdentifier = ReplicatedServerData.getServerIdentifier()
 
-                        if serverInfo then
-                            isDifferentWorld = serverInfo.worldIndex ~= worldIndex
-                        else
-                            isDifferentWorld = true
-                        end
+						if serverIdentifier then
+							isDifferentWorld = serverIdentifier.worldIndex ~= worldIndex
+						else
+							isDifferentWorld = true
+						end
 					elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.hasWorldOrigin) then
 						local worldOrigin = WorldOrigin.get():getNow()
 
-                        if worldOrigin then
-                            isDifferentWorld = worldOrigin.worldIndex ~= worldIndex
-                        else
-                            isDifferentWorld = true
-                        end
+						if worldOrigin then
+							isDifferentWorld = worldOrigin.worldIndex ~= worldIndex
+						else
+							isDifferentWorld = true
+						end
 					else
 						isDifferentWorld = true
 					end
 				end
 
 				return (
-					(isFirstThreeEmptyWorlds or (population ~= 0))
+					(isFirstThreeEmptyWorlds or (LiveServerData.getWorldPopulation(worldIndex) ~= 0))
 					and isDifferentWorld
 					and true
 				) or false
@@ -179,7 +178,7 @@ local component = function(props)
 	end
 
 	local worldButtons = Computed(function()
-		local currentWorlds = ReplicatedServerData.getWorlds():getNow()
+		local currentWorlds = ReplicatedServerData.getWorlds()
 
 		local worldButtons = {}
 
@@ -204,6 +203,7 @@ local component = function(props)
 		text = "Worlds",
 		size = UDim2.fromOffset(75, 75),
 		layoutOrder = props.layoutOrder or 1,
+		visible = enabled,
 	}
 
 	return menu, button
