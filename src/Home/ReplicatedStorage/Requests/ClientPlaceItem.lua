@@ -1,3 +1,8 @@
+--[[
+	Provides a client-side interface for placing and removing items in a home.
+	Will deem invalid requests that are not made by the home owner.
+]]
+
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
@@ -21,17 +26,9 @@ local PlaceItem = {}
 --[[
     Internal function for sending a request to the server.
 ]]
-function PlaceItem._request(placeItemRequestType: UserEnum, info: { itemId: string, pivotCFrame: CFrame? })
-	assert(
-		Table.hasValue(PlaceItemRequestType, placeItemRequestType),
-		"PlaceItem.request() called with invalid placeItemRequestType: " .. tostring(placeItemRequestType)
-	)
-
-	local PlaceItemRequest = ReplicaCollection.get "PlaceItemRequest"
-
-	return PlaceItemRequest:andThen(function(PlaceItemRequest)
-		return ReplicaRequest.new(PlaceItemRequest, placeItemRequestType, info)
-	end)
+local function request(placeItemRequestType: UserEnum, info: { itemId: string, pivotCFrame: CFrame? })
+	local placeItemRequestReplica = ReplicaCollection.get "PlaceItemRequest"
+	return ReplicaRequest.new(placeItemRequestReplica, placeItemRequestType, info)
 end
 
 --[[
@@ -39,7 +36,7 @@ end
     Returns a promise that resolves when the item is placed.
 ]]
 function PlaceItem.place(itemId: string, pivotCFrame: CFrame)
-	return PlaceItem._request(PlaceItemRequestType.place, {
+	return request(PlaceItemRequestType.place, {
 		itemId = itemId,
 		pivotCFrame = pivotCFrame,
 	})
@@ -50,7 +47,7 @@ end
     Returns a promise that resolves when the item is removed.
 ]]
 function PlaceItem.remove(itemId: string)
-	return PlaceItem._request(PlaceItemRequestType.remove, {
+	return request(PlaceItemRequestType.remove, {
 		itemId = itemId,
 	})
 end
