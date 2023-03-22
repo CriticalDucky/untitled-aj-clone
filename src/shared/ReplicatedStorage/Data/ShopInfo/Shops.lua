@@ -10,10 +10,10 @@ local ItemCategory = require(enumsFolder:WaitForChild("ItemCategory"))
 local AccessoryTypeEnum = require(enumsFolder:WaitForChild("AccessoryType"))
 local FurnitureTypeEnum = require(enumsFolder:WaitForChild("FurnitureType"))
 local HomeTypeEnum = require(enumsFolder:WaitForChild("HomeType"))
-local TimeRange = require(utilityFolder:WaitForChild("TimeRange"))
+local Time = require(utilityFolder:WaitForChild("Time"))
 
-local timeRange = TimeRange.new
-local group = TimeRange.newGroup
+local timeRange = Time.newRange
+local group = Time.newGroup
 
 return {
     [ShopTypeEnum.test1] = {
