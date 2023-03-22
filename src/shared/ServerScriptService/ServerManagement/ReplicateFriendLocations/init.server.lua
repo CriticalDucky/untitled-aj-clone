@@ -1,6 +1,5 @@
-local Players = game:GetService("Players")
-local ReplicatedFirst = game:GetService("ReplicatedFirst")
-local ServerStorage = game:GetService("ServerStorage")
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
+local ServerStorage = game:GetService "ServerStorage"
 
 local serverStorageShared = ServerStorage.Shared
 local replicatedFirstShared = ReplicatedFirst.Shared
@@ -11,22 +10,17 @@ local serverUtility = serverStorageShared.Utility
 local PlayerLocation = require(serverUtility.PlayerLocation)
 local GetFriends = require(utilityFolder.GetFriends)
 local PlayerDataManager = require(dataFolder.PlayerDataManager)
-local Types = require(utilityFolder.Types)
-
-type PlayerData = Types.PlayerData
 
 PlayerDataManager.forAllPlayerData(function(playerData)
-    local player = playerData.player
+	local player = playerData.player
 
-    local friends = GetFriends(player.UserId):expect()
+	local friends = GetFriends(player.UserId)
 
-    for _, friend in pairs(friends) do
-        PlayerLocation.get(friend.Id):andThen(function(location)
-            if location then
-                playerData:setValue({"friendLocations", "locations", friend.Id}, location)
-            end
-        end):catch(function(err)
-            warn("Error getting friend location: " .. tostring(err))
-        end)
-    end
+	for _, friendData in pairs(friends) do
+		local playerLocation = PlayerLocation.get(friendData.Id)
+
+		if playerLocation then
+			playerData:setValue({ "friendLocations", "locations", friendData.Id }, playerLocation)
+		end
+	end
 end)
