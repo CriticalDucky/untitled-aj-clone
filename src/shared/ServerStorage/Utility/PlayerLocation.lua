@@ -1,16 +1,21 @@
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
 
 local replicatedStorageShared = ReplicatedStorage.Shared
+local utilityFolder = ReplicatedFirst.Shared.Utility
 local enumsFolder = replicatedStorageShared.Enums
 
 local LiveServerData = require(replicatedStorageShared.Server.LiveServerData)
 local ServerTypeEnum = require(enumsFolder.ServerType)
+local Types = require(utilityFolder.Types)
+
+type ServerIdentifier = Types.ServerIdentifier
 
 local PlayerLocation = {}
 
 -- Gets the server identifier of the specified player, if they are online.
 -- If they are not online, returns nil.
-function PlayerLocation.get(userId: number)
+function PlayerLocation.get(userId: number): ServerIdentifier?
 	local liveServerData = LiveServerData.get()
 
 	if not liveServerData then return nil end
