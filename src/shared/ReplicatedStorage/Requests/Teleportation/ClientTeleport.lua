@@ -307,7 +307,7 @@ end
 
 --[[
 	Initializes a client-requested rejoin.
-	Guaranteed to succeed, *do not expect a response.*
+	Guaranteed to succeed, does not return anything.
 
 	No rejoin reason providable due to security reasons
 
@@ -316,7 +316,7 @@ end
 	```
 ]]
 function ClientTeleport.rejoin()
-	return requestTeleport(TeleportRequestType.rejoin)
+	requestTeleport(TeleportRequestType.rejoin)
 end
 
 return ClientTeleport
