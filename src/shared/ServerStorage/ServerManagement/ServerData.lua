@@ -266,7 +266,7 @@ function ServerData.get(key: string)
 end
 
 -- Returns the retriaval success and data for the worlds key.
-function ServerData.getWorlds()
+function ServerData.getWorlds(): (boolean, table)
 	return ServerData.get(WORLDS_KEY)
 end
 
@@ -306,7 +306,7 @@ function ServerData.getWorld(worldIndex: number)
 end
 
 -- Returns the retriaval success and data for the given `partyType` and `partyIndex`.
-function ServerData.getParty(partyType: UserEnum, partyIndex: number)
+function ServerData.getParty(partyType: UserEnum, partyIndex: number): (boolean, table)
 	assert(type(partyIndex) == "number", "Party index must be a number. Received " .. typeof(partyIndex))
 
 	local success, data = ServerData.getParties(partyType)
@@ -600,10 +600,13 @@ end
 --[[
 	Takes in a worldIndex along with an optional table with excluded locations.
 	Based on population info, it will return the first available location.
+
 	Returns a success value and a result that is either the location enum (if it exists) or an error message.
+
 	**WARNING**: This function is not guaranteed to return a location, even if it succeeds.
+	This would mean that the world simply has no available locations (all locations are full).
 ]]
-function ServerData.findAvailableLocation(worldIndex: number, locationsExcluded: { UserEnum }?)
+function ServerData.findAvailableLocation(worldIndex: number, locationsExcluded: { UserEnum }?): (boolean, UserEnum?)
 	assert(type(worldIndex) == "number", "World index must be a number. Got: " .. typeof(worldIndex))
 
 	local locationEnum
@@ -646,7 +649,7 @@ end
 
 	Returns a success value and a result that is either the world index (if it exists) or an error message.
 ]]
-function ServerData.findAvailableWorld(forcedLocation: { UserEnum }, worldsExcluded: { number })
+function ServerData.findAvailableWorld(forcedLocation: { UserEnum }, worldsExcluded: { number }): (boolean, number)
 	local success, worlds = ServerData.getWorlds()
 
 	if not success then
