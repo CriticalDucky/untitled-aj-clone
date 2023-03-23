@@ -1,6 +1,7 @@
-local ReplicatedFirst = game:GetService("ReplicatedFirst")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ServerStorage = game:GetService("ServerStorage")
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
+local ReplicatedStorage = game:GetService "ReplicatedStorage"
+local RunService = game:GetService("RunService")
+local ServerStorage = game:GetService "ServerStorage"
 
 local replicatedStorageShared = ReplicatedStorage.Shared
 local replicatedFirstShared = ReplicatedFirst.Shared
@@ -16,7 +17,7 @@ local ReplicaService = require(dataFolder.ReplicaService)
 local Teleport = require(teleportationFolder.Teleport)
 local Table = require(utilityFolder.Table)
 local TeleportRequestType = require(enumsFolder.TeleportRequestType)
-local ResponseType = require(enumsFolder.ResponseType)
+local TeleportResponseType = require(enumsFolder.TeleportResponseType)
 local ActiveParties = require(serverFolder.ActiveParties)
 local ReplicaResponse = require(serverStorageSharedUtility.ReplicaResponse)
 local Param = require(utilityFolder.Param)
@@ -24,61 +25,110 @@ local Promise = require(utilityFolder.Promise)
 local ServerGroupEnum = require(enumsFolder.ServerGroup)
 local ServerTypeGroups = require(serverFolder.ServerTypeGroups)
 
-local TeleportRequest = ReplicaService.NewReplica({
-    ClassToken = ReplicaService.NewClassToken("TeleportRequest"),
-    Replication = "All"
-})
+local Types = require(utilityFolder.Types)
+
+type Promise = Types.Promise
+
+local TeleportRequest = ReplicaService.NewReplica {
+	ClassToken = ReplicaService.NewClassToken "TeleportRequest",
+	Replication = "All",
+}
 
 ReplicaResponse.listen(TeleportRequest, function(player: Player, teleportRequestType, ...)
-    local vararg = {...}
+	if ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
+		warn "Routing server received a teleport request. This should never happen."
+		return false, TeleportResponseType.invalid
+	end
 
-    if ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
-        return Promise.reject(ResponseType.invalid)
-    end
+	if not Param.expect { teleportRequestType, "string" } then
+		warn "Invalid request: teleportRequestType is nil or invalid"
+		return false, TeleportResponseType.invalid
+	end
 
-    return Param.expect({teleportRequestType, "number"}):andThen(function()
-        if teleportRequestType == TeleportRequestType.toWorld then
-            local worldIndex = table.unpack(vararg)
+	if teleportRequestType == TeleportRequestType.toWorld then
+		local worldIndex = ...
 
-            return Param.expect({worldIndex, "number"}):andThen(function()
-                return Teleport.toWorld(player, worldIndex)
-            end)
-        elseif teleportRequestType == TeleportRequestType.toLocation then
-            local locationEnum = table.unpack(vararg)
-    
-            return Param.expect({locationEnum, "number", "string"}):andThen(function()
-                return Teleport.toLocation(player, locationEnum)
-            end)
-        elseif teleportRequestType == TeleportRequestType.toFriend then
-            local targetPlayerId = table.unpack(vararg)
-            
-            return Param.expect({targetPlayerId, "number"}):andThen(function()
-                return Teleport.toFriend(player, targetPlayerId)
-            end)
-        elseif teleportRequestType == TeleportRequestType.toParty then
-            local partyType = table.unpack(vararg)
-    
-            return Param.expect({partyType, "number"}):andThen(function()
-                if partyType ~= ActiveParties.getActiveParty().partyType then
-                    return Promise.reject(ResponseType.disabled)
-                end
-                
-                return Teleport.toParty(player, partyType)
-            end)
-        elseif teleportRequestType == TeleportRequestType.toHome then
-            local homeOwnerUserId = table.unpack(vararg)
+		if not Param.expect { worldIndex, "number" } then
+			warn "Invalid request: worldIndex is nil or invalid"
+			return false, TeleportResponseType.invalid
+		end
 
-            return Param.expect({homeOwnerUserId, "number"}):andThen(function()
-                return Teleport.toHome(player, homeOwnerUserId)
-            end)
-        elseif teleportRequestType == TeleportRequestType.rejoin then
-            return Teleport.rejoin(player, "An unknown error occured on the client. (err code C1)")
+		local success, result = Teleport.toWorld(player, worldIndex)
+
+        if success then
+            return result[1]:await()
         else
-            warn("Invalid request: teleportRequestType is nil or invalid")
-    
-            return Promise.reject(ResponseType.invalid)
+            return false, result
         end
-    end):andThen(function()
-        return Promise.resolve(ResponseType.success)
-    end)
+	elseif teleportRequestType == TeleportRequestType.toLocation then
+		local locationEnum = ...
+
+		if not Param.expect { locationEnum, "string" } then
+            warn "Invalid request: locationEnum is nil or invalid"
+            return false, TeleportResponseType.invalid
+        end
+
+        local success, result = Teleport.toLocation(player, locationEnum)
+
+        if success then
+            return result[1]:await()
+        else
+            return false, result
+        end
+	elseif teleportRequestType == TeleportRequestType.toFriend then
+		local targetPlayerId = ...
+
+        if not Param.expect { targetPlayerId, "number" } then
+            warn "Invalid request: targetPlayerId is nil or invalid"
+            return false, TeleportResponseType.invalid
+        end
+
+        local success, result = Teleport.toPlayer(player, targetPlayerId)
+
+        if success then
+            return result[1]:await()
+        else
+            return false, result
+        end
+	elseif teleportRequestType == TeleportRequestType.toParty then
+		local partyType = ...
+
+        if not Param.expect { partyType, "number" } then
+            warn "Invalid request: partyType is nil or invalid"
+            return false, TeleportResponseType.invalid
+        end
+
+        if partyType ~= ActiveParties.getActiveParty().partyType then
+            return false, TeleportResponseType.disabled
+        end
+
+        local success, result = Teleport.toParty(player, partyType)
+
+        if success then
+            return result[1]:await()
+        else
+            return false, result
+        end
+	elseif teleportRequestType == TeleportRequestType.toHome then
+		local homeOwnerUserId = ...
+
+        if not Param.expect { homeOwnerUserId, "number" } then
+            warn "Invalid request: homeOwnerUserId is nil or invalid"
+            return false, TeleportResponseType.invalid
+        end
+
+        local success, result = Teleport.toHome(player, homeOwnerUserId)
+
+        if success then
+            return result[1]:await()
+        else
+            return false, result
+        end
+	elseif teleportRequestType == TeleportRequestType.rejoin then
+		Teleport.rejoin(player, "An unknown error occured on the client. (err code C1)")
+	else
+		warn "Invalid request: teleportRequestType is nil or invalid"
+
+		return false, TeleportResponseType.invalid
+	end
 end)
