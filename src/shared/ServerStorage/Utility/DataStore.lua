@@ -1,6 +1,6 @@
 -- Helper functions for simple datastore requests for actions that don't require major wrappers like ProfileService
 
-local DEBUG = true
+local DEBUG = false
 
 local DATASTORE_MAX_RETRIES = 10
 
