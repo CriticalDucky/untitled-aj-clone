@@ -24,7 +24,6 @@ print(
                             //_/
       
        Hello F9 user. Here's an airplane.
-       Airplanes are birds and you cannot convince me otherwise.
 
        -----------------------------------------------
     ]]
