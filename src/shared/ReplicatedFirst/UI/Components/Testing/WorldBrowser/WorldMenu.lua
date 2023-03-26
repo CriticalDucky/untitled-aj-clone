@@ -97,7 +97,7 @@ local component = function(props)
 
 				if not success then
 					errored:set(true)
-					warn("Failed to teleport to world " .. worldIndex .. ": " .. response)
+					warn("Failed to teleport to world " .. worldIndex .. ": ", response)
 				end
 			end,
 			layoutOrder = layoutOrder,
@@ -137,10 +137,10 @@ local component = function(props)
 							isDifferentWorld = true
 						end
 					elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.hasWorldOrigin) then
-						local worldOrigin = WorldOrigin.get():getNow()
+						local worldOrigin = WorldOrigin.get()
 
 						if worldOrigin then
-							isDifferentWorld = worldOrigin.worldIndex ~= worldIndex
+							isDifferentWorld = worldOrigin ~= worldIndex
 						else
 							isDifferentWorld = true
 						end
