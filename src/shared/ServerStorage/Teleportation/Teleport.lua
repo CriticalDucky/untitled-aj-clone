@@ -70,7 +70,7 @@ function Teleport.getOptions(player: Player, teleportData: {}?)
 
 	local teleportOptions = Instance.new "TeleportOptions"
 
-	teleportOptions:SetTeleportData(Table.append(teleportData, {
+	teleportOptions:SetTeleportData(Table.merge(teleportData, {
 		locationFrom = locationEnum,
 		worldOrigin = worldIndex,
 	}))
@@ -150,13 +150,7 @@ function Teleport.go(
 ): (boolean, { [Player]: Promise } | typeof(TeleportResponseType))
 	players = if type(players) == "table" then players else { players }
 
-	if teleportOptions == nil then
-		local success, options = Teleport.getOptions(players[1]) -- Just use the first player's options
-
-		if not success then return false, TeleportResponseType.error end
-
-		teleportOptions = options
-	end
+	teleportOptions = teleportOptions or Teleport.getOptions(players[1])
 
 	local function teleportAsync()
 		return Promise.try(function()
@@ -474,7 +468,7 @@ function Authorize.toHome(
 		return false, TeleportResponseType.invalid
 	end
 
-	local success, isStamped = HomeManager.isHomeInfoStamped(homeOwnerUserId)
+	local success, isStamped = HomeManager.isHomeIdentifierStamped(homeOwnerUserId)
 
 	if not success then
 		warn "Teleport.toHome: failed to check if home is stamped"
@@ -515,7 +509,11 @@ function Authorize.toPlayer(players: { Player } | Player, targetPlayer: number)
 
 	local serverIdentifier = PlayerLocation.get(targetPlayer)
 
-	if not serverIdentifier then return false, TeleportResponseType.invalid end
+	if not serverIdentifier then
+		warn "Teleport.toPlayer: player is not in a server"
+
+		return false, TeleportResponseType.invalid
+	end
 
 	local serverType = serverIdentifier.serverType
 
@@ -527,32 +525,52 @@ function Authorize.toPlayer(players: { Player } | Player, targetPlayer: number)
 	end
 
 	if not ServerTypeGroups.serverInGroup(ServerGroupEnum.isWorldBased, serverType) then
+		warn "Teleport.toPlayer: server is not world based"
+
 		return false, TeleportResponseType.invalid
 	elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation, serverType) then
 		local isAllowed, responseType =
 			Authorize.toLocation(players, serverIdentifier.locationEnum, serverIdentifier.worldIndex)
 
-		if not isAllowed then return false, responseType end
+		if not isAllowed then
+			warn "Teleport.toPlayer: unauthorized to teleport to location"
+
+			return false, responseType
+		end
 
 		return true, serverType, serverIdentifier.locationEnum, serverIdentifier.worldIndex
 	elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isParty, serverType) then
 		local isAllowed, responseType =
 			Authorize.toParty(players, serverIdentifier.partyType, serverIdentifier.partyIndex)
 
-		if not isAllowed then return false, responseType end
+		if not isAllowed then
+			warn "Teleport.toPlayer: unauthorized to teleport to party"
+
+			return false, responseType
+		end
 
 		return true, serverType, serverIdentifier.partyType, serverIdentifier.partyIndex
 	elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome, serverType) then
-		if #players > 1 then return false, TeleportResponseType.invalid end
+		if #players > 1 then
+			warn "Teleport.toPlayer: cannot teleport multiple players to a home"
+
+			return false, TeleportResponseType.invalid
+		end
 
 		local isAllowed, responseType = Authorize.toHome(players[1], serverIdentifier.homeOwner)
 
-		if not isAllowed then return false, responseType end
+		if not isAllowed then
+			warn "Teleport.toPlayer: unauthorized to teleport to home"
+
+			return false, responseType
+		end
 
 		return true, serverType, serverIdentifier.homeOwner
 	elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isGame, serverType) then
 		return
 	else
+		warn "Teleport.toPlayer: server is not a valid server type"
+
 		return false, TeleportResponseType.invalid
 	end
 end
@@ -579,7 +597,7 @@ function Teleport.toLocation(
 	local isAllowed, responseType = Authorize.toLocation(players, locationEnum, worldIndex)
 
 	if not isAllowed then
-		warn("Teleport.toLocation: failed to authorize teleport to location " .. locationEnum)
+		warn("Teleport.toLocation: failed to authorize teleport to location ", locationEnum)
 
 		return false, responseType
 	end
@@ -637,7 +655,7 @@ function Teleport.toWorld(players: { Player } | Player, worldIndex: number, loca
 	local success, promiseTable = Teleport.toLocation(players, locationEnum, worldIndex)
 
 	if not success then
-		warn("Teleport.toWorld: failed to teleport to location " .. locationEnum)
+		warn("Teleport.toWorld: failed to teleport to location ", locationEnum)
 
 		return false, promiseTable -- promiseTable is actually a TeleportResponseType
 	end
@@ -647,7 +665,7 @@ function Teleport.toWorld(players: { Player } | Player, worldIndex: number, loca
 		For each promise, if the teleport fails, we'll try to find another location to teleport to.
 		Finally, we'll return the newly-edited promiseTable.
 	]]
-	return Table.map(promiseTable, function(player: Player, promise: Promise)
+	return true, Table.map(promiseTable, function(player: Player, promise: Promise)
 		return promise:catch(function(teleportResult: Enum.TeleportResult)
 			if teleportResult == Enum.TeleportResult.GameFull then
 				locationsExcluded = Table.append(locationsExcluded, { locationEnum })
@@ -665,7 +683,7 @@ function Teleport.toWorld(players: { Player } | Player, worldIndex: number, loca
 				if success then
 					return result[player]
 				else
-					warn("Teleport.toWorld: failed to teleport to location " .. location)
+					warn("Teleport.toWorld: failed to teleport to location ", location)
 
 					return Promise.reject(result) -- result is a TeleportResponseType or a table of promises
 				end
@@ -730,7 +748,7 @@ function Teleport.toHome(
 	local isAllowed, response = Authorize.toHome(player, homeOwnerUserId)
 
 	if not isAllowed then
-		warn("Teleport.toHome: failed to authorize teleport to home " .. homeOwnerUserId)
+		warn("Teleport.toHome: failed to authorize teleport to home ", homeOwnerUserId)
 
 		return false, response
 	end
@@ -779,7 +797,11 @@ function Teleport.toPlayer(
 		return Teleport.toParty(players, partyType, partyIndex)
 	elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome, serverType) then
 		-- If there are multiple players, we can't teleport them to a home.
-		if #players > 1 then return false, TeleportResponseType.invalid end
+		if #players > 1 then
+			warn("Teleport.toPlayer: cannot teleport multiple players to a home")
+
+			return false, TeleportResponseType.invalid
+		end
 
 		return Teleport.toHome(players[1], targetPlayerId)
 	elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isGame, serverType) then
@@ -810,7 +832,7 @@ function Teleport.rejoin(
 		rejoinReason = reason,
 	})
 
-	local success, result Teleport.go(
+	local success, result = Teleport.go(
 		players,
 		GameSettings.routePlaceId,
 		teleportOptions
@@ -837,14 +859,10 @@ end
 	Always specify a reason.
 ]]
 function Teleport.bootServer(reason)
-	local serverBootingEnabled = true
-
-	if not serverBootingEnabled then
+	if not SERVER_BOOTING_ENABLED then
 		warn("SERVER BOOT: " .. reason)
 		return
 	end
-
-	local rejoinFailedText = "[REJOIN FAILED] " .. (reason or "Unspecified reason")
 
 	local function boot()
 		Teleport.rejoin(Players:GetPlayers(), reason)
