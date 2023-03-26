@@ -164,21 +164,35 @@ end
 ]]
 function HomeManager.getHome(userId: number?, slot: string | number | nil): (boolean, InventoryItem?)
 	userId = userId or getHomeOwner()
+	assert(userId, "userId is nil, and it is not a home server.")
 
 	local homes = InventoryManager.getHomes(userId)
 
 	if not homes then return false end
 
 	if type(slot) == "string" then
-		return InventoryManager.getItemFromId(homes, slot)
+		for _, home in pairs(homes) do
+			if home.id == slot then return true, home end
+		end
+
+		return true
 	elseif type(slot) == "number" then
 		return true, homes[slot]
 	else -- type(slot) == "nil"
-		local selectedHomeId = HomeManager.getSelectedHomeId(userId)
+		local success, selectedHomeId = HomeManager.getSelectedHomeId(userId)
 
-		local success, item = InventoryManager.getItemFromId(homes, selectedHomeId)
+		if not success then return false end
 
-		return success, item -- We don't want to return the extra data from getItemFromId
+		local item
+
+		for _, home in pairs(homes) do
+			if home.id == selectedHomeId then
+				item = home
+				break
+			end
+		end
+
+		return true, item
 	end
 end
 
@@ -202,29 +216,17 @@ function HomeManager.getHomeServerInfo(userId: number?): HomeServerInfo
 end
 
 --[[
-	Gets whether the home server info of a player or homeowner is stamped. The player does not need to be in this server.
-	Home server info is stamped when a player's home server info is set in their profile.
+	Gets whether the home serverIdentifier is stamped. The player does not need to be in this server.
+	Returns a success boolean and the stamped status of the home serverIdentifier if successful.
 
-	Essentially, we're making sure privateServerId and serverCode are not nil.
-
-	```lua
-	homeServerInfo = {
-		privateServerId = string,
-		serverCode = string,
-	},
-	```
-
-	Returns a success boolean and the stamped status of the home server info if successful.
+	A home serverIdentifier is stamped if, in the ServerData datastore, the privateServerId key has the serverIdentifier.
 ]]
-function HomeManager.isHomeInfoStamped(userId: number?): (boolean, boolean?)
+function HomeManager.isHomeIdentifierStamped(userId: number?): (boolean, boolean?)
 	userId = userId or getHomeOwner()
 
 	local profile = PlayerDataManager.viewPlayerProfile(userId)
-	local homeServerInfo = HomeManager.getHomeServerInfo(userId)
 
-	if profile and homeServerInfo then
-		return true, (homeServerInfo.privateServerId and homeServerInfo.serverCode) and true or false
-	end
+	if profile then return true, profile.playerInfo.homeInfoStamped end
 
 	return false
 end
@@ -611,6 +613,8 @@ function HomeManager.unloadHome()
 end
 
 PlayerDataManager.forAllPlayerData(function(playerData: PlayerData)
+	ServerData.getServerIdentifier() -- Make sure server identifier is get
+
 	local function onError() -- If initialization failed for a player
 		warn "HomeManager: Initialization failed for player."
 	end
@@ -625,6 +629,8 @@ PlayerDataManager.forAllPlayerData(function(playerData: PlayerData)
 		})
 	end
 
+	homes = InventoryManager.getHomes(userId) -- Refresh homes variable
+
 	local success, selectedHomeId = HomeManager.getSelectedHomeId(userId)
 
 	if not success then
@@ -638,7 +644,7 @@ PlayerDataManager.forAllPlayerData(function(playerData: PlayerData)
 		HomeManager.setSelectedHomeId(userId, homes[1].id)
 	end
 
-	local success, homeServerInfo = HomeManager.getHomeServerInfo(userId)
+	local homeServerInfo = HomeManager.getHomeServerInfo(userId)
 
 	if not success then
 		warn "HomeManager: Failed to get home server info"
@@ -650,9 +656,9 @@ PlayerDataManager.forAllPlayerData(function(playerData: PlayerData)
 	if not (homeServerInfo and homeServerInfo.privateServerId and homeServerInfo.serverCode) then
 		local function getReservedServer()
 			return Promise.try(function()
-				local success, code, privateServerId = TeleportService:ReserveServer(GameSettings.homePlaceId)
+				local code, privateServerId = TeleportService:ReserveServer(GameSettings.homePlaceId)
 
-				if success and code and privateServerId then
+				if code and privateServerId then
 					return code, privateServerId
 				else
 					return Promise.reject()
@@ -660,14 +666,14 @@ PlayerDataManager.forAllPlayerData(function(playerData: PlayerData)
 			end)
 		end
 
-		local success = Promise.retry(getReservedServer, 5):andThen(function(code, privateServerId)
-			playerData
-				:setValue({ "playerInfo", "homeServerInfo" }, {
+		local success = Promise.retry(getReservedServer, 5)
+			:andThen(function(code, privateServerId)
+				playerData:setValue({ "playerInfo", "homeServerInfo" }, {
 					serverCode = code,
 					privateServerId = privateServerId,
 				})
-				:await()
-		end)
+			end)
+			:await()
 
 		if not success then
 			warn "HomeManager: Failed to get reserved server"
@@ -677,7 +683,7 @@ PlayerDataManager.forAllPlayerData(function(playerData: PlayerData)
 		end
 	end
 
-	local success, isStamped = HomeManager.isHomeInfoStamped(userId)
+	local success, isStamped = HomeManager.isHomeIdentifierStamped(userId)
 
 	if not success then
 		warn "HomeManager: Failed to get home info stamped"
@@ -687,13 +693,17 @@ PlayerDataManager.forAllPlayerData(function(playerData: PlayerData)
 	end
 
 	if not isStamped then
+		print "Stamping home server..."
+
 		local success, response = ServerData.stampHomeServer(playerData)
 
 		if not success then
-			warn("HomeManager: Failed to stamp home server: " .. response)
+			warn("HomeManager: Failed to stamp home server: ", response)
 
 			onError()
 			return
+		else
+			print "Successfully stamped home server!"
 		end
 	end
 
@@ -732,9 +742,7 @@ PlayerDataManager.forAllPlayerData(function(playerData: PlayerData)
 				return
 			end
 
-			if not doesOwn then
-				HomeManager.unloadPlacedItem(select(2, HomeManager.getPlacedItemFromId(itemId)))
-			end
+			if not doesOwn then HomeManager.unloadPlacedItem(select(2, HomeManager.getPlacedItemFromId(itemId))) end
 		end
 	end
 end)
@@ -767,13 +775,11 @@ InventoryManager.itemRemovedFromInventory:Connect(
 				return
 			end
 
-			if isPlaced then
-				HomeManager.removePlacedItem(item.id, player.UserId)
-			end
+			if isPlaced then HomeManager.removePlacedItem(item.id, player.UserId) end
 		end
 	end
 )
 
-if isHomeServer then HomeManager.loadHome() end
+if isHomeServer then task.spawn(HomeManager.loadHome) end
 
 return HomeManager
