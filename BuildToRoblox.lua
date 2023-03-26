@@ -11,7 +11,9 @@
 
     Add a folder called "BuiltProjects" to the root of your project. This is where the built projects will be stored.
 
-	Command (make sure you have remodel installed on your PATH): remodel --run BuildToRoblox.lua
+	Command (make sure you have remodel installed on your PATH): 
+
+	remodel run BuildToRoblox.lua
 ]]
 
 local TESTING_MODE = false -- DO NOT TOUCH THIS! DANGEROUS!
