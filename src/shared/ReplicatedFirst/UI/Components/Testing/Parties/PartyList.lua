@@ -114,7 +114,7 @@ local component = function(props)
 						local success, response = ClientTeleport.toParty(activeParty.partyType)
 						
 						if not success then
-							warn("Failed to teleport to party: " .. response)
+							warn("Failed to teleport to party", response)
 
 							errored:set(true)
 						end
