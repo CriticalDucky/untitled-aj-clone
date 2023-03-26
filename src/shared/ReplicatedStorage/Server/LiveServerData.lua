@@ -114,10 +114,9 @@ local LocalServerInfo = require(serverFolder.LocalServerInfo)
 local ServerTypeEnum = require(enumsFolder.ServerType)
 local GameSettings = require(replicatedFirstShared.Settings.GameSettings)
 local Table = require(utilityFolder.Table)
-local GetServerFillInfo = require(serverFolder.GetServerFillInfo)
 local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
 local ServerTypeGroups = require(serverFolder:WaitForChild "ServerTypeGroups")
-local Games = require(serverFolder:WaitForChild "Games")
+local Minigames = require(serverFolder:WaitForChild "Minigames")
 local Parties = require(serverFolder:WaitForChild "Parties")
 local Locations = require(serverFolder:WaitForChild "Locations")
 local Promise = require(utilityFolder.Promise)
@@ -278,7 +277,7 @@ if RunService:IsServer() then
 		local serverType = serverIdentifier.serverType
 		local serverInfo = message.serverInfo
 
-		assert(serverType and serverIdentifier and serverInfo, "LiveServerData: Received invalid message from server")
+		assert(serverType, "LiveServerData: Received invalid message from server")
 
 		local cachedServerType = cachedData[serverType]
 
@@ -347,14 +346,14 @@ if RunService:IsServer() then
 elseif RunService:IsClient() then -- Client
 	local ReplicaCollection = require(replicatedStorageShared.Replication.ReplicaCollection)
 
-	local replicaData = ReplicaCollection.get("LiveServerData").Data
+	local replicaData = ReplicaCollection.get("LiveServerData")
 
-	dataValue = Value(replicaData) -- Simple convenience for UI development
+	dataValue = Value(replicaData.Data) -- Simple convenience for UI development
 	-- Because of this, whenever we call any of the functions below,
 	-- UI will dynamically update when the data is updated (as long as it's called from a Computed).
 
 	replicaData:ListenToRaw(function()
-		dataValue:set(replicaData)
+		dataValue:set(replicaData.Data)
 	end)
 end
 
@@ -592,7 +591,7 @@ function LiveServerData.getPopulationInfo(serverIdentifier: ServerIdentifier)
 		elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isGame, serverType) then
 			local gameType = serverIdentifier.gameType
 
-			local gameInfo = Games[gameType]
+			local gameInfo = Minigames[gameType]
 
 			if gameInfo then
 				local populationInfo = gameInfo.populationInfo
