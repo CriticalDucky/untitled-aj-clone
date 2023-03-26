@@ -15,8 +15,8 @@ local ServerTypeGroups = require(serverFolder.ServerTypeGroups)
 if not ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
 	local success, result = ServerData.getServerIdentifier()
 
-    if not success then
-        Teleport.bootServer "An internal server error occurred. Please try again later. (err code SCF1)"
+    if not success or not result then
+        Teleport.bootServer "An internal server error occurred. (err code SCF1)"
         return
     end
 end
