@@ -46,6 +46,10 @@ local runServiceConnection = RunService.Heartbeat:Connect(function()
 
         serverInfo.players = getUserIds()
 
+        if not serverIdentifier then
+            return
+        end
+
         LiveServerData.publish(serverIdentifier, serverInfo)
     end
 end)
