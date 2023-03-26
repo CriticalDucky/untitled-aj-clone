@@ -40,7 +40,7 @@ ReplicaResponse.listen(TeleportRequest, function(player: Player, teleportRequest
 		return false, TeleportResponseType.invalid
 	end
 
-	if not Param.expect { teleportRequestType, "string" } then
+	if not Param.expect { teleportRequestType, "string", "number" } then
 		warn "Invalid request: teleportRequestType is nil or invalid"
 		return false, TeleportResponseType.invalid
 	end
@@ -56,8 +56,9 @@ ReplicaResponse.listen(TeleportRequest, function(player: Player, teleportRequest
 		local success, result = Teleport.toWorld(player, worldIndex)
 
         if success then
-            return result[1]:await()
+            return result[player]:await()
         else
+            warn("Teleport to world failed: " .. tostring(result))
             return false, result
         end
 	elseif teleportRequestType == TeleportRequestType.toLocation then
@@ -71,8 +72,9 @@ ReplicaResponse.listen(TeleportRequest, function(player: Player, teleportRequest
         local success, result = Teleport.toLocation(player, locationEnum)
 
         if success then
-            return result[1]:await()
+            return result[player]:await()
         else
+            warn("Teleport to location failed: " .. tostring(result))
             return false, result
         end
 	elseif teleportRequestType == TeleportRequestType.toFriend then
@@ -86,8 +88,9 @@ ReplicaResponse.listen(TeleportRequest, function(player: Player, teleportRequest
         local success, result = Teleport.toPlayer(player, targetPlayerId)
 
         if success then
-            return result[1]:await()
+            return result[player]:await()
         else
+            warn("Teleport to player failed: " .. tostring(result))
             return false, result
         end
 	elseif teleportRequestType == TeleportRequestType.toParty then
@@ -99,14 +102,18 @@ ReplicaResponse.listen(TeleportRequest, function(player: Player, teleportRequest
         end
 
         if partyType ~= ActiveParties.getActiveParty().partyType then
+            warn "Invalid request: partyType is not the same as the player's active party"
+
             return false, TeleportResponseType.disabled
         end
 
         local success, result = Teleport.toParty(player, partyType)
 
         if success then
-            return result[1]:await()
+            return result[player]:await()
         else
+            warn("Teleport to party failed: " .. tostring(result))
+
             return false, result
         end
 	elseif teleportRequestType == TeleportRequestType.toHome then
@@ -120,8 +127,9 @@ ReplicaResponse.listen(TeleportRequest, function(player: Player, teleportRequest
         local success, result = Teleport.toHome(player, homeOwnerUserId)
 
         if success then
-            return result[1]:await()
+            return result[player]:await()
         else
+            warn("Teleport to home failed: " .. tostring(result))
             return false, result
         end
 	elseif teleportRequestType == TeleportRequestType.rejoin then
