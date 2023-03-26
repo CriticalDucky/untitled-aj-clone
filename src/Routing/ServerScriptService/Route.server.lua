@@ -38,7 +38,7 @@ local function playerAdded(player: Player)
 		local isAllowed = Teleport.Authorize.toPlayer(player, followUserId)
 
 		if not isAllowed then
-			warn("Player " .. player.Name .. " tried to follow " .. followUserId .. " but was not allowed")
+			warn("Player ", player.Name, " tried to follow ", followUserId, " but was not allowed")
 
 			return routeToWorld(player)
 		end
@@ -46,7 +46,7 @@ local function playerAdded(player: Player)
 		local success, result = Teleport.toPlayer(player, followUserId)
 
 		if not success then
-			warn("Player " .. player.Name .. " tried to follow " .. followUserId .. " but failed to teleport")
+			warn("Player ", player.Name, " tried to follow ", followUserId, " but failed to teleport to them")
 
 			return routeToWorld(player)
 		end
