@@ -11,7 +11,7 @@ local serverFolder = replicatedStorageShared.Server
 local ServerTypeEnum = require(enumsFolder:WaitForChild("ServerType"))
 local Locations = require(serverFolder:WaitForChild("Locations"))
 local Parties = require(serverFolder:WaitForChild("Parties"))
-local Games = require(serverFolder:WaitForChild("Games"))
+local Minigames = require(serverFolder:WaitForChild("Minigames"))
 local GameSettings = require(replicatedFirstShared:WaitForChild("Settings"):WaitForChild("GameSettings"))
 
 local isServer = RunService:IsServer()
@@ -30,7 +30,7 @@ local serverType do
         end
     end
 
-    for _, gameInfo in pairs(Games) do
+    for _, gameInfo in pairs(Minigames) do
         if gameInfo.placeId == game.PlaceId then
             serverType = ServerTypeEnum.game
         end
