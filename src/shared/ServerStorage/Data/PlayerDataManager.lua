@@ -68,6 +68,12 @@ local lastProfileCacheTime =
 	]]
 	}
 
+local isRetrievingProfile = { -- Used to track if a profile is currently being retrieved.
+	--[[
+		[playerId] = boolean
+	]]
+}
+
 local PlayerData = {}
 PlayerData.__index = PlayerData
 
@@ -172,7 +178,7 @@ function PlayerData:setValue(path: table, value)
 	local replicationType = getReplicationType(path[1])
 
 	if replicationType == ReplicationType.public then
-		table.insert(path, 1, self.player)
+		table.insert(path, 1, self.player.UserId)
 
 		self.replica_public:SetValue(path, value)
 	elseif replicationType == ReplicationType.private then
@@ -193,7 +199,7 @@ function PlayerData:setValues(path, values)
 	local replicationType = getReplicationType(path[1])
 
 	if replicationType == ReplicationType.public then
-		table.insert(path, 1, self.player)
+		table.insert(path, 1, self.player.UserId)
 
 		self.replica_public:SetValues(path, values)
 	elseif replicationType == ReplicationType.private then
@@ -216,7 +222,7 @@ function PlayerData:arrayInsert(path, value)
 	local replicationType = getReplicationType(path[1])
 
 	if replicationType == ReplicationType.public then
-		table.insert(path, 1, self.player)
+		table.insert(path, 1, self.player.UserId)
 
 		self.replica_public:ArrayInsert(path, value)
 	elseif replicationType == ReplicationType.private then
@@ -237,7 +243,7 @@ function PlayerData:arraySet(path, index, value)
 	local replicationType = getReplicationType(path[1])
 
 	if replicationType == ReplicationType.public then
-		table.insert(path, 1, self.player)
+		table.insert(path, 1, self.player.UserId)
 
 		self.replica_public:ArraySet(path, index, value)
 	elseif replicationType == ReplicationType.private then
@@ -258,7 +264,7 @@ function PlayerData:arrayRemove(path, index)
 	local replicationType = getReplicationType(path[1])
 
 	if replicationType == ReplicationType.public then
-		table.insert(path, 1, self.player)
+		table.insert(path, 1, self.player.UserId)
 
 		self.replica_public:ArrayRemove(path, index)
 	elseif replicationType == ReplicationType.private then
@@ -309,21 +315,36 @@ end
 
 	Can return nil if loading the profile failed.
 ]]
-function PlayerDataManager.viewPlayerProfile(player: Player | number): ProfileData?
-	player = if typeof(player) == "number" then Players:GetPlayerByUserId(player) else player
+function PlayerDataManager.viewPlayerProfile(userId: number): ProfileData?
+	assert(typeof(userId) == "number", "userId must be a number. Got " .. typeof(userId) .. " instead.")
 
-	if playerDataCollection[player] then
+	local player = Players:GetPlayerByUserId(userId)
+
+	if player and playerDataCollection[player] then
 		local playerData = playerDataCollection[player]
 		return Table.deepFreeze(Table.deepCopy(playerData.profile.Data))
 	end
 
-	local userId = player.UserId
-
 	local profileData: ProfileData? = cachedViewedProfiles[userId]
 
-	if profileData and time() - lastProfileCacheTime[userId] < INACTIVE_PROFILE_COOLDOWN then return profileData end
+	local shouldRetrieveAgain = time() - (lastProfileCacheTime[userId] or time()) > INACTIVE_PROFILE_COOLDOWN
 
-	local profile = ProfileStore:expect():ViewProfileAsync(getKey(userId))
+	if profileData and not shouldRetrieveAgain then return profileData end
+
+	local profile
+
+	if isRetrievingProfile[userId] then
+		repeat task.wait() until not isRetrievingProfile[userId]
+
+		profile = cachedViewedProfiles[userId]
+	else
+		isRetrievingProfile[userId] = true
+
+		profile = ProfileStore:expect():ViewProfileAsync(getKey(userId))
+		lastProfileCacheTime[userId] = time()
+
+		isRetrievingProfile[userId] = false
+	end
 
 	if profile then
 		profileData = Table.deepFreeze(Table.deepCopy(profile.Data))
