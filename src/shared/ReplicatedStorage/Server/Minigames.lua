@@ -1,12 +1,12 @@
-local enumsFolder = game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Enums")
-local replicatedFirstShared = game:GetService("ReplicatedFirst"):WaitForChild("Shared")
+local enumsFolder = game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild "Enums"
+local replicatedFirstShared = game:GetService("ReplicatedFirst"):WaitForChild "Shared"
 
-local GameTypeEnum = require(enumsFolder:WaitForChild("GameType"))
-local GameJoinType = require(enumsFolder:WaitForChild("GameJoinType"))
-local Time = require(replicatedFirstShared:WaitForChild("Utility"):WaitForChild("Time"))
+local GameTypeEnum = require(enumsFolder:WaitForChild "GameType")
+local GameJoinType = require(enumsFolder:WaitForChild "GameJoinType")
+local Time = require(replicatedFirstShared:WaitForChild("Utility"):WaitForChild "Time")
 
 local timeRange = Time.newRange
-local group = Time.newGroup
+local group = Time.newRangeGroup
 
 --[[ Example game entry
 
@@ -15,7 +15,7 @@ local group = Time.newGroup
         placeId = 123456789,
         gameJoinType = GameJoinType.initial,
         maxPlayers = 10,
-        enabledTime = group {
+        enabledTime = group (
             timeRange(
                 {
                     year = 2020,
@@ -35,15 +35,15 @@ local group = Time.newGroup
                     sec = 0
                 }
             )
-        }
+        )
     }
 
 ]]
 
 return {
-    [GameTypeEnum.fishing] = {
-        name = "Fishing",
-        placeId = 11569189394,
-        gameJoinType = GameJoinType.initial,
-    }
+	[GameTypeEnum.fishing] = {
+		name = "Fishing",
+		placeId = 11569189394,
+		gameJoinType = GameJoinType.initial,
+	},
 }
