@@ -38,7 +38,7 @@ local playerDataValue = Value {}
 local ReplicatedPlayerData = {}
 
 --[[
-    Gets a player's data.
+	Gets a player's data.
 	Will dynamically update in computed objects if the data changes.
 
 	Returns nil if the data has yet to replicate.
@@ -89,14 +89,12 @@ if not ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
 				playerDataTable[tonumber(userId)] = data
 			end
 
-			for userId, data in pairs(privateDataReplica.Data) do
-				local userId = tonumber(userId)
+			local userId = Players.LocalPlayer.UserId
 
-				playerDataTable[userId] = playerDataTable[userId] or {}
+			playerDataTable[userId] = playerDataTable[userId] or {}
 
-				for key, value in pairs(data) do
-					playerDataTable[userId][key] = value
-				end
+			for key, value in pairs(privateDataReplica.Data) do
+				playerDataTable[userId][key] = value
 			end
 
 			playerDataValue:set(playerDataTable)
