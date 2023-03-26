@@ -38,6 +38,7 @@ export type TimeRange = {
 	isInRange: (TimeRange, time: number?) -> boolean,
 	distanceToClosing: (TimeRange, time: number?) -> number,
 	distanceToIntroduction: (TimeRange, time: number?) -> number,
+	isATimeRange: true,
 }
 
 export type TimeInfo = number | (
