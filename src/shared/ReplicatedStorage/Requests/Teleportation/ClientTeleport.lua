@@ -79,6 +79,8 @@ function Authorize.toWorld(worldIndex: number)
 	local isWorldFull = LiveServerData.isWorldFull(worldIndex, 1)
 
 	if isWorldFull then
+		warn("ClientTeleport.toWorld() called with full world: " .. tostring(worldIndex))
+
 		return false, TeleportResponseType.full
 	else
 		return true
@@ -102,7 +104,11 @@ function Authorize.toLocation(locationEnum: UserEnum)
 	if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
 		local serverIdentifier = LocalServerInfo.getServerIdentifier()
 
-		if locationEnum == serverIdentifier.locationEnum then return false, TeleportResponseType.alreadyInPlace end
+		if locationEnum == serverIdentifier.locationEnum then
+			warn("ClientTeleport.toLocation() called with current locationEnum: " .. tostring(locationEnum))
+
+			return false, TeleportResponseType.alreadyInPlace
+		end
 
 		localWorldIndex = serverIdentifier.worldIndex
 	elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.hasWorldOrigin) then
@@ -112,6 +118,8 @@ function Authorize.toLocation(locationEnum: UserEnum)
 	end
 
 	if not ReplicatedServerData.worldHasLocation(localWorldIndex, locationEnum) then
+		warn("ClientTeleport.toLocation() called with invalid locationEnum: " .. tostring(locationEnum))
+
 		return false, TeleportResponseType.invalid -- The replicated server data might not have replicated yet, so we can't be sure
 	end
 
@@ -121,6 +129,8 @@ function Authorize.toLocation(locationEnum: UserEnum)
 		if setting then
 			return true
 		else
+			warn("ClientTeleport.toLocation() called with full location: " .. tostring(locationEnum))
+
 			return false, TeleportResponseType.full
 		end
 	end
@@ -147,24 +157,36 @@ function Authorize.toFriend(playerId: number)
 
 		if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation, serverType) then
 			if not ReplicatedServerData.worldHasLocation(friendLocation.worldIndex, friendLocation.locationEnum) then
+				warn("ClientTeleport.toFriend() called with invalid locationEnum: " .. tostring(friendLocation.locationEnum))
+
 				return false, TeleportResponseType.invalid
 			end
 
 			if LiveServerData.isLocationFull(friendLocation.worldIndex, friendLocation.locationEnum, 1) then
+				warn("ClientTeleport.toFriend() called with full location: " .. tostring(friendLocation.locationEnum))
+
 				return false, TeleportResponseType.full
 			end
 
 			if Locations.info[friendLocation.locationEnum].cantJoinPlayer then
+				warn("ClientTeleport.toFriend() called with location that can't be joined: " .. tostring(friendLocation.locationEnum))
+
 				return false, TeleportResponseType.invalid
 			end
 		elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isParty, serverType) then
 			if LiveServerData.isPartyFull(friendLocation.partyType, friendLocation.partyIndex, 1) then
+				warn("ClientTeleport.toFriend() called with full party: " .. tostring(friendLocation.partyType))
+
 				return false, TeleportResponseType.full
 			end
 		else
+			warn("ClientTeleport.toFriend() called with invalid serverType: " .. tostring(serverType))
+
 			return false, TeleportResponseType.invalid
 		end
 	else
+		warn("ClientTeleport.toFriend() called with invalid playerId: " .. tostring(playerId))
+
 		return false, TeleportResponseType.invalid
 	end
 end
@@ -185,7 +207,11 @@ function Authorize.toParty(partyType: UserEnum)
 
 	local activeParty = ActiveParties.getActiveParty()
 
-	if activeParty.partyType ~= partyType then return false, TeleportResponseType.disabled end
+	if activeParty.partyType ~= partyType then
+		warn("ClientTeleport.toParty() called with an inactive partyType: " .. tostring(partyType))
+
+		return false, TeleportResponseType.disabled
+	end
 end
 
 --[[
@@ -203,12 +229,20 @@ function Authorize.toHome(homeOwnerUserId: number)
 	if ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome) then
 		local serverIdentifier = ReplicatedServerData.getServerIdentifier()
 
-		if serverIdentifier.homeOwner == homeOwnerUserId then return false, TeleportResponseType.alreadyInPlace end
+		if serverIdentifier.homeOwner == homeOwnerUserId then
+			warn("ClientTeleport.toHome() called with current homeOwnerUserId: " .. tostring(homeOwnerUserId))
+
+			return false, TeleportResponseType.alreadyInPlace
+		end
 	end
 
 	if homeOwnerUserId == player.UserId then return true end -- If we're trying to teleport to our own home, we don't need to check if it's full
 
-	if LiveServerData.isHomeFull(homeOwnerUserId, 1) then return false, TeleportResponseType.full end
+	if LiveServerData.isHomeFull(homeOwnerUserId, 1) then
+		warn("ClientTeleport.toHome() called with full home: " .. tostring(homeOwnerUserId))
+
+		return false, TeleportResponseType.full
+	end
 
 	-- TODO: Check if home is private
 end
@@ -227,6 +261,8 @@ function ClientTeleport.toWorld(worldIndex: number)
 	if isAllowed then
 		return requestTeleport(TeleportRequestType.toWorld, worldIndex)
 	else
+		warn("ClientTeleport.toWorld() unauthorized: " .. tostring(teleportResponseType))
+
 		return false, teleportResponseType
 	end
 end
@@ -245,6 +281,8 @@ function ClientTeleport.toLocation(locationEnum: UserEnum)
 	if isAllowed then
 		return requestTeleport(TeleportRequestType.toLocation, locationEnum)
 	else
+		warn("ClientTeleport.toLocation() unauthorized: " .. tostring(teleportResponseType))
+
 		return false, teleportResponseType
 	end
 end
@@ -263,6 +301,8 @@ function ClientTeleport.toFriend(playerId: number)
 	if isAllowed then
 		return requestTeleport(TeleportRequestType.toFriend, playerId)
 	else
+		warn("ClientTeleport.toFriend() unauthorized: " .. tostring(teleportResponseType))
+
 		return false, teleportResponseType
 	end
 end
@@ -281,6 +321,8 @@ function ClientTeleport.toParty(partyType: UserEnum)
 	if isAllowed then
 		return requestTeleport(TeleportRequestType.toParty, partyType)
 	else
+		warn("ClientTeleport.toParty() unauthorized: " .. tostring(teleportResponseType))
+
 		return false, teleportResponseType
 	end
 end
@@ -301,6 +343,8 @@ function ClientTeleport.toHome(homeOwnerUserId: number)
 	if isAllowed then
 		return requestTeleport(TeleportRequestType.toHome, homeOwnerUserId)
 	else
+		warn("ClientTeleport.toHome() unauthorized: " .. tostring(teleportResponseType))
+
 		return false, teleportResponseType
 	end
 end
