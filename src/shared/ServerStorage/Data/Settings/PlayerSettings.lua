@@ -22,7 +22,8 @@ local PlayerSettings = {}
 	Returns a success boolean and the PlayerSettings table if successful.
 ]]
 function PlayerSettings.get(player: Player | number)
-	local profileData = PlayerDataManager.viewPlayerProfile(player)
+	local profileData =
+		PlayerDataManager.viewPlayerProfile(if typeof(player) == "number" then player else player.UserId)
 
 	if profileData then
 		return true, profileData.playerSettings
@@ -39,11 +40,11 @@ end
 function PlayerSettings.getSetting(player: Player | number, settingName: string)
 	local success, playerSettings = PlayerSettings.get(player)
 
-    if success then
-        return true, playerSettings[settingName]
-    else
-        return false
-    end
+	if success then
+		return true, playerSettings[settingName]
+	else
+		return false
+	end
 end
 
 --[[
