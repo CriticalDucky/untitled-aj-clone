@@ -27,6 +27,9 @@ function Table.deepCopy(value) -- returns a deep copy of a table
 end
 
 function Table.copy(t) -- returns a shallow copy of a table
+	assert(type(t) == "table", "Table.copy: t must be a table")
+	assert(t, "Table.copy: t must not be nil")
+
 	local copy = {}
 
 	for k, v in pairs(t) do
@@ -106,7 +109,7 @@ end
 function Table.merge(...) -- merges multiple tables into one, later tables overwrite earlier tables
 	local merged = {}
 
-	for _, t in ipairs { ... } do
+	for _, t in { ... } do
 		for k, v in pairs(t) do
 			merged[k] = v
 		end
