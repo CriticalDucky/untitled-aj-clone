@@ -87,7 +87,7 @@ local function removeItem(player: Player, itemCategory: UserEnum, itemIndex: num
 	local playerData = PlayerDataManager.get(player, true)
 	assert(playerData, "removeItem: Player data not found")
 
-	local item = InventoryManager.getItemFromIndex(playerData, itemCategory, itemIndex)
+	local item = InventoryManager.getItemFromIndex(playerData.player.UserId, itemCategory, itemIndex)
 	assert(item, "removeItem: Item not found")
 
 	playerData:arrayRemove({ "inventory", itemCategory }, itemIndex)
@@ -108,7 +108,7 @@ local function addItem(player: Player, itemCategory: UserEnum, item: InventoryIt
 	local playerData = PlayerDataManager.get(player)
 	assert(playerData, "addItem: Player data not found")
 
-	local isInventoryFull = InventoryManager.isInventoryFull(player, itemCategory, 1)
+	local isInventoryFull = select(2, InventoryManager.isInventoryFull(player.UserId, itemCategory, 1))
 	assert(not isInventoryFull, "addItem: Inventory is full")
 
 	InventoryManager.itemPlacingInInventory:Fire(player, itemCategory, item)
@@ -145,8 +145,8 @@ local function changeOwnerOfItems(items: { InventoryItem }, currentOwner: Player
 			end
 
 			assert(
-				select(2, InventoryManager.isInventoryFull(newOwner, item.itemCategory, #otherItemsOfSameCategory)),
-				"InventoryManager.changeOwnerOfItems: Inventory would be full for: " .. item.itemCategory .. ""
+				not select(2, InventoryManager.isInventoryFull(newOwner.UserId, item.itemCategory, #otherItemsOfSameCategory)),
+				"InventoryManager.changeOwnerOfItems: Inventory would be full for: " .. (item.itemCategory or "nil")
 			)
 		end
 	end
@@ -214,7 +214,7 @@ end
 	Can return nil in the rare case retrieving the player's profile data fails.
 ]]
 function InventoryManager.getInventoryCategory(userId: number, itemCategory: UserEnum): InventoryCategory?
-	local inventory = InventoryManager.getInventory(userId.UserId)
+	local inventory = InventoryManager.getInventory(userId)
 
 	return inventory and inventory[itemCategory]
 end
@@ -479,7 +479,7 @@ end
 	Crude way to reconcile item props with the player's inventory. Will replace this function with a better one later.
 ]]
 local function reconcileItems(playerData) -- just like the function above, but no promises
-	local success, inventory = InventoryManager.getInventory(playerData.player)
+	local success, inventory = InventoryManager.getInventory(playerData.player.userId)
 
 	if not success or not inventory then return end
 
