@@ -105,7 +105,7 @@ local enumsFolder = replicatedStorageShared.Enums
 
 local Locations = require(serverFolder.Locations)
 local Parties = require(serverFolder.Parties)
-local Games = require(serverFolder.Games)
+local Minigames = require(serverFolder.Minigames)
 local DataStore = require(utilityFolder.DataStore)
 local LiveServerData = require(serverFolder.LiveServerData)
 local Math = require(replicatedFirstUtility.Math)
@@ -113,6 +113,7 @@ local Table = require(replicatedFirstUtility.Table)
 local ReplicaService = require(dataFolder.ReplicaService)
 local Promise = require(replicatedFirstUtility.Promise)
 local Types = require(replicatedFirstUtility.Types)
+local ServerTypeEnum = require(enumsFolder.ServerType)
 
 type Promise = Types.Promise
 type PlayerData = Types.PlayerData
@@ -157,7 +158,7 @@ local cachedData = {
 	--[[
 	[PrivateServerId] = {
 		[any] = any
-	}
+	} | ServerIdentifier
 ]]
 }
 
@@ -181,7 +182,7 @@ local replica = ReplicaService.NewReplica { -- Create a new replica for the cach
 
 -- Attempts to update the data at the given key using the given transform function.
 -- Returns the success of the update and the error if it failed.
-local function updateDataStore(key: string, transformFunction: () -> any)
+local function updateDataStore(key: string, transformFunction: (any) -> any)
 	local success, err = DataStore.safeUpdate(serverDataStore, key, transformFunction)
 
 	if success then
@@ -215,7 +216,8 @@ local function getKeyData(key: string)
 
 	if success then
 		cachedData[key] = result
-		replica:SetValue({ key }, Table.copy(cachedData[key]))
+
+		if result then replica:SetValue({ key }, Table.copy(cachedData[key])) end
 	else
 		warn("Failed to retrieve datastore for key: ", key)
 	end
@@ -223,7 +225,7 @@ local function getKeyData(key: string)
 	isRetrieving[key] = false
 	retrievedKeys[key] = success
 
-	return success and cachedData[key]
+	return success, cachedData[key]
 end
 
 --[[
@@ -454,7 +456,7 @@ function ServerData.addGame(gameType: UserEnum)
 
 	local function try()
 		return Promise.try(function()
-			local serverCode, privateServerId = TeleportService:ReserveServer(Games[gameType].placeId)
+			local serverCode, privateServerId = TeleportService:ReserveServer(Minigames[gameType].placeId)
 
 			return {
 				serverCode = serverCode,
@@ -490,10 +492,11 @@ end
 
 --[[
 	Adds a home server to the Servers datastore.
-	The key is the privateServerId, and the value is a serverInfo with a homeOwner:
+	The key is the privateServerId, and the value is a serverIdentifier table:
 	```lua
 	{
-		homeOwner = 123456789,
+		serverType = ServerTypeEnum.home,
+		homeOwner = 123456789, -- The UserId of the player who owns the home.
 	}
 	```
 	Returns a success value and an error message if the request failed.
@@ -505,12 +508,16 @@ function ServerData.stampHomeServer(playerData: PlayerData)
 
 	assert(privateServerId, "Player does not have a home server")
 
+	print("Stamping home server: ", privateServerId)
+
 	local success, response = DataStore.safeSet(serverDataStore, privateServerId, {
+		serverType = ServerTypeEnum.home,
 		homeOwner = owner.UserId, -- Stamp the home server with the owner's UserId.
 	})
 
 	if success then
 		cachedData[privateServerId] = { -- Update the cache.
+			serverType = ServerTypeEnum.home,
 			homeOwner = owner.UserId,
 		}
 
@@ -556,6 +563,13 @@ end
 function ServerData.getServerIdentifier(privateServerId: string)
 	privateServerId = privateServerId or game.PrivateServerId
 
+	if not privateServerId or privateServerId == "" then -- If the server is a routing server
+		return true, {
+			serverType = ServerTypeEnum.routing,
+			jobId = game.JobId,
+		}
+	end
+
 	local success, result = ServerData.getAll()
 
 	if not success then
@@ -571,16 +585,19 @@ function ServerData.getServerIdentifier(privateServerId: string)
 
 			if constantKey == WORLDS_KEY then -- the path is [WORLDS_KEY, worldIndex, "locations", locationEnum]
 				info = {
+					serverType = ServerTypeEnum.location,
 					worldIndex = path[2],
 					locationEnum = path[4],
 				}
 			elseif constantKey == PARTIES_KEY then -- the path is [PARTIES_KEY, partyType, partyIndex]
 				info = {
+					serverType = ServerTypeEnum.party,
 					partyType = path[2],
 					partyIndex = path[3],
 				}
 			elseif constantKey == GAMES_KEY then -- the path is [GAMES_KEY, gameType, gameIndex]
 				info = {
+					serverType = ServerTypeEnum.game,
 					gameType = path[2],
 					gameIndex = path[3],
 				}
@@ -592,9 +609,13 @@ function ServerData.getServerIdentifier(privateServerId: string)
 
 	local success, serverInfo = ServerData.get(privateServerId)
 
-	if not success then warn("Failed to get server info: ", serverInfo) end
+	if not success then warn("Failed to get server info: ", success, serverInfo) end
 
-	return if success and serverInfo and Table.hasAnything(serverInfo) then (serverInfo) else false
+	if success and serverInfo and Table.hasAnything(serverInfo) then
+		return true, serverInfo
+	else
+		return false
+	end
 end
 
 --[[
@@ -610,12 +631,7 @@ function ServerData.findAvailableLocation(worldIndex: number, locationsExcluded:
 	assert(type(worldIndex) == "number", "World index must be a number. Got: " .. typeof(worldIndex))
 
 	local locationEnum
-	local success, worldPopulationInfo = LiveServerData.getWorldPopulationInfo(worldIndex)
-
-	if not success then
-		warn("Failed to get world population info: ", worldPopulationInfo)
-		return success, worldPopulationInfo
-	end
+	local worldPopulationInfo = LiveServerData.getWorldPopulationInfo(worldIndex)
 
 	for _, locationType in pairs(Locations.priority) do
 		if locationsExcluded and table.find(locationsExcluded, locationType) then continue end
@@ -662,12 +678,7 @@ function ServerData.findAvailableWorld(forcedLocation: { UserEnum }, worldsExclu
 		local rarities = {}
 
 		for worldIndex, world in ipairs(worlds) do
-			local success, worldPopulationInfo = LiveServerData.getWorldPopulationInfo(worldIndex)
-
-			if not success then
-				warn("Failed to get world population info: ", worldPopulationInfo)
-				return success, worldPopulationInfo
-			end
+			local worldPopulationInfo = LiveServerData.getWorldPopulationInfo(worldIndex)
 
 			local worldIsSuitable = true
 
@@ -751,9 +762,7 @@ function ServerData.findAvailableParty(partyType: UserEnum)
 		local rarities = {}
 
 		for partyIndex, _ in ipairs(parties) do
-			local success, partyPopulationInfo = LiveServerData.getPartyPopulationInfo(partyType, partyIndex)
-
-			if not success then continue end
+			local partyPopulationInfo = LiveServerData.getPartyPopulationInfo(partyType, partyIndex)
 
 			local partyIsSuitable = true
 
