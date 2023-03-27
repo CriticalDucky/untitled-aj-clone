@@ -48,7 +48,6 @@ local GameSettings = require(replicatedFirstShared.Settings.GameSettings)
 local MiniId = require(utilityFolder.MiniId)
 local Promise = require(utilityFolder.Promise)
 local Types = require(utilityFolder.Types)
-local ResponseType = require(enumsFolder.ResponseType)
 local ItemCategory = require(enumsFolder.ItemCategory)
 
 type PlayerData = Types.PlayerData
