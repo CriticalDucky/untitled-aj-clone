@@ -42,7 +42,7 @@ This script manages, stores, and retrieves data from the Servers datastore.
 			...
 		}
 	},
-	[GAMES_KEY] = {
+	[MINIGAMES_KEY] = {
 		[gameType: UserEnum] = {
 			[gameIndex: number] = {
 				privateServerId = privateServerId,
@@ -73,8 +73,8 @@ export type ServerIdentifier = {
 	homeOwner: number?, -- The userId of the player who owns the home (home servers)
 	partyType: UserEnum?, -- The type of party the server is for (party servers)
 	partyIndex: number?, -- The index of the party the server is for (party servers)
-	gameType: UserEnum?, -- The type of game the server is for (game servers)
-	gameIndex: number?, -- The index of the game the server is for (game servers)
+	minigameType: UserEnum?, -- The type of minigame the server is for (game servers)
+	minigameIndex: number?, -- The index of the minigame the server is for (game servers)
 }
 ```
 
@@ -83,7 +83,7 @@ export type ServerIdentifier = {
 local SERVERS_DATASTORE = "Servers"
 local WORLDS_KEY = "worlds"
 local PARTIES_KEY = "parties"
-local GAMES_KEY = "games"
+local MINIGAMES_KEY = "games"
 local CACHE_COOLDOWN = 30
 
 --#region Imports
@@ -145,10 +145,10 @@ local cachedData = {
 			}
 		]]
 	},
-	[GAMES_KEY] = {
+	[MINIGAMES_KEY] = {
 		--[[
-			[gameType] = {
-				[gameIndex] = {
+			[minigameType] = {
+				[minigameIndex] = {
 					privateServerId = privateServerId,
 					serverCode = serverCode,
 				}
@@ -165,7 +165,7 @@ local cachedData = {
 local constantKeys = {
 	[WORLDS_KEY] = true,
 	[PARTIES_KEY] = true,
-	[GAMES_KEY] = true,
+	[MINIGAMES_KEY] = true,
 }
 
 local retrievedKeys = {} -- Determines if the datastore has been retrieved for a given key.
@@ -284,11 +284,11 @@ function ServerData.getParties(partyType: UserEnum?)
 end
 
 -- Returns the retriaval success and data for the games key.
-function ServerData.getGames(gameType: UserEnum?)
-	local success, result = ServerData.get(GAMES_KEY)
+function ServerData.getMinigames(minigameType: UserEnum?)
+	local success, result = ServerData.get(MINIGAMES_KEY)
 
 	if success then
-		return true, if gameType then result[gameType] or {} else result
+		return true, if minigameType then result[minigameType] or {} else result
 	else
 		return false, result
 	end
@@ -321,13 +321,13 @@ function ServerData.getParty(partyType: UserEnum, partyIndex: number): (boolean,
 end
 
 -- Returns the retriaval success and data for the given `gameType` and `gameIndex`. Can return nil if the game doesn't exist.
-function ServerData.getGame(gameType: UserEnum, gameIndex: number)
-	assert(type(gameIndex) == "number", "Game index must be a number. Received " .. typeof(gameIndex))
+function ServerData.getMinigame(minigameType: UserEnum, minigameIndex: number)
+	assert(type(minigameIndex) == "number", "Minigame index must be a number. Received " .. typeof(minigameIndex))
 
-	local success, data = ServerData.getGames(gameType)
+	local success, data = ServerData.getMinigames(minigameType)
 
 	if success then
-		return true, data[gameIndex]
+		return true, data[minigameIndex]
 	else
 		return false, data
 	end
@@ -351,7 +351,7 @@ function ServerData.getAll(): (boolean, table)
 	return Promise.all({
 		Promise.try(ServerData.getWorlds),
 		Promise.try(ServerData.getParties),
-		Promise.try(ServerData.getGames),
+		Promise.try(ServerData.getMinigames),
 	})
 		:andThen(function()
 			return cachedData
@@ -451,12 +451,12 @@ function ServerData.addParty(partyType: UserEnum)
 end
 
 -- Attempts to add a minigame server, returning a success value and a result that is either the game index or an error message.
-function ServerData.addGame(gameType: UserEnum)
-	assert(gameType, "Game type must be provided to add a game")
+function ServerData.addMinigame(minigameType: UserEnum)
+	assert(minigameType, "Minigame type is nil")
 
 	local function try()
 		return Promise.try(function()
-			local serverCode, privateServerId = TeleportService:ReserveServer(Minigames[gameType].placeId)
+			local serverCode, privateServerId = TeleportService:ReserveServer(Minigames[minigameType].placeId)
 
 			return {
 				serverCode = serverCode,
@@ -472,18 +472,18 @@ function ServerData.addGame(gameType: UserEnum)
 		return success, result
 	end
 
-	success, result = updateDataStore(GAMES_KEY, function(games)
-		games = games or {}
+	success, result = updateDataStore(MINIGAMES_KEY, function(minigames)
+		minigames = minigames or {}
 
-		games[gameType] = games[gameType] or {}
+		minigames[minigameType] = minigames[minigameType] or {}
 
-		table.insert(games[gameType], result)
+		table.insert(minigames[minigameType], result)
 
-		return games
+		return minigames
 	end)
 
 	if success then
-		return true, #cachedData[GAMES_KEY][gameType]
+		return true, #cachedData[MINIGAMES_KEY][minigameType]
 	else
 		warn("Failed to add game: ", result)
 		return success, result
@@ -538,7 +538,7 @@ end
 
 --[[
 	Attempts to get a server's identifier from the cache based on the provided privateServerId.
-	If the server is not in the cache, it will be fetched from the datastore.
+	If the server is not in the cache, it will be fetched from the datastore if onlySearchCache is false or nil.
 
 	Note the difference between this and ServerData.get. This function returns this:
 	```lua
@@ -550,25 +550,19 @@ end
 		homeOwner: number?, -- The UserId of the home owner (only for home servers)
 		partyType: UserEnum?, -- The type of party (only for party servers)
 		partyIndex: number?, -- The index of the party in the party type table (only for party servers)
-		gameType: UserEnum?, -- The type of game (only for game servers)
-		gameIndex: number?, -- The index of the game in the game type table (only for game servers)
+		minigameType: UserEnum?, -- The type of minigame (only for minigame servers)
+		minigameIndex: number?, -- The index of the minigame in the minigame type table (only for minigame servers)
 	}
 	```
 	This info is what actually characterizes the server instead of it being a serverCode or privateServerId.
 
 	Returns a success value and a result that is either the server info or an error message.
 
-	**TODO**: Make function naming clearer.
+	WARNING: This will not get the serverIdentifier for all servers, only those that need to use ServerData to identify themselves.
+	For example, routing servers and independent minigame servers cannot use ServerData to identify themselves.
 ]]
-function ServerData.getServerIdentifier(privateServerId: string)
+function ServerData.getServerIdentifier(privateServerId: string, onlySearchCache: boolean)
 	privateServerId = privateServerId or game.PrivateServerId
-
-	if not privateServerId or privateServerId == "" then -- If the server is a routing server
-		return true, {
-			serverType = ServerTypeEnum.routing,
-			jobId = game.JobId,
-		}
-	end
 
 	local success, result = ServerData.getAll()
 
@@ -595,17 +589,17 @@ function ServerData.getServerIdentifier(privateServerId: string)
 					partyType = path[2],
 					partyIndex = path[3],
 				}
-			elseif constantKey == GAMES_KEY then -- the path is [GAMES_KEY, gameType, gameIndex]
+			elseif constantKey == MINIGAMES_KEY then -- the path is [MINIGAMES_KEY, minigameType, minigameIndex]
 				info = {
 					serverType = ServerTypeEnum.minigame,
-					gameType = path[2],
-					gameIndex = path[3],
+					minigameType = path[2],
+					minigameIndex = path[3],
 				}
 			end
 		end
 	end)
 
-	if info then return true, info end
+	if info or onlySearchCache then return true, info end
 
 	local success, serverInfo = ServerData.get(privateServerId)
 
