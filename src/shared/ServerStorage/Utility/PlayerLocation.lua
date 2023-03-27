@@ -73,7 +73,7 @@ function PlayerLocation.get(userId: number): ServerIdentifier?
 					end
 				end
 			end
-		elseif serverType == ServerTypeEnum.game then
+		elseif serverType == ServerTypeEnum.minigame then
 			for gameType, gameTypeData in pairs(serverTypeData) do
 				for gameIndex, serverInfo in pairs(gameTypeData) do
 					if table.find(serverInfo.players, userId) then
