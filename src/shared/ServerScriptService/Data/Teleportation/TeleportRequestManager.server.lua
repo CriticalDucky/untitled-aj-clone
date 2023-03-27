@@ -96,7 +96,7 @@ ReplicaResponse.listen(TeleportRequest, function(player: Player, teleportRequest
 	elseif teleportRequestType == TeleportRequestType.toParty then
 		local partyType = ...
 
-        if not Param.expect { partyType, "number" } then
+        if not Param.expect { partyType, "string" } then
             warn "Invalid request: partyType is nil or invalid"
             return false, TeleportResponseType.invalid
         end
