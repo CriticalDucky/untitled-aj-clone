@@ -613,7 +613,7 @@ function HomeManager.unloadHome()
 end
 
 PlayerDataManager.forAllPlayerData(function(playerData: PlayerData)
-	ServerData.getServerIdentifier() -- Make sure server identifier is get
+	LocalServerInfo.getServerIdentifier() -- Make sure server identifier is get
 
 	local function onError() -- If initialization failed for a player
 		warn "HomeManager: Initialization failed for player."
