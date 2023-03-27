@@ -215,7 +215,7 @@ local function getKeyData(key: string)
 	local success, result = DataStore.safeGet(serverDataStore, key)
 
 	if success then
-		cachedData[key] = result
+		cachedData[key] = result or {}
 
 		if result then replica:SetValue({ key }, Table.copy(cachedData[key])) end
 	else
@@ -277,7 +277,7 @@ function ServerData.getParties(partyType: UserEnum?)
 	local success, result = ServerData.get(PARTIES_KEY)
 
 	if success then
-		return true, if partyType then result[partyType] else result
+		return true, if partyType then result[partyType] or {} else result
 	else
 		return false, result
 	end
@@ -288,13 +288,13 @@ function ServerData.getGames(gameType: UserEnum?)
 	local success, result = ServerData.get(GAMES_KEY)
 
 	if success then
-		return true, if gameType then result[gameType] else result
+		return true, if gameType then result[gameType] or {} else result
 	else
 		return false, result
 	end
 end
 
--- Returns the retriaval success and data for the given `worldIndex`.
+-- Returns the retriaval success and data for the given `worldIndex`. Can return nil if the world doesn't exist.
 function ServerData.getWorld(worldIndex: number)
 	assert(type(worldIndex) == "number", "World index must be a number. Received " .. typeof(worldIndex))
 
@@ -307,7 +307,7 @@ function ServerData.getWorld(worldIndex: number)
 	end
 end
 
--- Returns the retriaval success and data for the given `partyType` and `partyIndex`.
+-- Returns the retriaval success and data for the given `partyType` and `partyIndex`. Can return nil if the party doesn't exist.
 function ServerData.getParty(partyType: UserEnum, partyIndex: number): (boolean, table)
 	assert(type(partyIndex) == "number", "Party index must be a number. Received " .. typeof(partyIndex))
 
@@ -320,7 +320,7 @@ function ServerData.getParty(partyType: UserEnum, partyIndex: number): (boolean,
 	end
 end
 
--- Returns the retriaval success and data for the given `gameType` and `gameIndex`.
+-- Returns the retriaval success and data for the given `gameType` and `gameIndex`. Can return nil if the game doesn't exist.
 function ServerData.getGame(gameType: UserEnum, gameIndex: number)
 	assert(type(gameIndex) == "number", "Game index must be a number. Received " .. typeof(gameIndex))
 
@@ -333,13 +333,13 @@ function ServerData.getGame(gameType: UserEnum, gameIndex: number)
 	end
 end
 
--- Returns the retriaval success and data for the given `worldIndex` and `locationEnum`.
+-- Returns the retriaval success and data for the given `worldIndex` and `locationEnum`. Can return nil if the location doesn't exist.
 function ServerData.getLocation(worldIndex: number, locationEnum: UserEnum)
 	assert(type(worldIndex) == "number", "World index must be a number. Received " .. typeof(worldIndex))
 
 	local success, data = ServerData.getWorld(worldIndex)
 
-	if success then
+	if success and data then
 		return true, data.locations[locationEnum]
 	else
 		return false, data
@@ -597,7 +597,7 @@ function ServerData.getServerIdentifier(privateServerId: string)
 				}
 			elseif constantKey == GAMES_KEY then -- the path is [GAMES_KEY, gameType, gameIndex]
 				info = {
-					serverType = ServerTypeEnum.game,
+					serverType = ServerTypeEnum.minigame,
 					gameType = path[2],
 					gameIndex = path[3],
 				}
