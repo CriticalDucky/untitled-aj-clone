@@ -14,6 +14,7 @@ local Component = require(utilityFolder:WaitForChild "GetComponent")
 local Fusion = require(replicatedFirstShared:WaitForChild "Fusion")
 local ReplicatedServerData = require(serverFolder:WaitForChild "ReplicatedServerData")
 local LiveServerData = require(serverFolder:WaitForChild "LiveServerData")
+local LocalServerInfo = require(serverFolder:WaitForChild "LocalServerInfo")
 local WorldNames = require(serverFolder:WaitForChild "WorldNames")
 local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
 local ServerTypeGroups = require(serverFolder:WaitForChild "ServerTypeGroups")
@@ -43,7 +44,7 @@ local component = function(props)
 
 	Promise.all({
 		Promise.new(function(resolve)
-			ReplicatedServerData.getServerIdentifier()
+			LocalServerInfo.getServerIdentifier()
 			resolve()
 		end),
 
@@ -131,7 +132,7 @@ local component = function(props)
 				local isDifferentWorld
 				do
 					if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
-						local serverIdentifier = ReplicatedServerData.getServerIdentifier()
+						local serverIdentifier = LocalServerInfo.getServerIdentifier()
 
 						if serverIdentifier then
 							isDifferentWorld = serverIdentifier.worldIndex ~= worldIndex
