@@ -180,7 +180,7 @@ function Teleport.go(
 					return removingPlayer == player
 				end),
 
-				if TESTING_DONT_TELEPORT then Promise.delay(1) else Promise.resolve(),
+				if TESTING_DONT_TELEPORT then Promise.delay(1) else nil,
 			})
 				:timeout(LISTEN_TIMEOUT)
 				:andThen(function(_, teleportResult)
@@ -235,7 +235,7 @@ end
 function Authorize.toLocation(
 	players: { Player } | Player,
 	locationEnum,
-	worldIndex: number
+	worldIndex: number?
 ): (boolean, typeof(TeleportResponseType) | number)
 	assert(players and locationEnum, "Teleport.toLocation: missing argument")
 	players = if type(players) == "table" then players else { players }
@@ -305,7 +305,7 @@ function Authorize.toLocation(
 		end
 	end
 
-	local world = worlds[worldIndex]
+	local world = worlds[worldIndexOrigin]
 
 	if not world then
 		warn "Teleport.teleportToLocation: world does not exist"
@@ -318,6 +318,8 @@ function Authorize.toLocation(
 		warn "Teleport.teleportToLocation: location does not exist"
 		return false, TeleportResponseType.invalid
 	end
+
+	return true, worldIndexOrigin
 end
 
 --[[
@@ -716,7 +718,15 @@ function Teleport.toParty(
 		return false, response
 	end
 
-	local party = response
+	partyIndex = partyIndex or response
+
+	local success, party = ServerData.getParty(partyType, partyIndex)
+
+	if not success or not party then
+		warn "Teleport.toParty: failed to get party"
+
+		return false, TeleportResponseType.error
+	end
 
 	local code = party.serverCode
 	local targetPlayer = players[1]
