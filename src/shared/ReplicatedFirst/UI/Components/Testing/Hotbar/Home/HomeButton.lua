@@ -15,7 +15,6 @@ local ClientTeleport = require(requestsFolder:WaitForChild("Teleportation"):Wait
 local ReplicatedServerData = require(serverFolder:WaitForChild "ReplicatedServerData")
 local ServerTypeGroups = require(serverFolder:WaitForChild "ServerTypeGroups")
 local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
-local ReponseType = require(enumsFolder:WaitForChild "ResponseType")
 local Types = require(utilityFolder:WaitForChild "Types")
 
 type ServerIdentifier = Types.ServerIdentifier
