@@ -586,11 +586,11 @@ function HomeManager.loadHome()
 	assert(isHomeServer, "HomeManager.loadHome can only be called in a home server")
 
 	local success, home = HomeManager.getHome()
-	if not success then
+
+	if not success or not home then
 		warn "HomeManager.loadHome: No success when getting home"
 		return false
 	end
-	assert(home, "HomeManager.loadHome: No home found")
 
 	local homeInfo = Items.getHomeItem(home.itemEnum)
 	local modelClone = homeInfo.model:Clone()
@@ -779,7 +779,5 @@ InventoryManager.itemRemovedFromInventory:Connect(
 		end
 	end
 )
-
-if isHomeServer then task.spawn(HomeManager.loadHome) end
 
 return HomeManager
