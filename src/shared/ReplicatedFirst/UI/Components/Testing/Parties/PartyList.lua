@@ -21,7 +21,6 @@ local Parties = require(serverFolder:WaitForChild "Parties")
 local Table = require(utilityFolder:WaitForChild "Table")
 local Component = require(utilityFolder:WaitForChild "GetComponent")
 local Types = require(utilityFolder:WaitForChild "Types")
-local ResponseType = require(enumsFolder:WaitForChild "ResponseType")
 
 local Value = Fusion.Value
 local New = Fusion.New
