@@ -231,7 +231,7 @@ end
 ]]
 function Authorize.toHome(homeOwnerUserId: number)
 	if ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome) then
-		local serverIdentifier = ReplicatedServerData.getServerIdentifier()
+		local serverIdentifier = LocalServerInfo.getServerIdentifier()
 
 		if serverIdentifier.homeOwner == homeOwnerUserId then
 			warn("ClientTeleport.toHome() called with current homeOwnerUserId: " .. tostring(homeOwnerUserId))
