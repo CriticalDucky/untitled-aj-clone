@@ -38,8 +38,8 @@
 			}
 		},
 		[GAMES_KEY] = {
-			[gameType: UserEnum] = {
-				[gameIndex: number] = {
+			[minigameType: UserEnum] = {
+				[minigameIndex: number] = {
 					privateServerId = privateServerId,
 					serverCode = serverCode,
 				}
@@ -68,8 +68,8 @@
 		homeOwner: number?, -- The userId of the player who owns the home (home servers)
 		partyType: UserEnum?, -- The type of party the server is for (party servers)
 		partyIndex: number?, -- The index of the party the server is for (party servers)
-		gameType: UserEnum?, -- The type of game the server is for (game servers)
-		gameIndex: number?, -- The index of the game the server is for (game servers)
+		minigameType: UserEnum?, -- The type of game the server is for (game servers)
+		minigameIndex: number?, -- The index of the game the server is for (game servers)
 	}
 	```
 
@@ -77,7 +77,7 @@
 
 local WORLDS_KEY = "worlds"
 local PARTIES_KEY = "parties"
-local GAMES_KEY = "games"
+local MINIGAMES_KEY = "games"
 
 --#region Imports
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
@@ -131,10 +131,10 @@ local serverIdentifierPromise = Promise.new(function(resolve) -- Fat boy promise
 						partyType = path[2],
 						partyIndex = path[3],
 					}
-				elseif constantKey == GAMES_KEY then -- the path is [GAMES_KEY, gameType, gameIndex]
+				elseif constantKey == MINIGAMES_KEY then -- the path is [GAMES_KEY, minigameType, minigameIndex]
 					resolve {
-						gameType = path[2],
-						gameIndex = path[3],
+						minigameType = path[2],
+						minigameIndex = path[3],
 					}
 				end
 			end
@@ -185,7 +185,7 @@ end
 	WARNING: Can return nil.
 ]]
 function ReplicatedServerData.getGames()
-	return ReplicatedServerData.get()[GAMES_KEY]
+	return ReplicatedServerData.get()[MINIGAMES_KEY]
 end
 
 --[[
@@ -233,8 +233,8 @@ end
 		homeOwner: number?, -- The userId of the player who owns the home (home servers)
 		partyType: UserEnum?, -- The type of party the server is for (party servers)
 		partyIndex: number?, -- The index of the party the server is for (party servers)
-		gameType: UserEnum?, -- The type of game the server is for (game servers)
-		gameIndex: number?, -- The index of the game the server is for (game servers)
+		minigameType: UserEnum?, -- The type of minigame the server is for (game servers)
+		minigameIndex: number?, -- The index of the minigame the server is for (game servers)
 	}
 	```
 ]]
