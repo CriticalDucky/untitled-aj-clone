@@ -189,6 +189,8 @@ function Authorize.toFriend(playerId: number)
 
 		return false, TeleportResponseType.invalid
 	end
+
+	return true
 end
 
 --[[
@@ -212,6 +214,8 @@ function Authorize.toParty(partyType: UserEnum)
 
 		return false, TeleportResponseType.disabled
 	end
+
+	return true
 end
 
 --[[
@@ -243,6 +247,8 @@ function Authorize.toHome(homeOwnerUserId: number)
 
 		return false, TeleportResponseType.full
 	end
+
+	return true
 
 	-- TODO: Check if home is private
 end
