@@ -12,7 +12,7 @@ local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
 
 local Fusion = require(replicatedFirstShared:WaitForChild "Fusion")
 local ClientTeleport = require(requestsFolder:WaitForChild("Teleportation"):WaitForChild "ClientTeleport")
-local ReplicatedServerData = require(serverFolder:WaitForChild "ReplicatedServerData")
+local LocalServerInfo = require(serverFolder:WaitForChild "LocalServerInfo")
 local ServerTypeGroups = require(serverFolder:WaitForChild "ServerTypeGroups")
 local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
 local Types = require(utilityFolder:WaitForChild "Types")
@@ -39,7 +39,7 @@ local component = function(props)
 
 	if ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome) then
 		task.spawn(function()
-			local serverIdentifier = ReplicatedServerData.getServerIdentifier()
+			local serverIdentifier = LocalServerInfo.getServerIdentifier()
 
 			if serverIdentifier then
 				visible:set(serverIdentifier.homeOwner ~= player.UserId)
