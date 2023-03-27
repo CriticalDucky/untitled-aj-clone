@@ -1,3 +1,3 @@
 return {
-    fishing = "1",
+    fishing = "fishing1",
 }
