@@ -11,7 +11,7 @@ local ServerTypeGroups = {
     [ServerTypeGroup.hasWorldOrigin] = {
         [ServerTypeEnum.home] = true,
         [ServerTypeEnum.party] = true,
-        [ServerTypeEnum.game] = true,
+        [ServerTypeEnum.minigame] = true,
     },
 
     [ServerTypeGroup.isLocation] = {
@@ -31,21 +31,21 @@ local ServerTypeGroups = {
     },
 
     [ServerTypeGroup.isGame] = {
-        [ServerTypeEnum.game] = true,
+        [ServerTypeEnum.minigame] = true,
     },
 
     [ServerTypeGroup.hasWorldInfo] = {
         [ServerTypeEnum.home] = true,
         [ServerTypeEnum.party] = true,
         [ServerTypeEnum.location] = true,
-        [ServerTypeEnum.game] = true,
+        [ServerTypeEnum.minigame] = true,
     },
 
     [ServerTypeGroup.isWorldBased] = {
         [ServerTypeEnum.home] = true,
         [ServerTypeEnum.party] = true,
         [ServerTypeEnum.location] = true,
-        [ServerTypeEnum.game] = true,
+        [ServerTypeEnum.minigame] = true,
     },
 }
 
