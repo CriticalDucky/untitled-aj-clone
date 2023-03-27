@@ -41,7 +41,7 @@ local runServiceConnection = RunService.Heartbeat:Connect(function()
         elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
         elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome) then
         elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isParty) then
-        elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isGame) then
+        elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isMinigame) then
         end
 
         serverInfo.players = getUserIds()
