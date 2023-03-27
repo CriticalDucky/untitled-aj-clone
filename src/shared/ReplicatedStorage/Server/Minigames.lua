@@ -10,7 +10,7 @@ local group = Time.newRangeGroup
 
 --[[ Example game entry
 
-    [GameTypeEnum.example] = {
+    [MinigameTypeEnum.example] = {
         name = "Example",
         placeId = 123456789,
         minigameJoinType = MinigameJoinType.initial,
