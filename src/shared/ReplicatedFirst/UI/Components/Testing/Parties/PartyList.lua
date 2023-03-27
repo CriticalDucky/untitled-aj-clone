@@ -15,7 +15,7 @@ local Fusion = require(replicatedFirstShared:WaitForChild "Fusion")
 local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
 local ServerTypeGroups = require(serverFolder:WaitForChild "ServerTypeGroups")
 local ClientTeleport = require(teleportationFolder:WaitForChild "ClientTeleport")
-local ReplicatedServerData = require(serverFolder:WaitForChild "ReplicatedServerData")
+local LocalServerInfo = require(serverFolder:WaitForChild "LocalServerInfo")
 local ActiveParties = require(serverFolder:WaitForChild "ActiveParties")
 local Parties = require(serverFolder:WaitForChild "Parties")
 local Table = require(utilityFolder:WaitForChild "Table")
@@ -100,7 +100,7 @@ local component = function(props)
 
 				if currentParty:get().halfHourId == activeParty.halfHourId then
 					if ServerTypeGroups.serverInGroup(ServerGroupEnum.isParty) then
-						local serverInfo = ReplicatedServerData.getServerIdentifier()
+						local serverInfo = LocalServerInfo.getServerIdentifier()
 
 						if serverInfo and serverInfo.partyType == activeParty.partyType then
 							open:set(false)
