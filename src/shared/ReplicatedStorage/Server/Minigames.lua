@@ -1,8 +1,8 @@
 local enumsFolder = game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild "Enums"
 local replicatedFirstShared = game:GetService("ReplicatedFirst"):WaitForChild "Shared"
 
-local GameTypeEnum = require(enumsFolder:WaitForChild "GameType")
-local GameJoinType = require(enumsFolder:WaitForChild "GameJoinType")
+local MinigameTypeEnum = require(enumsFolder:WaitForChild "MinigameType")
+local MinigameJoinType = require(enumsFolder:WaitForChild "MinigameJoinType")
 local Time = require(replicatedFirstShared:WaitForChild("Utility"):WaitForChild "Time")
 
 local timeRange = Time.newRange
@@ -13,7 +13,7 @@ local group = Time.newRangeGroup
     [GameTypeEnum.example] = {
         name = "Example",
         placeId = 123456789,
-        gameJoinType = GameJoinType.initial,
+        minigameJoinType = MinigameJoinType.initial,
         maxPlayers = 10,
         enabledTime = group (
             timeRange(
@@ -41,9 +41,9 @@ local group = Time.newRangeGroup
 ]]
 
 return {
-	[GameTypeEnum.fishing] = {
+	[MinigameTypeEnum.fishing] = {
 		name = "Fishing",
 		placeId = 11569189394,
-		gameJoinType = GameJoinType.initial,
+		minigameJoinType = MinigameJoinType.initial,
 	},
 }
