@@ -455,7 +455,7 @@ local function CreateReplicaBranch(replica_entries, created_replicas) --> create
 		end
 		-- New Replica object table:
 		local replica = {
-			Data = replica_entry[3],
+			Data = if type(replica_entry[3]) == "table" then Table.deepToNumberKeys(replica_entry[3]) else replica_entry[3],
 			Id = replica_id,
 			Class = replica_entry[1],
 			Tags = replica_entry[2],
@@ -516,6 +516,8 @@ end
 -- Write handlers:
 
 local function ReplicaSetValue(replica_id, path_array, value)
+	value = if type(value) == "table" then Table.deepToNumberKeys(value) else value
+
 	local replica = Replicas[replica_id]
 	-- Getting path pointer and listener table:
 	local pointer = replica.Data
@@ -534,8 +536,9 @@ local function ReplicaSetValue(replica_id, path_array, value)
 	end)
 	if not succes then
 		print(replica_id, value)
-		Table.print(path_array, "path_array")
-		Table.print(value, "value")
+		Table.print(path_array, "path_array", true)
+		Table.print(value, "value", true)
+		Table.print(replica.Data, "replica.Data", true)
 		error(err)
 	end
 	pointer[key] = value
@@ -564,6 +567,8 @@ local function ReplicaSetValue(replica_id, path_array, value)
 end
 
 local function ReplicaSetValues(replica_id, path_array, values)
+	values = if type(values) == "table" then Table.deepToNumberKeys(values) else values
+
 	local replica = Replicas[replica_id]
 	-- Getting path pointer and listener table:
 	local pointer = replica.Data
@@ -605,6 +610,8 @@ local function ReplicaSetValues(replica_id, path_array, values)
 end
 
 local function ReplicaArrayInsert(replica_id, path_array, value) --> new_index
+	value = if type(value) == "table" then Table.deepToNumberKeys(value) else value
+
 	local replica = Replicas[replica_id]
 	-- Getting path pointer and listener table:
 	local pointer = replica.Data
@@ -634,6 +641,8 @@ local function ReplicaArrayInsert(replica_id, path_array, value) --> new_index
 end
 
 local function ReplicaArraySet(replica_id, path_array, index, value)
+	value = if type(value) == "table" then Table.deepToNumberKeys(value) else value
+
 	local replica = Replicas[replica_id]
 	-- Getting path pointer and listener table:
 	local pointer = replica.Data
