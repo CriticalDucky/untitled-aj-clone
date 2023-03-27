@@ -3,8 +3,7 @@
     MUST be strings because Roblox treats number keys weirdly in datastores.
 ]]
 
-
 return {
-    town = "1",
-    forest = "2",
+    town = "town1",
+    forest = "forest1",
 }
