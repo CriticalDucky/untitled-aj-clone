@@ -11,7 +11,6 @@ local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
 local requestsFolder = replicatedStorageShared:WaitForChild "Requests"
 
 local ReplicaCollection = require(replicationFolder:WaitForChild "ReplicaCollection")
-local ResponseType = require(enumsFolder:WaitForChild "ResponseType")
 local ReplicaRequest = require(requestsFolder:WaitForChild "ReplicaRequest")
 local Shops = require(shopInfoFolder:WaitForChild "Shops")
 
