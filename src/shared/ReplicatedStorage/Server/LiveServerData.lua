@@ -55,7 +55,7 @@
 			}
 		},
 
-		[ServerTypeEnum.game] = {
+		[ServerTypeEnum.minigame] = {
 			[gameType] = {
 				[gameIndex] | [privateServerId] = { -- TODO: Give private and public game servers their own tables
 					serverInfo
@@ -187,7 +187,7 @@ if RunService:IsServer() then
 			]]
 		},
 
-		[ServerTypeEnum.game] = {
+		[ServerTypeEnum.minigame] = {
 			--[[
 				[gameType] = {
 					[gameIndex] | [privateServerId] = {
@@ -321,7 +321,7 @@ if RunService:IsServer() then
 			end
 
 			replica:SetValue({ serverType, partyType, partyIndex }, filterServerInfo(Table.deepCopy(serverInfo)))
-		elseif serverType == ServerTypeEnum.game then
+		elseif serverType == ServerTypeEnum.minigame then
 			local gameType = serverIdentifier.gameType
 			local gameIndex = serverIdentifier.gameIndex
 
@@ -338,7 +338,7 @@ if RunService:IsServer() then
 
 			replica:SetValue({ serverType, gameType, gameIndex }, filterServerInfo(Table.deepCopy(serverInfo)))
 		else
-			error "LiveServerData: Message received with invalid server type"
+			error ("LiveServerData: Message received with invalid server type. Received: " .. tostring(serverType))
 		end
 
 		LiveServerData.ServerInfoUpdated:Fire(serverType, serverIdentifier, serverInfo)
@@ -418,7 +418,7 @@ function LiveServerData.get(
 		local partyTable = serverTypeData[serverIdentifier.partyType]
 
 		if partyTable then return partyTable[serverIdentifier.partyIndex] end
-	elseif serverType == ServerTypeEnum.game then
+	elseif serverType == ServerTypeEnum.minigame then
 		local gameTable = serverTypeData[serverIdentifier.gameType]
 
 		if gameTable then
@@ -669,7 +669,7 @@ end
 ]]
 function LiveServerData.getGamePopulationInfo(gameType, gameIndex: number | string)
 	return LiveServerData.getPopulationInfo {
-		serverType = ServerTypeEnum.game,
+		serverType = ServerTypeEnum.minigame,
 		gameType = gameType,
 		gameIndex = gameIndex,
 	}
@@ -733,7 +733,7 @@ end
 	Can return nil if no games of the given type are live.
 ]]
 function LiveServerData.getGameServers(gameType)
-	local gameData = LiveServerData.get(ServerTypeEnum.game)
+	local gameData = LiveServerData.get(ServerTypeEnum.minigame)
 
 	if gameData then return gameData[gameType] end
 end
