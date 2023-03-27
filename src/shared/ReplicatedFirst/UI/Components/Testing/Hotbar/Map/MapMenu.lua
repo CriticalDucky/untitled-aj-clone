@@ -15,7 +15,6 @@ local Locations = require(serverFolder:WaitForChild "Locations")
 local ClientTeleport = require(requestsFolder:WaitForChild("Teleportation"):WaitForChild "ClientTeleport")
 local ServerTypeGroups = require(serverFolder:WaitForChild "ServerTypeGroups")
 local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
-local ResponseType = require(enumsFolder:WaitForChild "ResponseType")
 local LocalServerInfo = require(serverFolder:WaitForChild "LocalServerInfo")
 
 local Value = Fusion.Value
@@ -78,7 +77,7 @@ local component = function(props)
 						return
 					end
 
-					if LocalServerInfo.locationEnum == locationEnum then
+					if serverInfo.locationEnum == locationEnum then
 						open:set(false)
 					else
 						onResponse(ClientTeleport.toLocation(locationEnum))
