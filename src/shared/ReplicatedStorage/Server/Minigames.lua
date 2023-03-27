@@ -8,7 +8,7 @@ local Time = require(replicatedFirstShared:WaitForChild("Utility"):WaitForChild 
 local timeRange = Time.newRange
 local group = Time.newRangeGroup
 
---[[ Example game entry
+--[[ Example minigame entry
 
     [MinigameTypeEnum.example] = {
         name = "Example",

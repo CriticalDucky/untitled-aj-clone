@@ -37,7 +37,7 @@
 				...
 			}
 		},
-		[GAMES_KEY] = {
+		[MINIGAMES_KEY] = {
 			[minigameType: UserEnum] = {
 				[minigameIndex: number] = {
 					privateServerId = privateServerId,
@@ -61,15 +61,15 @@
 	Structure of serverIdentifier:
 	```lua
 	export type ServerIdentifier = {
-		serverType: UserEnum, -- The type of server (location, party, game, etc.)
+		serverType: UserEnum, -- The type of server (location, party, minigame, etc.)
 		jobId: string?, -- The jobId of the server (routing servers)
 		worldIndex: number?, -- The index of the world the server is in (location servers)
 		locationEnum: UserEnum?, -- The location of the server (location servers)
 		homeOwner: number?, -- The userId of the player who owns the home (home servers)
 		partyType: UserEnum?, -- The type of party the server is for (party servers)
 		partyIndex: number?, -- The index of the party the server is for (party servers)
-		minigameType: UserEnum?, -- The type of game the server is for (game servers)
-		minigameIndex: number?, -- The index of the game the server is for (game servers)
+		minigameType: UserEnum?, -- The type of minigame the server is for (minigame servers)
+		minigameIndex: number?, -- The index of the minigame the server is for (minigame servers)
 	}
 	```
 
@@ -77,7 +77,7 @@
 
 local WORLDS_KEY = "worlds"
 local PARTIES_KEY = "parties"
-local MINIGAMES_KEY = "games"
+local MINIGAMES_KEY = "minigames"
 
 --#region Imports
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
@@ -131,7 +131,7 @@ local serverIdentifierPromise = Promise.new(function(resolve) -- Fat boy promise
 						partyType = path[2],
 						partyIndex = path[3],
 					}
-				elseif constantKey == MINIGAMES_KEY then -- the path is [GAMES_KEY, minigameType, minigameIndex]
+				elseif constantKey == MINIGAMES_KEY then -- the path is [MINIGAMES_KEY, minigameType, minigameIndex]
 					resolve {
 						minigameType = path[2],
 						minigameIndex = path[3],
@@ -179,12 +179,12 @@ function ReplicatedServerData.getParties()
 end
 
 --[[
-	Returns the games table from the currently replicated server data.
+	Returns the minigames table from the currently replicated server data.
 	Will act dynamically within a computed value.
 
 	WARNING: Can return nil.
 ]]
-function ReplicatedServerData.getGames()
+function ReplicatedServerData.getMinigames()
 	return ReplicatedServerData.get()[MINIGAMES_KEY]
 end
 
@@ -226,15 +226,15 @@ end
 
 	```lua
 	export type ServerIdentifier = {
-		serverType: UserEnum, -- The type of server (location, party, game, etc.)
+		serverType: UserEnum, -- The type of server (location, party, minigame, etc.)
 		jobId: string?, -- The jobId of the server (routing servers)
 		worldIndex: number?, -- The index of the world the server is in (location servers)
 		locationEnum: UserEnum?, -- The location of the server (location servers)
 		homeOwner: number?, -- The userId of the player who owns the home (home servers)
 		partyType: UserEnum?, -- The type of party the server is for (party servers)
 		partyIndex: number?, -- The index of the party the server is for (party servers)
-		minigameType: UserEnum?, -- The type of minigame the server is for (game servers)
-		minigameIndex: number?, -- The index of the minigame the server is for (game servers)
+		minigameType: UserEnum?, -- The type of minigame the server is for (minigame servers)
+		minigameIndex: number?, -- The index of the minigame the server is for (minigame servers)
 	}
 	```
 ]]

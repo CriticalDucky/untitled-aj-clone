@@ -16,7 +16,7 @@ local Table = require(utilityFolder:WaitForChild("Table"))
 local ClientPlayMinigame = {}
 
 function ClientPlayMinigame.request(minigameType, ...)
-    assert(Table.hasValue(MinigameType, minigameType), "PlayGame.request() called with invalid minigameType: " .. tostring(minigameType))
+    assert(Table.hasValue(MinigameType, minigameType), "ClientPlayMinigame.request() called with invalid minigameType: " .. tostring(minigameType))
 
     local response = ReplicaRequest.new(ReplicaCollection.get("PlayMinigameRequest"), minigameType, ...)
 

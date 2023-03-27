@@ -45,15 +45,15 @@ LocalServerInfo.serverType = serverType
 
 	```lua
 	export type ServerIdentifier = {
-		serverType: UserEnum, -- The type of server (location, party, game, etc.)
+		serverType: UserEnum, -- The type of server (location, party,  minigame, etc.)
 		jobId: string?, -- The jobId of the server (routing servers)
 		worldIndex: number?, -- The index of the world the server is in (location servers)
 		locationEnum: UserEnum?, -- The location of the server (location servers)
 		homeOwner: number?, -- The userId of the player who owns the home (home servers)
 		partyType: UserEnum?, -- The type of party the server is for (party servers)
 		partyIndex: number?, -- The index of the party the server is for (party servers)
-		minigameType: UserEnum?, -- The type of game the server is for (game servers)
-		minigameIndex: number?, -- The index of the game the server is for (game servers)
+		minigameType: UserEnum?, -- The type of minigame the server is for (minigame servers)
+		minigameIndex: number?, -- The index of the minigame the server is for (minigame servers)
 	}
 	```
 ]]

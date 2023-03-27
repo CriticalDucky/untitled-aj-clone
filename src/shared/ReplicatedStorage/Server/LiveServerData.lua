@@ -57,7 +57,7 @@
 
 		[ServerTypeEnum.minigame] = {
 			[minigameType] = {
-				[minigameIndex] | [privateServerId] = { -- TODO: Give private and public game servers their own tables
+				[minigameIndex] | [privateServerId] = { -- TODO: Give private and public minigame servers their own tables
 					serverInfo
 				}
 			}
@@ -325,15 +325,15 @@ if RunService:IsServer() then
 			local minigameType = serverIdentifier.minigameType
 			local minigameIndex = serverIdentifier.minigameIndex
 
-			local gameTable = cachedServerType[minigameType] or {}
+			local minigameTable = cachedServerType[minigameType] or {}
 
-			gameTable[minigameIndex] = serverInfo
-			cachedServerType[minigameType] = gameTable
+			minigameTable[minigameIndex] = serverInfo
+			cachedServerType[minigameType] = minigameTable
 
 			local replicaData = replica.Data[serverType]
 
 			if not replicaData[minigameType] then
-				replica:SetValue({ serverType, minigameType }, filterServerInfo(Table.deepCopy(gameTable)))
+				replica:SetValue({ serverType, minigameType }, filterServerInfo(Table.deepCopy(minigameTable)))
 			end
 
 			replica:SetValue({ serverType, minigameType, minigameIndex }, filterServerInfo(Table.deepCopy(serverInfo)))
@@ -665,7 +665,7 @@ end
 	Gets the population info for the given minigameType and minigameIndex.
 	Wrapper for LiveServerData.getPopulationInfo for minigame servers.
 
-	Can return nil if the game is not live.
+	Can return nil if the minigame is not live.
 ]]
 function LiveServerData.getMinigamePopulationInfo(minigameType, minigameIndex: number | string)
 	return LiveServerData.getPopulationInfo {
@@ -784,7 +784,7 @@ end
 	Returns a boolean indicating if the specified home is full.
 	Optionally, you can specify the number of players you plan to add to the home.
 
-	Will return false if the game is not live (makes sense, right?)
+	Will return false if the home is not live (makes sense, right?)
 ]]
 function LiveServerData.isHomeFull(homeOwner, numPlayersToAdd: number)
 	numPlayersToAdd = numPlayersToAdd or 0

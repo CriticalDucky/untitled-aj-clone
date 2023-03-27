@@ -99,7 +99,7 @@ end
 	Authorization allows for knowing whether a teleport is allowed without actually performing the teleport.
 ]]
 function Authorize.toLocation(locationEnum: UserEnum)
-	local localWorldIndex -- The world index of the server we're on (or the world origin if we're in a game, party, or home)
+	local localWorldIndex -- The world index of the server we're on (or the world origin if we're in a minigame, party, or home)
 
 	if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
 		local serverIdentifier = LocalServerInfo.getServerIdentifier()

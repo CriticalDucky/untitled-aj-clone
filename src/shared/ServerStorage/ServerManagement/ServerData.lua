@@ -2,8 +2,8 @@
 
 This script manages, stores, and retrieves data from the Servers datastore.
 
- It's responsible for reserving servers for new locations, parties, and games.
- Using this script, agents can also find available servers for locations, parties, and games.
+ It's responsible for reserving servers for new locations, parties, and minigames.
+ Using this script, agents can also find available servers for locations, parties, and minigames.
  Home server info is also stored by the Servers datastore.
 
  Server info is stored in the following format (see cachedData structure below):
@@ -43,8 +43,8 @@ This script manages, stores, and retrieves data from the Servers datastore.
 		}
 	},
 	[MINIGAMES_KEY] = {
-		[gameType: UserEnum] = {
-			[gameIndex: number] = {
+		[minigameType: UserEnum] = {
+			[minigameIndex: number] = {
 				privateServerId = privateServerId,
 				serverCode = serverCode,
 			}
@@ -66,15 +66,15 @@ It's used for servers to identify themselves and for scripts like LiveServerData
 Structure of serverIdentifier:
 ```lua
 export type ServerIdentifier = {
-	serverType: UserEnum, -- The type of server (location, party, game, etc.)
+	serverType: UserEnum, -- The type of server (location, party, minigame, etc.)
 	jobId: string?, -- The jobId of the server (routing servers)
 	worldIndex: number?, -- The index of the world the server is in (location servers)
 	locationEnum: UserEnum?, -- The location of the server (location servers)
 	homeOwner: number?, -- The userId of the player who owns the home (home servers)
 	partyType: UserEnum?, -- The type of party the server is for (party servers)
 	partyIndex: number?, -- The index of the party the server is for (party servers)
-	minigameType: UserEnum?, -- The type of minigame the server is for (game servers)
-	minigameIndex: number?, -- The index of the minigame the server is for (game servers)
+	minigameType: UserEnum?, -- The type of minigame the server is for (minigame servers)
+	minigameIndex: number?, -- The index of the minigame the server is for (minigame servers)
 }
 ```
 
@@ -83,7 +83,7 @@ export type ServerIdentifier = {
 local SERVERS_DATASTORE = "Servers"
 local WORLDS_KEY = "worlds"
 local PARTIES_KEY = "parties"
-local MINIGAMES_KEY = "games"
+local MINIGAMES_KEY = "minigames"
 local CACHE_COOLDOWN = 30
 
 --#region Imports
@@ -234,7 +234,7 @@ end
 	Returns a promise that resolves with a table containing the server code and private server id or rejects with
 	nothing.
 
-	You may notice that creating new parties or games don't have a dedicated function in the namespace.
+	You may notice that creating new parties or minigames don't have a dedicated function in the namespace.
 	That's because in both ServerData.addWorld and ServerData.reconcileWorlds, we create new location tables.
 ]]
 local function newLocation(locationEnum: UserEnum)
@@ -283,7 +283,7 @@ function ServerData.getParties(partyType: UserEnum?)
 	end
 end
 
--- Returns the retriaval success and data for the games key.
+-- Returns the retriaval success and data for the minigames key.
 function ServerData.getMinigames(minigameType: UserEnum?)
 	local success, result = ServerData.get(MINIGAMES_KEY)
 
@@ -320,7 +320,7 @@ function ServerData.getParty(partyType: UserEnum, partyIndex: number): (boolean,
 	end
 end
 
--- Returns the retriaval success and data for the given `gameType` and `gameIndex`. Can return nil if the game doesn't exist.
+-- Returns the retriaval success and data for the given `minigameType` and `minigameIndex`. Can return nil if the minigame doesn't exist.
 function ServerData.getMinigame(minigameType: UserEnum, minigameIndex: number)
 	assert(type(minigameIndex) == "number", "Minigame index must be a number. Received " .. typeof(minigameIndex))
 
@@ -450,7 +450,7 @@ function ServerData.addParty(partyType: UserEnum)
 	end
 end
 
--- Attempts to add a minigame server, returning a success value and a result that is either the game index or an error message.
+-- Attempts to add a minigame server, returning a success value and a result that is either the minigame index or an error message.
 function ServerData.addMinigame(minigameType: UserEnum)
 	assert(minigameType, "Minigame type is nil")
 
@@ -468,7 +468,7 @@ function ServerData.addMinigame(minigameType: UserEnum)
 	local success, result = Promise.retry(try, 5):await()
 
 	if not success then
-		warn("Failed to add game: ", result)
+		warn("Failed to add minigame: ", result)
 		return success, result
 	end
 
@@ -485,7 +485,7 @@ function ServerData.addMinigame(minigameType: UserEnum)
 	if success then
 		return true, #cachedData[MINIGAMES_KEY][minigameType]
 	else
-		warn("Failed to add game: ", result)
+		warn("Failed to add minigame: ", result)
 		return success, result
 	end
 end
@@ -522,7 +522,7 @@ function ServerData.stampHomeServer(playerData: PlayerData)
 		}
 
 		--[[
-			We don't want to stamp the home server again if the player leaves and rejoins the game.
+			We don't want to stamp the home server again if the player leaves and rejoins the minigame.
 			We also don't want to stamp the home server if the player is already stamped.
 
 			This may seem redundant, but it saves us from having to make a separate request to the datastore.
@@ -543,7 +543,7 @@ end
 	Note the difference between this and ServerData.get. This function returns this:
 	```lua
 	export type ServerIdentifier = {
-		serverType: UserEnum, -- The type of server (world, party, game, home)
+		serverType: UserEnum, -- The type of server (world, party, minigame, home)
 		jobId: string?, -- The jobId of the server (only for routing servers)
 		worldIndex: number?, -- The index of the world in the worlds table (only for location servers)
 		locationEnum: UserEnum?, -- The location enum of the location (only for location servers)
