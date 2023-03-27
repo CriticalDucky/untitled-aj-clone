@@ -30,7 +30,7 @@ local ServerTypeGroups = {
         [ServerTypeEnum.routing] = true,
     },
 
-    [ServerTypeGroup.isGame] = {
+    [ServerTypeGroup.isMinigame] = {
         [ServerTypeEnum.minigame] = true,
     },
 
