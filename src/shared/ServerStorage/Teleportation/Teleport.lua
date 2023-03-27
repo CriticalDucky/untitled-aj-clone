@@ -568,7 +568,7 @@ function Authorize.toPlayer(players: { Player } | Player, targetPlayer: number)
 		end
 
 		return true, serverType, serverIdentifier.homeOwner
-	elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isGame, serverType) then
+	elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isMinigame, serverType) then
 		return
 	else
 		warn "Teleport.toPlayer: server is not a valid server type"
@@ -814,7 +814,7 @@ function Teleport.toPlayer(
 		end
 
 		return Teleport.toHome(players[1], targetPlayerId)
-	elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isGame, serverType) then
+	elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isMinigame, serverType) then
 		return
 	end
 end
