@@ -10,17 +10,17 @@ local utilityFolder = replicatedFirstShared:WaitForChild("Utility")
 
 local ReplicaRequest = require(requestsFolder:WaitForChild("ReplicaRequest"))
 local ReplicaCollection = require(replicationFolder:WaitForChild("ReplicaCollection"))
-local GameType = require(enumsFolder:WaitForChild("GameType"))
+local MinigameType = require(enumsFolder:WaitForChild("MinigameType"))
 local Table = require(utilityFolder:WaitForChild("Table"))
 
-local PlayGame = {}
+local ClientPlayMinigame = {}
 
-function PlayGame.request(gameType, ...)
-    assert(Table.hasValue(GameType, gameType), "PlayGame.request() called with invalid gameType: " .. tostring(gameType))
+function ClientPlayMinigame.request(minigameType, ...)
+    assert(Table.hasValue(MinigameType, minigameType), "PlayGame.request() called with invalid gameType: " .. tostring(minigameType))
 
-    local response = ReplicaRequest.new(ReplicaCollection.get("PlayGameRequest"), gameType, ...)
+    local response = ReplicaRequest.new(ReplicaCollection.get("PlayMinigameRequest"), minigameType, ...)
 
     return response
 end
 
-return PlayGame
+return ClientPlayMinigame
