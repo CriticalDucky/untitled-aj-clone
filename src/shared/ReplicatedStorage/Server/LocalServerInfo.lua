@@ -32,7 +32,7 @@ local serverType do
 
     for _, gameInfo in pairs(Minigames) do
         if gameInfo.placeId == game.PlaceId then
-            serverType = ServerTypeEnum.game
+            serverType = ServerTypeEnum.minigame
         end
     end
 
