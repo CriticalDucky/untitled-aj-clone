@@ -21,17 +21,19 @@ for locationEnum, entranceComponents in pairs(Entrances.groups) do
 
 			if not success then
 				warn(result)
-                -- Just never try again if it fails, so we don't spam the player with errors
+				-- Just never try again if it fails, so we don't spam the player with errors
 				return
 			end
 
-            for _, promise in result do
-                promise:andThen(function()
-                    playersTouched[player] = nil
-                end):catch(function(result)
-                    warn("Failed to teleport player: " .. result)
-                end)
-            end
+			for _, promise in result do
+				promise
+					:andThen(function()
+						playersTouched[player] = nil
+					end)
+					:catch(function(result)
+						warn("Failed to teleport player: " .. result)
+					end)
+			end
 		end
 	end)
 end
