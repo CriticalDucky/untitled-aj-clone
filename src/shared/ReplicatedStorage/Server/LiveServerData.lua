@@ -57,7 +57,7 @@
 
 		[ServerTypeEnum.minigame] = {
 			[minigameType] = {
-				[minigameIndex] | [privateServerId] = { -- TODO: Give private and public minigame servers their own tables
+				[minigameIndex] | [privateServerId] = { -- Whether the index is a minigameIndex or privateServerId depends on the minigameType
 					serverInfo
 				}
 			}
