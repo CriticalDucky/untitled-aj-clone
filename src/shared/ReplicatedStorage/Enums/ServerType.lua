@@ -1,7 +1,7 @@
 return {
-    location = 1,
-    routing = 2,
-    home = 3,
-    party = 4,
-    game = 5,
+    location = "location",
+    routing = "routing",
+    home = "home",
+    party = "party",
+    minigame = "minigame",
 }
