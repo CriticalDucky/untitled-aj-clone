@@ -56,8 +56,8 @@
 		},
 
 		[ServerTypeEnum.minigame] = {
-			[gameType] = {
-				[gameIndex] | [privateServerId] = { -- TODO: Give private and public game servers their own tables
+			[minigameType] = {
+				[minigameIndex] | [privateServerId] = { -- TODO: Give private and public game servers their own tables
 					serverInfo
 				}
 			}
@@ -189,8 +189,8 @@ if RunService:IsServer() then
 
 		[ServerTypeEnum.minigame] = {
 			--[[
-				[gameType] = {
-					[gameIndex] | [privateServerId] = {
+				[minigameType] = {
+					[minigameIndex] | [privateServerId] = {
 						serverInfo
 					}
 				}
@@ -322,21 +322,21 @@ if RunService:IsServer() then
 
 			replica:SetValue({ serverType, partyType, partyIndex }, filterServerInfo(Table.deepCopy(serverInfo)))
 		elseif serverType == ServerTypeEnum.minigame then
-			local gameType = serverIdentifier.gameType
-			local gameIndex = serverIdentifier.gameIndex
+			local minigameType = serverIdentifier.minigameType
+			local minigameIndex = serverIdentifier.minigameIndex
 
-			local gameTable = cachedServerType[gameType] or {}
+			local gameTable = cachedServerType[minigameType] or {}
 
-			gameTable[gameIndex] = serverInfo
-			cachedServerType[gameType] = gameTable
+			gameTable[minigameIndex] = serverInfo
+			cachedServerType[minigameType] = gameTable
 
 			local replicaData = replica.Data[serverType]
 
-			if not replicaData[gameType] then
-				replica:SetValue({ serverType, gameType }, filterServerInfo(Table.deepCopy(gameTable)))
+			if not replicaData[minigameType] then
+				replica:SetValue({ serverType, minigameType }, filterServerInfo(Table.deepCopy(gameTable)))
 			end
 
-			replica:SetValue({ serverType, gameType, gameIndex }, filterServerInfo(Table.deepCopy(serverInfo)))
+			replica:SetValue({ serverType, minigameType, minigameIndex }, filterServerInfo(Table.deepCopy(serverInfo)))
 		else
 			error ("LiveServerData: Message received with invalid server type. Received: " .. tostring(serverType))
 		end
@@ -419,10 +419,10 @@ function LiveServerData.get(
 
 		if partyTable then return partyTable[serverIdentifier.partyIndex] end
 	elseif serverType == ServerTypeEnum.minigame then
-		local gameTable = serverTypeData[serverIdentifier.gameType]
+		local minigameTable = serverTypeData[serverIdentifier.minigameType]
 
-		if gameTable then
-			return gameTable[serverIdentifier.gameIndex] or gameTable[serverIdentifier.privateServerId]
+		if minigameTable then
+			return minigameTable[serverIdentifier.minigameIndex] or minigameTable[serverIdentifier.privateServerId]
 		end
 	else
 		error "LiveServerData: Message received with invalid server type"
@@ -588,13 +588,13 @@ function LiveServerData.getPopulationInfo(serverIdentifier: ServerIdentifier)
 			else
 				error("Invalid party enum: " .. tostring(partyType))
 			end
-		elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isGame, serverType) then
-			local gameType = serverIdentifier.gameType
+		elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isMinigame, serverType) then
+			local minigameType = serverIdentifier.minigameType
 
-			local gameInfo = Minigames[gameType]
+			local minigameInfo = Minigames[minigameType]
 
-			if gameInfo then
-				local populationInfo = gameInfo.populationInfo
+			if minigameInfo then
+				local populationInfo = minigameInfo.populationInfo
 
 				if populationInfo then
 					serverFillInfo.max = populationInfo.max
@@ -604,7 +604,7 @@ function LiveServerData.getPopulationInfo(serverIdentifier: ServerIdentifier)
 					serverFillInfo.recommended = GameSettings.location_maxRecommendedPlayers
 				end
 			else
-				error("Invalid game enum: " .. tostring(gameType))
+				error("Invalid game enum: " .. tostring(minigameType))
 			end
 		elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome, serverType) then
 			serverFillInfo.max = GameSettings.home_maxNormalPlayers
@@ -662,16 +662,16 @@ function LiveServerData.getHomePopulationInfo(homeOwner)
 end
 
 --[[
-	Gets the population info for the given gameType and gameIndex.
-	Wrapper for LiveServerData.getPopulationInfo for game servers.
+	Gets the population info for the given minigameType and minigameIndex.
+	Wrapper for LiveServerData.getPopulationInfo for minigame servers.
 
 	Can return nil if the game is not live.
 ]]
-function LiveServerData.getGamePopulationInfo(gameType, gameIndex: number | string)
+function LiveServerData.getMinigamePopulationInfo(minigameType, minigameIndex: number | string)
 	return LiveServerData.getPopulationInfo {
 		serverType = ServerTypeEnum.minigame,
-		gameType = gameType,
-		gameIndex = gameIndex,
+		minigameType = minigameType,
+		minigameIndex = minigameIndex,
 	}
 end
 
@@ -727,15 +727,15 @@ function LiveServerData.getHomeServers()
 end
 
 --[[
-	Gets the games table for the given game type.
+	Gets the minigames table for the given minigame type.
 	Servers not live will not be included in the table.
 
-	Can return nil if no games of the given type are live.
+	Can return nil if no minigames of the given type are live.
 ]]
-function LiveServerData.getGameServers(gameType)
-	local gameData = LiveServerData.get(ServerTypeEnum.minigame)
+function LiveServerData.getMinigameServers(minigameType)
+	local minigameData = LiveServerData.get(ServerTypeEnum.minigame)
 
-	if gameData then return gameData[gameType] end
+	if minigameData then return minigameData[minigameType] end
 end
 
 --[[
