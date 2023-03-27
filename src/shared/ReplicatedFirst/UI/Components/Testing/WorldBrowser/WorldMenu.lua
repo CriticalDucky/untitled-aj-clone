@@ -19,8 +19,8 @@ local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
 local ServerTypeGroups = require(serverFolder:WaitForChild "ServerTypeGroups")
 local ClientTeleport = require(requestsFolder:WaitForChild("Teleportation"):WaitForChild "ClientTeleport")
 local WorldOrigin = require(serverFolder:WaitForChild "WorldOrigin")
-local ResponseType = require(enumsFolder:WaitForChild "ResponseType")
 local Promise = require(utilityFolder:WaitForChild "Promise")
+local Table = require(utilityFolder:WaitForChild "Table")
 
 local Value = Fusion.Value
 local New = Fusion.New
@@ -38,6 +38,8 @@ local Cleanup = Fusion.Cleanup
 local component = function(props)
 	local open = Value(false)
 	local enabled = Value(false)
+
+	local worldButtons = {}
 
 	Promise.all({
 		Promise.new(function(resolve)
@@ -180,11 +182,9 @@ local component = function(props)
 	local worldButtons = Computed(function()
 		local currentWorlds = ReplicatedServerData.getWorlds()
 
-		local worldButtons = {}
-
 		if currentWorlds then
 			for i, _ in ipairs(currentWorlds) do
-				worldButtons[i] = worldButton(i)
+				worldButtons[i] = worldButtons[i] or worldButton(i)
 			end
 		end
 
