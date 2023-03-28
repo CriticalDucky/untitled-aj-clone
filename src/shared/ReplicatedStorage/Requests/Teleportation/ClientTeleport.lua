@@ -157,25 +157,37 @@ function Authorize.toFriend(playerId: number)
 
 		if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation, serverType) then
 			if not ReplicatedServerData.worldHasLocation(friendLocation.worldIndex, friendLocation.locationEnum) then
-				warn("ClientTeleport.toFriend() called with invalid locationEnum: " .. tostring(friendLocation.locationEnum))
+				warn("Authorize.toFriend() called with invalid locationEnum: " .. tostring(friendLocation.locationEnum))
 
 				return false, TeleportResponseType.invalid
 			end
 
 			if LiveServerData.isLocationFull(friendLocation.worldIndex, friendLocation.locationEnum, 1) then
-				warn("ClientTeleport.toFriend() called with full location: " .. tostring(friendLocation.locationEnum))
+				warn("Authorize.toFriend() called with full location: " .. tostring(friendLocation.locationEnum))
 
 				return false, TeleportResponseType.full
 			end
 
 			if Locations.info[friendLocation.locationEnum].cantJoinPlayer then
-				warn("ClientTeleport.toFriend() called with location that can't be joined: " .. tostring(friendLocation.locationEnum))
+				warn("Authorize.toFriend() called with location that can't be joined: " .. tostring(friendLocation.locationEnum))
 
 				return false, TeleportResponseType.invalid
 			end
 		elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isParty, serverType) then
 			if LiveServerData.isPartyFull(friendLocation.partyType, friendLocation.partyIndex, 1) then
-				warn("ClientTeleport.toFriend() called with full party: " .. tostring(friendLocation.partyType))
+				warn("Authorize.toFriend() called with full party: " .. tostring(friendLocation.partyType))
+
+				return false, TeleportResponseType.full
+			end
+		elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isMinigame, serverType) then
+			if typeof(friendLocation.minigameIndex) == "string" or friendLocation.minigameIndex == nil then
+				warn("Authorize.toFriend(): friend is in an instance minigame server")
+
+				return false, TeleportResponseType.invalid
+			end
+
+			if LiveServerData.isMinigameFull(friendLocation.minigameType, friendLocation.minigameIndex) then
+				warn("ClientTeleport.toFriend() called with full minigame: " .. tostring(friendLocation.minigameType))
 
 				return false, TeleportResponseType.full
 			end
