@@ -18,9 +18,7 @@ local ClientPlayMinigame = {}
 function ClientPlayMinigame.request(minigameType, ...)
     assert(Table.hasValue(MinigameType, minigameType), "ClientPlayMinigame.request() called with invalid minigameType: " .. tostring(minigameType))
 
-    local response = ReplicaRequest.new(ReplicaCollection.get("PlayMinigameRequest"), minigameType, ...)
-
-    return response
+    return ReplicaRequest.new(ReplicaCollection.get("PlayMinigameRequest"), minigameType, ...)
 end
 
 return ClientPlayMinigame
