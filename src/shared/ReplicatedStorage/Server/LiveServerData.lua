@@ -64,7 +64,7 @@
 		},
 	}
 	```
-	
+
 	This script can be required from both the client and server.
 	If required on the client, all functions will return values that
 	can be used in Computeds that dynamically update.
@@ -323,9 +323,12 @@ if RunService:IsServer() then
 			replica:SetValue({ serverType, partyType, partyIndex }, filterServerInfo(Table.deepCopy(serverInfo)))
 		elseif serverType == ServerTypeEnum.minigame then
 			local minigameType = serverIdentifier.minigameType
-			local minigameIndex = serverIdentifier.minigameIndex
 
 			local minigameTable = cachedServerType[minigameType] or {}
+
+			local minigameIndex = serverIdentifier.minigameIndex
+
+			minigameIndex = minigameIndex or serverIdentifier.privateServerId -- privateServerId is used for instance servers
 
 			minigameTable[minigameIndex] = serverInfo
 			cachedServerType[minigameType] = minigameTable
@@ -422,7 +425,7 @@ function LiveServerData.get(
 		local minigameTable = serverTypeData[serverIdentifier.minigameType]
 
 		if minigameTable then
-			return minigameTable[serverIdentifier.minigameIndex] or minigameTable[serverIdentifier.privateServerId]
+			return minigameTable[serverIdentifier.minigameIndex or serverIdentifier.privateServerId]
 		end
 	else
 		error "LiveServerData: Message received with invalid server type"
@@ -663,6 +666,7 @@ end
 
 --[[
 	Gets the population info for the given minigameType and minigameIndex.
+	minigameIndex can be a minigameIndex or privateServerId.
 	Wrapper for LiveServerData.getPopulationInfo for minigame servers.
 
 	Can return nil if the minigame is not live.
@@ -671,7 +675,7 @@ function LiveServerData.getMinigamePopulationInfo(minigameType, minigameIndex: n
 	return LiveServerData.getPopulationInfo {
 		serverType = ServerTypeEnum.minigame,
 		minigameType = minigameType,
-		minigameIndex = minigameIndex,
+		[if type(minigameIndex) == "number" then "minigameIndex" else "privateServerId"] = minigameIndex,
 	}
 end
 
@@ -792,6 +796,22 @@ function LiveServerData.isHomeFull(homeOwner, numPlayersToAdd: number)
 	local homePopulationInfo = LiveServerData.getHomePopulationInfo(homeOwner)
 
 	return if homePopulationInfo and homePopulationInfo.max_emptySlots - numPlayersToAdd <= 0
+		then true
+		else false
+end
+
+--[[
+	Returns a boolean indicating if the specified minigame is full.
+	Optionally, you can specify the number of players you plan to add to the minigame.
+
+	Will return false if the minigame is not live (makes sense, right?)
+]]
+function LiveServerData.isMinigameFull(minigameType, minigameIndex: number | string, numPlayersToAdd: number)
+	numPlayersToAdd = numPlayersToAdd or 0
+
+	local minigamePopulationInfo = LiveServerData.getMinigamePopulationInfo(minigameType, minigameIndex)
+
+	return if minigamePopulationInfo and minigamePopulationInfo.max_emptySlots - numPlayersToAdd <= 0
 		then true
 		else false
 end
