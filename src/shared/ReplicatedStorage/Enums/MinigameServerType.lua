@@ -6,7 +6,7 @@ return {
     public = "public",
     --[[
         Instance minigames are only accessible once, and that's when they're initialized.
-        THe player (or other players) cannot (re)join after leaving. Not stored in ServerData as they are temporary, but accessible through
+        The player (or other players) cannot (re)join after leaving. Not stored in ServerData as they are temporary, but accessible through
         LiveServerData until the server shuts down.
     ]]
     instance = "instance",
