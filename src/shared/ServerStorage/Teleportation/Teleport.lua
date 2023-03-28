@@ -23,6 +23,7 @@ local serverUtility = serverStorageShared.Utility
 
 local Locations = require(serverFolder.Locations)
 local Parties = require(serverFolder.Parties)
+local Minigames = require(serverFolder.Minigames)
 local ServerGroupEnum = require(enumsFolder.ServerGroup)
 local ServerTypeGroups = require(serverFolder.ServerTypeGroups)
 local LocalServerInfo = require(serverFolder.LocalServerInfo)
@@ -36,6 +37,7 @@ local HomeLockType = require(enumsFolder.HomeLockType)
 local GameSettings = require(replicatedFirstShared.Settings.GameSettings)
 local Promise = require(replicatedFirstUtility.Promise)
 local TeleportResponseType = require(enumsFolder.TeleportResponseType)
+local MinigameServerType = require(enumsFolder:WaitForChild "MinigameServerType")
 local Types = require(replicatedFirstUtility.Types)
 local PlayerSettings = require(serverStorageShared.Data.Settings.PlayerSettings)
 
@@ -486,6 +488,70 @@ function Authorize.toHome(
 end
 
 --[[
+	Authorizes a player to teleport to a minigame. Used to verify that parameters are valid for teleporting to a minigame.
+	`minigameIndex` specifies which public minigame server to authorize to. If not provided, the player will be authorized to
+	a new instance minigame server.
+
+	If success is true, the second return value will be the minigame index if the specified minigame is public. Otherwise, it will be nil.
+
+	```lua
+	local isAllowed, responseType = Authorize.toMinigame(Player, minigameIndex)
+	```
+
+	Returns a boolean indicating whether the teleport is allowed, and a TeleportResponseType if not.
+]]
+function Authorize.toMinigame(
+	player: Player,
+	minigameType: UserEnum,
+	minigameIndex: number?
+): (boolean, typeof(TeleportResponseType))
+	assert(player and minigameType, "Teleport.toMinigame: missing argument: " .. tostring(player) .. ", " .. tostring(minigameType))
+
+	local minigame = Minigames[minigameType]
+
+	if not minigame then
+		warn "Teleport.toMinigame: invalid minigame type"
+		return false, TeleportResponseType.invalid
+	end
+
+	local minigameServerType = minigame.minigameServerType
+
+	if minigameServerType == MinigameServerType.public then
+		if not minigameIndex then
+			local success
+
+			success, minigameIndex = ServerData.findAvailableMinigame(minigameType)
+
+			if not success or not minigameIndex then
+				warn "Teleport.toMinigame: no available minigames"
+				return false, TeleportResponseType.error
+			end
+		else
+			local success, data = ServerData.getMinigame(minigameType, minigameIndex)
+
+			if not success or not data then
+				warn "Teleport.toMinigame: minigame does not exist"
+				return false, TeleportResponseType.invalid
+			end
+
+			local isMinigameFull = LiveServerData.isMinigameFull(minigameIndex)
+
+			if isMinigameFull then
+				warn "Teleport.toMinigame: minigame is full"
+				return false, TeleportResponseType.full
+			end
+		end
+
+		return true, minigameIndex
+	elseif minigameServerType == MinigameServerType.instance then
+		return true
+	else
+		warn "Teleport.toMinigame: invalid minigame server type for provided minigame type"
+		return false, TeleportResponseType.invalid
+	end
+end
+
+--[[
 	Authorizes a player to teleport to a location. Used to verify that parameters are valid for teleporting to a location.
 
 	Returns a boolean indicating whether the teleport is allowed, and a TeleportResponseType if not.
@@ -569,7 +635,15 @@ function Authorize.toPlayer(players: { Player } | Player, targetPlayer: number)
 
 		return true, serverType, serverIdentifier.homeOwner
 	elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isMinigame, serverType) then
-		return
+		local isAllowed, responseType = Authorize.toMinigame(players[1], serverIdentifier.minigameType, serverIdentifier.minigameIndex)
+
+		if not isAllowed then
+			warn "Teleport.toPlayer: unauthorized to teleport to minigame"
+
+			return false, responseType
+		end
+
+		return true, serverType, serverIdentifier.minigameType, serverIdentifier.minigameIndex
 	else
 		warn "Teleport.toPlayer: server is not a valid server type"
 
@@ -772,6 +846,77 @@ function Teleport.toHome(
 end
 
 --[[
+	Teleports a player or a set of players to a minigame.
+	- `minigameType` is the type of the minigame to teleport to.
+	- `minigameIndex` is optional. If not provided, an available minigame will be found.
+
+	If the specified minigame's minigameServerType is `instance`, the player will be teleported to a new server.
+	If it's `public`, the player will be teleported to the public server.
+
+	Returns a success boolean and a table of promises that resolve when the teleport is complete successfully for each player.
+	See Teleport.go for more information (it retruns what Teleport.go does).
+]]
+function Teleport.toMinigame(
+	players: Player | { Player },
+	minigameType: number,
+	minigameIndex: number?
+)
+	players = if type(players) == "table" then players else { players }
+
+	local isAllowed, response = Authorize.toMinigame(players, minigameType, minigameIndex)
+
+	if not isAllowed then
+		warn("Teleport.toMinigame: failed to authorize teleport to minigame " .. minigameType)
+
+		return false, response
+	end
+
+	local minigame = Minigames[minigameType]
+	local minigameServerType = minigame.minigameServerType
+	local teleportOptions = Teleport.getOptions(players[1])
+
+	if minigameServerType == MinigameServerType.instance then
+		local placeId = minigame.placeId
+
+		local function getServerCode()
+			return Promise.try(function()
+				return TeleportService:ReserveServer(placeId)
+			end)
+		end
+
+		local success, result = Promise.retry(getServerCode, 5):await()
+
+		if not success then
+			warn("Teleport.toMinigame: failed to reserve server for minigame " .. minigameType)
+
+			return false, TeleportResponseType.error
+		end
+
+		teleportOptions.ReservedServerAccessCode = result
+	elseif minigameServerType == MinigameServerType.public then
+		minigameIndex = minigameIndex or response
+
+		local success, minigame = ServerData.getMinigame(minigameType, minigameIndex)
+
+		if not success or not minigame then
+			warn "Teleport.toMinigame: failed to get minigame"
+
+			return false, TeleportResponseType.error
+		end
+
+		local code = minigame.serverCode
+
+		teleportOptions.ReservedServerAccessCode = code
+	else
+		warn("Teleport.toMinigame: invalid minigame type " .. minigameType)
+
+		return false, TeleportResponseType.error
+	end
+
+	return Teleport.go(players, Minigames[minigameType].placeId, teleportOptions)
+end
+
+--[[
 	Teleports a player or a set of players to a player.
 
 	Returns a success boolean and a table of promises that resolve when the teleport is
@@ -815,7 +960,13 @@ function Teleport.toPlayer(
 
 		return Teleport.toHome(players[1], targetPlayerId)
 	elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isMinigame, serverType) then
-		return
+		local minigameType, minigameIndex = arg2, arg3
+
+		return Teleport.toMinigame(players, minigameType, minigameIndex)
+	else
+		warn("Teleport.toPlayer: invalid server type " .. serverType)
+
+		return false, TeleportResponseType.error
 	end
 end
 
