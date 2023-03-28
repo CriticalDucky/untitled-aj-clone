@@ -18,6 +18,7 @@ local group = Time.newRangeGroup
 			max = 100,
 			recommended = 50,
 		},
+		isBrowsable = true, -- Whether the minigame is browsable in the minigame list
 		enabledTime = group (
 			timeRange(
 				{
@@ -48,5 +49,6 @@ return {
 		name = "Fishing",
 		placeId = 11569189394,
 		minigameServerType = MinigameServerType.instance,
+		isBrowsable = true,
 	},
 }
