@@ -45,7 +45,7 @@ LocalServerInfo.serverType = serverType
 
 	```lua
 	export type ServerIdentifier = {
-		serverType: UserEnum, -- The type of server (location, party,  minigame, etc.)
+		serverType: UserEnum, -- The type of server (location, party, minigame, etc.)
 		jobId: string?, -- The jobId of the server (routing servers)
 		worldIndex: number?, -- The index of the world the server is in (location servers)
 		locationEnum: UserEnum?, -- The location of the server (location servers)
@@ -53,18 +53,12 @@ LocalServerInfo.serverType = serverType
 		partyType: UserEnum?, -- The type of party the server is for (party servers)
 		partyIndex: number?, -- The index of the party the server is for (party servers)
 		minigameType: UserEnum?, -- The type of minigame the server is for (minigame servers)
-		minigameIndex: number?, -- The index of the minigame the server is for (minigame servers)
+		minigameIndex: number?, -- The index of the minigame the server is for (public minigame servers)
+		privateServerId: string?, -- The private server id of the server (instance minigame servers)
 	}
 	```
 ]]
 function LocalServerInfo.getServerIdentifier()
-    if serverType == ServerTypeEnum.routing then
-		return {
-			serverType = serverType,
-			jobId = game.JobId,
-		}
-    end
-
     local serverIdentifier
 
 	if RunService:IsServer() then
@@ -75,10 +69,26 @@ function LocalServerInfo.getServerIdentifier()
 		local ServerData = require(serverStorageShared.ServerManagement.ServerData)
 
 		serverIdentifier = select(2, ServerData.getServerIdentifier())
+
+		if serverIdentifier then
+			serverIdentifier.jobId = game.JobId
+			serverIdentifier.privateServerId = game.PrivateServerId
+		end
 	elseif RunService:IsClient() then
 		local ReplicatedServerData = require(serverFolder:WaitForChild "ReplicatedServerData")
+		local ReplicaCollection = require(replicatedStorageShared:WaitForChild("Replication"):WaitForChild "ReplicaCollection")
 
 		serverIdentifier = ReplicatedServerData.getServerIdentifier()
+
+		if serverIdentifier then
+			local PrivateServerInfo = ReplicaCollection.get("PrivateServerInfo").Data
+
+			serverIdentifier.privateServerId = PrivateServerInfo.privateServerId
+		end
+	end
+
+	if serverIdentifier then
+		serverIdentifier.serverType = serverType
 	end
 
 	if serverType == ServerTypeEnum.minigame then
@@ -87,7 +97,7 @@ function LocalServerInfo.getServerIdentifier()
         end
 
 		serverIdentifier = {
-			serverType = serverType,
+			serverType = ServerTypeEnum.minigame,
 		}
 
         for minigameType, minigameInfo in pairs(Minigames) do

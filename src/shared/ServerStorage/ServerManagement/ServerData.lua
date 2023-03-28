@@ -74,7 +74,8 @@ export type ServerIdentifier = {
 	partyType: UserEnum?, -- The type of party the server is for (party servers)
 	partyIndex: number?, -- The index of the party the server is for (party servers)
 	minigameType: UserEnum?, -- The type of minigame the server is for (minigame servers)
-	minigameIndex: number?, -- The index of the minigame the server is for (minigame servers)
+	minigameIndex: number?, -- The index of the minigame the server is for (public minigame servers)
+	privateServerId: string?, -- The privateServerId of the server (instance minigame servers)
 }
 ```
 
@@ -107,6 +108,7 @@ local Locations = require(serverFolder.Locations)
 local Parties = require(serverFolder.Parties)
 local Minigames = require(serverFolder.Minigames)
 local DataStore = require(utilityFolder.DataStore)
+local MinigameServerType = require(enumsFolder.MinigameServerType)
 local LiveServerData = require(serverFolder.LiveServerData)
 local Math = require(replicatedFirstUtility.Math)
 local Table = require(replicatedFirstUtility.Table)
@@ -349,9 +351,15 @@ end
 -- Returns the retriaval success and cachedData. This can be used to make sure all data is retrieved before using it.
 function ServerData.getAll(): (boolean, table)
 	return Promise.all({
-		Promise.try(ServerData.getWorlds),
-		Promise.try(ServerData.getParties),
-		Promise.try(ServerData.getMinigames),
+		Promise.try(function()
+			assert(ServerData.getWorlds())
+		end),
+		Promise.try(function()
+			assert(ServerData.getParties())
+		end),
+		Promise.try(function()
+			assert(ServerData.getMinigames())
+		end),
 	})
 		:andThen(function()
 			return cachedData
@@ -453,6 +461,7 @@ end
 -- Attempts to add a minigame server, returning a success value and a result that is either the minigame index or an error message.
 function ServerData.addMinigame(minigameType: UserEnum)
 	assert(minigameType, "Minigame type is nil")
+	assert(Minigames[minigameType].minigameServerType == MinigameServerType.public, "Minigame must be public in order to add it to the server data.")
 
 	local function try()
 		return Promise.try(function()
@@ -551,7 +560,8 @@ end
 		partyType: UserEnum?, -- The type of party (only for party servers)
 		partyIndex: number?, -- The index of the party in the party type table (only for party servers)
 		minigameType: UserEnum?, -- The type of minigame (only for minigame servers)
-		minigameIndex: number?, -- The index of the minigame in the minigame type table (only for minigame servers)
+		minigameIndex: number?, -- The index of the minigame the server is for (public minigame servers)
+		privateServerId: string?, -- The privateServerId of the server (instance minigame servers)
 	}
 	```
 	This info is what actually characterizes the server instead of it being a serverCode or privateServerId.
@@ -795,6 +805,70 @@ function ServerData.findAvailableParty(partyType: UserEnum)
 	end
 
 	return true, partyIndex
+end
+
+--[[
+	Finds an available minigame based on population and chance.
+
+	`minigameType` is the type of minigame to search for.
+
+	Returns a success value and a result that is either the minigame index (if it exists) or an error message.
+]]
+function ServerData.findAvailableMinigame(minigameType: UserEnum)
+	assert(minigameType, "Minigame type must be provided")
+	assert(Minigames[minigameType].minigameServerType)
+
+	local success, minigames = ServerData.getMinigames(minigameType)
+
+	if not success or not minigames then
+		warn("Failed to get minigames: ", minigames)
+		return success, minigames
+	end
+
+	local minigameIndex
+	do
+		local rarities = {}
+
+		for minigameIndex, _ in ipairs(minigames) do
+			local minigamePopulationInfo = LiveServerData.getMinigamePopulationInfo(minigameType, minigameIndex)
+
+			local minigameIsSuitable = true
+
+			if minigamePopulationInfo then
+				if minigamePopulationInfo.recommended_emptySlots == 0 then minigameIsSuitable = false end
+			end
+
+			if not minigameIsSuitable then
+				print("ServerData.findAvailableMinigame: Minigame " .. minigameIndex .. " is not suitable")
+				continue
+			end
+
+			local population = minigamePopulationInfo and minigamePopulationInfo.population or 0
+
+			local chance
+			do
+				if population == 0 then
+					chance = 0.001
+				else
+					chance = population
+				end
+			end
+
+			print("ServerData.findAvailableMinigame: Minigame " .. minigameIndex .. " has a chance of " .. chance)
+
+			rarities[minigameIndex] = chance
+		end
+
+		minigameIndex = Math.weightedChance(rarities)
+	end
+
+	if minigameIndex == nil then
+		print "No suitable minigame found, creating new minigame"
+
+		return ServerData.addMinigame(minigameType)
+	end
+
+	return true, minigameIndex
 end
 
 --[[

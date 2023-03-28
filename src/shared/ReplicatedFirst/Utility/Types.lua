@@ -87,6 +87,7 @@ export type ServerIdentifier = {
 	partyIndex: number?,
 	minigameType: UserEnum?,
 	minigameIndex: number?,
+	privateServerId: string?,
 }
 
 return nil

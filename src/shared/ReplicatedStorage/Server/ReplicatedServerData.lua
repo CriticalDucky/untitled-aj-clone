@@ -69,7 +69,8 @@
 		partyType: UserEnum?, -- The type of party the server is for (party servers)
 		partyIndex: number?, -- The index of the party the server is for (party servers)
 		minigameType: UserEnum?, -- The type of minigame the server is for (minigame servers)
-		minigameIndex: number?, -- The index of the minigame the server is for (minigame servers)
+		minigameIndex: number?, -- The index of the minigame the server is for (public minigame servers)
+		privateServerId: string?, -- The privateServerId of the server (instance minigame servers)
 	}
 	```
 
@@ -234,7 +235,8 @@ end
 		partyType: UserEnum?, -- The type of party the server is for (party servers)
 		partyIndex: number?, -- The index of the party the server is for (party servers)
 		minigameType: UserEnum?, -- The type of minigame the server is for (minigame servers)
-		minigameIndex: number?, -- The index of the minigame the server is for (minigame servers)
+		minigameIndex: number?, -- The index of the minigame the server is for (public minigame servers)
+		privateServerId: string?, -- The privateServerId of the server (instance minigame servers)
 	}
 	```
 ]]
