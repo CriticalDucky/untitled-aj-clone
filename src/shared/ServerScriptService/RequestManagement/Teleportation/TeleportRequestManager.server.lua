@@ -29,12 +29,12 @@ local Types = require(utilityFolder.Types)
 
 type Promise = Types.Promise
 
-local TeleportRequest = ReplicaService.NewReplica {
+local teleportRequest = ReplicaService.NewReplica {
 	ClassToken = ReplicaService.NewClassToken "TeleportRequest",
 	Replication = "All",
 }
 
-ReplicaResponse.listen(TeleportRequest, function(player: Player, teleportRequestType, ...)
+ReplicaResponse.listen(teleportRequest, function(player: Player, teleportRequestType, ...)
 	if ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
 		warn "Routing server received a teleport request. This should never happen."
 		return false, TeleportResponseType.invalid
