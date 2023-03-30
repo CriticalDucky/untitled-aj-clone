@@ -1,0 +1,137 @@
+{
+  "name": "Untitled-AJ-clone",
+  "servePlaceIds": [
+    12939855185
+  ],
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "$path": "src/Minigames/Gatherer/ReplicatedStorage",
+
+      "Shared": {
+        "$className": "Folder",
+        "$path": "src/Shared/ReplicatedStorage"
+      },
+
+      "Minigame": {
+        "$className": "Folder",
+        "$path": "src/Minigame/ReplicatedStorage"
+      }
+    },
+
+    "ReplicatedFirst": {
+      "$className": "ReplicatedFirst",
+      "$path": "src/Minigames/Gatherer/ReplicatedStorage",
+
+      "Shared": {
+        "$className": "Folder",
+        "$path": "src/Shared/ReplicatedFirst"
+      },
+
+      "Minigame": {
+        "$className": "Folder",
+        "$path": "src/Minigame/ReplicatedFirst"
+      }
+    },
+
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "$path": "src/Minigames/Gatherer/ServerScriptService",
+
+      "Shared": {
+        "$className": "Folder",
+        "$path": "src/Shared/ServerScriptService"
+      },
+
+      "Minigame": {
+        "$className": "Folder",
+        "$path": "src/Minigame/ServerScriptService"
+      }
+    },
+
+    "ServerStorage": {
+      "$className": "ServerStorage",
+      "$path": "src/Minigames/Gatherer/ServerStorage",
+
+      "Shared": {
+        "$className": "Folder",
+        "$path": "src/Shared/ServerStorage"
+      },
+
+      "Minigame": {
+        "$className": "Folder",
+        "$path": "src/Minigame/ServerStorage"
+      }
+    },
+
+    "Players": {
+      "$className": "Players",
+      "$properties": {
+        "CharacterAutoLoads": false
+      }
+    },
+
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "$properties": {
+        "DevComputerMovementMode": "KeyboardMouse",
+        "DevTouchMovementMode": "DynamicThumbstick",
+        "EnableMouseLockOption": false
+      },
+
+      "StarterPlayerScripts": {
+          "$className": "StarterPlayerScripts",
+          "$path": "src/Minigames/Gatherer/StarterPlayer/StarterPlayerScripts",
+
+          "Shared": {
+            "$className": "Folder",
+            "$path": "src/Shared/StarterPlayer/StarterPlayerScripts"
+          },
+
+          "Minigame": {
+            "$className": "Folder",
+            "$path": "src/Minigame/StarterPlayer/StarterPlayerScripts"
+          }
+      },
+
+      "StarterCharacterScripts": {
+          "$className": "StarterCharacterScripts",
+          "$path": "src/Minigames/Gatherer/StarterPlayer/StarterCharacterScripts",
+
+          "Shared": {
+            "$className": "Folder",
+            "$path": "src/Shared/StarterPlayer/StarterCharacterScripts"
+          },
+
+          "Minigame": {
+            "$className": "Folder",
+            "$path": "src/Minigame/StarterPlayer/StarterCharacterScripts"
+          }
+      }
+    },
+
+    "Workspace": {
+      "$className": "Workspace",
+      "$path": "src/Minigames/Gatherer/Workspace",
+
+      "Shared": {
+        "$className": "Folder",
+        "$path": "src/Shared/Workspace"
+      },
+
+      "Location": {
+        "$className": "Folder",
+        "$path": "src/Minigame/Workspace"
+      }
+    },
+
+    "Lighting": {
+      "$className": "Lighting",
+      "$properties": {
+        "Technology": "Future"
+      }
+    }
+  }
+}
