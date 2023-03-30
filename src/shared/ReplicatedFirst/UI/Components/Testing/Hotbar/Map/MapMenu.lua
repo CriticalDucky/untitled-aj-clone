@@ -36,9 +36,11 @@ local component = function(props)
 	local enabled = Value(false)
 
 	task.spawn(function()
-		LocalServerInfo.getServerIdentifier()
+		if ServerTypeGroups.serverInGroup(ServerGroupEnum.isWorldBased) then
+			LocalServerInfo.getServerIdentifier()
 
-		enabled:set(true)
+			enabled:set(true)
+		end
 	end)
 
 	for priority, locationEnum in pairs(Locations.priority) do
