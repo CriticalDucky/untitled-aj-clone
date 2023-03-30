@@ -21,7 +21,7 @@ local classes = {
 	"PlayMinigameRequest",
 	"LiveServerData",
 	"ServerData",
-	"PrivateServerInfo",
+	"SessionInfo",
 }
 
 local inclusiveClasses =
