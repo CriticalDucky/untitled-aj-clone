@@ -44,7 +44,10 @@ local component = function(props)
 
 	Promise.all({
 		Promise.new(function(resolve)
-			LocalServerInfo.getServerIdentifier()
+			if ServerTypeGroups.serverInGroup(ServerGroupEnum.isWorldBased) then
+				LocalServerInfo.getServerIdentifier()
+			end
+
 			resolve()
 		end),
 
