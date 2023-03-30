@@ -326,9 +326,7 @@ if RunService:IsServer() then
 
 			local minigameTable = cachedServerType[minigameType] or {}
 
-			local minigameIndex = serverIdentifier.minigameIndex
-
-			minigameIndex = minigameIndex or serverIdentifier.privateServerId -- privateServerId is used for instance servers
+			local minigameIndex = serverIdentifier.minigameIndex or serverIdentifier.privateServerId
 
 			minigameTable[minigameIndex] = serverInfo
 			cachedServerType[minigameType] = minigameTable
