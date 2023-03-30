@@ -51,4 +51,11 @@ return {
 		minigameServerType = MinigameServerType.instance,
 		isBrowsable = true,
 	},
+
+	[MinigameTypeEnum.gatherer] = {
+		name = "Gatherer",
+		placeId = 12939855185,
+		minigameServerType = MinigameServerType.public,
+		isBrowsable = true,
+	}
 }
