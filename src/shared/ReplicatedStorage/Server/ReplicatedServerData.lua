@@ -104,7 +104,7 @@ type ServerIdentifier = Types.ServerIdentifier
 local serverDataValue = Value {}
 
 local serverIdentifierPromise = Promise.new(function(resolve) -- Fat boy promise
-	local privateServerId = ReplicaCollection.get("PrivateServerInfo").Data.privateServerId
+	local privateServerId = ReplicaCollection.get("SessionInfo").Data.privateServerId
 
 	local disconnect
 
