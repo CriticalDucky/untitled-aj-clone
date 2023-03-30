@@ -37,7 +37,11 @@ local playMinigameRequest = ReplicaService.NewReplica {
 local onRequested: {[string]: (Player, ...any) -> (boolean, typeof(PlayMinigameResponseType))} = {
     [MinigameType.fishing] = function(player)
         return Teleport.toMinigame(player, MinigameType.fishing)
-    end
+    end,
+
+    [MinigameType.gatherer] = function(player)
+        return Teleport.toMinigame(player, MinigameType.gatherer)
+    end,
 }
 
 ReplicaResponse.listen(playMinigameRequest, function(player, minigameType, ...)
