@@ -40,6 +40,7 @@ local TeleportResponseType = require(enumsFolder.TeleportResponseType)
 local MinigameServerType = require(enumsFolder:WaitForChild "MinigameServerType")
 local Types = require(replicatedFirstUtility.Types)
 local PlayerSettings = require(serverStorageShared.Data.Settings.PlayerSettings)
+local Friends = require(replicatedFirstUtility.Friends)
 
 type ServerIdentifier = Types.ServerIdentifier
 type HomeServerInfo = Types.HomeServerInfo
@@ -450,18 +451,22 @@ function Authorize.toHome(
 			return false, TeleportResponseType.full
 		end
 
-		local success, isFriendsWith = pcall(function()
-			return player:IsFriendsWith(homeOwnerUserId)
-		end)
+		local isFriend = Friends.are(player.UserId, homeOwnerUserId)
+		local success, homeLockType = PlayerSettings.getSetting("homeLock", homeOwnerUserId)
 
 		if not success then
-			warn "Teleport.toHome: failed to check if player is friends with home owner"
+			warn "Teleport.toHome: failed to get home lock type"
 			return false, TeleportResponseType.error
 		end
 
-		if not isFriendsWith then
-			warn "Teleport.toHome: home is locked"
-			return false, TeleportResponseType.invalid
+		local friendsOnlyButNotFriend = homeLockType == HomeLockType.friendsOnly and not isFriend
+		local lockedToEveryone = homeLockType == HomeLockType.locked
+
+		if friendsOnlyButNotFriend or lockedToEveryone then
+			warn("ClientTeleport.toHome() called with locked home: " .. tostring(homeOwnerUserId))
+			warn(friendsOnlyButNotFriend, lockedToEveryone) -- For debugging when I inevitably run into this
+
+			return false, TeleportResponseType.locked
 		end
 	end
 

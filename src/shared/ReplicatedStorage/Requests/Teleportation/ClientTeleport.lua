@@ -34,6 +34,9 @@ local ActiveParties = require(serverFolder:WaitForChild "ActiveParties")
 local Promise = require(utilityFolder:WaitForChild "Promise")
 local Types = require(utilityFolder:WaitForChild "Types")
 local LocalServerInfo = require(serverFolder:WaitForChild "LocalServerInfo")
+local HomeLockType = require(enumsFolder:WaitForChild "HomeLockType")
+local ReplicatedPlayerData = require(dataFolder:WaitForChild "ReplicatedPlayerData")
+local Friends = require(utilityFolder:WaitForChild "Friends")
 
 type ServerIdentifier = Types.ServerIdentifier
 type UserEnum = Types.UserEnum
@@ -169,7 +172,10 @@ function Authorize.toFriend(playerId: number)
 			end
 
 			if Locations.info[friendLocation.locationEnum].cantJoinPlayer then
-				warn("Authorize.toFriend() called with location that can't be joined: " .. tostring(friendLocation.locationEnum))
+				warn(
+					"Authorize.toFriend() called with location that can't be joined: "
+						.. tostring(friendLocation.locationEnum)
+				)
 
 				return false, TeleportResponseType.invalid
 			end
@@ -181,7 +187,7 @@ function Authorize.toFriend(playerId: number)
 			end
 		elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isMinigame, serverType) then
 			if typeof(friendLocation.minigameIndex) == "string" or friendLocation.minigameIndex == nil then
-				warn("Authorize.toFriend(): friend is in an instance minigame server")
+				warn "Authorize.toFriend(): friend is in an instance minigame server"
 
 				return false, TeleportResponseType.invalid
 			end
@@ -260,9 +266,20 @@ function Authorize.toHome(homeOwnerUserId: number)
 		return false, TeleportResponseType.full
 	end
 
-	return true
+	local isFriend = Friends.are(player.UserId, homeOwnerUserId)
+	local homeLockType = ClientPlayerSettings.getSetting("homeLock", homeOwnerUserId, true)
 
-	-- TODO: Check if home is private
+	local friendsOnlyButNotFriend = homeLockType == HomeLockType.friendsOnly and not isFriend
+	local lockedToEveryone = homeLockType == HomeLockType.locked
+
+	if friendsOnlyButNotFriend or lockedToEveryone then
+		warn("ClientTeleport.toHome() called with locked home: " .. tostring(homeOwnerUserId))
+		warn(friendsOnlyButNotFriend, lockedToEveryone) -- For debugging when I inevitably run into this
+
+		return false, TeleportResponseType.locked
+	end
+
+	return true
 end
 
 --[[
