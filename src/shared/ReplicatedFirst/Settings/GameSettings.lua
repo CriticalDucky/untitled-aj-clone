@@ -50,7 +50,8 @@ local gameSettings = { -- Constants for the game
 			homeInfoStamped = false,
 		},
 
-		playerSettings = {
+		playerSettings = { -- Settings that can be changed by the player.
+		-- NOTE: If you add something here, make sure to add a verification method in src\Shared\ServerScriptService\RequestManagement\Settings\SetSettingRequestManager.server.lua
 			findOpenWorld = true, -- Whether or not the player wants to teleport to an open world if the desired location is full
 			homeLock = HomeLockType.unlocked, -- Who can access the player's home
 			selectedHome = nil, -- The home the player has selected
