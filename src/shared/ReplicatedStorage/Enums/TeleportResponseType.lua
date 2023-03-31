@@ -5,4 +5,5 @@ return {
     invalid = "TRT_I", -- The request was invalid. This error code is flexible and can be used for many different reasons
     success = "TRT_SUCCESS", -- The request was successful :D
     disabled = "TRT_D", -- The requested party is not online right now. Important for clients to detect this so they can show a message to the user
+    locked = "TRT_L", -- The requested home is locked. Important for clients to detect this so they can show a message to the user
 }
