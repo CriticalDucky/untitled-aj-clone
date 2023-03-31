@@ -8,13 +8,13 @@ local dataFolder = serverStorageShared.Data
 local serverUtility = serverStorageShared.Utility
 
 local PlayerLocation = require(serverUtility.PlayerLocation)
-local GetFriends = require(utilityFolder.GetFriends)
+local Friends = require(utilityFolder.Friends)
 local PlayerDataManager = require(dataFolder.PlayerDataManager)
 
 PlayerDataManager.forAllPlayerData(function(playerData)
 	local player = playerData.player
 
-	local friends = GetFriends(player.UserId)
+	local friends = Friends.get(player.UserId)
 
 	for _, friendData in pairs(friends) do
 		local playerLocation = PlayerLocation.get(friendData.Id)
