@@ -22,6 +22,8 @@ local classes = {
 	"LiveServerData",
 	"ServerData",
 	"SessionInfo",
+	"ProfileDataRequest",
+	"SetSettingRequest"
 }
 
 local inclusiveClasses =
