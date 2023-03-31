@@ -10,6 +10,7 @@ local ItemCategory = require(enumsFolder:WaitForChild "ItemCategory")
 local AccessoryTypeEnum = require(enumsFolder:WaitForChild "AccessoryType")
 local FurnitureTypeEnum = require(enumsFolder:WaitForChild "FurnitureType")
 local HomeTypeEnum = require(enumsFolder:WaitForChild "HomeType")
+local CurrencyType = require(enumsFolder:WaitForChild "CurrencyType")
 local Time = require(utilityFolder:WaitForChild "Time")
 
 local timeRange = Time.newRange
@@ -22,6 +23,10 @@ return {
 			{ -- Beach Ball
 				itemCategory = ItemCategory.furniture,
 				item = FurnitureTypeEnum.beachBall,
+				price = {
+					type = CurrencyType.money,
+					amount = 100,
+				},
 				sellingTime = group(timeRange({
 					year = 2020,
 					month = 1,
