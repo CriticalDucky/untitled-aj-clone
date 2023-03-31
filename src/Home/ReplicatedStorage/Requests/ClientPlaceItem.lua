@@ -28,7 +28,7 @@ local PlaceItem = {}
 ]]
 local function request(placeItemRequestType: UserEnum, info: { itemId: string, pivotCFrame: CFrame? })
 	local placeItemRequestReplica = ReplicaCollection.get "PlaceItemRequest"
-	return ReplicaRequest.new(placeItemRequestReplica, placeItemRequestType, info)
+	return unpack(ReplicaRequest.new(placeItemRequestReplica, placeItemRequestType, info))
 end
 
 --[[
