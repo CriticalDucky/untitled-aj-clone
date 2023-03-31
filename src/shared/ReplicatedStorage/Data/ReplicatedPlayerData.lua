@@ -17,6 +17,7 @@ local replicationFolder = replicatedStorageShared:WaitForChild "Replication"
 local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
 local serverFolder = replicatedStorageShared:WaitForChild "Server"
+local requestsFolder = replicatedStorageShared:WaitForChild "Requests"
 
 local ReplicaCollection = require(replicationFolder:WaitForChild "ReplicaCollection")
 local Fusion = require(replicatedFirstShared:WaitForChild "Fusion")
@@ -24,6 +25,7 @@ local Types = require(utilityFolder:WaitForChild "Types")
 local Promise = require(utilityFolder:WaitForChild "Promise")
 local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
 local ServerTypeGroups = require(serverFolder:WaitForChild "ServerTypeGroups")
+local ReplicaRequest = require(requestsFolder:WaitForChild "ReplicaRequest")
 
 type InventoryCategory = Types.InventoryCategory
 type Promise = Types.Promise
@@ -75,6 +77,19 @@ function ReplicatedPlayerData.get(player: Player | number | nil, wait: boolean?)
 	end
 
 	return playerDataValue:get()[userId] or (wait and waitForData())
+end
+
+--[[
+	Requests an offline player's data and uses one credit if successful.
+	Clients have at max 5 credits and they replenish at a rate of 1 credit every 30 seconds.
+
+	Returns an allowed boolean and the data if successful.
+	Even if the allowed boolean is true, the data may be nil if retrieval failed.
+]]
+function ReplicatedPlayerData.requestData(userId: number): (boolean, ProfileData?)
+	local replica = ReplicaCollection.get "ProfileDataRequest"
+
+	return unpack(ReplicaRequest.new(replica, userId))
 end
 
 if not ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
