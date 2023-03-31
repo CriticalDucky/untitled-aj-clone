@@ -1,3 +1,3 @@
 return {
-    test1 = -100
+    test1 = "test1",
 }
