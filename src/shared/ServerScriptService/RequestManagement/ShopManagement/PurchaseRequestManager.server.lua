@@ -1,58 +1,67 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ServerStorage = game:GetService("ServerStorage")
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
+local ReplicatedStorage = game:GetService "ReplicatedStorage"
+local ServerStorage = game:GetService "ServerStorage"
 
 local serverStorageShared = ServerStorage.Shared
 local replicatedStorageShared = ReplicatedStorage.Shared
+local replicatedFirstShared = ReplicatedFirst.Shared
 local dataFolder = serverStorageShared.Data
 local shoppingFolder = dataFolder.Shopping
 local replicatedShoppingFolder = replicatedStorageShared.Data.ShopInfo
+local enumsFolder = replicatedStorageShared.Enums
+local utilityFolder = replicatedFirstShared.Utility
+local serverStorageSharedUtility = serverStorageShared.Utility
 
 local ReplicaService = require(dataFolder.ReplicaService)
 local ActiveShops = require(shoppingFolder.ActiveShops)
 local Shops = require(replicatedShoppingFolder.Shops)
 local ShopManager = require(shoppingFolder.ShopManager)
+local PurchaseResponseType = require(enumsFolder:WaitForChild "PurchaseResponseType")
+local Param = require(utilityFolder:WaitForChild "Param")
+local ReplicaResponse = require(serverStorageSharedUtility.ReplicaResponse)
 
-local purchaseRequest = ReplicaService.NewReplica({
-    ClassToken = ReplicaService.NewClassToken("PurchaseRequest"),
-    Replication = "All"
-})
+local purchaseRequest = ReplicaService.NewReplica {
+	ClassToken = ReplicaService.NewClassToken "PurchaseRequest",
+	Replication = "All",
+}
 
-purchaseRequest:ConnectOnServerEvent(function(player, requestCode, shopEnum, itemIndex)
-    local function requestIsValid()
-        if not (shopEnum and itemIndex and type(requestCode) == "string") then
-            warn("Invalid arguments")
-            return false
-        end
+ReplicaResponse.listen(purchaseRequest, function(player, shopEnum: string, itemIndex: number)
+	if not Param.expect({ shopEnum, "string" }, { itemIndex, "number" }) then
+		warn "PurchaseRequestManager: Invalid arguments"
 
-        if not ActiveShops[shopEnum] then
-            warn("Shop is not active")
-            return false
-        end
+		return false, PurchaseResponseType.invalid
+	end
 
-        local shopInfo = Shops[shopEnum]
-        local shopItem = shopInfo.items[itemIndex]
+	if not ActiveShops[shopEnum] then
+		warn "PurchaseRequestManager: Shop is not active"
 
-        if not shopItem then
-            warn("Shop item does not exist")
-            return false
-        end
+		return false, PurchaseResponseType.invalid
+	end
 
-        if not ShopManager.playerCanBuyItem(player, shopEnum, itemIndex) then
-            warn("Player cannot buy item")
-            return false
-        end
+	local shopInfo = Shops[shopEnum]
+	local shopItem = shopInfo.items[itemIndex]
 
-        return true
-    end
+	if not shopItem then
+		warn "PurchaseRequestManager: Shop item does not exist"
 
-    local function respond(success)
-        purchaseRequest:FireClient(player, requestCode, success)
-    end
+		return false, PurchaseResponseType.invalid
+	end
 
-    if requestIsValid() then
-        respond(ShopManager.purchaseShopItem(player, shopEnum, itemIndex))
-    else
-        warn("Invalid request")
-        respond(false)
-    end
+	local canBuy, result = ShopManager.canPlayerBuyItem(player, shopEnum, itemIndex)
+
+	if not canBuy then
+		warn "PurchaseRequestManager: Player cannot buy item"
+
+		return false, result
+	end
+
+	local success, result = ShopManager.purchaseShopItem(player, shopEnum, itemIndex)
+
+	if not success then
+		warn "PurchaseRequestManager: Player cannot buy item"
+
+		return false, result
+	end
+
+	return true, result
 end)
