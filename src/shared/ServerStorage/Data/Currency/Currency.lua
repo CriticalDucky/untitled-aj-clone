@@ -1,61 +1,88 @@
-local ServerStorage = game:GetService("ServerStorage")
+local ServerStorage = game:GetService "ServerStorage"
 
 local serverStorageShared = ServerStorage.Shared
 local dataFolder = serverStorageShared.Data
 
 local PlayerDataManager = require(dataFolder.PlayerDataManager)
 
-local lastCurrencyChange = {
-    --[[
-    [player] = {
-        currencyType = currencyType,
-        amount = amount,
-    }
-    ]]
-}
-
 local Currency = {}
 
+--[[
+    Gets the amount of currency of the specified currency type that the player has.
+    Returns a success boolean and the amount of currency if successful.
+    If no currency type is specified, returns a table of all currency types and their amounts.
+
+    CurrencyType is a CurrencyType.lua enum.
+]]
 function Currency.get(player, currencyType)
+	local playerData = PlayerDataManager.get(player)
+
+	if not playerData then return false end
+
+	local currencyTable = playerData.profile.Data.currency
+
+	return true, if currencyType then currencyTable[currencyType] else currencyTable
+end
+
+--[[
+    Returns a success boolean and whether or not the player has the specified amount of currency.
+
+    CurrencyType is a CurrencyType.lua enum.
+]]
+function Currency.hasAmount(player: Player, currencyType, amount: number)
+	assert(player and currencyType and amount, "Currency.has: Missing argument(s)")
+
+	local currency = Currency.get(player, currencyType)
+
+	return currency and currency >= amount
+end
+
+--[[
+    Sets the player's currency to the specified amount.
+    Returns a success boolean.
+
+    CurrencyType is a CurrencyType.lua enum.
+
+    Consider using Currency.increment for general transaction operations.
+]]
+function Currency.set(player: Player, currencyType, amount: number)
+    assert(player and currencyType and amount, "Currency.set: Missing argument(s)")
+
     local playerData = PlayerDataManager.get(player)
-    
-    if not playerData then
-        return
+
+    if not playerData then return false end
+
+    playerData:setValue({ "currency", currencyType }, amount)
+
+    return true
+end
+
+--[[
+    Increments the player's currency by the specified amount.
+    Returns a success boolean.
+
+    CurrencyType is a CurrencyType.lua enum.
+]]
+function Currency.increment(player: Player, currencyType, amount: number)
+	assert(player and currencyType and amount, "Currency.increment: Missing argument(s)")
+
+	local playerData = PlayerDataManager.get(player)
+
+	if not playerData then return false end
+
+	local success, currencyAmount = Currency.get(player, currencyType)
+
+	if success and currencyAmount and currencyAmount + amount >= 0 then
+		return Currency.set(player, currencyType, currencyAmount + amount)
+	end
+
+    if not (currencyAmount + amount >= 0) then
+        error("Currency.increment: Resulting currency amount is less than 0")
     end
 
-    local currencyTable = playerData.profile.Data.currency
-
-    return if currencyType then currencyTable[currencyType] else currencyTable
+    return false
 end
 
-function Currency.has(player, currencyType, amount)
-    assert(player and currencyType and amount, "Currency.has: Missing argument(s)")
-    local currency = Currency.get(player, currencyType)
-    return currency and currency >= amount
-end
 
-function Currency.increment(player, currencyType, amount)
-    assert(player and currencyType and amount, "Currency.increment: Missing argument(s)")
-
-    local playerData = PlayerDataManager.get(player)
-    
-    if not playerData then
-        return
-    end
-
-    local currencyAmount = Currency.get(player, currencyType)
-
-    if currencyAmount and currencyAmount + amount >= 0 then
-        lastCurrencyChange[player] = amount
-        playerData:setValue({"currency", currencyType}, currencyAmount + amount)
-
-        return true
-    end
-end
-
-function Currency.reimburse(player) -- Undo last currency change
-    local playerCurrencyChange = lastCurrencyChange[player]
-    Currency.increment(player, playerCurrencyChange.currencyType, -playerCurrencyChange.amount)
-end
 
 return Currency
