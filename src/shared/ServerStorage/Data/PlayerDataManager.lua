@@ -112,6 +112,17 @@ function PlayerData.new(player: Player): PlayerData
 	profile:ListenToRelease(function()
 		playerDataCollection[player] = nil
 		playerDataCreationComplete[player] = nil
+
+		local matchingProps = {}
+
+		for propName, prop in profile.Data do
+			matchingProps[propName] = if GameSettings.dataKeyReplication[propName] == ReplicationType.public
+				then prop
+				else nil
+		end
+
+		playerDataPublicReplica:SetValue({ player.UserId }, matchingProps)
+		cachedViewedProfiles[player.UserId] = Table.deepCopy(profile.Data)
 	end)
 
 	if not player:IsDescendantOf(Players) then
@@ -322,7 +333,7 @@ function PlayerDataManager.viewPlayerProfile(userId: number): ProfileData?
 
 	if player and playerDataCollection[player] then
 		local playerData = playerDataCollection[player]
-		return Table.deepFreeze(Table.deepCopy(playerData.profile.Data))
+		return Table.deepCopy(playerData.profile.Data)
 	end
 
 	local profileData: ProfileData? = cachedViewedProfiles[userId]
@@ -334,7 +345,9 @@ function PlayerDataManager.viewPlayerProfile(userId: number): ProfileData?
 	local profile
 
 	if isRetrievingProfile[userId] then
-		repeat task.wait() until not isRetrievingProfile[userId]
+		repeat
+			task.wait()
+		until not isRetrievingProfile[userId]
 
 		profile = cachedViewedProfiles[userId]
 	else
@@ -347,8 +360,18 @@ function PlayerDataManager.viewPlayerProfile(userId: number): ProfileData?
 	end
 
 	if profile then
-		profileData = Table.deepFreeze(Table.deepCopy(profile.Data))
+		profileData = Table.deepCopy(profile.Data)
 		cachedViewedProfiles[userId] = profileData
+
+		local matchingProps = {}
+
+		for propName, prop in profile.Data do
+			matchingProps[propName] = if GameSettings.dataKeyReplication[propName] == ReplicationType.public
+				then prop
+				else nil
+		end
+
+		playerDataPublicReplica:SetValue({ userId }, matchingProps)
 		return profileData
 	else
 		warn "Failed to view profile"
@@ -388,6 +411,13 @@ function PlayerDataManager.forAllPlayerData(callback: (PlayerData) -> nil)
 	local connection = PlayerDataManager.playerDataAdded:Connect(callback)
 
 	return connection
+end
+
+-- Returns whether or not the given player's data has been cached in this server.
+function PlayerDataManager.isDataCached(player: Player | number): boolean
+	player = if typeof(player) == "number" then Players:GetPlayerByUserId(player) else player
+
+	return playerDataCollection[player] ~= nil or cachedViewedProfiles[player.UserId] ~= nil
 end
 
 Players.PlayerRemoving:Connect(function(player)
