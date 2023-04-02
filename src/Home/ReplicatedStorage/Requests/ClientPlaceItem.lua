@@ -24,7 +24,7 @@ type UserEnum = Types.UserEnum
 local PlaceItem = {}
 
 --[[
-    Internal function for sending a request to the server.
+	Internal function for sending a request to the server.
 ]]
 local function request(placeItemRequestType: UserEnum, info: { itemId: string, pivotCFrame: CFrame? })
 	local placeItemRequestReplica = ReplicaCollection.get "PlaceItemRequest"
@@ -32,8 +32,8 @@ local function request(placeItemRequestType: UserEnum, info: { itemId: string, p
 end
 
 --[[
-    Sends a request to the server to place an item.
-    Returns a promise that resolves when the item is placed.
+	Sends a request to the server to place an item.
+	Returns a promise that resolves when the item is placed.
 ]]
 function PlaceItem.place(itemId: string, pivotCFrame: CFrame)
 	return request(PlaceItemRequestType.place, {
@@ -43,8 +43,8 @@ function PlaceItem.place(itemId: string, pivotCFrame: CFrame)
 end
 
 --[[
-    Sends a request to the server to remove an item.
-    Returns a promise that resolves when the item is removed.
+	Sends a request to the server to remove an item.
+	Returns a promise that resolves when the item is removed.
 ]]
 function PlaceItem.remove(itemId: string)
 	return request(PlaceItemRequestType.remove, {

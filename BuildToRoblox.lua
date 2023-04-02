@@ -2,14 +2,14 @@
 
 --[[
 
-    This script *publishes* then project to Roblox. It will overwrite the existing place asset.
+	This script *publishes* then project to Roblox. It will overwrite the existing place asset.
 
-    TESTING_MODE controls whether it will publish to the testing or production game. This is extremely dangerous.
-    It should only be changed when we want to push an update. Go through me first!
+	TESTING_MODE controls whether it will publish to the testing or production game. This is extremely dangerous.
+	It should only be changed when we want to push an update. Go through me first!
 
-    SETUP:
+	SETUP:
 
-    Add a folder called "BuiltProjects" to the root of your project. This is where the built projects will be stored.
+	Add a folder called "BuiltProjects" to the root of your project. This is where the built projects will be stored.
 
 	Command (make sure you have remodel installed on your PATH): 
 

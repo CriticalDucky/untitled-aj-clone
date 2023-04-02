@@ -9,20 +9,20 @@ local mainEntrance = entrances:WaitForChild("MainEntrance")
 local LocationTypeEnum = require(enumsFolder:WaitForChild("LocationType"))
 
 local function getComponents(name)
-    local entranceGroup = entrances:WaitForChild(name)
+	local entranceGroup = entrances:WaitForChild(name)
 
-    return {
-        entrance = entranceGroup:WaitForChild("Entrance"),
-        exit = entranceGroup:WaitForChild("Exit"),
-    }   
+	return {
+		entrance = entranceGroup:WaitForChild("Entrance"),
+		exit = entranceGroup:WaitForChild("Exit"),
+	}   
 end
 
 local entranceGroupTable = {
-    groups = {
-        [LocationTypeEnum.forest] = getComponents("Forest"),
-    },
+	groups = {
+		[LocationTypeEnum.forest] = getComponents("Forest"),
+	},
 
-    main = mainEntrance,
+	main = mainEntrance,
 }
 
 return entranceGroupTable

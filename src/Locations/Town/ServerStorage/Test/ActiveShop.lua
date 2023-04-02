@@ -6,5 +6,5 @@ local enumsFolder = replicatedStorageShared.Enums
 local ShopTypeEnum = require(enumsFolder.ShopType)
 
 return {
-    [ShopTypeEnum.test1] = true
+	[ShopTypeEnum.test1] = true
 }
