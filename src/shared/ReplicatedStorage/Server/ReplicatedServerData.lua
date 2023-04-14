@@ -74,6 +74,26 @@
 	}
 	```
 
+	Example usage (not in computeds):
+	```lua
+	local parties = ReplicatedServerData.getParties()
+
+	if not parties or not Table.hasAnything(parties) then
+		warn("Parties have not replicated yet")
+	end
+	```
+
+	Example usage (in computeds):
+	```lua
+	local Computed = Fusion.Computed
+
+	Computed(function(use)
+		local data = use(ReplicatedServerData.value)
+		local withData = ReplicatedServerData.withData
+
+		local world = withData.getWorld(data, 1)
+	end)
+	```lua
 ]]
 
 local WORLDS_KEY = "worlds"
@@ -97,8 +117,10 @@ local Types = require(utilityFolder:WaitForChild "Types")
 local Fusion = require(replicatedFirstShared:WaitForChild "Fusion")
 local Value = Fusion.Value
 local Observer = Fusion.Observer
+local peek = Fusion.peek
 
 type ServerIdentifier = Types.ServerIdentifier
+type Use = Fusion.Use
 --#endregion
 
 local serverDataValue = Value {}
@@ -109,7 +131,7 @@ local serverIdentifierPromise = Promise.new(function(resolve) -- Fat boy promise
 	local disconnect
 
 	local function find()
-		local serverData = serverDataValue:get()
+		local serverData = peek(serverDataValue)
 
 		if serverData[privateServerId] then
 			disconnect()
@@ -147,81 +169,148 @@ local serverIdentifierPromise = Promise.new(function(resolve) -- Fat boy promise
 	find()
 end)
 
+
+
 local ReplicatedServerData = {}
+ReplicatedServerData.value = serverDataValue
+
+local withData = {}
+ReplicatedServerData.withData = withData
 
 --[[
-	Returns a table with the currently replicated server data.
-	Will act dynamically within a computed value.
+	Returns the worlds table with the currently replicated server data.
+	Pass in a table to use as the data. (useful for computed values)
 
 	Note: Can be an empty table if the server data has not been replicated yet.
 ]]
-function ReplicatedServerData.get()
-	return serverDataValue:get()
+function withData.getWorlds(data)
+	return data[WORLDS_KEY]
 end
 
 --[[
-	Returns the worlds table from the currently replicated server data.
-	Will act dynamically within a computed value.
+	Returns the parties table with the currently replicated server data.
+	Pass in a table to use as the data. (useful for computed values)
 
-	WARNING: Can return nil.
+	Note: Can be an empty table if the server data has not been replicated yet.
 ]]
-function ReplicatedServerData.getWorlds()
-	return ReplicatedServerData.get()[WORLDS_KEY]
+function withData.getParties(data)
+	return data[PARTIES_KEY]
 end
 
 --[[
-	Returns the parties table from the currently replicated server data.
-	Will act dynamically within a computed value.
+	Returns the minigames table with the currently replicated server data.
+	Pass in a table to use as the data. (useful for computed values)
 
-	WARNING: Can return nil.
+	Note: Can be an empty table if the server data has not been replicated yet.
 ]]
-function ReplicatedServerData.getParties()
-	return ReplicatedServerData.get()[PARTIES_KEY]
-end
-
---[[
-	Returns the minigames table from the currently replicated server data.
-	Will act dynamically within a computed value.
-
-	WARNING: Can return nil.
-]]
-function ReplicatedServerData.getMinigames()
-	return ReplicatedServerData.get()[MINIGAMES_KEY]
+function withData.getMinigames(data)
+	return data[MINIGAMES_KEY]
 end
 
 --[[
 	Returns the world with the specified index from the currently replicated server data.
-	Will act dynamically within a computed value.
+	Pass in a table to use as the data. (useful for computed values)
 
-	WARNING: Can return nil.
+	WARNING: Can return nil if the world has not been replicated yet. (or if the worldIndex is invalid)
 ]]
-function ReplicatedServerData.getWorld(worldIndex)
-	assert(typeof(worldIndex) == "number", "worldIndex must be a number")
+function withData.getWorld(data, worldIndex)
+	assert(type(worldIndex) == "number", "worldIndex must be a number")
 
-	local worlds = ReplicatedServerData.getWorlds()
+	local worlds = withData.getWorlds(data)
 
-	return worlds and worlds[worldIndex] or nil
+	return worlds and worlds[worldIndex]
 end
 
 --[[
 	Returns whether the specified world has the specified location.
-	Will act dynamically within a computed value.
+	Pass in a table to use as the data. (useful for computed values)
+
+	WARNING: Can return nil if the world has not been replicated yet. (or if the worldIndex is invalid)
+]]
+function withData.worldHasLocation(data, worldIndex, locationEnum)
+	assert(type(worldIndex) == "number", "worldIndex must be a number")
+	assert(type(locationEnum) == "number", "locationEnum must be a number")
+
+	local world = withData.getWorld(data, worldIndex)
+
+	return world and world.locations[locationEnum]
+end
+
+
+--[[
+	Returns a table with the currently replicated server data.
+	
+	If you're using this in a computed value, consider using ReplicatedServerData.withData instead.
+	(see the documentation at the top of the script)
+
+	Note: Can be an empty table if the server data has not been replicated yet.
+]]
+function ReplicatedServerData.get()
+	return peek(serverDataValue)
+end
+
+--[[
+	Returns the worlds table from the currently replicated server data.
+	
+	If you're using this in a computed value, consider using ReplicatedServerData.withData instead.
+	(see the documentation at the top of the script)
+
+	WARNING: Can return nil.
+]]
+function ReplicatedServerData.getWorlds()
+	return withData.getWorlds(peek(serverDataValue))
+end
+
+--[[
+	Returns the parties table from the currently replicated server data.
+	
+	If you're using this in a computed value, consider using ReplicatedServerData.withData instead.
+	(see the documentation at the top of the script)
+
+	WARNING: Can return nil.
+]]
+function ReplicatedServerData.getParties()
+	return withData.getParties(peek(serverDataValue))
+end
+
+--[[
+	Returns the minigames table from the currently replicated server data.
+	
+	If you're using this in a computed value, consider using ReplicatedServerData.withData instead.
+	(see the documentation at the top of the script)
+
+	WARNING: Can return nil.
+]]
+function ReplicatedServerData.getMinigames()
+	return withData.getMinigames(peek(serverDataValue))
+end
+
+--[[
+	Returns the world with the specified index from the currently replicated server data.
+	
+	If you're using this in a computed value, consider using ReplicatedServerData.withData instead.
+	(see the documentation at the top of the script)
+
+	WARNING: Can return nil.
+]]
+function ReplicatedServerData.getWorld(worldIndex)
+	return withData.getWorld(peek(serverDataValue), worldIndex)
+end
+
+--[[
+	Returns whether the specified world has the specified location.
+	
+	If you're using this in a computed value, consider using ReplicatedServerData.withData instead.
+	(see the documentation at the top of the script)
 
 	WARNING: Can return nil.
 ]]
 function ReplicatedServerData.worldHasLocation(worldIndex, locationEnum)
-	assert(typeof(worldIndex) == "number", "worldIndex must be a number")
-	assert(locationEnum, "locationEnum must not be nil")
-
-	local world = ReplicatedServerData.getWorld(worldIndex)
-
-	if not world then return nil end
-
-	return world.locations[locationEnum] ~= nil
+	return withData.worldHasLocation(peek(serverDataValue), worldIndex, locationEnum)
 end
 
 --[[
-	Returns the serverIdentifier of the server this script is running on.
+	Returns the serverIdentifier of the server this script is running on. Yields.
 
 	Structure:
 
