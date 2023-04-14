@@ -5,7 +5,6 @@ local ServerStorage = game:GetService "ServerStorage"
 local serverStorageShared = ServerStorage.Shared
 local replicatedStorageShared = ReplicatedStorage.Shared
 local replicatedFirstShared = ReplicatedFirst.Shared
-local settingsFolder = replicatedFirstShared.Settings
 local dataFolder = serverStorageShared.Data
 local serverStorageSharedUtility = serverStorageShared.Utility
 local utilityFolder = replicatedFirstShared.Utility
@@ -13,7 +12,6 @@ local enumsFolder = replicatedStorageShared.Enums
 
 local ReplicaService = require(dataFolder.ReplicaService)
 local ReplicaResponse = require(serverStorageSharedUtility.ReplicaResponse)
-local GameSettings = require(settingsFolder.GameSettings)
 local Param = require(utilityFolder.Param)
 local PlayerSettings = require(dataFolder.Settings.PlayerSettings)
 local Table = require(utilityFolder.Table)

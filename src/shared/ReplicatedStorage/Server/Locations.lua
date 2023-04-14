@@ -7,7 +7,7 @@ local settingsFolder = replicatedFirstShared:WaitForChild("Settings")
 local enumsFolder = replicatedStorageShared:WaitForChild("Enums")
 
 local LocationTypeEnum = require(enumsFolder:WaitForChild("LocationType"))
-local GameSettings = require(settingsFolder:WaitForChild("GameSettings"))
+local PlaceSettings = require(settingsFolder:WaitForChild("PlaceSettings"))
 
 local Locations = {
     info = {
@@ -15,8 +15,8 @@ local Locations = {
             name = "Town",
             placeId = 10189748812,
             populationInfo = { -- Example; optional
-                max = GameSettings.location_maxPlayers,
-                recommended = GameSettings.location_maxRecommendedPlayers,
+                max = PlaceSettings.location_maxPlayers,
+                recommended = PlaceSettings.location_maxRecommendedPlayers,
             },
             cantJoinPlayer = false
         },
@@ -48,7 +48,7 @@ function Locations.getMaxPlayerCount(locationEnum)
         error("Invalid location enum: " .. tostring(locationEnum))
     end
 
-    return GameSettings.location_maxPlayers
+    return PlaceSettings.location_maxPlayers
 end
 
 function Locations.getRecommendedPlayerCount(locationEnum)
@@ -66,7 +66,7 @@ function Locations.getRecommendedPlayerCount(locationEnum)
         error("Invalid location enum: " .. tostring(locationEnum))
     end
 
-    return GameSettings.location_maxRecommendedPlayers
+    return PlaceSettings.location_maxRecommendedPlayers
 end
 
 function Locations.getWorldMaxPlayerCount()

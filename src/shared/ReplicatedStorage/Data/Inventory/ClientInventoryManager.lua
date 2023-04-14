@@ -2,44 +2,86 @@
 	Provides an inventory interface for the client.
 	Wrapper for ReplicatedPlayerData.lua.
 
-	See GameSettings.lua to see how player data is structured and replicated.
+	See PlayerDataSettings.lua to see how player data is structured and replicated.
+	The player inventory is privately replicated, meaning that the client can only see their own inventory.
 ]]
 
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ReplicatedFirst = game:GetService("ReplicatedFirst")
+local ReplicatedStorage = game:GetService "ReplicatedStorage"
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
 
-local replicatedStorageShared = ReplicatedStorage:WaitForChild("Shared")
-local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
-local dataFolder = replicatedStorageShared:WaitForChild("Data")
-local utilityFolder = replicatedFirstShared:WaitForChild("Utility")
+local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
+local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
+local dataFolder = replicatedStorageShared:WaitForChild "Data"
+local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 
-local ReplicatedPlayerData = require(dataFolder:WaitForChild("ReplicatedPlayerData"))
-local Types = require(utilityFolder:WaitForChild("Types"))
+local ReplicatedPlayerData = require(dataFolder:WaitForChild "ReplicatedPlayerData")
+local Types = require(utilityFolder:WaitForChild "Types")
+
+local Fusion = require(replicatedFirstShared:WaitForChild "Fusion")
+local peek = Fusion.peek
 
 type UserEnum = Types.UserEnum
+type Inventory = Types.Inventory
+type InventoryCategory = Types.InventoryCategory
 
 local ClientInventoryManager = {}
+ClientInventoryManager.value = ReplicatedPlayerData.value
+
+local withData = {}
+ClientInventoryManager.withData = withData
 
 --[[
-	Gets a player's inventory. If the player data is not replicated, this will return nil unless wait is true.
-]]
-function ClientInventoryManager.getInventory(player: Player | number | nil, wait: boolean)
-	local data = ReplicatedPlayerData.get(player, wait)
+	Gets a player's inventory. Does not yield.
 
-	if data then
-		return data.inventory
-	end
+	Example usage for computeds:
+	```lua
+	Computed(function(use)
+		local data = use(ClientInventoryManager.value)
+		local inventory = ClientInventoryManager.withData.getInventory(data) -- Gets the local player's inventory
+	end)
+	```
+]]
+function withData.getInventory(data, player: Player | number | nil): Inventory?
+	local profileData = ReplicatedPlayerData.withData.get(data, player)
+
+	return profileData and profileData.inventory
 end
 
 --[[
-	Gets a player's inventory category. If the player data is not replicated, this will return nil unless wait is true.
-]]
-function ClientInventoryManager.getInventoryCategory(player: Player | number | nil, category: UserEnum, wait: boolean)
-	local inventory = ClientInventoryManager.getInventory(player, wait)
+	Gets a player's inventory category. Does not yield.
 
-	if inventory then
-		return inventory[category]
-	end
+	Example usage for computeds:
+	```lua
+	Computed(function(use)
+		local data = use(ClientInventoryManager.value)
+		local inventoryCategory = ClientInventoryManager.withData.getInventoryCategory(data, category :: UserEnum) -- Gets the local player's inventory category
+	end)
+	```
+]]
+function withData.getInventoryCategory(data, category: UserEnum, player: Player | number | nil): InventoryCategory?
+	local inventory = withData.getInventory(data, player)
+
+	return inventory and inventory[category]
+end
+
+--[[
+	Gets a player's inventory. Will yield until the player data is replicated.
+	If you're getting the inventory inside a computed, use withData.getInventory instead.
+]]
+function ClientInventoryManager.getInventory(player: Player | number | nil): Inventory?
+	local profileData = ReplicatedPlayerData.get(player)
+
+	return profileData and withData.getInventory(profileData, player)
+end
+
+--[[
+	Gets a player's inventory category with the specified category. Will yield until the player data is replicated.
+	If you're getting the inventory category inside a computed, use withData.getInventoryCategory instead.
+]]
+function ClientInventoryManager.getInventoryCategory(category, player: Player | number | nil): InventoryCategory?
+	local inventory = ClientInventoryManager.getInventory(player)
+
+	return inventory and withData.getInventoryCategory(inventory, category, player)
 end
 
 return ClientInventoryManager

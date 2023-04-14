@@ -12,7 +12,7 @@ local ServerTypeEnum = require(enumsFolder:WaitForChild "ServerType")
 local Locations = require(serverFolder:WaitForChild "Locations")
 local Parties = require(serverFolder:WaitForChild "Parties")
 local Minigames = require(serverFolder:WaitForChild "Minigames")
-local GameSettings = require(replicatedFirstShared:WaitForChild("Settings"):WaitForChild "GameSettings")
+local PlaceSettings = require(replicatedFirstShared:WaitForChild("Settings"):WaitForChild "PlaceSettings")
 local MinigameServerType = require(enumsFolder:WaitForChild "MinigameServerType")
 local Table = require(utilityFolder:WaitForChild "Table")
 
@@ -30,7 +30,7 @@ do
 		if minigameInfo.placeId == game.PlaceId then serverType = ServerTypeEnum.minigame end
 	end
 
-	if GameSettings.homePlaceId == game.PlaceId then serverType = ServerTypeEnum.home end
+	if PlaceSettings.homePlaceId == game.PlaceId then serverType = ServerTypeEnum.home end
 
 	if not serverType then serverType = ServerTypeEnum.routing end
 end
