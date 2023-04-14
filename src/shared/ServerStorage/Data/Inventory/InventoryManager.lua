@@ -19,7 +19,7 @@
 		accessories = {inventoryItem}, -- Accessories are items that one's character can wear.
 		homeItems = {inventoryItem}, -- Home items (furniture, decorations, etc.) are items that can be placed or applied to a home. The enum name for this is "furniture"
 		homes = {inventoryItem}, -- An array of homes that the player owns.
-		-- more can be added here. To add a new category, visit GameSettings.lua and search for "inventory".
+		-- more can be added here. To add a new category, visit PlayerDataSettings.lua and search for "inventory".
 	},
 	```
 
@@ -44,7 +44,7 @@ local PlayerDataManager = require(dataFolder.PlayerDataManager)
 local Items = require(replicatedStorageInventory.Items)
 local Table = require(utilityFolder.Table)
 local Signal = require(utilityFolder.Signal)
-local GameSettings = require(replicatedFirstShared.Settings.GameSettings)
+local PlayerDataSettings = require(replicatedFirstShared.Settings.PlayerDataSettings)
 local MiniId = require(utilityFolder.MiniId)
 local Promise = require(utilityFolder.Promise)
 local Types = require(utilityFolder.Types)
@@ -59,7 +59,7 @@ type UserEnum = Types.UserEnum
 local function addPropsToItem(item: InventoryItem)
 	local itemCategory = item.itemCategory
 
-	local props = GameSettings.itemProps[itemCategory]
+	local props = PlayerDataSettings.itemProps[itemCategory]
 
 	if props then
 		for propName, propValue in pairs(props) do
@@ -407,7 +407,7 @@ function InventoryManager.isInventoryFull(userId: number, itemCategory: UserEnum
 	if not inventoryCategory then return false, nil end
 
 	local numItems = #inventoryCategory
-	local limit = GameSettings.inventoryLimits[itemCategory]
+	local limit = PlayerDataSettings.inventoryLimits[itemCategory]
 
 	if numItems == limit then return true, true end
 
@@ -483,7 +483,7 @@ local function reconcileItems(playerData) -- just like the function above, but n
 	if not success or not inventory then return end
 
 	for itemCategory, items in pairs(inventory) do
-		local propTemplate = GameSettings.itemProps[itemCategory]
+		local propTemplate = PlayerDataSettings.itemProps[itemCategory]
 
 		if not propTemplate then continue end
 
