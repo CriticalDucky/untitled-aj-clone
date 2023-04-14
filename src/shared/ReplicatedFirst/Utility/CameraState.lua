@@ -6,6 +6,7 @@ local Fusion = require(replicatedFirstShared:WaitForChild("Fusion"))
 local Value = Fusion.Value
 local OnEvent = Fusion.OnEvent
 local Hydrate = Fusion.Hydrate
+local peek = Fusion.peek
 
 local cameraState = Value({})
 
@@ -19,7 +20,7 @@ local function initCamera()
 
     Hydrate(camera){
         [OnEvent "Changed"] = function()
-            local currentCameraState = cameraState:get()
+            local currentCameraState = peek(cameraState)
 
             for _, v in pairs(watchingProps) do
                 currentCameraState[v] = camera[v]
