@@ -27,7 +27,7 @@ local Observer = Fusion.Observer
 local Tween = Fusion.Tween
 local Spring = Fusion.Spring
 local Hydrate = Fusion.Hydrate
-local unwrap = Fusion.unwrap
+local peek = Fusion.peek
 
 local component = function(props)
 	local locationButtons = {}
@@ -57,8 +57,8 @@ local component = function(props)
 		end
 
 		local button = New "TextButton" {
-			BackgroundColor3 = Computed(function()
-				if hasErrored:get() then
+			BackgroundColor3 = Computed(function(use)
+				if use(hasErrored) then
 					return Color3.fromRGB(255, 0, 0)
 				else
 					return Color3.fromRGB(0, 0, 0)
@@ -98,7 +98,7 @@ local component = function(props)
 		Size = UDim2.new(0, 400, 0, 400),
 		Position = UDim2.new(0.5, 0, 0.5, 0),
 		Visible = Computed(function()
-			return open:get() and enabled:get()
+			return
 		end),
 
 		[Children] = {
@@ -135,7 +135,7 @@ local component = function(props)
 			TextSize = 18,
 
 			[OnEvent "MouseButton1Click"] = function()
-				open:set(not open:get())
+				open:set(not peek(open))
 			end,
 
 			[Children] = {

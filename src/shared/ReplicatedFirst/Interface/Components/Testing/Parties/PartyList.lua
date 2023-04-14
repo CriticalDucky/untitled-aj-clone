@@ -32,7 +32,7 @@ local Observer = Fusion.Observer
 local Tween = Fusion.Tween
 local Spring = Fusion.Spring
 local Hydrate = Fusion.Hydrate
-local unwrap = Fusion.unwrap
+local peek = Fusion.peek
 
 type ServerIdentifier = Types.ServerIdentifier
 
@@ -73,7 +73,7 @@ local component = function(props)
 				end
 
 				if enabled then
-					enabled:set(not enabled:get())
+					enabled:set(not peek(enabled))
 				end
 			end,
 
@@ -88,8 +88,8 @@ local component = function(props)
 	end
 
 	local function partyButton(index)
-		local currentParty = Computed(function()
-			return partyListComputed:get()[index]
+		local currentParty = Computed(function(use)
+			return use(partyListComputed)[index]
 		end)
 
 		local errored = Value(false)
@@ -98,7 +98,7 @@ local component = function(props)
 			onClick = function()
 				local activeParty = ActiveParties.getActiveParty()
 
-				if currentParty:get().halfHourId == activeParty.halfHourId then
+				if peek(currentParty).halfHourId == activeParty.halfHourId then
 					if ServerTypeGroups.serverInGroup(ServerGroupEnum.isParty) then
 						local serverInfo = LocalServerInfo.getServerIdentifier()
 
@@ -121,8 +121,8 @@ local component = function(props)
 				end
 			end,
 			layoutOrder = index,
-			text = Computed(function()
-				return Parties[currentParty:get().partyType].name
+			text = Computed(function(use)
+				return Parties[use(currentParty).partyType].name
 			end),
 			textXAlignment = Enum.TextXAlignment.Left,
 			size = UDim2.new(1, 0, 0, 50),
@@ -134,8 +134,8 @@ local component = function(props)
 					AnchorPoint = Vector2.new(1, 0),
 					BackgroundTransparency = 1,
 
-					Text = Computed(function()
-						local timeUntil = currentParty:get().time:distanceToIntroduction()
+					Text = Computed(function(use)
+						local timeUntil = use(currentParty).time:distanceToIntroduction()
 
 						if timeUntil == 0 then
 							return "GO NOW!"
@@ -162,8 +162,8 @@ local component = function(props)
 							end
 						end
 					end),
-					TextColor3 = Computed(function()
-						local errored = errored:get()
+					TextColor3 = Computed(function(use)
+						local errored = use(errored)
 
 						if errored then
 							return Color3.fromRGB(180, 54, 54)
@@ -194,7 +194,7 @@ local component = function(props)
 
 	local button = button {
 		onClick = function()
-			open:set(not open:get())
+			open:set(not peek(open))
 		end,
 		size = UDim2.fromOffset(75, 50),
 		layoutOrder = props.layoutOrder or 5,

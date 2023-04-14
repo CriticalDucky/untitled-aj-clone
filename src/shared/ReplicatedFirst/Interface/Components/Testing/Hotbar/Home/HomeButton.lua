@@ -29,7 +29,7 @@ local Observer = Fusion.Observer
 local Tween = Fusion.Tween
 local Spring = Fusion.Spring
 local Hydrate = Fusion.Hydrate
-local unwrap = Fusion.unwrap
+local peek = Fusion.peek
 
 local player = Players.LocalPlayer
 
@@ -53,8 +53,8 @@ local component = function(props)
 		Size = UDim2.fromOffset(75, 75),
 		LayoutOrder = 50,
 		Visible = visible,
-		BackgroundColor3 = Computed(function()
-			if errored:get() then
+		BackgroundColor3 = Computed(function(use)
+			if use(errored) then
 				return Color3.fromRGB(255, 102, 102)
 			else
 				return Color3.fromRGB(255, 255, 255)

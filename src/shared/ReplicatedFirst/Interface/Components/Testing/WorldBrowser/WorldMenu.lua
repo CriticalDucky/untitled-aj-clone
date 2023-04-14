@@ -33,7 +33,7 @@ local Observer = Fusion.Observer
 local Tween = Fusion.Tween
 local Spring = Fusion.Spring
 local Hydrate = Fusion.Hydrate
-local unwrap = Fusion.unwrap
+local peek = Fusion.peek
 local Cleanup = Fusion.Cleanup
 
 local component = function(props)
@@ -75,7 +75,7 @@ local component = function(props)
 
 				if onClick then onClick() end
 
-				if enabled then enabled:set(not enabled:get()) end
+				if enabled then enabled:set(not peek(enabled)) end
 			end,
 
 			[Children] = {
@@ -93,7 +93,7 @@ local component = function(props)
 		local layoutOrder = Value(0)
 
 		Observer(open):onChange(function()
-			if open:get() then
+			if peek(open) then
  layoutOrder:set(worldIndex - LiveServerData.getWorldPopulation(worldIndex) * 10000) end
 		end)
 
@@ -109,8 +109,9 @@ local component = function(props)
 			layoutOrder = layoutOrder,
 			text = WorldNames.get(worldIndex),
 			size = UDim2.new(1, 0, 0, 50),
-			visible = Computed(function()
-				local currentWorlds = ReplicatedServerData.getWorlds()
+			visible = Computed(function(use)
+				local data = use(ReplicatedServerData.value)
+				local currentWorlds = ReplicatedServerData.withData.getWorlds(data)
 
 				if not currentWorlds then return false end
 
@@ -172,8 +173,8 @@ local component = function(props)
 					Text = Computed(function()
 						return LiveServerData.getWorldPopulation(worldIndex)
 					end),
-					TextColor3 = Computed(function()
-						return if errored:get() then Color3.fromRGB(255, 0, 0) else Color3.fromRGB(0, 0, 0)
+					TextColor3 = Computed(function(use)
+						return if use(errored) then Color3.fromRGB(255, 0, 0) else Color3.fromRGB(0, 0, 0)
 					end),
 					Font = Enum.Font.Gotham,
 				},
@@ -183,8 +184,9 @@ local component = function(props)
 		return button
 	end
 
-	local worldButtons = Computed(function()
-		local currentWorlds = ReplicatedServerData.getWorlds()
+	local worldButtons = Computed(function(use)
+		local data = use(ReplicatedServerData.value)
+		local currentWorlds = ReplicatedServerData.withData.getWorlds(data)
 
 		if currentWorlds then
 			for i, _ in ipairs(currentWorlds) do
@@ -202,7 +204,7 @@ local component = function(props)
 
 	local button = button {
 		onClick = function()
-			open:set(not open:get())
+			open:set(not peek(open))
 		end,
 		text = "Worlds",
 		size = UDim2.fromOffset(75, 75),
