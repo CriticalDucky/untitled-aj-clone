@@ -127,7 +127,7 @@ function Authorize.toLocation(locationEnum: UserEnum)
 	end
 
 	if LiveServerData.isLocationFull(localWorldIndex, locationEnum, 1) then
-		local setting = ClientPlayerSettings.getSetting("findOpenWorld", nil, true) -- nil means use local player, true means wait for setting to load
+		local setting = ClientPlayerSettings.getSetting("findOpenWorld", nil) -- nil means use local player, true means wait for setting to load
 
 		if setting then
 			return true
@@ -267,7 +267,7 @@ function Authorize.toHome(homeOwnerUserId: number)
 	end
 
 	local isFriend = Friends.are(player.UserId, homeOwnerUserId)
-	local homeLockType = ClientPlayerSettings.getSetting("homeLock", homeOwnerUserId, true)
+	local homeLockType = ClientPlayerSettings.getSetting("homeLock", homeOwnerUserId)
 
 	local friendsOnlyButNotFriend = homeLockType == HomeLockType.friendsOnly and not isFriend
 	local lockedToEveryone = homeLockType == HomeLockType.locked
