@@ -6,11 +6,11 @@ local utilityFolder = replicatedFirstShared:WaitForChild("Utility")
 local settingsFolder = replicatedFirstShared:WaitForChild("Settings")
 
 local Promise = require(utilityFolder:WaitForChild("Promise"))
-local PlayerDataSettings = require(settingsFolder:WaitForChild("PlayerDataSettings"))
+local PlayerDataConstants = require(settingsFolder:WaitForChild("PlayerDataConstants"))
 local Table = require(utilityFolder:WaitForChild("Table"))
 
-local profileTemplate = PlayerDataSettings.profileTemplate
-local tempDataTemplate = PlayerDataSettings.tempDataTemplate
+local profileTemplate = PlayerDataConstants.profileTemplate
+local tempDataTemplate = PlayerDataConstants.tempDataTemplate
 
 export type ProfileData = typeof(profileTemplate) & typeof(tempDataTemplate)
 export type Inventory = typeof(profileTemplate.inventory)

@@ -2,7 +2,7 @@
 	Provides an inventory interface for the client.
 	Wrapper for ReplicatedPlayerData.lua.
 
-	See PlayerDataSettings.lua to see how player data is structured and replicated.
+	See PlayerDataConstants.lua to see how player data is structured and replicated.
 	The player inventory is privately replicated, meaning that the client can only see their own inventory.
 ]]
 

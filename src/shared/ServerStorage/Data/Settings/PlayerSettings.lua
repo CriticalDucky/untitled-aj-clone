@@ -17,7 +17,7 @@ local PlayerSettings = {}
 
 --[[
 	Gets the PlayerSettings table. The player does not need to be in this server.
-	Refer to PlayerDataSettings.lua and search for "playerSettings" for the structure of this table.
+	Refer to PlayerDataConstants.lua and search for "playerSettings" for the structure of this table.
 
 	Returns a success boolean and the PlayerSettings table if successful.
 ]]

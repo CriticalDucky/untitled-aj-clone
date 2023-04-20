@@ -22,14 +22,14 @@ local PlayerJoinTimes = require(serverStorageSharedUtility.PlayerJoinTimes)
 local Signal = require(replicatedFirstUtility.Signal)
 local Promise = require(replicatedFirstUtility.Promise)
 local Types = require(replicatedFirstUtility.Types)
-local PlayerDataSettings = require(replicatedFirstShared.Settings.PlayerDataSettings)
+local PlayerDataConstants = require(replicatedFirstShared.Settings.PlayerDataConstants)
 
 type PlayerData = Types.PlayerData
 type Promise = Types.Promise
 type ProfileData = Types.ProfileData
 
-local profileTemplate = PlayerDataSettings.profileTemplate
-local tempDataTemplate = PlayerDataSettings.tempDataTemplate
+local profileTemplate = PlayerDataConstants.profileTemplate
+local tempDataTemplate = PlayerDataConstants.tempDataTemplate
 
 local ProfileStore = Promise.retry(function()
 	return Promise.try(function()
@@ -79,7 +79,7 @@ PlayerData.__index = PlayerData
 
 -- For the given property of a profile or temp data, returns the replication type.
 local function getReplicationType(prop)
-	return PlayerDataSettings.dataKeyReplication[prop]
+	return PlayerDataConstants.dataKeyReplication[prop]
 end
 
 local function getKey(playerId)
@@ -116,7 +116,7 @@ function PlayerData.new(player: Player): PlayerData
 		local matchingProps = {}
 
 		for propName, prop in profile.Data do
-			matchingProps[propName] = if PlayerDataSettings.dataKeyReplication[propName] == ReplicationType.public
+			matchingProps[propName] = if PlayerDataConstants.dataKeyReplication[propName] == ReplicationType.public
 				then prop
 				else nil
 		end
@@ -139,7 +139,7 @@ function PlayerData.new(player: Player): PlayerData
 		local matchingProps = {}
 
 		for propName, prop in pairs(profile.Data) do
-			matchingProps[propName] = if PlayerDataSettings.dataKeyReplication[propName] == privacy then prop else nil
+			matchingProps[propName] = if PlayerDataConstants.dataKeyReplication[propName] == privacy then prop else nil
 		end
 
 		return matchingProps
@@ -149,7 +149,7 @@ function PlayerData.new(player: Player): PlayerData
 		local matchingProps = {}
 
 		for propName, prop in pairs(tempDataCopy) do
-			matchingProps[propName] = if PlayerDataSettings.dataKeyReplication[propName] == privacy then prop else nil
+			matchingProps[propName] = if PlayerDataConstants.dataKeyReplication[propName] == privacy then prop else nil
 		end
 
 		return matchingProps
@@ -366,7 +366,7 @@ function PlayerDataManager.viewPlayerProfile(userId: number): ProfileData?
 		local matchingProps = {}
 
 		for propName, prop in profile.Data do
-			matchingProps[propName] = if PlayerDataSettings.dataKeyReplication[propName] == ReplicationType.public
+			matchingProps[propName] = if PlayerDataConstants.dataKeyReplication[propName] == ReplicationType.public
 				then prop
 				else nil
 		end

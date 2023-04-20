@@ -3,7 +3,7 @@
 	Player settings are settings that the player controls (e.g. music, findOpenWorld, etc.).
 	Player settings are publicly replicated, meaning that the client can see other players' settings.
 
-	See PlayerDataSettings.lua to see all the player settings.
+	See PlayerDataConstants.lua to see all the player settings.
 ]]
 
 local ReplicatedStorage = game:GetService "ReplicatedStorage"

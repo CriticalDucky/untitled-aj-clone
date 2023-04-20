@@ -112,7 +112,7 @@ local utilityFolder = replicatedFirstShared.Utility
 
 local LocalServerInfo = require(serverFolder.LocalServerInfo)
 local ServerTypeEnum = require(enumsFolder.ServerType)
-local PlaceSettings = require(replicatedFirstShared.Settings.PlaceSettings)
+local PlaceConstants = require(replicatedFirstShared.Settings.PlaceConstants)
 local Table = require(utilityFolder.Table)
 local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
 local ServerTypeGroups = require(serverFolder:WaitForChild "ServerTypeGroups")
@@ -565,8 +565,8 @@ function LiveServerData.getPopulationInfo(serverIdentifier: ServerIdentifier)
 					serverFillInfo.max = populationInfo.max
 					serverFillInfo.recommended = populationInfo.recommended
 				else
-					serverFillInfo.max = PlaceSettings.location_maxPlayers
-					serverFillInfo.recommended = PlaceSettings.location_maxRecommendedPlayers
+					serverFillInfo.max = PlaceConstants.location_maxPlayers
+					serverFillInfo.recommended = PlaceConstants.location_maxRecommendedPlayers
 				end
 			else
 				error("Invalid location enum: " .. tostring(locationEnum))
@@ -583,8 +583,8 @@ function LiveServerData.getPopulationInfo(serverIdentifier: ServerIdentifier)
 					serverFillInfo.max = populationInfo.max
 					serverFillInfo.recommended = populationInfo.recommended
 				else
-					serverFillInfo.max = PlaceSettings.party_maxPlayers
-					serverFillInfo.recommended = PlaceSettings.party_maxRecommendedPlayers
+					serverFillInfo.max = PlaceConstants.party_maxPlayers
+					serverFillInfo.recommended = PlaceConstants.party_maxRecommendedPlayers
 				end
 			else
 				error("Invalid party enum: " .. tostring(partyType))
@@ -601,14 +601,14 @@ function LiveServerData.getPopulationInfo(serverIdentifier: ServerIdentifier)
 					serverFillInfo.max = populationInfo.max
 					serverFillInfo.recommended = populationInfo.recommended
 				else
-					serverFillInfo.max = PlaceSettings.location_maxPlayers
-					serverFillInfo.recommended = PlaceSettings.location_maxRecommendedPlayers
+					serverFillInfo.max = PlaceConstants.location_maxPlayers
+					serverFillInfo.recommended = PlaceConstants.location_maxRecommendedPlayers
 				end
 			else
 				error("Invalid game enum: " .. tostring(minigameType))
 			end
 		elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome, serverType) then
-			serverFillInfo.max = PlaceSettings.home_maxNormalPlayers
+			serverFillInfo.max = PlaceConstants.home_maxNormalPlayers
 		else
 			error("Invalid server type: " .. tostring(serverType))
 		end

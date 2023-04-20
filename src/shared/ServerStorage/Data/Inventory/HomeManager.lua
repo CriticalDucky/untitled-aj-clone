@@ -24,7 +24,7 @@ local Items = require(inventoryReplicatedStorage.Items)
 local ItemCategory = require(enums.ItemCategory)
 local HomeType = require(enums.HomeType)
 local PlayerSettings = require(settingsServerStorage.PlayerSettings)
-local PlayerDataSettings = require(replicatedFirstShared.Settings.PlayerDataSettings)
+local PlayerDataConstants = require(replicatedFirstShared.Settings.PlayerDataConstants)
 local ServerGroupEnum = require(enums.ServerGroup)
 local ServerTypeGroups = require(serverFolder.ServerTypeGroups)
 local Table = require(utilityFolder.Table)
@@ -323,7 +323,7 @@ function HomeManager.isPlacedItemsFull(userId: number?, numItemsToAdd: number?, 
 	userId = userId or getHomeOwner()
 
 	local numItemsToAdd = numItemsToAdd or 0
-	local maxFurniturePlaced = PlayerDataSettings.maxFurniturePlaced
+	local maxFurniturePlaced = PlayerDataConstants.maxFurniturePlaced
 
 	local success, placedItems = HomeManager.getPlacedItems(userId, slot)
 
@@ -656,7 +656,7 @@ PlayerDataManager.forAllPlayerData(function(playerData: PlayerData)
 	if not (homeServerInfo and homeServerInfo.privateServerId and homeServerInfo.serverCode) then
 		local function getReservedServer()
 			return Promise.try(function()
-				local code, privateServerId = TeleportService:ReserveServer(PlayerDataSettings.homePlaceId)
+				local code, privateServerId = TeleportService:ReserveServer(PlayerDataConstants.homePlaceId)
 
 				if code and privateServerId then
 					return code, privateServerId

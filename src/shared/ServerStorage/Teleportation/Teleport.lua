@@ -34,7 +34,7 @@ local Table = require(replicatedFirstUtility.Table)
 local WorldOrigin = require(serverFolder.WorldOrigin)
 local HomeManager = require(serverStorageShared.Data.Inventory.HomeManager)
 local HomeLockType = require(enumsFolder.HomeLockType)
-local PlaceSettings = require(replicatedFirstShared.Settings.PlaceSettings)
+local PlaceConstants = require(replicatedFirstShared.Settings.PlaceConstants)
 local Promise = require(replicatedFirstUtility.Promise)
 local TeleportResponseType = require(enumsFolder.TeleportResponseType)
 local MinigameServerType = require(enumsFolder:WaitForChild "MinigameServerType")
@@ -847,7 +847,7 @@ function Teleport.toHome(
 	local teleportOptions = Teleport.getOptions(player)
 	teleportOptions.ReservedServerAccessCode = homeServerInfo.serverCode
 
-	return Teleport.go(player, PlaceSettings.homePlaceId, teleportOptions)
+	return Teleport.go(player, PlaceConstants.homePlaceId, teleportOptions)
 end
 
 --[[
@@ -1000,7 +1000,7 @@ function Teleport.rejoin(
 
 	local success, result = Teleport.go(
 		players,
-		PlaceSettings.routePlaceId,
+		PlaceConstants.routePlaceId,
 		teleportOptions
 	)
 
