@@ -1,4 +1,4 @@
-local placeSettings = { -- Constants for the game
+local placeConstants = { -- Constants for the game
 	location_maxPlayers = 20, -- The max amount of players that can be in a location at once
 	location_maxRecommendedPlayers = 15, -- The recommended amount of players in a location at once
 	world_maxRecommendedPlayers = 50, -- The recommended amount of players in a world at once
@@ -12,4 +12,4 @@ local placeSettings = { -- Constants for the game
 	routePlaceId = 10189729412, -- The place ID of the routing server
 }
 
-return placeSettings
+return placeConstants

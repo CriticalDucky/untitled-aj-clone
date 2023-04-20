@@ -6,7 +6,7 @@ local HomeLockType = require(enumsFolder.HomeLockType)
 local ReplicationType = require(enumsFolder.ReplicationType)
 local ItemCategory = require(enumsFolder.ItemCategory)
 
-local playerDataSettings = {
+local playerDataConstants = {
 	profileTemplate = { -- Items in here can only be under a table. Add a _replication field to decide who can see it. If it's not there, it's not replicated
 		currency = {
 			money = 0,
@@ -58,4 +58,4 @@ local playerDataSettings = {
 	},
 }
 
-return playerDataSettings
+return playerDataConstants
