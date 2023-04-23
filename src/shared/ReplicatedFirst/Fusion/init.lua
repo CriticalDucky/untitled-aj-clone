@@ -49,6 +49,7 @@ export type Observer = PubTypes.Observer
 export type Tween<T> = PubTypes.Tween<T>
 export type Spring<T> = PubTypes.Spring<T>
 export type Use = PubTypes.Use
+export type Child = PubTypes.Children
 
 type Fusion = {
 	version: PubTypes.Version,
