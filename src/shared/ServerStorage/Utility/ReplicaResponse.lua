@@ -7,7 +7,7 @@ type Promise = Types.Promise
 local ReplicaResponse = {}
 
 --[[
-    This function is used for replica responses on a server. Pass in a Replica,
+	This function is used for replica responses on a server. Pass in a Replica,
 	and a callback that takes a player and any number of arguments, and returns any value(s).
 
 	When the replica is fired, the callback will be called with the player and the arguments.
