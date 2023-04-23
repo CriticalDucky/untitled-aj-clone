@@ -1,4 +1,9 @@
+local MARGIN = 4
+local DEFUALT_PADDING = 40
+local DEFUALT_OUTLINE_COLOR = Color3.fromRGB(0, 0, 0)
+
 --#region Imports
+local PolicyService = game:GetService "PolicyService"
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
@@ -34,7 +39,9 @@ local peek = Fusion.peek
 local cleanup = Fusion.cleanup
 local doNothing = Fusion.doNothing
 
+---@diagnostic disable-next-line: undefined-type wtf
 type CanBeState<T> = Fusion.CanBeState<T>
+type Child = Fusion.Child
 -- #endregion
 
 export type Props = {
@@ -47,66 +54,83 @@ export type Props = {
 	AutomaticSize: CanBeState<Enum.AutomaticSize>?,
 	ZIndex: CanBeState<number>?,
 
-    -- Custom props
-    OutlineColor: CanBeState<Color3>?, -- Defaults to black
-    BackgroundColor: CanBeState<Color3>?, -- Defaults to white
+	-- Custom props
+	OutlineColor: CanBeState<Color3>?, -- Defaults to black
+	BackgroundColor: CanBeState<Color3>?, -- Defaults to white
 
-    PaddingTop: CanBeState<UDim>?, -- Defaults to UDim.new(0, 0)
-    PaddingBottom: CanBeState<UDim>?, -- Defaults to UDim.new(0, 0)
-    PaddingLeft: CanBeState<UDim>?, -- Defaults to UDim.new(0, 0)
-    PaddingRight: CanBeState<UDim>?, -- Defaults to UDim.new(0, 0)
+	PaddingTop: CanBeState<UDim>?, -- Defaults to UDim.new(0, 0)
+	PaddingBottom: CanBeState<UDim>?, -- Defaults to UDim.new(0, 0)
+	PaddingLeft: CanBeState<UDim>?, -- Defaults to UDim.new(0, 0)
+	PaddingRight: CanBeState<UDim>?, -- Defaults to UDim.new(0, 0)
 
-    Rotation: CanBeState<number>?, -- Defaults to 0
+	Rotation: CanBeState<number>?, -- Defaults to 0
+
+	OuterChildren: Child?, -- Children not under the padded frame
+	Children: Child?, -- Children under the padded frame
 }
 
 --[[
 	This component creates a standard outlined frame that all stylized menus must use.
 ]]
 local function Component(props: Props)
-	local MARGIN = 4
-	local OUTER_ROUNDNESS = InterfaceConstants.roundness.menuOuter
-	local INNER_ROUNDNESS = OUTER_ROUNDNESS - MARGIN
-	local DEFUALT_PADDING = 40
-	local DEFUALT_OUTLINE_COLOR = Color3.fromRGB(0, 0, 0)
+	local outerRoundness = InterfaceConstants.roundness.menuOuter
+	local innerRoundness = outerRoundness - MARGIN
+
+	local defaultMenuColor = InterfaceConstants.colors.menuBackground
 
 	local frame = New "Frame" {
-		Name = props.Name or "StandardFrame",
+		Name = props.Name or "OutlinedFrame",
 		LayoutOrder = props.LayoutOrder,
 		Position = props.Position,
 		AnchorPoint = props.AnchorPoint,
 		Size = props.Size,
 		AutomaticSize = props.AutomaticSize,
 		ZIndex = props.ZIndex,
+		Rotation = props.Rotation or 0,
 
 		BackgroundColor3 = props.OutlineColor or DEFUALT_OUTLINE_COLOR,
 
 		[Children] = {
-			New "UICorner" {
-				CornerRadius = UDim.new(0, InterfaceConstants.roundness.menuOuter),
+			New "UICorner" { -- For the outline
+				CornerRadius = UDim.new(0, outerRoundness),
 			},
 
-			New "Frame" {
-				Name = "InnerFrame",
+			New "Frame" { -- This is invisible, and is used to apply padding to the children.
+				Name = "PaddingFrame",
 				Position = UDim2.fromOffset(MARGIN, MARGIN),
-				Size = UDim2.fromOffset(-MARGIN * 2, -MARGIN * 2),
-				BackgroundColor3 = props.BackgroundColor or Color3.fromRGB(255, 255, 255),
-				Rotation = props.Rotation or 0,
+				Size = UDim2.new(1, -MARGIN * 2, 1, -MARGIN * 2),
+				BackgroundTransparency = 1,
+				ZIndex = -1,
 
 				[Children] = {
-					New "UICorner" {
-						CornerRadius = UDim.new(0, INNER_ROUNDNESS),
+					New "UIPadding" {
+						PaddingTop = UDim.new(0, props.PaddingTop or DEFUALT_PADDING),
+						PaddingBottom = UDim.new(0, props.PaddingBottom),
+						PaddingLeft = UDim.new(0, props.PaddingLeft),
+						PaddingRight = UDim.new(0, props.PaddingRight),
 					},
 
-					New "UIPadding" {
-						PaddingTop = props.PaddingTop or UDim.new(0, DEFUALT_PADDING),
-						PaddingBottom = props.PaddingBottom or UDim.new(0, DEFUALT_PADDING),
-						PaddingLeft = props.PaddingLeft or UDim.new(0, DEFUALT_PADDING),
-						PaddingRight = props.PaddingRight or UDim.new(0, DEFUALT_PADDING),
+					New "Frame" { -- This is the actual frame that the children are placed in.
+						Name = "InnerFrame",
+						Size = UDim2.fromScale(1, 1),
+						BackgroundColor3 = props.BackgroundColor or defaultMenuColor,
+
+						[Children] = {
+							New "UICorner" {
+								CornerRadius = UDim.new(0, innerRoundness),
+							},
+
+							props.Children,
+						},
 					},
 				},
 			},
-		}
+
+			props.OuterChildren,
+		},
 	}
+
+	return frame
 end
 
 return Component
