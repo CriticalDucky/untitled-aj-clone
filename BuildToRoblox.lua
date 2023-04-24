@@ -11,6 +11,7 @@
 
 	Add a folder called "BuiltProjects" to the root of your project. This is where the built projects will be stored.
 
+	Open Roblox Studio once in a place for remodel to get your security token.
 	Command (make sure you have remodel installed on your PATH): 
 
 	remodel run BuildToRoblox.lua
