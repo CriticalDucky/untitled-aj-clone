@@ -1,6 +1,6 @@
 -- Controls lighting and effects.
 
-local SPRING_SPEED = 5
+local SPRING_SPEED = 1
 local SPRING_DAMPING = 1
 
 --#region Imports
@@ -224,6 +224,28 @@ for key, value in pairs(skyDefaults) do
 end
 
 Hydrate(sky)(skyStates)
+
+--#endregion
+
+--#region Clouds
+
+local clouds = workspace.Terrain:WaitForChild "Clouds"
+
+local cloudsDefaults = {
+    Color = clouds.Color,
+    Cover = clouds.Cover,
+    Density = clouds.Density,
+}
+
+local cloudsValues = {}
+local cloudsSprings = {}
+
+for key, value in pairs(cloudsDefaults) do
+    cloudsValues[key] = Value(value)
+    cloudsSprings[key] = Spring(cloudsValues[key], SPRING_SPEED, SPRING_DAMPING)
+end
+
+Hydrate(clouds)(cloudsSprings)
 
 --#endregion
 
@@ -471,6 +493,39 @@ end
 -- `instantly` is true.
 function LightingSystem.resetSky(instantly: boolean?)
     LightingSystem.updateSky(skyDefaults, instantly)
+end
+
+-- Updates the `Clouds`'s properties to the given values. Quantitative values will be animated with a spring unless
+-- `instantly` is true.
+function LightingSystem.updateClouds(props: { [string]: any }, instantly: boolean?)
+    for prop, newValue in pairs(props) do
+        local value = cloudsValues[prop]
+
+        if not value then
+            warn("Invalid/unsupported Clouds property ignored: " .. prop)
+            continue
+        end
+
+        value:set(newValue)
+
+        if not instantly then continue end
+
+        local spring = cloudsSprings[prop]
+
+        spring:setPosition(newValue)
+
+        if typeof(peek(spring)) == "Color3" then
+            spring:setVelocity(Color3.new(0, 0, 0))
+        else
+            spring:setVelocity(0)
+        end
+    end
+end
+
+-- Resets the `Clouds`'s properties to their default values. Quantitative values will be animated with a spring unless
+-- `instantly` is true.
+function LightingSystem.resetClouds(instantly: boolean?)
+    LightingSystem.updateClouds(cloudsDefaults, instantly)
 end
 
 return LightingSystem

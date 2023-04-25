@@ -68,3 +68,9 @@ sky.StarCount = 3000
 sky.SunAngularSize = 11
 sky.SunTextureId = "rbxassetid://6196665106"
 sky.Parent = Lighting
+
+local clouds = Instance.new "Clouds"
+clouds.Name = "Clouds"
+clouds.Cover = 0
+clouds.Density = 0
+clouds.Parent = workspace.Terrain
