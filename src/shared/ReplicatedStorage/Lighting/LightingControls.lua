@@ -232,17 +232,17 @@ Hydrate(sky)(skyStates)
 local clouds = workspace.Terrain:WaitForChild "Clouds"
 
 local cloudsDefaults = {
-    Color = clouds.Color,
-    Cover = clouds.Cover,
-    Density = clouds.Density,
+	Color = clouds.Color,
+	Cover = clouds.Cover,
+	Density = clouds.Density,
 }
 
 local cloudsValues = {}
 local cloudsSprings = {}
 
 for key, value in pairs(cloudsDefaults) do
-    cloudsValues[key] = Value(value)
-    cloudsSprings[key] = Spring(cloudsValues[key], SPRING_SPEED, SPRING_DAMPING)
+	cloudsValues[key] = Value(value)
+	cloudsSprings[key] = Spring(cloudsValues[key], SPRING_SPEED, SPRING_DAMPING)
 end
 
 Hydrate(clouds)(cloudsSprings)
@@ -492,40 +492,70 @@ end
 -- Resets the `Sky`'s properties to their default values. Quantitative values will be animated with a spring unless
 -- `instantly` is true.
 function LightingSystem.resetSky(instantly: boolean?)
-    LightingSystem.updateSky(skyDefaults, instantly)
+	LightingSystem.updateSky(skyDefaults, instantly)
 end
 
 -- Updates the `Clouds`'s properties to the given values. Quantitative values will be animated with a spring unless
 -- `instantly` is true.
 function LightingSystem.updateClouds(props: { [string]: any }, instantly: boolean?)
-    for prop, newValue in pairs(props) do
-        local value = cloudsValues[prop]
+	for prop, newValue in pairs(props) do
+		local value = cloudsValues[prop]
 
-        if not value then
-            warn("Invalid/unsupported Clouds property ignored: " .. prop)
-            continue
-        end
+		if not value then
+			warn("Invalid/unsupported Clouds property ignored: " .. prop)
+			continue
+		end
 
-        value:set(newValue)
+		value:set(newValue)
 
-        if not instantly then continue end
+		if not instantly then continue end
 
-        local spring = cloudsSprings[prop]
+		local spring = cloudsSprings[prop]
 
-        spring:setPosition(newValue)
+		spring:setPosition(newValue)
 
-        if typeof(peek(spring)) == "Color3" then
-            spring:setVelocity(Color3.new(0, 0, 0))
-        else
-            spring:setVelocity(0)
-        end
-    end
+		if typeof(peek(spring)) == "Color3" then
+			spring:setVelocity(Color3.new(0, 0, 0))
+		else
+			spring:setVelocity(0)
+		end
+	end
 end
 
 -- Resets the `Clouds`'s properties to their default values. Quantitative values will be animated with a spring unless
 -- `instantly` is true.
 function LightingSystem.resetClouds(instantly: boolean?)
-    LightingSystem.updateClouds(cloudsDefaults, instantly)
+	LightingSystem.updateClouds(cloudsDefaults, instantly)
+end
+
+-- Resets all lighting and effect properties to their default values. Quantitative values will be animated with a spring
+-- unless `instantly` is true.
+function LightingSystem.resetAll(instantly: boolean?)
+	LightingSystem.resetAtmosphere(instantly)
+	LightingSystem.resetBloomEffect(instantly)
+	LightingSystem.resetBlurEffect(instantly)
+	LightingSystem.resetClouds(instantly)
+	LightingSystem.resetColorCorrectionEffect(instantly)
+	LightingSystem.resetDepthOfFieldEffect(instantly)
+	LightingSystem.resetLighting(instantly)
+	LightingSystem.resetSky(instantly)
+	LightingSystem.resetSunRaysEffect(instantly)
+end
+
+-- Updates all lighting and effect properties to the given template, with ommitted properties being set to default.
+-- Quantitative values will be animated with a spring unless `instantly` is true.
+function LightingSystem.applyTemplate(template: { [string]: { [string]: any } }, instantly: boolean?)
+	LightingSystem.resetAll(instantly)
+
+	LightingSystem.updateAtmosphere(template.Atmosphere, instantly)
+	LightingSystem.updateBloomEffect(template.BloomEffect, instantly)
+	LightingSystem.updateBlurEffect(template.BlurEffect, instantly)
+	LightingSystem.updateClouds(template.Clouds, instantly)
+	LightingSystem.updateColorCorrectionEffect(template.ColorCorrectionEffect, instantly)
+	LightingSystem.updateDepthOfFieldEffect(template.DepthOfFieldEffect, instantly)
+	LightingSystem.updateLighting(template.Lighting, instantly)
+	LightingSystem.updateSky(template.Sky, instantly)
+	LightingSystem.updateSunRaysEffect(template.SunRaysEffect, instantly)
 end
 
 return LightingSystem
