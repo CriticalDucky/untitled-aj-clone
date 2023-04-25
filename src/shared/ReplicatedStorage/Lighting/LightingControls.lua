@@ -17,40 +17,28 @@ local Value = Fusion.Value
 
 --#endregion
 
---#region Lighting
+--#region Atmosphere
 
-local lightingDefaults = {
-	Ambient = Lighting.Ambient,
-	Brightness = Lighting.Brightness,
-	ClockTime = Lighting.ClockTime,
-	ColorShift_Bottom = Lighting.ColorShift_Bottom,
-	ColorShift_Top = Lighting.ColorShift_Top,
-	EnvironmentDiffuseScale = Lighting.EnvironmentDiffuseScale,
-	EnvironmentSpecularScale = Lighting.EnvironmentSpecularScale,
-	ExposureCompensation = Lighting.ExposureCompensation,
-	GeographicLatitude = Lighting.GeographicLatitude,
-	GlobalShadows = Lighting.GlobalShadows,
-	OutdoorAmbient = Lighting.OutdoorAmbient,
-	ShadowSoftness = Lighting.ShadowSoftness,
+local atmosphere = Lighting:WaitForChild "Atmosphere"
+
+local atmosphereDefaults = {
+	Color = atmosphere.Color,
+	Decay = atmosphere.Decay,
+	Density = atmosphere.Density,
+	Glare = atmosphere.Glare,
+	Haze = atmosphere.Haze,
+	Offset = atmosphere.Offset,
 }
 
-local lightingValues = {}
-local lightingSprings = {}
-local lightingStates = {}
+local atmosphereValues = {}
+local atmosphereSprings = {}
 
-for key, value in pairs(lightingDefaults) do
-	lightingValues[key] = Value(value)
-
-	if key == "GlobalShadows" then
-		lightingStates[key] = lightingValues[key]
-		continue
-	end
-
-	lightingSprings[key] = Spring(lightingValues[key], SPRING_SPEED, SPRING_DAMPING)
-	lightingStates[key] = lightingSprings[key]
+for key, value in pairs(atmosphereDefaults) do
+	atmosphereValues[key] = Value(value)
+	atmosphereSprings[key] = Spring(atmosphereValues[key], SPRING_SPEED, SPRING_DAMPING)
 end
 
-Hydrate(Lighting)(lightingStates)
+Hydrate(atmosphere)(atmosphereSprings)
 
 --#endregion
 
@@ -93,6 +81,28 @@ for key, value in pairs(blurEffectDefaults) do
 end
 
 Hydrate(blurEffect)(blurEffectSprings)
+
+--#endregion
+
+--#region Clouds
+
+local clouds = workspace.Terrain:WaitForChild "Clouds"
+
+local cloudsDefaults = {
+	Color = clouds.Color,
+	Cover = clouds.Cover,
+	Density = clouds.Density,
+}
+
+local cloudsValues = {}
+local cloudsSprings = {}
+
+for key, value in pairs(cloudsDefaults) do
+	cloudsValues[key] = Value(value)
+	cloudsSprings[key] = Spring(cloudsValues[key], SPRING_SPEED, SPRING_DAMPING)
+end
+
+Hydrate(clouds)(cloudsSprings)
 
 --#endregion
 
@@ -142,49 +152,40 @@ Hydrate(depthOfFieldEffect)(depthOfFieldEffectSprings)
 
 --#endregion
 
---#region SunRaysEffect
+--#region Lighting
 
-local sunRaysEffect = Lighting:WaitForChild "SunRaysEffect"
-
-local sunRaysEffectDefaults = {
-	Intensity = sunRaysEffect.Intensity,
-	Spread = sunRaysEffect.Spread,
+local lightingDefaults = {
+	Ambient = Lighting.Ambient,
+	Brightness = Lighting.Brightness,
+	ClockTime = Lighting.ClockTime,
+	ColorShift_Bottom = Lighting.ColorShift_Bottom,
+	ColorShift_Top = Lighting.ColorShift_Top,
+	EnvironmentDiffuseScale = Lighting.EnvironmentDiffuseScale,
+	EnvironmentSpecularScale = Lighting.EnvironmentSpecularScale,
+	ExposureCompensation = Lighting.ExposureCompensation,
+	GeographicLatitude = Lighting.GeographicLatitude,
+	GlobalShadows = Lighting.GlobalShadows,
+	OutdoorAmbient = Lighting.OutdoorAmbient,
+	ShadowSoftness = Lighting.ShadowSoftness,
 }
 
-local sunRaysEffectValues = {}
-local sunRaysEffectSprings = {}
+local lightingValues = {}
+local lightingSprings = {}
+local lightingStates = {}
 
-for key, value in pairs(sunRaysEffectDefaults) do
-	sunRaysEffectValues[key] = Value(value)
-	sunRaysEffectSprings[key] = Spring(sunRaysEffectValues[key], SPRING_SPEED, SPRING_DAMPING)
+for key, value in pairs(lightingDefaults) do
+	lightingValues[key] = Value(value)
+
+	if key == "GlobalShadows" then
+		lightingStates[key] = lightingValues[key]
+		continue
+	end
+
+	lightingSprings[key] = Spring(lightingValues[key], SPRING_SPEED, SPRING_DAMPING)
+	lightingStates[key] = lightingSprings[key]
 end
 
-Hydrate(sunRaysEffect)(sunRaysEffectSprings)
-
---#endregion
-
---#region Atmosphere
-
-local atmosphere = Lighting:WaitForChild "Atmosphere"
-
-local atmosphereDefaults = {
-	Color = atmosphere.Color,
-	Decay = atmosphere.Decay,
-	Density = atmosphere.Density,
-	Glare = atmosphere.Glare,
-	Haze = atmosphere.Haze,
-	Offset = atmosphere.Offset,
-}
-
-local atmosphereValues = {}
-local atmosphereSprings = {}
-
-for key, value in pairs(atmosphereDefaults) do
-	atmosphereValues[key] = Value(value)
-	atmosphereSprings[key] = Spring(atmosphereValues[key], SPRING_SPEED, SPRING_DAMPING)
-end
-
-Hydrate(atmosphere)(atmosphereSprings)
+Hydrate(Lighting)(lightingStates)
 
 --#endregion
 
@@ -227,85 +228,63 @@ Hydrate(sky)(skyStates)
 
 --#endregion
 
---#region Clouds
+--#region SunRaysEffect
 
-local clouds = workspace.Terrain:WaitForChild "Clouds"
+local sunRaysEffect = Lighting:WaitForChild "SunRaysEffect"
 
-local cloudsDefaults = {
-	Color = clouds.Color,
-	Cover = clouds.Cover,
-	Density = clouds.Density,
+local sunRaysEffectDefaults = {
+	Intensity = sunRaysEffect.Intensity,
+	Spread = sunRaysEffect.Spread,
 }
 
-local cloudsValues = {}
-local cloudsSprings = {}
+local sunRaysEffectValues = {}
+local sunRaysEffectSprings = {}
 
-for key, value in pairs(cloudsDefaults) do
-	cloudsValues[key] = Value(value)
-	cloudsSprings[key] = Spring(cloudsValues[key], SPRING_SPEED, SPRING_DAMPING)
+for key, value in pairs(sunRaysEffectDefaults) do
+	sunRaysEffectValues[key] = Value(value)
+	sunRaysEffectSprings[key] = Spring(sunRaysEffectValues[key], SPRING_SPEED, SPRING_DAMPING)
 end
 
-Hydrate(clouds)(cloudsSprings)
+Hydrate(sunRaysEffect)(sunRaysEffectSprings)
 
 --#endregion
 
 local LightingSystem = {}
 
--- Updates `Lighting`'s properties to the given values. Quantitative values will be animated with a spring unless
--- `instantly` is true.
-function LightingSystem.updateLighting(props: { [string]: any }, instantly: boolean?)
-	for prop, newValue in pairs(props) do
-		local value = lightingValues[prop]
+-- Updates all lighting and effect properties to the given template, with ommitted properties being set to default.
+-- Quantitative values will be animated with a spring unless `instantly` is true.
+function LightingSystem.applyTemplate(template: { [string]: { [string]: any } }, instantly: boolean?)
+	LightingSystem.resetAll(instantly)
 
-		if not value then
-			warn("Invalid/unsupported Lighting property ignored: " .. prop)
-			continue
-		end
-
-		value:set(newValue)
-
-		if not instantly then continue end
-
-		local spring = lightingSprings[prop]
-
-		if not spring then continue end
-
-		spring:setPosition(newValue)
-
-		if typeof(peek(spring)) == "Color3" then
-			spring:setVelocity(Color3.new(0, 0, 0))
-		else
-			spring:setVelocity(0)
-		end
-	end
+	LightingSystem.updateAtmosphere(template.Atmosphere, instantly)
+	LightingSystem.updateBloomEffect(template.BloomEffect, instantly)
+	LightingSystem.updateBlurEffect(template.BlurEffect, instantly)
+	LightingSystem.updateClouds(template.Clouds, instantly)
+	LightingSystem.updateColorCorrectionEffect(template.ColorCorrectionEffect, instantly)
+	LightingSystem.updateDepthOfFieldEffect(template.DepthOfFieldEffect, instantly)
+	LightingSystem.updateLighting(template.Lighting, instantly)
+	LightingSystem.updateSky(template.Sky, instantly)
+	LightingSystem.updateSunRaysEffect(template.SunRaysEffect, instantly)
 end
 
--- Resets `Lighting`'s properties to their default values. Quantitative values will be animated with a spring unless
--- `instantly` is true.
-function LightingSystem.resetLighting(instantly: boolean?)
-	LightingSystem.updateLighting(lightingDefaults, instantly)
+-- Resets all lighting and effect properties to their default values. Quantitative values will be animated with a spring
+-- unless `instantly` is true.
+function LightingSystem.resetAll(instantly: boolean?)
+	LightingSystem.resetAtmosphere(instantly)
+	LightingSystem.resetBloomEffect(instantly)
+	LightingSystem.resetBlurEffect(instantly)
+	LightingSystem.resetClouds(instantly)
+	LightingSystem.resetColorCorrectionEffect(instantly)
+	LightingSystem.resetDepthOfFieldEffect(instantly)
+	LightingSystem.resetLighting(instantly)
+	LightingSystem.resetSky(instantly)
+	LightingSystem.resetSunRaysEffect(instantly)
 end
 
--- Updates the `BloomEffect`'s properties to the given values. Quantitative values will be animated with a spring unless
--- `instantly` is true.
-function LightingSystem.updateBloomEffect(props: { [string]: any }, instantly: boolean?)
-	for prop, newValue in pairs(props) do
-		local value = bloomEffectValues[prop]
-
-		if not value then
-			warn("Invalid/unsupported BloomEffect property ignored: " .. prop)
-			continue
-		end
-
-		value:set(newValue)
-
-		if not instantly then continue end
-
-		local spring = bloomEffectSprings[prop]
-
-		spring:setPosition(newValue)
-		spring:setVelocity(0)
-	end
+-- Resets the `Atmosphere`'s properties to their default values. Quantitative values will be animated with a spring
+-- unless `instantly` is true.
+function LightingSystem.resetAtmosphere(instantly: boolean?)
+	LightingSystem.updateAtmosphere(atmosphereDefaults, instantly)
 end
 
 -- Resets the `BloomEffect`'s properties to their default values. Quantitative values will be animated with a spring
@@ -314,59 +293,16 @@ function LightingSystem.resetBloomEffect(instantly: boolean?)
 	LightingSystem.updateBloomEffect(bloomEffectDefaults, instantly)
 end
 
--- Updates the `BlurEffect`'s properties to the given values. Quantitative values will be animated with a spring unless
--- `instantly` is true.
-function LightingSystem.updateBlurEffect(props: { [string]: any }, instantly: boolean?)
-	for prop, newValue in pairs(props) do
-		local value = blurEffectValues[prop]
-
-		if not value then
-			warn("Invalid/unsupported BlurEffect property ignored: " .. prop)
-			continue
-		end
-
-		value:set(newValue)
-
-		if not instantly then continue end
-
-		local spring = blurEffectSprings[prop]
-
-		spring:setPosition(newValue)
-		spring:setVelocity(0)
-	end
-end
-
 -- Resets the `BlurEffect`'s properties to their default values. Quantitative values will be animated with a spring
 -- unless `instantly` is true.
 function LightingSystem.resetBlurEffect(instantly: boolean?)
 	LightingSystem.updateBlurEffect(blurEffectDefaults, instantly)
 end
 
--- Updates the `ColorCorrectionEffect`'s properties to the given values. Quantitative values will be animated with a
--- spring unless `instantly` is true.
-function LightingSystem.updateColorCorrectionEffect(props: { [string]: any }, instantly: boolean?)
-	for prop, newValue in pairs(props) do
-		local value = colorCorrectionEffectValues[prop]
-
-		if not value then
-			warn("Invalid/unsupported ColorCorrectionEffect property ignored: " .. prop)
-			continue
-		end
-
-		value:set(newValue)
-
-		if not instantly then continue end
-
-		local spring = colorCorrectionEffectSprings[prop]
-
-		spring:setPosition(newValue)
-
-		if typeof(peek(spring)) == "Color3" then
-			spring:setVelocity(Color3.new(0, 0, 0))
-		else
-			spring:setVelocity(0)
-		end
-	end
+-- Resets the `Clouds`'s properties to their default values. Quantitative values will be animated with a spring unless
+-- `instantly` is true.
+function LightingSystem.resetClouds(instantly: boolean?)
+	LightingSystem.updateClouds(cloudsDefaults, instantly)
 end
 
 -- Resets the `ColorCorrectionEffect`'s properties to their default values. Quantitative values will be animated with a
@@ -375,54 +311,22 @@ function LightingSystem.resetColorCorrectionEffect(instantly: boolean?)
 	LightingSystem.updateColorCorrectionEffect(colorCorrectionEffectDefaults, instantly)
 end
 
--- Updates the `DepthOfFieldEffect`'s properties to the given values. Quantitative values will be animated with a spring
--- unless `instantly` is true.
-function LightingSystem.updateDepthOfFieldEffect(props: { [string]: any }, instantly: boolean?)
-	for prop, newValue in pairs(props) do
-		local value = depthOfFieldEffectValues[prop]
-
-		if not value then
-			warn("Invalid/unsupported DepthOfFieldEffect property ignored: " .. prop)
-			continue
-		end
-
-		value:set(newValue)
-
-		if not instantly then continue end
-
-		local spring = depthOfFieldEffectSprings[prop]
-
-		spring:setPosition(newValue)
-		spring:setVelocity(0)
-	end
-end
-
 -- Resets the `DepthOfFieldEffect`'s properties to their default values. Quantitative values will be animated with a
 -- spring unless `instantly` is true.
 function LightingSystem.resetDepthOfFieldEffect(instantly: boolean?)
 	LightingSystem.updateDepthOfFieldEffect(depthOfFieldEffectDefaults, instantly)
 end
 
--- Updates the `SunRaysEffect`'s properties to the given values. Quantitative values will be animated with a spring
--- unless `instantly` is true.
-function LightingSystem.updateSunRaysEffect(props: { [string]: any }, instantly: boolean?)
-	for prop, newValue in pairs(props) do
-		local value = sunRaysEffectValues[prop]
+-- Resets `Lighting`'s properties to their default values. Quantitative values will be animated with a spring unless
+-- `instantly` is true.
+function LightingSystem.resetLighting(instantly: boolean?)
+	LightingSystem.updateLighting(lightingDefaults, instantly)
+end
 
-		if not value then
-			warn("Invalid/unsupported SunRaysEffect property ignored: " .. prop)
-			continue
-		end
-
-		value:set(newValue)
-
-		if not instantly then continue end
-
-		local spring = sunRaysEffectSprings[prop]
-
-		spring:setPosition(newValue)
-		spring:setVelocity(0)
-	end
+-- Resets the `Sky`'s properties to their default values. Quantitative values will be animated with a spring unless
+-- `instantly` is true.
+function LightingSystem.resetSky(instantly: boolean?)
+	LightingSystem.updateSky(skyDefaults, instantly)
 end
 
 -- Resets the `SunRaysEffect`'s properties to their default values. Quantitative values will be animated with a spring
@@ -458,20 +362,14 @@ function LightingSystem.updateAtmosphere(props: { [string]: any }, instantly: bo
 	end
 end
 
--- Resets the `Atmosphere`'s properties to their default values. Quantitative values will be animated with a spring
--- unless `instantly` is true.
-function LightingSystem.resetAtmosphere(instantly: boolean?)
-	LightingSystem.updateAtmosphere(atmosphereDefaults, instantly)
-end
-
--- Updates the `Sky`'s properties to the given values. Quantitative values will be animated with a spring unless
+-- Updates the `BloomEffect`'s properties to the given values. Quantitative values will be animated with a spring unless
 -- `instantly` is true.
-function LightingSystem.updateSky(props: { [string]: any }, instantly: boolean?)
+function LightingSystem.updateBloomEffect(props: { [string]: any }, instantly: boolean?)
 	for prop, newValue in pairs(props) do
-		local value = skyValues[prop]
+		local value = bloomEffectValues[prop]
 
 		if not value then
-			warn("Invalid/unsupported Sky property ignored: " .. prop)
+			warn("Invalid/unsupported BloomEffect property ignored: " .. prop)
 			continue
 		end
 
@@ -479,20 +377,33 @@ function LightingSystem.updateSky(props: { [string]: any }, instantly: boolean?)
 
 		if not instantly then continue end
 
-		local spring = skySprings[prop]
-
-		if not spring then continue end
+		local spring = bloomEffectSprings[prop]
 
 		spring:setPosition(newValue)
-
 		spring:setVelocity(0)
 	end
 end
 
--- Resets the `Sky`'s properties to their default values. Quantitative values will be animated with a spring unless
+-- Updates the `BlurEffect`'s properties to the given values. Quantitative values will be animated with a spring unless
 -- `instantly` is true.
-function LightingSystem.resetSky(instantly: boolean?)
-	LightingSystem.updateSky(skyDefaults, instantly)
+function LightingSystem.updateBlurEffect(props: { [string]: any }, instantly: boolean?)
+	for prop, newValue in pairs(props) do
+		local value = blurEffectValues[prop]
+
+		if not value then
+			warn("Invalid/unsupported BlurEffect property ignored: " .. prop)
+			continue
+		end
+
+		value:set(newValue)
+
+		if not instantly then continue end
+
+		local spring = blurEffectSprings[prop]
+
+		spring:setPosition(newValue)
+		spring:setVelocity(0)
+	end
 end
 
 -- Updates the `Clouds`'s properties to the given values. Quantitative values will be animated with a spring unless
@@ -522,40 +433,129 @@ function LightingSystem.updateClouds(props: { [string]: any }, instantly: boolea
 	end
 end
 
--- Resets the `Clouds`'s properties to their default values. Quantitative values will be animated with a spring unless
--- `instantly` is true.
-function LightingSystem.resetClouds(instantly: boolean?)
-	LightingSystem.updateClouds(cloudsDefaults, instantly)
+-- Updates the `ColorCorrectionEffect`'s properties to the given values. Quantitative values will be animated with a
+-- spring unless `instantly` is true.
+function LightingSystem.updateColorCorrectionEffect(props: { [string]: any }, instantly: boolean?)
+	for prop, newValue in pairs(props) do
+		local value = colorCorrectionEffectValues[prop]
+
+		if not value then
+			warn("Invalid/unsupported ColorCorrectionEffect property ignored: " .. prop)
+			continue
+		end
+
+		value:set(newValue)
+
+		if not instantly then continue end
+
+		local spring = colorCorrectionEffectSprings[prop]
+
+		spring:setPosition(newValue)
+
+		if typeof(peek(spring)) == "Color3" then
+			spring:setVelocity(Color3.new(0, 0, 0))
+		else
+			spring:setVelocity(0)
+		end
+	end
 end
 
--- Resets all lighting and effect properties to their default values. Quantitative values will be animated with a spring
+-- Updates the `DepthOfFieldEffect`'s properties to the given values. Quantitative values will be animated with a spring
 -- unless `instantly` is true.
-function LightingSystem.resetAll(instantly: boolean?)
-	LightingSystem.resetAtmosphere(instantly)
-	LightingSystem.resetBloomEffect(instantly)
-	LightingSystem.resetBlurEffect(instantly)
-	LightingSystem.resetClouds(instantly)
-	LightingSystem.resetColorCorrectionEffect(instantly)
-	LightingSystem.resetDepthOfFieldEffect(instantly)
-	LightingSystem.resetLighting(instantly)
-	LightingSystem.resetSky(instantly)
-	LightingSystem.resetSunRaysEffect(instantly)
+function LightingSystem.updateDepthOfFieldEffect(props: { [string]: any }, instantly: boolean?)
+	for prop, newValue in pairs(props) do
+		local value = depthOfFieldEffectValues[prop]
+
+		if not value then
+			warn("Invalid/unsupported DepthOfFieldEffect property ignored: " .. prop)
+			continue
+		end
+
+		value:set(newValue)
+
+		if not instantly then continue end
+
+		local spring = depthOfFieldEffectSprings[prop]
+
+		spring:setPosition(newValue)
+		spring:setVelocity(0)
+	end
 end
 
--- Updates all lighting and effect properties to the given template, with ommitted properties being set to default.
--- Quantitative values will be animated with a spring unless `instantly` is true.
-function LightingSystem.applyTemplate(template: { [string]: { [string]: any } }, instantly: boolean?)
-	LightingSystem.resetAll(instantly)
+-- Updates `Lighting`'s properties to the given values. Quantitative values will be animated with a spring unless
+-- `instantly` is true.
+function LightingSystem.updateLighting(props: { [string]: any }, instantly: boolean?)
+	for prop, newValue in pairs(props) do
+		local value = lightingValues[prop]
 
-	LightingSystem.updateAtmosphere(template.Atmosphere, instantly)
-	LightingSystem.updateBloomEffect(template.BloomEffect, instantly)
-	LightingSystem.updateBlurEffect(template.BlurEffect, instantly)
-	LightingSystem.updateClouds(template.Clouds, instantly)
-	LightingSystem.updateColorCorrectionEffect(template.ColorCorrectionEffect, instantly)
-	LightingSystem.updateDepthOfFieldEffect(template.DepthOfFieldEffect, instantly)
-	LightingSystem.updateLighting(template.Lighting, instantly)
-	LightingSystem.updateSky(template.Sky, instantly)
-	LightingSystem.updateSunRaysEffect(template.SunRaysEffect, instantly)
+		if not value then
+			warn("Invalid/unsupported Lighting property ignored: " .. prop)
+			continue
+		end
+
+		value:set(newValue)
+
+		if not instantly then continue end
+
+		local spring = lightingSprings[prop]
+
+		if not spring then continue end
+
+		spring:setPosition(newValue)
+
+		if typeof(peek(spring)) == "Color3" then
+			spring:setVelocity(Color3.new(0, 0, 0))
+		else
+			spring:setVelocity(0)
+		end
+	end
+end
+
+-- Updates the `Sky`'s properties to the given values. Quantitative values will be animated with a spring unless
+-- `instantly` is true.
+function LightingSystem.updateSky(props: { [string]: any }, instantly: boolean?)
+	for prop, newValue in pairs(props) do
+		local value = skyValues[prop]
+
+		if not value then
+			warn("Invalid/unsupported Sky property ignored: " .. prop)
+			continue
+		end
+
+		value:set(newValue)
+
+		if not instantly then continue end
+
+		local spring = skySprings[prop]
+
+		if not spring then continue end
+
+		spring:setPosition(newValue)
+
+		spring:setVelocity(0)
+	end
+end
+
+-- Updates the `SunRaysEffect`'s properties to the given values. Quantitative values will be animated with a spring
+-- unless `instantly` is true.
+function LightingSystem.updateSunRaysEffect(props: { [string]: any }, instantly: boolean?)
+	for prop, newValue in pairs(props) do
+		local value = sunRaysEffectValues[prop]
+
+		if not value then
+			warn("Invalid/unsupported SunRaysEffect property ignored: " .. prop)
+			continue
+		end
+
+		value:set(newValue)
+
+		if not instantly then continue end
+
+		local spring = sunRaysEffectSprings[prop]
+
+		spring:setPosition(newValue)
+		spring:setVelocity(0)
+	end
 end
 
 return LightingSystem
