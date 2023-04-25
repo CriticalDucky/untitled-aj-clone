@@ -251,8 +251,26 @@ Hydrate(sunRaysEffect)(sunRaysEffectSprings)
 
 local LightingSystem = {}
 
--- Updates all lighting and effect properties to the given template, with ommitted properties being set to default.
--- Quantitative values will be animated with a spring unless `instantly` is true.
+--[[
+	Updates all lighting and effect properties to the given template, with ommitted properties being set to default.
+	Quantitative values will be animated with a spring unless `instantly` is true.
+
+	**Example:**
+	```lua
+	LightingSystem.applyTemplate({
+		Atmosphere = {
+			Density = 0.5,
+			Color = Color3.fromRGB(255, 255, 255),
+		},
+		BloomEffect = {
+			Intensity = 0.5,
+		},
+		BlurEffect = {
+			Size = 0.5,
+		},
+	})
+	```
+]]
 function LightingSystem.applyTemplate(template: { [string]: { [string]: any } }, instantly: boolean?)
 	LightingSystem.resetAll(instantly)
 
@@ -267,8 +285,10 @@ function LightingSystem.applyTemplate(template: { [string]: { [string]: any } },
 	LightingSystem.updateSunRaysEffect(template.SunRaysEffect, instantly)
 end
 
--- Resets all lighting and effect properties to their default values. Quantitative values will be animated with a spring
--- unless `instantly` is true.
+--[[
+	Resets all lighting and effect properties to their default values. Quantitative values will be animated with a
+	spring unless `instantly` is true.
+]]
 function LightingSystem.resetAll(instantly: boolean?)
 	LightingSystem.resetAtmosphere(instantly)
 	LightingSystem.resetBloomEffect(instantly)
@@ -281,62 +301,83 @@ function LightingSystem.resetAll(instantly: boolean?)
 	LightingSystem.resetSunRaysEffect(instantly)
 end
 
--- Resets the `Atmosphere`'s properties to their default values. Quantitative values will be animated with a spring
--- unless `instantly` is true.
+--[[
+	Resets the `Atmosphere`'s properties to their default values. Quantitative values will be animated with a spring
+	unless `instantly` is true.
+]]
 function LightingSystem.resetAtmosphere(instantly: boolean?)
 	LightingSystem.updateAtmosphere(atmosphereDefaults, instantly)
 end
 
--- Resets the `BloomEffect`'s properties to their default values. Quantitative values will be animated with a spring
--- unless `instantly` is true.
+--[[
+	Resets the `BloomEffect`'s properties to their default values. Quantitative values will be animated with a spring
+	unless `instantly` is true.
+]]
 function LightingSystem.resetBloomEffect(instantly: boolean?)
 	LightingSystem.updateBloomEffect(bloomEffectDefaults, instantly)
 end
 
--- Resets the `BlurEffect`'s properties to their default values. Quantitative values will be animated with a spring
--- unless `instantly` is true.
+--[[
+	Resets the `BlurEffect`'s properties to their default values. Quantitative values will be animated with a spring
+	unless `instantly` is true.
+]]
 function LightingSystem.resetBlurEffect(instantly: boolean?)
 	LightingSystem.updateBlurEffect(blurEffectDefaults, instantly)
 end
 
--- Resets the `Clouds`'s properties to their default values. Quantitative values will be animated with a spring unless
--- `instantly` is true.
+
+--[[
+	Resets the `Clouds`'s properties to their default values. Quantitative values will be animated with a spring unless
+	`instantly` is true.
+]]
 function LightingSystem.resetClouds(instantly: boolean?)
 	LightingSystem.updateClouds(cloudsDefaults, instantly)
 end
 
--- Resets the `ColorCorrectionEffect`'s properties to their default values. Quantitative values will be animated with a
--- spring unless `instantly` is true.
+--[[
+	Resets the `ColorCorrectionEffect`'s properties to their default values. Quantitative values will be animated with a
+	spring unless `instantly` is true.
+]]
 function LightingSystem.resetColorCorrectionEffect(instantly: boolean?)
 	LightingSystem.updateColorCorrectionEffect(colorCorrectionEffectDefaults, instantly)
 end
 
--- Resets the `DepthOfFieldEffect`'s properties to their default values. Quantitative values will be animated with a
--- spring unless `instantly` is true.
+--[[
+	Resets the `DepthOfFieldEffect`'s properties to their default values. Quantitative values will be animated with a
+	spring unless `instantly` is true.
+]]
 function LightingSystem.resetDepthOfFieldEffect(instantly: boolean?)
 	LightingSystem.updateDepthOfFieldEffect(depthOfFieldEffectDefaults, instantly)
 end
 
--- Resets `Lighting`'s properties to their default values. Quantitative values will be animated with a spring unless
--- `instantly` is true.
+--[[
+	Resets `Lighting`'s properties to their default values. Quantitative values will be animated with a spring unless
+	`instantly` is true.
+]]
 function LightingSystem.resetLighting(instantly: boolean?)
 	LightingSystem.updateLighting(lightingDefaults, instantly)
 end
 
--- Resets the `Sky`'s properties to their default values. Quantitative values will be animated with a spring unless
--- `instantly` is true.
+--[[
+	Resets the `Sky`'s properties to their default values. Quantitative values will be animated with a spring unless
+	`instantly` is true.
+]]
 function LightingSystem.resetSky(instantly: boolean?)
 	LightingSystem.updateSky(skyDefaults, instantly)
 end
 
--- Resets the `SunRaysEffect`'s properties to their default values. Quantitative values will be animated with a spring
--- unless `instantly` is true.
+--[[
+	Resets the `SunRaysEffect`'s properties to their default values. Quantitative values will be animated with a spring
+	unless `instantly` is true.
+]]
 function LightingSystem.resetSunRaysEffect(instantly: boolean?)
 	LightingSystem.updateSunRaysEffect(sunRaysEffectDefaults, instantly)
 end
 
--- Updates the `Atmosphere`'s properties to the given values. Quantitative values will be animated with a spring unless
--- `instantly` is true.
+--[[
+	Updates the `Atmosphere`'s properties to the given values. Quantitative values will be animated with a spring unless
+	`instantly` is true.
+]]
 function LightingSystem.updateAtmosphere(props: { [string]: any }, instantly: boolean?)
 	for prop, newValue in pairs(props) do
 		local value = atmosphereValues[prop]
@@ -362,8 +403,10 @@ function LightingSystem.updateAtmosphere(props: { [string]: any }, instantly: bo
 	end
 end
 
--- Updates the `BloomEffect`'s properties to the given values. Quantitative values will be animated with a spring unless
--- `instantly` is true.
+--[[
+	Updates the `BloomEffect`'s properties to the given values. Quantitative values will be animated with a spring
+	unless `instantly` is true.
+]]
 function LightingSystem.updateBloomEffect(props: { [string]: any }, instantly: boolean?)
 	for prop, newValue in pairs(props) do
 		local value = bloomEffectValues[prop]
@@ -384,8 +427,10 @@ function LightingSystem.updateBloomEffect(props: { [string]: any }, instantly: b
 	end
 end
 
--- Updates the `BlurEffect`'s properties to the given values. Quantitative values will be animated with a spring unless
--- `instantly` is true.
+--[[
+	Updates the `BlurEffect`'s properties to the given values. Quantitative values will be animated with a spring unless
+	`instantly` is true.
+]]
 function LightingSystem.updateBlurEffect(props: { [string]: any }, instantly: boolean?)
 	for prop, newValue in pairs(props) do
 		local value = blurEffectValues[prop]
@@ -406,8 +451,10 @@ function LightingSystem.updateBlurEffect(props: { [string]: any }, instantly: bo
 	end
 end
 
--- Updates the `Clouds`'s properties to the given values. Quantitative values will be animated with a spring unless
--- `instantly` is true.
+--[[
+	Updates the `Clouds`'s properties to the given values. Quantitative values will be animated with a spring unless
+	`instantly` is true.
+]]
 function LightingSystem.updateClouds(props: { [string]: any }, instantly: boolean?)
 	for prop, newValue in pairs(props) do
 		local value = cloudsValues[prop]
@@ -433,8 +480,10 @@ function LightingSystem.updateClouds(props: { [string]: any }, instantly: boolea
 	end
 end
 
--- Updates the `ColorCorrectionEffect`'s properties to the given values. Quantitative values will be animated with a
--- spring unless `instantly` is true.
+--[[
+	Updates the `ColorCorrectionEffect`'s properties to the given values. Quantitative values will be animated with a
+	spring unless `instantly` is true.
+]]
 function LightingSystem.updateColorCorrectionEffect(props: { [string]: any }, instantly: boolean?)
 	for prop, newValue in pairs(props) do
 		local value = colorCorrectionEffectValues[prop]
@@ -460,8 +509,10 @@ function LightingSystem.updateColorCorrectionEffect(props: { [string]: any }, in
 	end
 end
 
--- Updates the `DepthOfFieldEffect`'s properties to the given values. Quantitative values will be animated with a spring
--- unless `instantly` is true.
+--[[
+	Updates the `DepthOfFieldEffect`'s properties to the given values. Quantitative values will be animated with a
+	spring unless `instantly` is true.
+]]
 function LightingSystem.updateDepthOfFieldEffect(props: { [string]: any }, instantly: boolean?)
 	for prop, newValue in pairs(props) do
 		local value = depthOfFieldEffectValues[prop]
@@ -482,8 +533,10 @@ function LightingSystem.updateDepthOfFieldEffect(props: { [string]: any }, insta
 	end
 end
 
--- Updates `Lighting`'s properties to the given values. Quantitative values will be animated with a spring unless
--- `instantly` is true.
+--[[
+	Updates `Lighting`'s properties to the given values. Quantitative values will be animated with a spring unless
+	`instantly` is true.
+]]
 function LightingSystem.updateLighting(props: { [string]: any }, instantly: boolean?)
 	for prop, newValue in pairs(props) do
 		local value = lightingValues[prop]
@@ -511,8 +564,10 @@ function LightingSystem.updateLighting(props: { [string]: any }, instantly: bool
 	end
 end
 
--- Updates the `Sky`'s properties to the given values. Quantitative values will be animated with a spring unless
--- `instantly` is true.
+--[[
+	Updates the `Sky`'s properties to the given values. Quantitative values will be animated with a spring unless
+	`instantly` is true.
+]]
 function LightingSystem.updateSky(props: { [string]: any }, instantly: boolean?)
 	for prop, newValue in pairs(props) do
 		local value = skyValues[prop]
@@ -536,8 +591,10 @@ function LightingSystem.updateSky(props: { [string]: any }, instantly: boolean?)
 	end
 end
 
--- Updates the `SunRaysEffect`'s properties to the given values. Quantitative values will be animated with a spring
--- unless `instantly` is true.
+--[[
+	Updates the `SunRaysEffect`'s properties to the given values. Quantitative values will be animated with a spring
+	unless `instantly` is true.
+]]
 function LightingSystem.updateSunRaysEffect(props: { [string]: any }, instantly: boolean?)
 	for prop, newValue in pairs(props) do
 		local value = sunRaysEffectValues[prop]
