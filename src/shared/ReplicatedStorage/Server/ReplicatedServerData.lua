@@ -229,7 +229,6 @@ end
 ]]
 function withData.worldHasLocation(data, worldIndex, locationEnum)
 	assert(type(worldIndex) == "number", "worldIndex must be a number")
-	assert(type(locationEnum) == "number", "locationEnum must be a number")
 
 	local world = withData.getWorld(data, worldIndex)
 
