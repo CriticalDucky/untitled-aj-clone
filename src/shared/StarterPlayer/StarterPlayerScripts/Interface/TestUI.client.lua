@@ -4,7 +4,6 @@ local Players = game:GetService "Players"
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
 local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
-local UIFolder = replicatedFirstShared:WaitForChild "UI"
 local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 local serverFolder = replicatedStorageShared:WaitForChild "Server"
 local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
@@ -29,7 +28,6 @@ if not ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
 	local Tween = Fusion.Tween
 	local Spring = Fusion.Spring
 	local Hydrate = Fusion.Hydrate
-	local unwrap = Fusion.unwrap
 
 	local worldMenu, worldButton = Component "WorldMenu" {}
 	local map, mapButton = Component "MapMenu" {}
