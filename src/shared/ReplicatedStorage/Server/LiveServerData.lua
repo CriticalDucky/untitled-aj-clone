@@ -110,7 +110,6 @@ local serverFolder = replicatedStorageShared.Server
 local enumsFolder = replicatedStorageShared.Enums
 local utilityFolder = replicatedFirstShared.Utility
 
-local LocalServerInfo = require(serverFolder.LocalServerInfo)
 local ServerTypeEnum = require(enumsFolder.ServerType)
 local PlaceConstants = require(replicatedFirstShared.Settings.PlaceConstants)
 local Table = require(utilityFolder.Table)
@@ -119,22 +118,24 @@ local ServerTypeGroups = require(serverFolder:WaitForChild "ServerTypeGroups")
 local Minigames = require(serverFolder:WaitForChild "Minigames")
 local Parties = require(serverFolder:WaitForChild "Parties")
 local Locations = require(serverFolder:WaitForChild "Locations")
-local Promise = require(utilityFolder.Promise)
 local Signal = require(utilityFolder.Signal)
 local Types = require(utilityFolder.Types)
-local LocationType = require(enumsFolder:WaitForChild "LocationType")
+
+local Fusion = require(replicatedFirstShared.Fusion)
+local Value = Fusion.Value
+local peek = Fusion.peek
 
 type Promise = Types.Promise
 type ServerIdentifier = Types.ServerIdentifier
 type UserEnum = Types.UserEnum
-
-local Fusion = require(replicatedFirstShared.Fusion)
-local Value = Fusion.Value
-local unwrap = Fusion.unwrap
+type Use = Fusion.Use
 
 --#endregion
 
 local LiveServerData = {}
+
+local withData = {}
+LiveServerData.withData = withData
 
 local dataValue
 
@@ -339,7 +340,7 @@ if RunService:IsServer() then
 
 			replica:SetValue({ serverType, minigameType, minigameIndex }, filterServerInfo(Table.deepCopy(serverInfo)))
 		else
-			error ("LiveServerData: Message received with invalid server type. Received: " .. tostring(serverType))
+			error("LiveServerData: Message received with invalid server type. Received: " .. tostring(serverType))
 		end
 
 		LiveServerData.ServerInfoUpdated:Fire(serverType, serverIdentifier, serverInfo)
@@ -347,7 +348,7 @@ if RunService:IsServer() then
 elseif RunService:IsClient() then -- Client
 	local ReplicaCollection = require(replicatedStorageShared.Replication.ReplicaCollection)
 
-	local replicaData = ReplicaCollection.get("LiveServerData")
+	local replicaData = ReplicaCollection.get "LiveServerData"
 
 	dataValue = Value(replicaData.Data) -- Simple convenience for UI development
 	-- Because of this, whenever we call any of the functions below,
@@ -358,31 +359,28 @@ elseif RunService:IsClient() then -- Client
 	end)
 end
 
+LiveServerData.value = dataValue
+
 --[[
 	Since servers broadcast their data every WAIT_TIME seconds,
 	we need to wait for that time to pass before we can get an accurate representation of data
 	from all the servers.
 
-	Why don't I just have this built in to the get function?
-
-	* Fusion Computeds cant yield, so UI scripts need to implement their own
-	loading functionalities.
-
-	* However, I can safely do this in the get function for the server.
+	Used by LiveServerData.get to ensure that the data is accurate.
 ]]
 function LiveServerData.initialWait()
 	if time() < WAIT_TIME then task.wait(WAIT_TIME - time()) end
 end
 
 --[[
-	Gets the live server data for the given serverIdentifier.
-	If a serverType is provided instead, it will return the whole data table for that serverType.
+	Gets the live server data for the given data & serverIdentifier.
+	If a serverType is provided instead of the server identifier, it will return the whole data table
+	for that serverType
 	If no serverIdentifier is provided, it will return the whole data table.
-	
+
 	Consider using the helper functions for convenience.
 
-
-	Will return nil if the specified server is not live.
+	Will return nil if the specified server (retrieved from the serveridentifier) is not live.
 	If the server is live, it will return this:
 	```lua
 	serverInfo = {
@@ -392,19 +390,28 @@ end
 		[any] = any
 	}
 	```
+
+	Be wary: if there are no live servers within a table, that table will be nil (except for serverType tables)
+
+	This function is safe for Computed usage. It does not yield.
+	Example Computed usage:
+	```lua
+	Computed(function(use: Use))
+		local data = use(LiveServerData.value)
+		local serverInfo = LiveServerData.withData.get(data, serverIdentifier)
+
+		-- Will dynamically update when the data is updated.
+	end)
+	```
 ]]
-function LiveServerData.get(
-	serverIdentifier: ServerIdentifier | UserEnum | nil
+function withData.get(
+	data: table, -- Retrieved from LiveServerData.value on the client, or simply dataValue table on the server.
+	serverIdentifier: ServerIdentifier | UserEnum -- ServerIdentifier or serverType
 ): nil | {} | { players: { [number]: number }, [any]: any }
-	if RunService:IsServer() then LiveServerData.initialWait() end -- See LiveServerData.initialWait comment above
-
-	local data = unwrap(dataValue)
-
-	if not serverIdentifier then return data end
-
 	local serverType = if typeof(serverIdentifier) == "table" then serverIdentifier.serverType else serverIdentifier
 	local serverTypeData = data[serverType]
 
+	-- If serverIdentifier is a serverType, return the whole data table for that serverType.
 	if typeof(serverIdentifier) ~= "table" then return serverTypeData end
 
 	if serverType == ServerTypeEnum.routing then
@@ -426,19 +433,71 @@ function LiveServerData.get(
 			return minigameTable[serverIdentifier.minigameIndex or serverIdentifier.privateServerId]
 		end
 	else
-		error "LiveServerData: Message received with invalid server type"
+		error "LiveServerData: Called with invalid server type"
 	end
 end
 
 --[[
-	Gets the location live server info for the given worldIndex and locationEnum.
+	Gets the live server data for the given serverIdentifier.
+	If a serverType is provided instead of the server identifier, it will return the whole data table
+	for that serverType
+	If no serverIdentifier is provided, it will return the whole data table.
+
+	Consider using the helper functions for convenience.
+
+	Will return nil if the specified server (retrieved from the serveridentifier) is not live.
+	If the server is live, it will return this:
+	```lua
+	serverInfo = {
+		players = {
+			userIds
+		},
+		[any] = any
+	}
+	```
+
+	Be wary: if there are no live servers within a table, that table will be nil (except for serverType tables)
+
+	This is NOT SAFE for computeds! If you want to use this in a computed, use LiveServerData.withData.get instead.
 ]]
-function LiveServerData.getLocation(worldIndex, locationEnum)
-	return LiveServerData.get {
+function LiveServerData.get(
+	serverIdentifier: ServerIdentifier | UserEnum
+): nil | {} | { players: { [number]: number }, [any]: any }
+	LiveServerData.initialWait() -- We can wait here since computeds wont use this function.
+
+	return withData.get(peek(dataValue), serverIdentifier) -- we can use peek since computeds wont use this function.
+end
+
+--[[
+	Gets the location live server info for the given worldIndex and locationEnum.
+	Safe for Computed usage.
+
+	Example usage:
+	```lua
+	Computed(function(use: Use))
+		local data = use(LiveServerData.value)
+		local locationInfo = LiveServerData.withData.getLocation(data, worldIndex, locationEnum)
+
+		-- Will dynamically update when the data is updated.
+	end)
+	```
+]]
+function withData.getLocation(data, worldIndex, locationEnum)
+	return withData.get(data, {
 		serverType = ServerTypeEnum.location,
 		worldIndex = worldIndex,
 		locationEnum = locationEnum,
-	}
+	})
+end
+
+--[[
+	Gets the location live server info for the given worldIndex and locationEnum.
+	Not safe for Computed usage. Use LiveServerData.withData.getLocation instead.
+]]
+function LiveServerData.getLocation(worldIndex, locationEnum)
+	LiveServerData.initialWait()
+
+	return withData.getLocation(peek(dataValue), worldIndex, locationEnum)
 end
 
 --[[
@@ -460,10 +519,10 @@ end
 
 	To get the population info for a whole world, pass in a ServerIdentifier that leaves the locationEnum field nil:
 	```lua
-	local worldPopulationInfo = LiveServerData.getPopulationInfo {
+	local worldPopulationInfo = withData.getPopulationInfo({
 		serverType = ServerTypeEnum.location,
 		worldIndex = 1,
-	}
+	})
 	```
 	
 	This will return the population info for the whole world:
@@ -485,7 +544,7 @@ end
 
 	This is how you could check if a server is full:
 	```lua
-	local populationInfo = LiveServerData.getPopulationInfo(serverIdentifier)
+	local populationInfo = withData.getPopulationInfo(serverIdentifier)
 	
 	if populationInfo.max_emptySlots == 0 then -- Will error if the specified server is not live
 		-- Server is full
@@ -493,8 +552,18 @@ end
 	```
 
 	**Will return nil** if the specified server is not live.
+
+	This is safe for computeds. Example usage:
+	```lua
+	Computed(function(use: Use))
+		local data = use(LiveServerData.value)
+		local populationInfo = LiveServerData.withData.getPopulationInfo(data, serverIdentifier)
+
+		-- Will dynamically update when the data is updated.
+	end)
+	```
 ]]
-function LiveServerData.getPopulationInfo(serverIdentifier: ServerIdentifier)
+function withData.getPopulationInfo(data: table, serverIdentifier: ServerIdentifier)
 	local serverType = serverIdentifier.serverType
 
 	if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation, serverType) then
@@ -503,7 +572,7 @@ function LiveServerData.getPopulationInfo(serverIdentifier: ServerIdentifier)
 		if locationEnum == nil then
 			-- This is a request for the whole world's population info
 			local worldIndex = serverIdentifier.worldIndex
-			local worldTable = LiveServerData.get(ServerTypeEnum.location)[worldIndex]
+			local worldTable = data[ServerTypeEnum.location][worldIndex]
 			local worldPopulationInfo
 
 			if worldTable and Table.hasAnything(worldTable) then -- If the world is live
@@ -518,7 +587,7 @@ function LiveServerData.getPopulationInfo(serverIdentifier: ServerIdentifier)
 				local priorityPopulation = 0 -- The population of locations where players can spawn
 
 				for locationEnum, _ in pairs(worldTable) do
-					local populationInfo = LiveServerData.getLocationPopulationInfo(worldIndex, locationEnum)
+					local populationInfo = withData.getLocationPopulationInfo(data, worldIndex, locationEnum)
 
 					if populationInfo then
 						local population = populationInfo.population
@@ -542,7 +611,7 @@ function LiveServerData.getPopulationInfo(serverIdentifier: ServerIdentifier)
 		end
 	end
 
-	local serverInfo = LiveServerData.get(serverIdentifier)
+	local serverInfo = withData.get(data, serverIdentifier)
 
 	if serverInfo then
 		local serverInfoPlayers = serverInfo.players
@@ -622,17 +691,127 @@ function LiveServerData.getPopulationInfo(serverIdentifier: ServerIdentifier)
 end
 
 --[[
+	Gets the compiled population info for the given serverIdentifier.
+
+
+	Population info looks like this:
+	```lua
+	{
+		population = number,
+		recommended_emptySlots = number,
+		max_emptySlots = number,
+	}
+	```
+	where `population` is the number of players on the server,
+	`recommended_emptySlots` is the number of empty slots recommended for the server to fill up,
+	and `max_emptySlots` is the maximum number of empty slots the server has left.
+	Recommended empty slots will always either be higher or equal to max empty slots.
+
+	To get the population info for a whole world, pass in a ServerIdentifier that leaves the locationEnum field nil:
+	```lua
+	local worldPopulationInfo = LiveServerData.getPopulationInfo({
+		serverType = ServerTypeEnum.location,
+		worldIndex = 1,
+	})
+	```
+	
+	This will return the population info for the whole world:
+	```lua
+	{
+		population = number,
+		recommended_emptySlots = number,
+		max_emptySlots = number,
+
+		locations = {
+			[LocationEnum] = {
+				population = number,
+				recommended_emptySlots = number,
+				max_emptySlots = number,
+			}
+		}
+	}
+	```
+
+	This is how you could check if a server is full:
+	```lua
+	local populationInfo = LiveServerData.getPopulationInfo(serverIdentifier)
+	
+	if populationInfo.max_emptySlots == 0 then -- Will error if the specified server is not live
+		-- Server is full
+	end
+	```
+
+	**Will return nil** if the specified server is not live.
+
+	This is not safe for computeds. If you want to use this in a computed, use
+	`LiveServerData.withData.getPopulationInfo` instead.
+]]
+function LiveServerData.getPopulationInfo(serverIdentifier: ServerIdentifier)
+	LiveServerData.initialWait()
+
+	return LiveServerData.withData.getPopulationInfo(peek(dataValue), serverIdentifier)
+end
+
+--[[
+	Get the population info for the given worldIndex and locationEnum.
+	Wrapper for LiveServerData.withData.getPopulationInfo.
+
+	Can return nil if the location is not live.
+
+	This is safe for computeds. Example usage:
+	```lua
+	Computed(function(use: Use))
+		local data = use(LiveServerData.value)
+		local populationInfo = LiveServerData.withData.getLocationPopulationInfo(data, worldIndex, locationEnum)
+
+		-- Will dynamically update when the data is updated.
+	end)
+	```
+]]
+function withData.getLocationPopulationInfo(data: table, worldIndex: number, locationEnum)
+	return LiveServerData.withData.getPopulationInfo(data, {
+		serverType = ServerTypeEnum.location,
+		worldIndex = worldIndex,
+		locationEnum = locationEnum,
+	})
+end
+
+--[[
 	Gets the population info for the given worldIndex and locationEnum.
 	Wrapper for LiveServerData.getPopulationInfo.
 
 	Can return nil if the location is not live.
+
+	Do not use this in computeds. Use LiveServerData.withData.getLocationPopulationInfo instead.
 ]]
 function LiveServerData.getLocationPopulationInfo(worldIndex, locationEnum)
-	return LiveServerData.getPopulationInfo {
-		serverType = ServerTypeEnum.location,
-		worldIndex = worldIndex,
-		locationEnum = locationEnum,
-	}
+	LiveServerData.initialWait()
+
+	return LiveServerData.withData.getLocationPopulationInfo(peek(dataValue), worldIndex, locationEnum)
+end
+
+--[[
+	Gets the population info for the given partyType and partyIndex.
+	Wrapper for LiveServerData.withData.getPopulationInfo for party servers.
+
+	Can return nil if the party is not live.
+
+	This is safe for computeds. Example usage:
+	```lua
+	Computed(function(use: Use))
+		local data = use(LiveServerData.value)
+		local populationInfo = LiveServerData.withData.getPartyPopulationInfo(data, partyType, partyIndex)
+
+		-- Will dynamically update when the data is updated.
+	end)
+	```
+]]
+function withData.getPartyPopulationInfo(data, partyType, partyIndex)
+	return LiveServerData.withData.getPopulationInfo(data, {
+		serverType = ServerTypeEnum.party,
+		partyType = partyType,
+		partyIndex = partyIndex,
+	})
 end
 
 --[[
@@ -640,6 +819,8 @@ end
 	Wrapper for LiveServerData.getPopulationInfo for party servers.
 
 	Can return nil if the party is not live.
+
+	Do not use this in computeds. Use LiveServerData.withData.getPartyPopulationInfo instead.
 ]]
 function LiveServerData.getPartyPopulationInfo(partyType, partyIndex)
 	return LiveServerData.getPopulationInfo {
@@ -651,9 +832,34 @@ end
 
 --[[
 	Gets the population info for the given home server.
+	Wrapper for LiveServerData.withData.getPopulationInfo for home servers.
+
+	Can return nil if the home is not live.
+
+	This is safe for computeds. Example usage:
+	```lua
+	Computed(function(use: Use))
+		local data = use(LiveServerData.value)
+		local populationInfo = LiveServerData.withData.getHomePopulationInfo(data, homeOwner)
+
+		-- Will dynamically update when the data is updated.
+	end)
+	```
+]]
+function withData.getHomePopulationInfo(data, homeOwner)
+	return LiveServerData.withData.getPopulationInfo(data, {
+		serverType = ServerTypeEnum.home,
+		homeOwner = homeOwner,
+	})
+end
+
+--[[
+	Gets the population info for the given home server.
 	Wrapper for LiveServerData.getPopulationInfo for home servers.
 
 	Can return nil if the home is not live.
+
+	Do not use this in computeds. Use LiveServerData.withData.getHomePopulationInfo instead.
 ]]
 function LiveServerData.getHomePopulationInfo(homeOwner)
 	return LiveServerData.getPopulationInfo {
@@ -662,19 +868,68 @@ function LiveServerData.getHomePopulationInfo(homeOwner)
 	}
 end
 
+-- withData for LiveServerData.getMinigamePopulationInfo:
+--[[
+	Gets the population info for the given minigameType and minigameIndex.
+	minigameIndex can be a minigameIndex or privateServerId.
+	Wrapper for LiveServerData.withData.getPopulationInfo for minigame servers.
+
+	Can return nil if the minigame is not live.
+
+	This is safe for computeds. Example usage:
+	```lua
+	Computed(function(use: Use))
+		local data = use(LiveServerData.value)
+		local populationInfo = LiveServerData.withData.getMinigamePopulationInfo(data, minigameType, minigameIndex)
+
+		-- Will dynamically update when the data is updated.
+	end)
+	```
+]]
+function withData.getMinigamePopulationInfo(data, minigameType, minigameIndex: number | string)
+	return LiveServerData.withData.getPopulationInfo(data, {
+		serverType = ServerTypeEnum.minigame,
+		minigameType = minigameType,
+		[if type(minigameIndex) == "number" then "minigameIndex" else "privateServerId"] = minigameIndex,
+	})
+end
+
 --[[
 	Gets the population info for the given minigameType and minigameIndex.
 	minigameIndex can be a minigameIndex or privateServerId.
 	Wrapper for LiveServerData.getPopulationInfo for minigame servers.
 
 	Can return nil if the minigame is not live.
+
+	Do not use this in computeds. Use LiveServerData.withData.getMinigamePopulationInfo instead.
 ]]
 function LiveServerData.getMinigamePopulationInfo(minigameType, minigameIndex: number | string)
-	return LiveServerData.getPopulationInfo {
-		serverType = ServerTypeEnum.minigame,
-		minigameType = minigameType,
-		[if type(minigameIndex) == "number" then "minigameIndex" else "privateServerId"] = minigameIndex,
-	}
+	LiveServerData.initialWait()
+
+	return withData.getMinigamePopulationInfo(peek(dataValue), minigameType, minigameIndex)
+end
+
+--[[
+	Gets the population info for the given worldIndex.
+	Wrapper for LiveServerData.withData.getPopulationInfo.
+
+	Can return nil if the world is not live.
+
+	This is safe for computeds. Example usage:
+	```lua
+	Computed(function(use: Use))
+		local data = use(LiveServerData.value)
+		local populationInfo = LiveServerData.withData.getWorldPopulationInfo(data, worldIndex)
+
+		-- Will dynamically update when the data is updated.
+	end)
+	```
+]]
+function withData.getWorldPopulationInfo(data, worldIndex)
+	return LiveServerData.withData.getPopulationInfo(data, {
+		serverType = ServerTypeEnum.location,
+		worldIndex = worldIndex,
+	})
 end
 
 --[[
@@ -682,6 +937,8 @@ end
 	Wrapper for LiveServerData.getPopulationInfo.
 
 	Can return nil if the world is not live.
+
+	Do not use this in computeds. Use LiveServerData.withData.getWorldPopulationInfo instead.
 ]]
 function LiveServerData.getWorldPopulationInfo(worldIndex)
 	return LiveServerData.getPopulationInfo {
@@ -692,6 +949,29 @@ end
 
 --[[
 	Gets the compiled player count for the given worldIndex.
+	If the world is not live, this will return 0.
+
+	This is safe for computeds. Example usage:
+	```lua
+	Computed(function(use: Use))
+		local data = use(LiveServerData.value)
+		local population = LiveServerData.withData.getWorldPopulation(data, worldIndex)
+
+		-- Will dynamically update when the data is updated.
+	end)
+	```
+]]
+function withData.getWorldPopulation(data, worldIndex)
+	local worldPopulationInfo = withData.getWorldPopulationInfo(data, worldIndex)
+
+	return if worldPopulationInfo then worldPopulationInfo.population else 0
+end
+
+--[[
+	Gets the compiled player count for the given worldIndex.
+	If the world is not live, this will return 0.
+
+	Do not use this in computeds. Use LiveServerData.withData.getWorldPopulation instead.
 ]]
 function LiveServerData.getWorldPopulation(worldIndex)
 	local worldPopulationInfo = LiveServerData.getWorldPopulationInfo(worldIndex)
@@ -704,6 +984,30 @@ end
 	Servers not live will not be included in the table.
 
 	Can return nil if no parties of the given type are live.
+
+	This is safe for computeds. Example usage:
+	```lua
+	Computed(function(use: Use))
+		local data = use(LiveServerData.value)
+		local partyServers = LiveServerData.withData.getPartyServers(data, partyType)
+
+		-- Will dynamically update when the data is updated.
+	end)
+	```
+]]
+function withData.getPartyServers(data, partyType)
+	local partyData = LiveServerData.withData.get(data, ServerTypeEnum.party)
+
+	if partyData then return partyData[partyType] end
+end
+
+--[[
+	Gets the parties table for the given party type.
+	Servers not live will not be included in the table.
+
+	Can return nil if no parties of the given type are live.
+
+	Do not use this in computeds. Use LiveServerData.withData.getPartyServers instead.
 ]]
 function LiveServerData.getPartyServers(partyType)
 	local partyData = LiveServerData.get(ServerTypeEnum.party)
@@ -723,6 +1027,36 @@ end
 	```
 
 	Servers not live will not be included in the table, and if no home servers are live, this will return nil.
+
+	This is safe for computeds. Example usage:
+	```lua
+	Computed(function(use: Use))
+		local data = use(LiveServerData.value)
+		local homeServers = LiveServerData.withData.getHomeServers(data)
+
+		-- Will dynamically update when the data is updated.
+	end)
+	```
+]]
+function withData.getHomeServers(data)
+	return LiveServerData.withData.get(data, ServerTypeEnum.home)
+end
+
+--[[
+	Gets the home servers table.
+
+	```lua
+	{
+		[UserId] = {
+			serverData
+		}
+	}
+	```
+
+	Servers not live will not be included in the table, and if no home servers are live,
+	this will return nil.
+
+	Do not use this in computeds. Use LiveServerData.withData.getHomeServers instead.
 ]]
 function LiveServerData.getHomeServers()
 	return LiveServerData.get(ServerTypeEnum.home)
@@ -733,6 +1067,30 @@ end
 	Servers not live will not be included in the table.
 
 	Can return nil if no minigames of the given type are live.
+
+	This is safe for computeds. Example usage:
+	```lua
+	Computed(function(use: Use))
+		local data = use(LiveServerData.value)
+		local minigameServers = LiveServerData.withData.getMinigameServers(data, minigameType)
+
+		-- Will dynamically update when the data is updated.
+	end)
+	```
+]]
+function withData.getMinigameServers(data, minigameType)
+	local minigameData = LiveServerData.withData.get(data, ServerTypeEnum.minigame)
+
+	if minigameData then return minigameData[minigameType] end
+end
+
+--[[
+	Gets the minigames table for the given minigame type.
+	Servers not live will not be included in the table.
+
+	Can return nil if no minigames of the given type are live.
+
+	Do not use this in computeds. Use LiveServerData.withData.getMinigameServers instead.
 ]]
 function LiveServerData.getMinigameServers(minigameType)
 	local minigameData = LiveServerData.get(ServerTypeEnum.minigame)
@@ -740,16 +1098,27 @@ function LiveServerData.getMinigameServers(minigameType)
 	if minigameData then return minigameData[minigameType] end
 end
 
+--withData for LiveServerData.isLocationFull:
 --[[
 	Returns a boolean indicating if the specified location is full.
 	Optionally, you can specify the number of players you plan to add to the location.
 
 	Will return false if the location is not live (makes sense, right?)
+
+	This is safe for computeds. Example usage:
+	```lua
+	Computed(function(use: Use))
+		local data = use(LiveServerData.value)
+		local isLocationFull = LiveServerData.withData.isLocationFull(data, worldIndex, locationEnum, numPlayersToAdd)
+
+		-- Will dynamically update when the data is updated.
+	end)
+	```
 ]]
-function LiveServerData.isLocationFull(worldIndex, locationEnum, numPlayersToAdd: number)
+function withData.isLocationFull(data, worldIndex, locationEnum, numPlayersToAdd: number)
 	numPlayersToAdd = numPlayersToAdd or 0
 
-	local locationPopulationInfo = LiveServerData.getLocationPopulationInfo(worldIndex, locationEnum)
+	local locationPopulationInfo = LiveServerData.withData.getLocationPopulationInfo(data, worldIndex, locationEnum)
 
 	return if locationPopulationInfo and locationPopulationInfo.max_emptySlots - numPlayersToAdd <= 0
 		then true
@@ -757,13 +1126,51 @@ function LiveServerData.isLocationFull(worldIndex, locationEnum, numPlayersToAdd
 end
 
 --[[
+	Returns a boolean indicating if the specified location is full.
+	Optionally, you can specify the number of players you plan to add to the location.
+
+	Will return false if the location is not live (makes sense, right?)
+
+	Do not use this in computeds. Use LiveServerData.withData.isLocationFull instead.
+]]
+function LiveServerData.isLocationFull(worldIndex, locationEnum, numPlayersToAdd: number)
+	LiveServerData.initialWait()
+
+	return LiveServerData.withData.isLocationFull(peek(dataValue), worldIndex, locationEnum, numPlayersToAdd)
+end
+
+--[[
 	Returns a boolean indicating if the specified world is full.
 	Optionally, you can specify the number of players you plan to add to the world.
 
 	Will return false if the world is not live (makes sense, right?)
+
+	This is safe for computeds. Example usage:
+	```lua
+	Computed(function(use: Use))
+		local data = use(LiveServerData.value)
+		local isWorldFull = LiveServerData.withData.isWorldFull(data, worldIndex, numPlayersToAdd)
+
+		-- Will dynamically update when the data is updated.
+	end)
+	```
+]]
+function withData.isWorldFull(data, worldIndex, numPlayersToAdd: number)
+	return withData.isLocationFull(data, worldIndex, nil, numPlayersToAdd)
+end
+
+--[[
+	Returns a boolean indicating if the specified world is full.
+	Optionally, you can specify the number of players you plan to add to the world.
+
+	Will return false if the world is not live (makes sense, right?)
+
+	Do not use this in computeds. Use LiveServerData.withData.isWorldFull instead.
 ]]
 function LiveServerData.isWorldFull(worldIndex, numPlayersToAdd: number)
-	return LiveServerData.isLocationFull(worldIndex, nil, numPlayersToAdd)
+	LiveServerData.initialWait()
+
+	return withData.isWorldFull(peek(dataValue), worldIndex, numPlayersToAdd)
 end
 
 --[[
@@ -771,15 +1178,37 @@ end
 	Optionally, you can specify the number of players you plan to add to the party.
 
 	Will return false if the party is not live (makes sense, right?)
+
+	This is safe for computeds. Example usage:
+	```lua
+	Computed(function(use: Use))
+		local data = use(LiveServerData.value)
+		local isPartyFull = LiveServerData.withData.isPartyFull(data, partyType, partyIndex, numPlayersToAdd)
+
+		-- Will dynamically update when the data is updated.
+	end)
+	```
 ]]
-function LiveServerData.isPartyFull(partyType, partyIndex, numPlayersToAdd: number)
+function withData.isPartyFull(data, partyType, partyIndex, numPlayersToAdd: number)
 	numPlayersToAdd = numPlayersToAdd or 0
 
-	local partyPopulationInfo = LiveServerData.getPartyPopulationInfo(partyType, partyIndex)
+	local partyPopulationInfo = LiveServerData.withData.getPartyPopulationInfo(data, partyType, partyIndex)
 
-	return if partyPopulationInfo and partyPopulationInfo.max_emptySlots - numPlayersToAdd <= 0
-		then true
-		else false
+	return if partyPopulationInfo and partyPopulationInfo.max_emptySlots - numPlayersToAdd <= 0 then true else false
+end
+
+--[[
+	Returns a boolean indicating if the specified party is full.
+	Optionally, you can specify the number of players you plan to add to the party.
+
+	Will return false if the party is not live (makes sense, right?)
+
+	Do not use this in computeds. Use LiveServerData.withData.isPartyFull instead.
+]]
+function LiveServerData.isPartyFull(partyType, partyIndex, numPlayersToAdd: number)
+	LiveServerData.initialWait()
+
+	return withData.isPartyFull(peek(dataValue), partyType, partyIndex, numPlayersToAdd)
 end
 
 --[[
@@ -787,13 +1216,61 @@ end
 	Optionally, you can specify the number of players you plan to add to the home.
 
 	Will return false if the home is not live (makes sense, right?)
+
+	This is safe for computeds. Example usage:
+	```lua
+	Computed(function(use: Use))
+		local data = use(LiveServerData.value)
+		local isHomeFull = LiveServerData.withData.isHomeFull(data, homeOwner, numPlayersToAdd)
+
+		-- Will dynamically update when the data is updated.
+	end)
+	```
 ]]
-function LiveServerData.isHomeFull(homeOwner, numPlayersToAdd: number)
+function withData.isHomeFull(data, homeOwnerUserId, numPlayersToAdd: number)
 	numPlayersToAdd = numPlayersToAdd or 0
 
-	local homePopulationInfo = LiveServerData.getHomePopulationInfo(homeOwner)
+	local homePopulationInfo = LiveServerData.withData.getHomePopulationInfo(data, homeOwnerUserId)
 
-	return if homePopulationInfo and homePopulationInfo.max_emptySlots - numPlayersToAdd <= 0
+	return if homePopulationInfo and homePopulationInfo.max_emptySlots - numPlayersToAdd <= 0 then true else false
+end
+
+--[[
+	Returns a boolean indicating if the specified home is full.
+	Optionally, you can specify the number of players you plan to add to the home.
+
+	Will return false if the home is not live (makes sense, right?)
+
+	Do not use this in computeds. Use LiveServerData.withData.isHomeFull instead.
+]]
+function LiveServerData.isHomeFull(homeOwnerUserId, numPlayersToAdd: number)
+	LiveServerData.initialWait()
+
+	return withData.isHomeFull(peek(dataValue), homeOwnerUserId, numPlayersToAdd)
+end
+
+--[[
+	Returns a boolean indicating if the specified minigame is full.
+	Optionally, you can specify the number of players you plan to add to the minigame.
+
+	Will return false if the minigame is not live (makes sense, right?)
+
+	This is safe for computeds. Example usage:
+	```lua
+	Computed(function(use: Use))
+		local data = use(LiveServerData.value)
+		local isMinigameFull = LiveServerData.withData.isMinigameFull(data, minigameType, minigameIndex, numPlayersToAdd)
+
+		-- Will dynamically update when the data is updated.
+	end)
+	```
+]]
+function withData.isMinigameFull(data, minigameType, minigameIndex: number | string, numPlayersToAdd: number)
+	numPlayersToAdd = numPlayersToAdd or 0
+
+	local minigamePopulationInfo = LiveServerData.withData.getMinigamePopulationInfo(data, minigameType, minigameIndex)
+
+	return if minigamePopulationInfo and minigamePopulationInfo.max_emptySlots - numPlayersToAdd <= 0
 		then true
 		else false
 end
@@ -803,15 +1280,13 @@ end
 	Optionally, you can specify the number of players you plan to add to the minigame.
 
 	Will return false if the minigame is not live (makes sense, right?)
+
+	Do not use this in computeds. Use LiveServerData.withData.isMinigameFull instead.
 ]]
 function LiveServerData.isMinigameFull(minigameType, minigameIndex: number | string, numPlayersToAdd: number)
-	numPlayersToAdd = numPlayersToAdd or 0
+	LiveServerData.initialWait()
 
-	local minigamePopulationInfo = LiveServerData.getMinigamePopulationInfo(minigameType, minigameIndex)
-
-	return if minigamePopulationInfo and minigamePopulationInfo.max_emptySlots - numPlayersToAdd <= 0
-		then true
-		else false
+	return withData.isMinigameFull(peek(dataValue), minigameType, minigameIndex, numPlayersToAdd)
 end
 
 return LiveServerData
