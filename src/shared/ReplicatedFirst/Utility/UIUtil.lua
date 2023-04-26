@@ -1,6 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local UIFolder = ReplicatedStorage:WaitForChild("UI")
+local UIFolder = ReplicatedStorage:WaitForChild("Interface")
 local Components = UIFolder:WaitForChild("Components")
 local Utility = script.Parent
 local WaitForDescendant = require(Utility:WaitForChild("WaitForDescendant"))
