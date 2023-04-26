@@ -97,8 +97,8 @@ local component = function(props)
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Size = UDim2.new(0, 400, 0, 400),
 		Position = UDim2.new(0.5, 0, 0.5, 0),
-		Visible = Computed(function()
-			return
+		Visible = Computed(function(use)
+			return use(open) and use(enabled)
 		end),
 
 		[Children] = {
