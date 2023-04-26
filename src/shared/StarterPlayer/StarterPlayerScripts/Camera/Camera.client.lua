@@ -13,20 +13,6 @@ player.CharacterAdded:Connect(function()
     character = player.Character
 end)
 
-local Fusion = require(replicatedFirstShared:WaitForChild("Fusion"))
-
-local Value = Fusion.Value
-local New = Fusion.New
-local Children = Fusion.Children
-local Computed = Fusion.Computed
-local OnEvent = Fusion.OnEvent
-local OnChange = Fusion.OnChange
-local Observer = Fusion.Observer
-local Tween = Fusion.Tween
-local Spring = Fusion.Spring
-local Hydrate = Fusion.Hydrate
-local unwrap = Fusion.unwrap
-
 local UNIT_VECTOR = Vector3.new(1, 1.2, 1).Unit
 local DISTANCE = 100
 local FOV = 20
