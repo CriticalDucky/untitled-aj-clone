@@ -8,6 +8,7 @@ local NO_REPEAT_ZONE = 1 / 2 -- of current active parties
 local PARTY_PADDING_MINUTES = 5 -- minutes
 
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
 
 local utilityFolder = game:GetService("ReplicatedFirst"):WaitForChild("Shared"):WaitForChild "Utility"
 
@@ -17,6 +18,9 @@ local Math = require(utilityFolder:WaitForChild "Math")
 local Time = require(utilityFolder:WaitForChild "Time")
 local Types = require(utilityFolder:WaitForChild "Types")
 
+local Fusion = require(ReplicatedFirst:WaitForChild("Shared"):WaitForChild "Fusion")
+
+type Use = Fusion.Use
 type PartyUnit = Types.PartyUnit
 
 local function halfHourIdToUnixTime(halfHourId)
@@ -35,12 +39,12 @@ local function getPossiblePartiesFromHalfHour(halfHour)
 	return possibleParties
 end
 
-local function getWeekId(time)
-	return math.floor((time or Time.getUnix()) / 604800)
+local function getWeekId(time, use: Use)
+	return math.floor((time or Time.getUnix(use)) / 604800)
 end
 
-local function getHalfHourId(time)
-	return math.floor((time or Time.getUnix()) / 1800)
+local function getHalfHourId(time, use: Use?)
+	return math.floor((time or Time.getUnix(use)) / 1800)
 end
 
 local function createWeekPartySchedule(weekId)
@@ -106,8 +110,12 @@ end
 
 local partySchedules = {}
 
-function getWeekPartySchedule(weekId)
-	weekId = weekId or getWeekId()
+--[[
+	Gets the party schedule for a given week.
+	Pass in a Use to dynamically update within computeds.
+]]
+function getWeekPartySchedule(weekId, use: Use?): {[number]: PartyUnit}
+	weekId = weekId or getWeekId(use)
 
 	if not partySchedules[weekId] then partySchedules[weekId] = createWeekPartySchedule(weekId) end
 
@@ -116,24 +124,36 @@ end
 
 local ActiveParties = {}
 
-function ActiveParties.getPartyAtHalfHourId(halfHourId): PartyUnit
+--[[
+	Gets the party at a given half hour id.
+	Pass in a Use to dynamically update within computeds.
+]]
+function ActiveParties.getPartyAtHalfHourId(halfHourId: number, use: Use?): PartyUnit
 	local weekId = math.floor(halfHourId / 336)
-	local partySchedule = getWeekPartySchedule(weekId)
+	local partySchedule = getWeekPartySchedule(weekId, use)
 
 	return partySchedule[halfHourId]
 end
 
-function ActiveParties.getActiveParty(): PartyUnit
-	return ActiveParties.getPartyAtHalfHourId(getHalfHourId())
+--[[
+	Gets the party at the current half hour id.
+	Pass in a Use to dynamically update within computeds.
+]]
+function ActiveParties.getActiveParty(use: Use?): PartyUnit
+	return ActiveParties.getPartyAtHalfHourId(getHalfHourId(use), use)
 end
 
-function ActiveParties.generatePartyList(length, time): { PartyUnit }
+--[[
+	Gets the party list for the next x half hours.
+	Pass in a Use to dynamically update within computeds.
+]]
+function ActiveParties.generatePartyList(length, time, use: Use?): { PartyUnit }
 	local partyList = {}
 
-	local halfHourId = getHalfHourId(time)
+	local halfHourId = getHalfHourId(time, use)
 
 	for i = 1, length do
-		table.insert(partyList, ActiveParties.getPartyAtHalfHourId(halfHourId + i - 1))
+		table.insert(partyList, ActiveParties.getPartyAtHalfHourId(halfHourId + i - 1, use))
 	end
 
 	return partyList
