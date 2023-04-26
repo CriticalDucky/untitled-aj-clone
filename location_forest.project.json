@@ -1,8 +1,6 @@
 {
   "name": "Untitled-AJ-clone",
-  "servePlaceIds": [
-    10212920968
-  ],
+  "servePlaceIds": [10212920968, 10212920968, 0],
   "tree": {
     "$className": "DataModel",
 
@@ -82,39 +80,43 @@
       },
 
       "StarterPlayerScripts": {
-          "$className": "StarterPlayerScripts",
-          "$path": "src/Locations/Forest/StarterPlayer/StarterPlayerScripts",
+        "$className": "StarterPlayerScripts",
+        "$path": "src/Locations/Forest/StarterPlayer/StarterPlayerScripts",
 
-          "Shared": {
-            "$className": "Folder",
-            "$path": "src/Shared/StarterPlayer/StarterPlayerScripts"
-          },
+        "Shared": {
+          "$className": "Folder",
+          "$path": "src/Shared/StarterPlayer/StarterPlayerScripts"
+        },
 
-          "Location": {
-            "$className": "Folder",
-            "$path": "src/Location/StarterPlayer/StarterPlayerScripts"
-          }
+        "Location": {
+          "$className": "Folder",
+          "$path": "src/Location/StarterPlayer/StarterPlayerScripts"
+        }
       },
 
       "StarterCharacterScripts": {
-          "$className": "StarterCharacterScripts",
-          "$path": "src/Locations/Forest/StarterPlayer/StarterCharacterScripts",
+        "$className": "StarterCharacterScripts",
+        "$path": "src/Locations/Forest/StarterPlayer/StarterCharacterScripts",
 
-          "Shared": {
-            "$className": "Folder",
-            "$path": "src/Shared/StarterPlayer/StarterCharacterScripts"
-          },
+        "Shared": {
+          "$className": "Folder",
+          "$path": "src/Shared/StarterPlayer/StarterCharacterScripts"
+        },
 
-          "Location": {
-            "$className": "Folder",
-            "$path": "src/Location/StarterPlayer/StarterCharacterScripts"
-          }
+        "Location": {
+          "$className": "Folder",
+          "$path": "src/Location/StarterPlayer/StarterCharacterScripts"
+        }
       }
     },
 
     "Workspace": {
       "$className": "Workspace",
       "$path": "src/Locations/Forest/Workspace",
+
+      "Terrain": {
+        "$className": "Terrain"
+      },
 
       "Shared": {
         "$className": "Folder",
