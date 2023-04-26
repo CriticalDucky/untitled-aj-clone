@@ -4,7 +4,7 @@ local Players = game:GetService "Players"
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
 local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
-local UIFolder = replicatedFirstShared:WaitForChild "UI"
+local UIFolder = replicatedFirstShared:WaitForChild "Interface"
 local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 local serverFolder = replicatedStorageShared:WaitForChild "Server"
 local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
@@ -35,16 +35,19 @@ local Hydrate = Fusion.Hydrate
 local peek = Fusion.peek
 
 type ServerIdentifier = Types.ServerIdentifier
+type Computed<T> = Fusion.Computed<T>
+type PartyUnit = Types.PartyUnit
+type TimeRange = Types.TimeRange
 
 local component = function(props)
 	local LIST_LENGTH = 12 -- The list will display this many parties
 
 	local open = Value(false)
 
-	local partyListComputed = Computed(function()
-		local list = ActiveParties.generatePartyList(LIST_LENGTH + 1)
+	local partyListComputed = Computed(function(use)
+		local list = ActiveParties.generatePartyList(LIST_LENGTH + 1, nil, use)
 
-		if list[1].time:distanceToClosing() <= 0 then
+		if list[1].time:distanceToClosing(nil, use) <= 0 then
 			table.remove(list, 1)
 		else
 			table.remove(list, LIST_LENGTH + 1)
@@ -88,7 +91,7 @@ local component = function(props)
 	end
 
 	local function partyButton(index)
-		local currentParty = Computed(function(use)
+		local currentParty: Computed<PartyUnit> = Computed(function(use)
 			return use(partyListComputed)[index]
 		end)
 
@@ -135,7 +138,7 @@ local component = function(props)
 					BackgroundTransparency = 1,
 
 					Text = Computed(function(use)
-						local timeUntil = use(currentParty).time:distanceToIntroduction()
+						local timeUntil = (use(currentParty).time :: TimeRange):distanceToIntroduction(nil, use)
 
 						if timeUntil == 0 then
 							return "GO NOW!"
