@@ -41,7 +41,11 @@ for _, fileName in pairs(files) do
 		local id
 
 		if TESTING_MODE then
-			id = servePlaceIds[2]
+			if servePlaceIds[2] == 0 then
+				id = servePlaceIds[3]
+			else
+				id = servePlaceIds[2]
+			end
 		else
 			id = servePlaceIds[1]
 		end
