@@ -164,6 +164,8 @@ end
 	timeInfo can also be nil, in which case the current time will be used.
 ]]
 function TimeRange:isInRange(timeInfo: TimeInfo?, use: Use?)
+	timeInfo = timeInfo or Time.getUnix(use)
+
 	if self.timeRanges then
 		for _, timeRange in ipairs(self.timeRanges) do
 			if timeRange:isInRange(timeInfo) then return true end
@@ -200,11 +202,13 @@ end
 	`:isInRange` would return false (not necessarily the amount of time until
 	the current TimeRange is no longer in range)
 
-	* An optional `timeInfo` can be passed in.
+	* An optional `timeInfo` can be passed in, which describes the time to check.
 	* If the TimeRange is infinite, it will return nil.
 	* If the TimeRange is not in range, it will return 0.
 ]]
-function TimeRange:distanceToClosing(timeInfo: TimeInfo, use: Use?): number?
+function TimeRange:distanceToClosing(timeInfo: TimeInfo?, use: Use?): number?
+	timeInfo = timeInfo or Time.getUnix(use)
+
 	local timeInfoUnix = Time.getUnixFromTimeInfo(timeInfo, use)
 	local closing = self.closing
 
@@ -246,12 +250,12 @@ end
 	If called with a TimeRange group, it will return the amount of time until
 	`:isInRange` would return true.
 
-	* An optional `timeInfo` can be passed in.
+	* An optional `timeInfo` can be passed in, which describes the time to check.
 	* If the TimeRange is infinite, it will return nil.
 	* If the TimeRange is in range, it will return 0.
 ]]
 function TimeRange:distanceToIntroduction(timeInfo: TimeInfo?, use: Use?): number
-	local timeInfoUnix = Time.getUnixFromTimeInfo(timeInfo, use)
+	local timeInfoUnix = if timeInfo then Time.getUnixFromTimeInfo(timeInfo, use) else Time.getUnix(use)
 
 	if self.timeRanges then
 		local distance = math.huge
