@@ -35,9 +35,9 @@ export type PlayerData = {
 export type TimeRange = {
 	introduction: number | table,
 	closing: number | table,
-	isInRange: (TimeRange, time: number?) -> boolean,
-	distanceToClosing: (TimeRange, time: number?) -> number,
-	distanceToIntroduction: (TimeRange, time: number?) -> number,
+	isInRange: (TimeRange, timeInfo: TimeInfo?) -> boolean,
+	distanceToClosing: (TimeRange, timeInfo: TimeInfo?, ()->()) -> number,
+	distanceToIntroduction: (TimeRange, timeInfo: TimeInfo?, ()->()) -> number,
 	isATimeRange: true,
 }
 
