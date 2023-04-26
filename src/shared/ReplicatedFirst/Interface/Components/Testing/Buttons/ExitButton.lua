@@ -4,7 +4,6 @@ local Players = game:GetService("Players")
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild("Shared")
 local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
-local UIFolder = replicatedFirstShared:WaitForChild("UI")
 local utilityFolder = replicatedFirstShared:WaitForChild("Utility")
 
 local Component = require(utilityFolder:WaitForChild("GetComponent"))
@@ -20,7 +19,6 @@ local Observer = Fusion.Observer
 local Tween = Fusion.Tween
 local Spring = Fusion.Spring
 local Hydrate = Fusion.Hydrate
-local unwrap = Fusion.unwrap
 
 local component = function(props)
 	local state = props.value
