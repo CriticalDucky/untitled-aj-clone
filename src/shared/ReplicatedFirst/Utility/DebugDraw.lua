@@ -19,7 +19,7 @@ local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
 
 local Fusion = require(replicatedFirstShared:WaitForChild "Fusion")
 local Value = Fusion.Value
-local unwrap = Fusion.unwrap
+local peek = Fusion.peek
 
 export type Line = {
 	p1: Vector3,
@@ -69,13 +69,13 @@ function Line:draw()
 	local line = self.part or Instance.new "Part"
 	self.part = line
 
-	local p1 = unwrap(self.p1)
-	local p2 = unwrap(self.p2)
-	local thickness = unwrap(self.thickness)
+	local p1 = peek(self.p1)
+	local p2 = peek(self.p2)
+	local thickness = peek(self.thickness)
 
 	line.Shape = Enum.PartType.Cylinder
 	line.Size = Vector3.new(1, thickness, thickness)
-	line.Color = unwrap(self.color)
+	line.Color = peek(self.color)
 	line.Anchored = true
 	line.Material = Enum.Material.Neon
 	line.CanCollide = false
