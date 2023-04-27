@@ -1,5 +1,6 @@
+local ROUNDNESS = 32
 local MARGIN = 4
-local DEFUALT_PADDING = 40
+local DEFUALT_PADDING = 24
 local DEFUALT_OUTLINE_COLOR = Color3.fromRGB(0, 0, 0)
 
 --#region Imports
@@ -63,6 +64,8 @@ export type Props = {
 	PaddingLeft: CanBeState<UDim>?, -- Defaults to UDim.new(0, 0)
 	PaddingRight: CanBeState<UDim>?, -- Defaults to UDim.new(0, 0)
 
+	OuterRoundness: CanBeState<number>?, -- Defaults to InterfaceConstants.outlinedFrame.roundness
+
 	Rotation: CanBeState<number>?, -- Defaults to 0
 
 	OuterChildren: Child?, -- Children not under the padded frame
@@ -73,7 +76,7 @@ export type Props = {
 	This component creates a standard outlined frame that all stylized menus must use.
 ]]
 local function Component(props: Props)
-	local outerRoundness = InterfaceConstants.roundness.menuOuter
+	local outerRoundness = props.OuterRoundness or ROUNDNESS
 	local innerRoundness = outerRoundness - MARGIN
 
 	local defaultMenuColor = InterfaceConstants.colors.menuBackground
@@ -104,10 +107,10 @@ local function Component(props: Props)
 
 				[Children] = {
 					New "UIPadding" {
-						PaddingTop = UDim.new(0, props.PaddingTop or DEFUALT_PADDING),
-						PaddingBottom = UDim.new(0, props.PaddingBottom),
-						PaddingLeft = UDim.new(0, props.PaddingLeft),
-						PaddingRight = UDim.new(0, props.PaddingRight),
+						PaddingTop = props.PaddingTop or UDim.new(0, DEFUALT_PADDING),
+						PaddingBottom = props.PaddingBottom,
+						PaddingLeft = props.PaddingLeft,
+						PaddingRight = props.PaddingRight,
 					},
 
 					New "Frame" { -- This is the actual frame that the children are placed in.
