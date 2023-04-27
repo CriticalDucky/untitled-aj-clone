@@ -1,8 +1,6 @@
 {
   "name": "Untitled-AJ-clone",
-  "servePlaceIds": [
-    10189729412
-  ],
+  "servePlaceIds": [10189729412, 10189729412, 0],
   "tree": {
     "$className": "DataModel",
 
@@ -62,29 +60,33 @@
       },
 
       "StarterPlayerScripts": {
-          "$className": "StarterPlayerScripts",
-          "$path": "src/Routing/StarterPlayer/StarterPlayerScripts",
+        "$className": "StarterPlayerScripts",
+        "$path": "src/Routing/StarterPlayer/StarterPlayerScripts",
 
-          "Shared": {
-            "$className": "Folder",
-            "$path": "src/Shared/StarterPlayer/StarterPlayerScripts"
-          }
+        "Shared": {
+          "$className": "Folder",
+          "$path": "src/Shared/StarterPlayer/StarterPlayerScripts"
+        }
       },
 
       "StarterCharacterScripts": {
-          "$className": "StarterCharacterScripts",
-          "$path": "src/Routing/StarterPlayer/StarterCharacterScripts",
+        "$className": "StarterCharacterScripts",
+        "$path": "src/Routing/StarterPlayer/StarterCharacterScripts",
 
-          "Shared": {
-            "$className": "Folder",
-            "$path": "src/Shared/StarterPlayer/StarterCharacterScripts"
-          }
+        "Shared": {
+          "$className": "Folder",
+          "$path": "src/Shared/StarterPlayer/StarterCharacterScripts"
+        }
       }
     },
 
     "Workspace": {
       "$className": "Workspace",
       "$path": "src/Routing/StarterPlayer/Workspace",
+
+      "Terrain": {
+        "$className": "Terrain"
+      },
 
       "Shared": {
         "$className": "Folder",

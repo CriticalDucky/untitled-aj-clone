@@ -1,8 +1,6 @@
 {
   "name": "Untitled-AJ-clone",
-  "servePlaceIds": [
-    11569189394
-  ],
+  "servePlaceIds": [11569189394, 11569189394, 0],
   "tree": {
     "$className": "DataModel",
 
@@ -82,39 +80,43 @@
       },
 
       "StarterPlayerScripts": {
-          "$className": "StarterPlayerScripts",
-          "$path": "src/Minigames/Fishing/StarterPlayer/StarterPlayerScripts",
+        "$className": "StarterPlayerScripts",
+        "$path": "src/Minigames/Fishing/StarterPlayer/StarterPlayerScripts",
 
-          "Shared": {
-            "$className": "Folder",
-            "$path": "src/Shared/StarterPlayer/StarterPlayerScripts"
-          },
+        "Shared": {
+          "$className": "Folder",
+          "$path": "src/Shared/StarterPlayer/StarterPlayerScripts"
+        },
 
-          "Minigame": {
-            "$className": "Folder",
-            "$path": "src/Minigame/StarterPlayer/StarterPlayerScripts"
-          }
+        "Minigame": {
+          "$className": "Folder",
+          "$path": "src/Minigame/StarterPlayer/StarterPlayerScripts"
+        }
       },
 
       "StarterCharacterScripts": {
-          "$className": "StarterCharacterScripts",
-          "$path": "src/Minigames/Fishing/StarterPlayer/StarterCharacterScripts",
+        "$className": "StarterCharacterScripts",
+        "$path": "src/Minigames/Fishing/StarterPlayer/StarterCharacterScripts",
 
-          "Shared": {
-            "$className": "Folder",
-            "$path": "src/Shared/StarterPlayer/StarterCharacterScripts"
-          },
+        "Shared": {
+          "$className": "Folder",
+          "$path": "src/Shared/StarterPlayer/StarterCharacterScripts"
+        },
 
-          "Minigame": {
-            "$className": "Folder",
-            "$path": "src/Minigame/StarterPlayer/StarterCharacterScripts"
-          }
+        "Minigame": {
+          "$className": "Folder",
+          "$path": "src/Minigame/StarterPlayer/StarterCharacterScripts"
+        }
       }
     },
 
     "Workspace": {
       "$className": "Workspace",
       "$path": "src/Minigames/Fishing/Workspace",
+
+      "Terrain": {
+        "$className": "Terrain"
+      },
 
       "Shared": {
         "$className": "Folder",
