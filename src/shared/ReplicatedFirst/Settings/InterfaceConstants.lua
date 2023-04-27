@@ -1,10 +1,9 @@
 return {
 	colors = {
-		menuBackground = Color3.fromRGB(228, 184, 148),
-	},
+		menuBackground = Color3.fromHex("#E4C5B0"),
+		menuTitle = Color3.fromHex("#F1E3D7"),
 
-	roundness = {
-		menuOuter = 12,
+		green1 = Color3.fromHex("#687822"),
 	},
 
 	fonts = {
