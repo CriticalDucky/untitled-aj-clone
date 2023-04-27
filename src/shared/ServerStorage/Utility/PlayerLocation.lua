@@ -18,7 +18,10 @@ local PlayerLocation = {}
 function PlayerLocation.get(userId: number): ServerIdentifier?
 	local liveServerData = LiveServerData.get()
 
-	if not liveServerData then return nil end
+	if not liveServerData then
+		warn("PlayerLocation.get: LiveServerData is not available, cannot get player location.")
+		return nil
+	end
 
 	local playerServerIdentifier
 
