@@ -452,7 +452,7 @@ function Authorize.toHome(
 		end
 
 		local isFriend = Friends.are(player.UserId, homeOwnerUserId)
-		local success, homeLockType = PlayerSettings.getSetting("homeLock", homeOwnerUserId)
+		local success, homeLockType = PlayerSettings.getSetting(homeOwnerUserId, "homeLock")
 
 		if not success then
 			warn "Teleport.toHome: failed to get home lock type"
