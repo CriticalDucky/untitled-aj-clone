@@ -31,6 +31,8 @@ local playerDataConstants = {
 			findOpenWorld = true, -- Whether or not the player wants to teleport to an open world if the desired location is full
 			homeLock = HomeLockType.unlocked, -- Who can access the player's home
 			selectedHome = nil, -- The home the player has selected
+			musicVolume = 1, -- The volume of the music
+			sfxVolume = 1, -- The volume of the sound effects
 		},
 	},
 	tempDataTemplate = {

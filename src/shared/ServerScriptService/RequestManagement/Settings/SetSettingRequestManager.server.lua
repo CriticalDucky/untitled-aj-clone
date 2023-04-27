@@ -46,6 +46,14 @@ local verificationMethods: { [string]: (Player, any) -> boolean } = {
 
 		return success and ownsItem
 	end,
+
+    musicVolume = function(_, value)
+        return Param.expect { value, "number" } and value >= 0 and value <= 1
+    end,
+
+    sfxVolume = function(_, value)
+        return Param.expect { value, "number" } and value >= 0 and value <= 1
+    end,
 }
 
 ReplicaResponse.listen(setSettingRequest, function(player, setting, value)
