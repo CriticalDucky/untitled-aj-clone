@@ -54,9 +54,9 @@ end
 	If you're getting a setting within a computed, you should use ClientPlayerSettings.withData.getSetting instead.
 ]]
 function ClientPlayerSettings.getSetting(settingName: string, player: Player | number | nil): any?
-	local data = ReplicatedPlayerData.get(player)
+	ReplicatedPlayerData.get(player)
 
-	return data and withData.getSetting(data, settingName, player)
+	return withData.getSetting(peek(ReplicatedPlayerData.value), settingName, player)
 end
 
 --[[
