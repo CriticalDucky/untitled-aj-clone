@@ -461,9 +461,13 @@ end
 	This is NOT SAFE for computeds! If you want to use this in a computed, use LiveServerData.withData.get instead.
 ]]
 function LiveServerData.get(
-	serverIdentifier: ServerIdentifier | UserEnum
+	serverIdentifier: (ServerIdentifier | UserEnum)? -- Do not provide if you want the whole data table.
 ): nil | {} | { players: { [number]: number }, [any]: any }
 	LiveServerData.initialWait() -- We can wait here since computeds wont use this function.
+
+	if not serverIdentifier then
+		return peek(dataValue)
+	end
 
 	return withData.get(peek(dataValue), serverIdentifier) -- we can use peek since computeds wont use this function.
 end
