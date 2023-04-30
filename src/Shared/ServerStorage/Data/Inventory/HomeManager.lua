@@ -8,6 +8,7 @@ local TeleportService = game:GetService "TeleportService"
 
 local serverStorageShared = ServerStorage.Shared
 local replicatedFirstShared = ReplicatedFirst.Shared
+local replicatedFirstVendor = ReplicatedFirst.Vendor
 local dataServerStorage = serverStorageShared.Data
 local inventoryServerStorage = dataServerStorage.Inventory
 local replicatedStorageShared = ReplicatedStorage.Shared
@@ -31,7 +32,7 @@ local Table = require(utilityFolder.Table)
 local SpacialQuery = require(utilityFolder.SpacialQuery)
 local Serialization = require(utilityFolder.Serialization)
 local ServerData = require(serverStorageShared.ServerManagement.ServerData)
-local Promise = require(utilityFolder.Promise)
+local Promise = require(replicatedFirstVendor.Promise)
 local Types = require(utilityFolder.Types)
 local LocalServerInfo = require(serverFolder.LocalServerInfo)
 

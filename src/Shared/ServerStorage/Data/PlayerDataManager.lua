@@ -7,20 +7,22 @@ local ServerScriptService = game:GetService "ServerScriptService"
 local ServerStorage = game:GetService "ServerStorage"
 
 local replicatedFirstShared = ReplicatedFirst.Shared
+local replicatedFirstVendor = ReplicatedFirst.Vendor
 local replicatedStorageShared = ReplicatedStorage.Shared
 local serverStorageShared = ServerStorage.Shared
 local serverStorageSharedUtility = serverStorageShared.Utility
 local serverStorageSharedData = serverStorageShared.Data
+local serverStorageVendor = ServerStorage.Vendor
 local enumsFolder = replicatedStorageShared.Enums
 local replicatedFirstUtility = replicatedFirstShared.Utility
 
-local ProfileService = require(serverStorageSharedUtility.ProfileService)
-local ReplicaService = require(serverStorageSharedData.ReplicaService)
+local ProfileService = require(serverStorageVendor.ProfileService)
+local ReplicaService = require(serverStorageVendor.ReplicaService)
 local ReplicationType = require(enumsFolder.ReplicationType)
 local Table = require(replicatedFirstUtility.Table)
 local PlayerJoinTimes = require(serverStorageSharedUtility.PlayerJoinTimes)
-local Signal = require(replicatedFirstUtility.Signal)
-local Promise = require(replicatedFirstUtility.Promise)
+local Signal = require(replicatedFirstVendor.Signal.Signal)
+local Promise = require(replicatedFirstVendor.Promise)
 local Types = require(replicatedFirstUtility.Types)
 local PlayerDataConstants = require(replicatedFirstShared.Settings.PlayerDataConstants)
 

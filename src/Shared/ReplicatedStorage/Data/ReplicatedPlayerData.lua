@@ -11,6 +11,7 @@ local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
 local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
+local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
 local replicationFolder = replicatedStorageShared:WaitForChild "Replication"
 local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
@@ -18,9 +19,9 @@ local serverFolder = replicatedStorageShared:WaitForChild "Server"
 local requestsFolder = replicatedStorageShared:WaitForChild "Requests"
 
 local ReplicaCollection = require(replicationFolder:WaitForChild "ReplicaCollection")
-local Fusion = require(replicatedFirstShared:WaitForChild "Fusion")
+local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
 local Types = require(utilityFolder:WaitForChild "Types")
-local Promise = require(utilityFolder:WaitForChild "Promise")
+local Promise = require(replicatedFirstVendor:WaitForChild "Promise")
 local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
 local ServerTypeGroups = require(serverFolder:WaitForChild "ServerTypeGroups")
 local ReplicaRequest = require(requestsFolder:WaitForChild "ReplicaRequest")

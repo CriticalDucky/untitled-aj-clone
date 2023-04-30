@@ -4,13 +4,14 @@ local Players = game:GetService "Players"
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
 local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
+local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
 local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 local serverFolder = replicatedStorageShared:WaitForChild "Server"
 local requestsFolder = replicatedStorageShared:WaitForChild "Requests"
 local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
 
 local Component = require(utilityFolder:WaitForChild "GetComponent")
-local Fusion = require(replicatedFirstShared:WaitForChild "Fusion")
+local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
 local Minigames = require(serverFolder:WaitForChild "Minigames")
 local ClientPlayMinigame = require(requestsFolder:WaitForChild("Minigames"):WaitForChild "ClientPlayMinigame")
 local ServerTypeGroups = require(serverFolder:WaitForChild "ServerTypeGroups")

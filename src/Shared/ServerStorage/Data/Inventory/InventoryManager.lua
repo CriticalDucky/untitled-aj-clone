@@ -32,6 +32,7 @@ local ReplicatedStorage = game:GetService "ReplicatedStorage"
 local ServerStorage = game:GetService "ServerStorage"
 
 local replicatedFirstShared = ReplicatedFirst.Shared
+local replicatedFirstVendor = ReplicatedFirst.Vendor
 local replicatedStorageShared = ReplicatedStorage.Shared
 local serverStorageShared = ServerStorage.Shared
 local dataFolder = serverStorageShared.Data
@@ -43,10 +44,10 @@ local enumsFolder = replicatedStorageShared.Enums
 local PlayerDataManager = require(dataFolder.PlayerDataManager)
 local Items = require(replicatedStorageInventory.Items)
 local Table = require(utilityFolder.Table)
-local Signal = require(utilityFolder.Signal)
+local Signal = require(replicatedFirstVendor.Signal.Signal)
 local PlayerDataConstants = require(replicatedFirstShared.Settings.PlayerDataConstants)
 local MiniId = require(utilityFolder.MiniId)
-local Promise = require(utilityFolder.Promise)
+local Promise = require(replicatedFirstVendor.Promise)
 local Types = require(utilityFolder.Types)
 local ItemCategory = require(enumsFolder.ItemCategory)
 

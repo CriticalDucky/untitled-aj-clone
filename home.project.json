@@ -6,57 +6,85 @@
 
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
+      "$path": "src/Home/ReplicatedStorage",
+
+      "Vendor": {
+        "$className": "Folder",
+
+        "ReplicaService": {
+          "$path": "vendor/MadStudioRoblox/ReplicaService/src/ReplicatedStorage"
+        },
+
+        "Loadstring": {
+          "$path": "vendor/Reinitialized/Loadstring"
+        }
+      },
 
       "Shared": {
         "$className": "Folder",
         "$path": "src/Shared/ReplicatedStorage"
-      },
-
-      "Home": {
-        "$className": "Folder",
-        "$path": "src/Home/ReplicatedStorage"
       }
     },
 
     "ReplicatedFirst": {
       "$className": "ReplicatedFirst",
+      "$path": "src/Home/ReplicatedFirst",
+
+      "Vendor": {
+        "$className": "Folder",
+
+        "Fusion": {
+          "$path": "vendor/Elttob/Fusion/src"
+        },
+
+        "Promise": {
+          "$path": "vendor/evaera/roblox-lua-promise/lib"
+        },
+
+        "Signal": {
+          "$path": "vendor/Quenty/NevermoreEngine/src/signal/src/Shared"
+        }
+      },
 
       "Shared": {
         "$className": "Folder",
         "$path": "src/Shared/ReplicatedFirst"
-      },
-
-      "Home": {
-        "$className": "Folder",
-        "$path": "src/Home/ReplicatedFirst"
       }
     },
 
     "ServerScriptService": {
       "$className": "ServerScriptService",
+      "$path": "src/Home/ServerScriptService",
 
       "Shared": {
         "$className": "Folder",
         "$path": "src/Shared/ServerScriptService"
-      },
-
-      "Home": {
-        "$className": "Folder",
-        "$path": "src/Home/ServerScriptService"
       }
     },
 
     "ServerStorage": {
       "$className": "ServerStorage",
+      "$path": "src/Home/ServerStorage",
+
+      "Vendor": {
+        "$className": "Folder",
+
+        "Cmdr": {
+          "$path": "vendor/evaera/Cmdr/Cmdr"
+        },
+
+        "ProfileService": {
+          "$path": "vendor/MadStudioRoblox/ProfileService/ProfileService.lua"
+        },
+
+        "ReplicaService": {
+          "$path": "vendor/MadStudioRoblox/ReplicaService/src/ServerScriptService/ReplicaService.lua"
+        }
+      },
 
       "Shared": {
         "$className": "Folder",
         "$path": "src/Shared/ServerStorage"
-      },
-
-      "Home": {
-        "$className": "Folder",
-        "$path": "src/Home/ServerStorage"
       }
     },
 
@@ -77,35 +105,28 @@
 
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
+        "$path": "src/Home/StarterPlayer/StarterPlayerScripts",
 
         "Shared": {
           "$className": "Folder",
           "$path": "src/Shared/StarterPlayer/StarterPlayerScripts"
-        },
-
-        "Home": {
-          "$className": "Folder",
-          "$path": "src/Home/StarterPlayer/StarterPlayerScripts"
         }
       },
 
       "StarterCharacterScripts": {
         "$className": "StarterCharacterScripts",
+        "$path": "src/Home/StarterPlayer/StarterCharacterScripts",
 
         "Shared": {
           "$className": "Folder",
           "$path": "src/Shared/StarterPlayer/StarterCharacterScripts"
-        },
-
-        "Home": {
-          "$className": "Folder",
-          "$path": "src/Home/StarterPlayer/StarterCharacterScripts"
         }
       }
     },
 
     "Workspace": {
       "$className": "Workspace",
+      "$path": "src/Home/Workspace",
 
       "Terrain": {
         "$className": "Terrain"
@@ -114,11 +135,6 @@
       "Shared": {
         "$className": "Folder",
         "$path": "src/Shared/Workspace"
-      },
-
-      "Home": {
-        "$className": "Folder",
-        "$path": "src/Home/Workspace"
       }
     },
 

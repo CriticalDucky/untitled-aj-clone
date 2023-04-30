@@ -4,10 +4,9 @@ local DEBUG = false
 
 local DATASTORE_MAX_RETRIES = 10
 
-local utilityFolder = game:GetService("ReplicatedFirst").Shared.Utility
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
 
-local Promise = require(utilityFolder.Promise)
-local Table = require(utilityFolder.Table)
+local Promise = require(ReplicatedFirst.Vendor.Promise)
 
 local DataStore = {}
 
@@ -75,7 +74,6 @@ function DataStore.safeSet(
 	return Promise.retry(try, DATASTORE_MAX_RETRIES):await()
 end
 
-
 --[[
 	Attempts to get the value in the specified key, automatically retrying if it fails.
 
@@ -99,7 +97,6 @@ function DataStore.safeGet(dataStore: GlobalDataStore, key: string)
 
 	return Promise.retry(try, DATASTORE_MAX_RETRIES):await()
 end
-
 
 --[[
 	Attempts to remove the value in the specified key, automatically retrying if it fails.

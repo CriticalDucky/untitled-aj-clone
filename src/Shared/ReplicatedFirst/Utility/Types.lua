@@ -2,10 +2,11 @@ local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local RunService = game:GetService("RunService")
 
 local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
+local replicatedFirstVendor = ReplicatedFirst:WaitForChild("Vendor")
 local utilityFolder = replicatedFirstShared:WaitForChild("Utility")
 local settingsFolder = replicatedFirstShared:WaitForChild("Settings")
 
-local Promise = require(utilityFolder:WaitForChild("Promise"))
+local Promise = require(replicatedFirstVendor:WaitForChild("Promise"))
 local PlayerDataConstants = require(settingsFolder:WaitForChild("PlayerDataConstants"))
 local Table = require(utilityFolder:WaitForChild("Table"))
 

@@ -106,15 +106,16 @@ local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
 local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
+local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
 local replicationFolder = replicatedStorageShared:WaitForChild "Replication"
 local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 
 local ReplicaCollection = require(replicationFolder:WaitForChild "ReplicaCollection")
-local Promise = require(utilityFolder:WaitForChild "Promise")
+local Promise = require(replicatedFirstVendor:WaitForChild "Promise")
 local Table = require(utilityFolder:WaitForChild "Table")
 local Types = require(utilityFolder:WaitForChild "Types")
 
-local Fusion = require(replicatedFirstShared:WaitForChild "Fusion")
+local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
 local Value = Fusion.Value
 local Observer = Fusion.Observer
 local peek = Fusion.peek

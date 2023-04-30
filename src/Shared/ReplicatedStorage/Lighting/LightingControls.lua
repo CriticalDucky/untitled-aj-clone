@@ -8,7 +8,7 @@ local SPRING_DAMPING = 1
 local Lighting = game:GetService "Lighting"
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
 
-local Fusion = require(ReplicatedFirst:WaitForChild("Shared"):WaitForChild "Fusion")
+local Fusion = require(ReplicatedFirst:WaitForChild("Vendor"):WaitForChild "Fusion")
 
 local Hydrate = Fusion.Hydrate
 local peek = Fusion.peek

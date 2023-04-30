@@ -2,10 +2,10 @@ local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
 local SoundService = game:GetService "SoundService"
 
-local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
+local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
 local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
 
-local Fusion = require(replicatedFirstShared:WaitForChild "Fusion")
+local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
 
 local Computed = Fusion.Computed
 local Hydrate = Fusion.Hydrate

@@ -1,9 +1,11 @@
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local RunService = game:GetService "RunService"
 
-local replicatedFirstShared = game:GetService("ReplicatedFirst"):WaitForChild "Shared"
+local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
+local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
 local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 
-local Fusion = require(replicatedFirstShared:WaitForChild "Fusion")
+local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
 local Types = require(utilityFolder:WaitForChild "Types")
 local Value = Fusion.Value
 local peek = Fusion.peek

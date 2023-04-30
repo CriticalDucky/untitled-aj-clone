@@ -2,8 +2,9 @@
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
 
 local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
+local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
 
-local Fusion = require(replicatedFirstShared:WaitForChild "Fusion")
+local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
 local New = Fusion.New
 local Children = Fusion.Children
 

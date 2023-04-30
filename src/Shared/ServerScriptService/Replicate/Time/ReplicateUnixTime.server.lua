@@ -1,9 +1,10 @@
 local ServerStorage = game:GetService("ServerStorage")
 
 local serverStorageShared = ServerStorage.Shared
+local serverStorageVendor = ServerStorage.Vendor
 local dataFolder = serverStorageShared.Data
 
-local ReplicaService = require(dataFolder.ReplicaService)
+local ReplicaService = require(serverStorageVendor.ReplicaService)
 
 local timeReplica = ReplicaService.NewReplica({
     ClassToken = ReplicaService.NewClassToken("ServerUnixTime"),

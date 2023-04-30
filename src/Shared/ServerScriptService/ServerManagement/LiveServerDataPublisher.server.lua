@@ -6,6 +6,7 @@ local ServerStorage = game:GetService "ServerStorage"
 
 local replicatedStorageShared = ReplicatedStorage.Shared
 local replicatedFirstShared = ReplicatedFirst.Shared
+local replicatedFirstVendor = ReplicatedFirst.Vendor
 local serverStorageShared = ServerStorage.Shared
 local utilityFolder = replicatedFirstShared.Utility
 local enumsFolder = replicatedStorageShared.Enums
@@ -15,7 +16,7 @@ local LiveServerData = require(serverFolder.LiveServerData)
 local LocalServerInfo = require(serverFolder.LocalServerInfo)
 local ServerGroupEnum = require(enumsFolder.ServerGroup)
 local ServerTypeGroups = require(serverFolder.ServerTypeGroups)
-local Promise = require(utilityFolder.Promise)
+local Promise = require(replicatedFirstVendor.Promise)
 
 local serverIdentifier = LocalServerInfo.getServerIdentifier()
 

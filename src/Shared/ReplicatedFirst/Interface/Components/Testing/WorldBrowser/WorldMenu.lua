@@ -4,6 +4,7 @@ local Players = game:GetService "Players"
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
 local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
+local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
 local UIFolder = replicatedFirstShared:WaitForChild "Interface"
 local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 local serverFolder = replicatedStorageShared:WaitForChild "Server"
@@ -11,7 +12,7 @@ local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
 local requestsFolder = replicatedStorageShared:WaitForChild "Requests"
 
 local Component = require(utilityFolder:WaitForChild "GetComponent")
-local Fusion = require(replicatedFirstShared:WaitForChild "Fusion")
+local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
 local ReplicatedServerData = require(serverFolder:WaitForChild "ReplicatedServerData")
 local LiveServerData = require(serverFolder:WaitForChild "LiveServerData")
 local LocalServerInfo = require(serverFolder:WaitForChild "LocalServerInfo")
@@ -20,7 +21,7 @@ local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
 local ServerTypeGroups = require(serverFolder:WaitForChild "ServerTypeGroups")
 local ClientTeleport = require(requestsFolder:WaitForChild("Teleportation"):WaitForChild "ClientTeleport")
 local WorldOrigin = require(serverFolder:WaitForChild "WorldOrigin")
-local Promise = require(utilityFolder:WaitForChild "Promise")
+local Promise = require(replicatedFirstVendor:WaitForChild "Promise")
 local Table = require(utilityFolder:WaitForChild "Table")
 
 local Value = Fusion.Value

@@ -97,7 +97,9 @@ local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
 local replicatedStorageShared = ReplicatedStorage.Shared
 local replicatedFirstShared = ReplicatedFirst.Shared
+local replicatedFirstVendor = ReplicatedFirst.Vendor
 local serverStorageShared = ServerStorage.Shared
+local serverStorageVendor = ServerStorage.Vendor
 local serverFolder = replicatedStorageShared.Server
 local utilityFolder = serverStorageShared.Utility
 local replicatedFirstUtility = replicatedFirstShared.Utility
@@ -112,8 +114,8 @@ local MinigameServerType = require(enumsFolder.MinigameServerType)
 local LiveServerData = require(serverFolder.LiveServerData)
 local Math = require(replicatedFirstUtility.Math)
 local Table = require(replicatedFirstUtility.Table)
-local ReplicaService = require(dataFolder.ReplicaService)
-local Promise = require(replicatedFirstUtility.Promise)
+local ReplicaService = require(serverStorageVendor.ReplicaService)
+local Promise = require(replicatedFirstVendor.Promise)
 local Types = require(replicatedFirstUtility.Types)
 local ServerTypeEnum = require(enumsFolder.ServerType)
 

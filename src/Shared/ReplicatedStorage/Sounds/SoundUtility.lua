@@ -13,7 +13,7 @@ local SoundService = game:GetService "SoundService"
 
 assert(RunService:IsClient(), "SoundUtility can only be used on the client.")
 
-local Fusion = require(ReplicatedFirst:WaitForChild("Shared"):WaitForChild "Fusion")
+local Fusion = require(ReplicatedFirst:WaitForChild("Vendor"):WaitForChild "Fusion")
 
 local Hydrate = Fusion.Hydrate
 local Spring = Fusion.Spring

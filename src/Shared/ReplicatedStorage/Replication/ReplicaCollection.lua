@@ -1,14 +1,9 @@
-local Players = game:GetService "Players"
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
-local ReplicatedFirst = game:GetService "ReplicatedFirst"
 
-local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
-local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
-local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
-local madworkFolder = replicatedStorageShared:WaitForChild "Madwork"
+local replicatedStorageVendor = ReplicatedStorage:WaitForChild "Vendor"
+local replicaServiceFolder = replicatedStorageVendor:WaitForChild "ReplicaService"
 
-local ReplicaController = require(madworkFolder:WaitForChild "ReplicaController")
-local Promise = require(utilityFolder:WaitForChild "Promise")
+local ReplicaController = require(replicaServiceFolder:WaitForChild "ReplicaController")
 
 local replicas = {}
 

@@ -4,6 +4,7 @@ local Players = game:GetService "Players"
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
 local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
+local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
 local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 local serverFolder = replicatedStorageShared:WaitForChild "Server"
 local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
@@ -13,7 +14,7 @@ local ServerTypeGroups = require(serverFolder:WaitForChild "ServerTypeGroups")
 
 if not ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
 	local Component = require(utilityFolder:WaitForChild "GetComponent")
-	local Fusion = require(replicatedFirstShared:WaitForChild "Fusion")
+	local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
 
 	local player = Players.LocalPlayer
 	local playerGui = player:WaitForChild "PlayerGui"

@@ -9,6 +9,7 @@ local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
 local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
+local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
 local replicationFolder = replicatedStorageShared:WaitForChild "Replication"
 local requestsFolder = replicatedStorageShared:WaitForChild "Requests"
 local serverFolder = replicatedStorageShared:WaitForChild "Server"
@@ -31,7 +32,7 @@ local Locations = require(serverFolder:WaitForChild "Locations")
 local FriendLocations = require(serverFolder:WaitForChild "FriendLocations")
 local WorldOrigin = require(serverFolder:WaitForChild "WorldOrigin")
 local ActiveParties = require(serverFolder:WaitForChild "ActiveParties")
-local Promise = require(utilityFolder:WaitForChild "Promise")
+local Promise = require(replicatedFirstVendor:WaitForChild "Promise")
 local Types = require(utilityFolder:WaitForChild "Types")
 local LocalServerInfo = require(serverFolder:WaitForChild "LocalServerInfo")
 local HomeLockType = require(enumsFolder:WaitForChild "HomeLockType")

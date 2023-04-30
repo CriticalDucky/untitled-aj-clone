@@ -105,6 +105,7 @@ local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
 local replicatedFirstShared = ReplicatedFirst.Shared
+local replicatedFirstVendor = ReplicatedFirst.Vendor
 local replicatedStorageShared = ReplicatedStorage.Shared
 local serverFolder = replicatedStorageShared.Server
 local enumsFolder = replicatedStorageShared.Enums
@@ -118,10 +119,10 @@ local ServerTypeGroups = require(serverFolder:WaitForChild "ServerTypeGroups")
 local Minigames = require(serverFolder:WaitForChild "Minigames")
 local Parties = require(serverFolder:WaitForChild "Parties")
 local Locations = require(serverFolder:WaitForChild "Locations")
-local Signal = require(utilityFolder.Signal)
+local Signal = require(replicatedFirstVendor.Signal.Signal)
 local Types = require(utilityFolder.Types)
 
-local Fusion = require(replicatedFirstShared.Fusion)
+local Fusion = require(replicatedFirstVendor.Fusion)
 local Value = Fusion.Value
 local peek = Fusion.peek
 
@@ -143,11 +144,12 @@ if RunService:IsServer() then
 	local ServerStorage = game:GetService "ServerStorage"
 
 	local serverStorageShared = ServerStorage.Shared
+	local serverStorageVendor = ServerStorage.Vendor
 	local messagingFolder = serverStorageShared.Messaging
 	local dataFolder = serverStorageShared.Data
 
 	local Message = require(messagingFolder.Message)
-	local ReplicaService = require(dataFolder.ReplicaService)
+	local ReplicaService = require(serverStorageVendor.ReplicaService)
 
 	local lastBroadcast = 0
 

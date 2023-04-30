@@ -18,7 +18,7 @@ local Math = require(utilityFolder:WaitForChild "Math")
 local Time = require(utilityFolder:WaitForChild "Time")
 local Types = require(utilityFolder:WaitForChild "Types")
 
-local Fusion = require(ReplicatedFirst:WaitForChild("Shared"):WaitForChild "Fusion")
+local Fusion = require(ReplicatedFirst:WaitForChild("Vendor"):WaitForChild "Fusion")
 
 type Use = Fusion.Use
 type PartyUnit = Types.PartyUnit

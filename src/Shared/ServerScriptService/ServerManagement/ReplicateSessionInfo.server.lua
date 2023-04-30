@@ -4,10 +4,9 @@
 
 local ServerStorage = game:GetService("ServerStorage")
 
-local serverStorageShared = ServerStorage:WaitForChild("Shared")
-local dataFolder = serverStorageShared:WaitForChild("Data")
+local serverStorageVendor = ServerStorage:WaitForChild("Vendor")
 
-local ReplicaService = require(dataFolder:WaitForChild("ReplicaService"))
+local ReplicaService = require(serverStorageVendor:WaitForChild("ReplicaService"))
 
 ReplicaService.NewReplica({
     ClassToken = ReplicaService.NewClassToken("SessionInfo"),

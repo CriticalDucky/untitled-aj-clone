@@ -1,5 +1,5 @@
-local ServerScriptService = game:GetService("ServerScriptService")
+local ServerStorage = game:GetService("ServerStorage")
 
-local Cmdr = require(ServerScriptService.Shared.Commands.Cmdr)
+local Cmdr = require(ServerStorage.Vendor.Cmdr)
 
 Cmdr:RegisterDefaultCommands()
