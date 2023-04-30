@@ -38,6 +38,7 @@ export type Props = {
     Text: CanBeState<string>?,
     OnClick: (() -> ())?,
     Disabled: CanBeState<boolean>?,
+    CornerRadius: CanBeState<UDim>?,
 
     -- edited values
     isHovering: Value<boolean>?,
@@ -118,8 +119,8 @@ local function Component(props: Props)
         end,
 
         [Children] = {
-            New "UICorner" {
-                CornerRadius = UDim.new(0, 4)
+            props.CornerRadius and New "UICorner" {
+                CornerRadius = props.CornerRadius
             },
 
             New "UIPadding" {
