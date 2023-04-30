@@ -35,6 +35,8 @@ export type Props = {
 	ZIndex: CanBeState<number>?,
 
 	-- Custom props
+	Visible: CanBeState<boolean>?, -- Defaults to true
+
 	OutlineColor: CanBeState<Color3>?, -- Defaults to black
 	BackgroundColor: CanBeState<Color3>?, -- Defaults to white
 
@@ -69,6 +71,7 @@ local function Component(props: Props)
 		AutomaticSize = props.AutomaticSize,
 		ZIndex = props.ZIndex,
 		Rotation = props.Rotation or 0,
+		Visible = props.Visible,
 
 		BackgroundColor3 = props.OutlineColor or DEFUALT_OUTLINE_COLOR,
 
