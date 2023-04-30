@@ -69,9 +69,3 @@ New "ScreenGui" {
         }
     }
 }
-
-while task.wait(5) do
-    disabled:set(true)
-    task.wait(2)
-    disabled:set(false)
-end
