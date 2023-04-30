@@ -8,6 +8,7 @@ local RETRY_DELAY = 2
 
 local Players = game:GetService "Players"
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
+local RunService = game:GetService("RunService")
 local TeleportService = game:GetService "TeleportService"
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
 local ServerStorage = game:GetService "ServerStorage"
@@ -46,6 +47,8 @@ type ServerIdentifier = Types.ServerIdentifier
 type HomeServerInfo = Types.HomeServerInfo
 type Promise = Types.Promise
 type UserEnum = Types.UserEnum
+
+local dontTeleport = TESTING_DONT_TELEPORT or RunService:IsStudio()
 
 local Teleport = {}
 local Authorize = {}
@@ -157,7 +160,7 @@ function Teleport.go(
 
 	local function teleportAsync()
 		return Promise.try(function()
-			return if not TESTING_DONT_TELEPORT
+			return if not dontTeleport
 				then TeleportService:TeleportAsync(placeId, players, teleportOptions)
 				else print "Teleported!"
 		end)
@@ -183,7 +186,7 @@ function Teleport.go(
 					return removingPlayer == player
 				end),
 
-				if TESTING_DONT_TELEPORT then Promise.delay(1) else nil,
+				if dontTeleport then Promise.delay(1) else nil,
 			})
 				:timeout(LISTEN_TIMEOUT)
 				:andThen(function(_, teleportResult)
