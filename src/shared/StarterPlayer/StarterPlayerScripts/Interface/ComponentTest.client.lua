@@ -35,7 +35,7 @@ local doNothing = Fusion.doNothing -- Special thanks to @Validark for this one
 
 -- #endregion
 
-local outlinedFrame = require(componentsFolder:WaitForChild("Frames"):WaitForChild("OutlinedFrame"))
+local outlinedFrame = require(componentsFolder:WaitForChild("OutlinedFrame"))
 local playerGui = game:GetService "Players".LocalPlayer:WaitForChild "PlayerGui"
 
 New "ScreenGui" {
