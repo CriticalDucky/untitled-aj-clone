@@ -16,33 +16,12 @@ local settingsFolder = replicatedFirstShared:WaitForChild "Settings"
 
 local InterfaceConstants = require(settingsFolder:WaitForChild "InterfaceConstants")
 
--- Optional: Remove imports that you don't need
 local Fusion = require(replicatedFirstShared:WaitForChild "Fusion")
 local New = Fusion.New
-local Hydrate = Fusion.Hydrate
-local Ref = Fusion.Ref
 local Children = Fusion.Children
-local Out = Fusion.Out
-local OnEvent = Fusion.OnEvent
-local OnChange = Fusion.OnChange
-local Attribute = Fusion.Attribute
-local AttributeChange = Fusion.AttributeChange
-local AttributeOut = Fusion.AttributeOut
-local Value = Fusion.Value
-local Computed = Fusion.Computed
-local ForPairs = Fusion.ForPairs
-local ForKeys = Fusion.ForKeys
-local ForValues = Fusion.ForValues
-local Observer = Fusion.Observer
-local Tween = Fusion.Tween
-local Spring = Fusion.Spring
-local peek = Fusion.peek
-local cleanup = Fusion.cleanup
-local doNothing = Fusion.doNothing
 
 ---@diagnostic disable-next-line: undefined-type wtf
 type CanBeState<T> = Fusion.CanBeState<T>
-type Child = Fusion.Child
 -- #endregion
 
 export type Props = {
@@ -68,8 +47,8 @@ export type Props = {
 
 	Rotation: CanBeState<number>?, -- Defaults to 0
 
-	OuterChildren: Child?, -- Children not under the padded frame
-	Children: Child?, -- Children under the padded frame
+	OuterChildren: any,
+	Children: any
 }
 
 --[[
