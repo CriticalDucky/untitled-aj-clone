@@ -1,7 +1,8 @@
-local SIZE_Y = 40
+local SIZE_Y = 48
 local DEFAULT_SIZE_X = 100
 local DEFAULT_ICON_SIZE = 24
-local SPRING_SPEED = 75
+local SPRING_SPEED = 65
+local OUTER_ROUNDNESS = 24
 
 --#region Imports
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
@@ -105,16 +106,16 @@ local function Component(props: Props)
 			local color = use(props.SecondaryColor or InterfaceConstants.colors.buttonBlueSecondary)
 
 			if use(props.Disabled) then
-                return desaturate(color)
-            else
-                return if use(isHovering) then brighten(color) else color
-            end
+				return desaturate(color)
+			else
+				return if use(isHovering) then brighten(color) else color
+			end
 		end),
 		SPRING_SPEED,
 		1
 	)
 
-	local frame = New "TextLabel" {
+	local frame = New "Frame" {
 		Name = props.Name or "BubbleButton",
 		LayoutOrder = props.LayoutOrder,
 		Position = props.Position,
@@ -123,44 +124,64 @@ local function Component(props: Props)
 		AutomaticSize = props.AutomaticSize,
 		ZIndex = props.ZIndex,
 
-		BackgroundColor3 = primaryColor,
-		Text = props.Text or "",
-		TextColor3 = secondaryColor,
-		TextSize = textSize,
-		FontFace = textFont,
+		BackgroundColor3 = secondaryColor,
 
 		[Children] = {
 			New "UICorner" {
-				CornerRadius = UDim.new(0, 20),
+				CornerRadius = UDim.new(0, OUTER_ROUNDNESS),
 			},
 
-			New "UIStroke" {
-				ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-				Color = secondaryColor,
-				Thickness = 4,
+			New "UIPadding" {
+				PaddingLeft = UDim.new(0, 4),
+				PaddingRight = UDim.new(0, 4),
+				PaddingTop = UDim.new(0, 4),
+				PaddingBottom = UDim.new(0, 4),
 			},
 
-			Computed(function(use)
-				if not use(props.Text) then
-					return New "ImageLabel" {
-						Size = UDim2.fromOffset(
-							props.IconSize or DEFAULT_ICON_SIZE,
-							props.IconSize or DEFAULT_ICON_SIZE
-						),
-						Position = UDim2.fromScale(0.5, 0.5),
-						AnchorPoint = Vector2.new(0.5, 0.5),
-						BackgroundTransparency = 1,
-						Image = props.Icon,
-						ImageColor3 = secondaryColor,
-						ZIndex = -1,
-					}
-				end
-			end, Fusion.cleanup),
+			New "TextLabel" {
+				Name = props.Name or "Text",
+				Position = UDim2.fromScale(0.5, 0.5),
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				Size = UDim2.fromScale(1, 1),
+
+				BackgroundColor3 = primaryColor,
+				Text = props.Text or "",
+				TextColor3 = secondaryColor,
+				TextSize = textSize,
+				FontFace = textFont,
+
+				[Children] = {
+					New "UICorner" {
+						CornerRadius = UDim.new(0, OUTER_ROUNDNESS - 4),
+					},
+
+					Computed(function(use)
+						if not use(props.Text) then
+							return New "ImageLabel" {
+								Size = UDim2.fromOffset(
+									props.IconSize or DEFAULT_ICON_SIZE,
+									props.IconSize or DEFAULT_ICON_SIZE
+								),
+								Position = UDim2.fromScale(0.5, 0.5),
+								AnchorPoint = Vector2.new(0.5, 0.5),
+								BackgroundTransparency = 1,
+								Image = props.Icon,
+								ImageColor3 = secondaryColor,
+								ZIndex = -1,
+							}
+						end
+					end, Fusion.cleanup),
+				},
+			},
 
 			buttonInput {
-				Size = UDim2.fromScale(1, 1),
+				Size = UDim2.new(1, 8, 1, 8),
 				OnClick = props.OnClick,
 				Disabled = props.Disabled,
+				ZIndex = 10,
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				Position = UDim2.fromScale(0.5, 0.5),
+				CornerRadius = UDim.new(0, OUTER_ROUNDNESS),
 
 				isHeldDown = isHeldDown,
 				isHovering = isHovering,
