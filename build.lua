@@ -8,12 +8,12 @@
 	Install and set up Aftman using the instructions on its GitHub page: https://github.com/LPGhatguy/aftman
 
 	Run this script using the following command:
-	> remodel run BuildToRoblox.lua
+	> remodel run build.lua
 
 	By default, this command will attempt to publish to the testing game. You may optionally pass in an argument to
 	specify whether to attempt to publish to the testing or production game, like so:
-	> remodel run BuildToRoblox.lua testing
-	> remodel run BuildToRoblox.lua production
+	> remodel run build.lua testing
+	> remodel run build.lua production
 
 	An authentication cookie is necessary to publish to Roblox! More info can be found here:
 	https://github.com/rojo-rbx/remodel#authentication
@@ -182,7 +182,7 @@ else
 		local input = io.read()
 
 		if input:lower() == "y" or input:lower() == "yes" then
-			os.execute(("remodel run BuildToRoblox.lua %s"):format(table.concat(args, " ")))
+			os.execute(("remodel run build.lua %s"):format(table.concat(args, " ")))
 			break
 		elseif input:lower() == "n" or input:lower() == "no" then
 			print "Aborting."
