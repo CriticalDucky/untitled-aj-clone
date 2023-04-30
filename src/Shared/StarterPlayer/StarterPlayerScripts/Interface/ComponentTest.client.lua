@@ -31,12 +31,15 @@ local Tween = Fusion.Tween
 local Spring = Fusion.Spring
 local peek = Fusion.peek
 local cleanup = Fusion.cleanup
-local doNothing = Fusion.doNothing -- Special thanks to @Validark for this one
+local doNothing = Fusion.doNothing
 
 -- #endregion
 
 local outlinedFrame = require(componentsFolder:WaitForChild("OutlinedFrame"))
+local bubbleButton = require(componentsFolder:WaitForChild("BubbleButton"))
 local playerGui = game:GetService "Players".LocalPlayer:WaitForChild "PlayerGui"
+
+local disabled = Value(false)
 
 New "ScreenGui" {
     Name = "TestGui",
@@ -48,10 +51,27 @@ New "ScreenGui" {
             Size = UDim2.new(0, 400, 0, 250),
             AnchorPoint = Vector2.new(0.5, 0.5),
 
-            OutlineColor = InterfaceConstants.colors.green1,
+            OutlineColor = InterfaceConstants.colors.menuGreen1,
             BackgroundColor = InterfaceConstants.colors.menuBackground,
 
             PaddingTop = UDim.new(0, 30),
+
+            Children = bubbleButton {
+                Position = UDim2.fromScale(0.5, 0.5),
+                AnchorPoint = Vector2.new(0.5, 0.5),
+                SizeX = 200,
+                Text = "Hello world!",
+                OnClick = function()
+                    print("Clicked!")
+                end,
+                Disabled = disabled,
+            }
         }
     }
 }
+
+while task.wait(5) do
+    disabled:set(true)
+    task.wait(2)
+    disabled:set(false)
+end
