@@ -1,6 +1,7 @@
 local SIZE_Y = 40
 local DEFAULT_SIZE_X = 100
 local DEFAULT_ICON_SIZE = 24
+local SPRING_SPEED = 70
 
 --#region Imports
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
@@ -76,12 +77,12 @@ local function Component(props: Props)
 	local isHeldDown = Value(false)
 
 	local function brighten(color: Color3)
-		local h, s, v = Color3.fromHSV(color)
+		local h, s, v = color:ToHSV()
 		return Color3.fromHSV(h, s, math.min(v + 40 / 255, 1))
 	end
 
 	local function desaturate(color: Color3)
-		local h, s, v = Color3.fromHSV(color)
+		local h, s, v = color:ToHSV()
 		return Color3.fromHSV(h, math.max(s - 0.2, 0), v)
 	end
 
@@ -95,7 +96,7 @@ local function Component(props: Props)
 				return if use(isHovering) then brighten(color) else color
 			end
 		end),
-		50,
+		SPRING_SPEED,
 		1
 	)
 
@@ -109,7 +110,7 @@ local function Component(props: Props)
                 return if use(isHovering) then brighten(color) else color
             end
 		end),
-		50,
+		SPRING_SPEED,
 		1
 	)
 
@@ -134,6 +135,7 @@ local function Component(props: Props)
 			},
 
 			New "UIStroke" {
+				ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 				Color = secondaryColor,
 				Thickness = 4,
 			},
@@ -165,6 +167,8 @@ local function Component(props: Props)
 			},
 		},
 	}
+
+	return frame
 end
 
 return Component
