@@ -1,7 +1,7 @@
 local SIZE_Y = 40
 local DEFAULT_SIZE_X = 100
 local DEFAULT_ICON_SIZE = 24
-local SPRING_SPEED = 70
+local SPRING_SPEED = 75
 
 --#region Imports
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
