@@ -13,9 +13,9 @@
         "$path": "src/Shared/ReplicatedStorage"
       },
 
-      "Location": {
+      "LocationShared": {
         "$className": "Folder",
-        "$path": "src/Location/ReplicatedStorage"
+        "$path": "src/LocationShared/ReplicatedStorage"
       }
     },
 
@@ -28,9 +28,9 @@
         "$path": "src/Shared/ReplicatedFirst"
       },
 
-      "Location": {
+      "LocationShared": {
         "$className": "Folder",
-        "$path": "src/Location/ReplicatedFirst"
+        "$path": "src/LocationShared/ReplicatedFirst"
       }
     },
 
@@ -43,9 +43,9 @@
         "$path": "src/Shared/ServerScriptService"
       },
 
-      "Location": {
+      "LocationShared": {
         "$className": "Folder",
-        "$path": "src/Location/ServerScriptService"
+        "$path": "src/LocationShared/ServerScriptService"
       }
     },
 
@@ -58,9 +58,9 @@
         "$path": "src/Shared/ServerStorage"
       },
 
-      "Location": {
+      "LocationShared": {
         "$className": "Folder",
-        "$path": "src/Location/ServerStorage"
+        "$path": "src/LocationShared/ServerStorage"
       }
     },
 
@@ -88,9 +88,9 @@
           "$path": "src/Shared/StarterPlayer/StarterPlayerScripts"
         },
 
-        "Location": {
+        "LocationShared": {
           "$className": "Folder",
-          "$path": "src/Location/StarterPlayer/StarterPlayerScripts"
+          "$path": "src/LocationShared/StarterPlayer/StarterPlayerScripts"
         }
       },
 
@@ -103,9 +103,9 @@
           "$path": "src/Shared/StarterPlayer/StarterCharacterScripts"
         },
 
-        "Location": {
+        "LocationShared": {
           "$className": "Folder",
-          "$path": "src/Location/StarterPlayer/StarterCharacterScripts"
+          "$path": "src/LocationShared/StarterPlayer/StarterCharacterScripts"
         }
       }
     },
@@ -123,9 +123,9 @@
         "$path": "src/Shared/Workspace"
       },
 
-      "Location": {
+      "LocationShared": {
         "$className": "Folder",
-        "$path": "src/Location/Workspace"
+        "$path": "src/LocationShared/Workspace"
       }
     },
 
