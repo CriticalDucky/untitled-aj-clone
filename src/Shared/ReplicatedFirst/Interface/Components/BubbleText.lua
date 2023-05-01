@@ -1,7 +1,14 @@
 --#region Imports
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
+local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
+local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
 local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
+local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
+local componentsFolder = replicatedFirstShared:WaitForChild("Interface"):WaitForChild "Components"
+local settingsFolder = replicatedFirstShared:WaitForChild "Settings"
+
+local InterfaceConstants = require(settingsFolder:WaitForChild "InterfaceConstants")
 local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
 
 local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
@@ -35,6 +42,9 @@ export type Props = {
     Make sure you do not care about the size of the bubble text.
 ]]
 local function Component(props: Props)
+    local fontFace = props.FontFace or InterfaceConstants.fonts.thickTitle.font
+    local textSize = props.TextSize or InterfaceConstants.fonts.thickTitle.size
+
     local outerTextLabel = New "TextLabel" {
         Name = props.Name,
         LayoutOrder = props.LayoutOrder,
@@ -44,8 +54,8 @@ local function Component(props: Props)
         AutomaticSize = Enum.AutomaticSize.XY,
 
         Text = props.Text,
-        FontFace = props.FontFace,
-        TextSize = props.TextSize,
+        FontFace = fontFace,
+        TextSize = textSize,
         TextColor3 = props.TextOutlineColor,
         BackgroundTransparency = 1,
 
@@ -61,8 +71,8 @@ local function Component(props: Props)
                 Size = UDim2.fromScale(1, 1),
                 BackgroundTransparency = 1,
                 Text = props.Text,
-                FontFace = props.FontFace,
-                TextSize = props.TextSize,
+                FontFace = fontFace,
+                TextSize = textSize,
                 TextColor3 = props.TextColor,
             },
         }
