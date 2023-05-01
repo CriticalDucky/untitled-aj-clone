@@ -55,15 +55,14 @@ New "ScreenGui" {
             OutlineColor = InterfaceConstants.colors.menuGreen1,
             BackgroundColor = InterfaceConstants.colors.menuBackground,
 
-            PaddingTop = UDim.new(0, 30),
+            PaddingTop = UDim.new(0, 20),
 
             Children = bubbleButton {
                 Position = UDim2.fromScale(0.5, 0.5),
                 AnchorPoint = Vector2.new(0.5, 0.5),
-                SizeX = 200,
+                SizeX = 50,
                 Text = "Hello world!",
                 OnClick = function()
-                    print("Clicked!")
                 end,
                 Disabled = disabled,
             }
