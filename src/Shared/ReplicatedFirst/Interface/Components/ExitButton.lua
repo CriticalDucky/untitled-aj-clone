@@ -6,6 +6,7 @@ local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
 local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
+local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
 local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 local componentsFolder = replicatedFirstShared:WaitForChild("Interface"):WaitForChild "Components"
 local settingsFolder = replicatedFirstShared:WaitForChild "Settings"
@@ -14,7 +15,7 @@ local bubbleButton = require(componentsFolder:WaitForChild "BubbleButton")
 local InterfaceConstants = require(settingsFolder:WaitForChild "InterfaceConstants")
 
 -- Optional: Remove imports that you don't need
-local Fusion = require(replicatedFirstShared:WaitForChild "Fusion")
+local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
 local New = Fusion.New
 local Hydrate = Fusion.Hydrate
 local Ref = Fusion.Ref
