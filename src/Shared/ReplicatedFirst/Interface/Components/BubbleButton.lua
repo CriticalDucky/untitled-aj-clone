@@ -52,7 +52,6 @@ export type Props = {
 	Position: CanBeState<UDim2>?,
 	AnchorPoint: CanBeState<Vector2>?,
 	Size: CanBeState<UDim2>?, -- Consider using SizeX, but can be used to override SizeY and SizeX if you want
-	AutomaticSize: CanBeState<Enum.AutomaticSize>?,
 	ZIndex: CanBeState<number>?,
 
 	-- Custom props
@@ -61,7 +60,7 @@ export type Props = {
 	IconSize: CanBeState<number>?, -- offset size
 	PrimaryColor: CanBeState<Color3>?, -- background color
 	SecondaryColor: CanBeState<Color3>?, -- outlines, text, icon color
-	SizeX: CanBeState<number>?, -- use this so that the Y size is always the same, but if you want to override it, you can use Size
+	SizeX: CanBeState<number>?, -- use this so that the Y size remains constant, but if you want to override it, you can use Size
 
 	OnClick: (() -> ())?,
 	Disabled: CanBeState<boolean>?,
@@ -122,7 +121,7 @@ local function Component(props: Props)
 		Position = props.Position,
 		AnchorPoint = props.AnchorPoint,
 		Size = props.Size or UDim2.new(UDim.new(0, props.SizeX or DEFAULT_SIZE_X), UDim.new(0, SIZE_Y)),
-		AutomaticSize = props.AutomaticSize,
+		AutomaticSize = Enum.AutomaticSize.X,
 		ZIndex = props.ZIndex,
 
 		BackgroundColor3 = secondaryColor,
@@ -141,9 +140,8 @@ local function Component(props: Props)
 
 			New "TextLabel" {
 				Name = props.Name or "Text",
-				Position = UDim2.fromScale(0.5, 0.5),
-				AnchorPoint = Vector2.new(0.5, 0.5),
-				Size = UDim2.fromScale(1, 1),
+				Size = UDim2.fromScale(0, 1),
+				AutomaticSize = Enum.AutomaticSize.X,
 
 				BackgroundColor3 = primaryColor,
 				Text = props.Text or "",
@@ -154,6 +152,11 @@ local function Component(props: Props)
 				[Children] = {
 					New "UICorner" {
 						CornerRadius = UDim.new(0, OUTER_ROUNDNESS - 4),
+					},
+
+					New "UIPadding" {
+						PaddingLeft = UDim.new(0, 10),
+						PaddingRight = UDim.new(0, 10),
 					},
 
 					Computed(function(use)
