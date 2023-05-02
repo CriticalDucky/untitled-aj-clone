@@ -15,6 +15,9 @@
 	> remodel run build.lua testing
 	> remodel run build.lua production
 
+	Alternatively, you can run a VS Code task to build and publish to the testing or production game. (Search commands
+	with the "tasks" keyword.) Building and publishing to the test game is the default build task.
+
 	An authentication cookie is necessary to publish to Roblox! More info can be found here:
 	https://github.com/rojo-rbx/remodel#authentication
 ]]
