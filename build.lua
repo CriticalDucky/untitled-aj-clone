@@ -83,22 +83,21 @@ for _, project in pairs(projectsToBuild) do
 end
 
 if not testingMode then
-	local confirmationMessage = "I would like to publish to production."
+	local confirmationMessage =
+		"I confirm that I would like to publish to production and understand that this is final."
 
 	print()
 	print "=================================================="
 	print "WARNING: You are about to publish to production!"
 	print "=================================================="
-	print "To proceed, copy the following statement exactly 3 times."
+	print "To proceed, copy the following statement exactly."
 	print("- " .. confirmationMessage)
 
-	for i = 1, 3 do
-		io.write "> "
-		local input = io.read()
-		if input ~= confirmationMessage then
-			print "Statement does not match. Aborting."
-			return
-		end
+	io.write "> "
+	local input = io.read()
+	if input ~= confirmationMessage then
+		print "Statement does not match. Aborting."
+		return
 	end
 end
 
