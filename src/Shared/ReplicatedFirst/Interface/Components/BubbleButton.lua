@@ -71,6 +71,8 @@ export type Props = {
     It plays a sound when clicked and hovered over.
 ]]
 local function Component(props: Props)
+	local isImageMode = props.Icon ~= nil
+
 	local textSize = InterfaceConstants.fonts.button.size
 	local textFont = InterfaceConstants.fonts.button.font
 
@@ -140,8 +142,8 @@ local function Component(props: Props)
 
 			New "TextLabel" {
 				Name = props.Name or "Text",
-				Size = UDim2.fromScale(0, 1),
-				AutomaticSize = Enum.AutomaticSize.X,
+				Size = UDim2.fromScale(isImageMode and 1 or 0, 1),
+				AutomaticSize = if not isImageMode then Enum.AutomaticSize.X else nil,
 
 				BackgroundColor3 = primaryColor,
 				Text = props.Text or "",
