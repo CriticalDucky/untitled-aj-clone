@@ -66,7 +66,6 @@ local function Component(props: Props)
         Position = props.Position,
         AnchorPoint = props.AnchorPoint,
         ZIndex = props.ZIndex,
-        SizeX = 48,
 
         PrimaryColor = props.PrimaryColor or InterfaceConstants.colors.buttonBluePrimary,
         SecondaryColor = props.SecondaryColor or InterfaceConstants.colors.buttonBlueSecondary,
@@ -75,6 +74,8 @@ local function Component(props: Props)
         Disabled = props.Disabled,
 
         Icon = X_IMAGE_ID,
+
+        Square = true,
     }
 end
 

@@ -61,6 +61,7 @@ export type Props = {
 	PrimaryColor: CanBeState<Color3>?, -- background color
 	SecondaryColor: CanBeState<Color3>?, -- outlines, text, icon color
 	SizeX: CanBeState<number>?, -- use this so that the Y size remains constant, but if you want to override it, you can use Size
+	Square: CanBeState<boolean>?, -- if true, the button will be square
 
 	OnClick: (() -> ())?,
 	Disabled: CanBeState<boolean>?,
@@ -122,8 +123,8 @@ local function Component(props: Props)
 		LayoutOrder = props.LayoutOrder,
 		Position = props.Position,
 		AnchorPoint = props.AnchorPoint,
-		Size = props.Size or UDim2.new(UDim.new(0, props.SizeX or DEFAULT_SIZE_X), UDim.new(0, SIZE_Y)),
-		AutomaticSize = Enum.AutomaticSize.X,
+		Size = props.Size or UDim2.new(UDim.new(0, props.SizeX or if props.Square then SIZE_Y else DEFAULT_SIZE_X), UDim.new(0, SIZE_Y)),
+		AutomaticSize = if not isImageMode then Enum.AutomaticSize.X else nil,
 		ZIndex = props.ZIndex,
 
 		BackgroundColor3 = secondaryColor,
@@ -185,8 +186,8 @@ local function Component(props: Props)
 				OnClick = props.OnClick,
 				Disabled = props.Disabled,
 				ZIndex = 10,
-				AnchorPoint = Vector2.new(0.5, 0.5),
-				Position = UDim2.fromScale(0.5, 0.5),
+				AnchorPoint = Vector2.new(0, 0),
+				Position = UDim2.fromOffset(-4, -4),
 				CornerRadius = UDim.new(0, OUTER_ROUNDNESS),
 
 				isHeldDown = isHeldDown,
