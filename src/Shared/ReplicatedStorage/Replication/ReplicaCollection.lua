@@ -67,9 +67,9 @@ function replicaCollection.get(class: string)
 	return replicas[class]
 end
 
-for _, class in ipairs(classes) do
-	ReplicaController.ReplicaOfClassCreated(class, onReplicaReceived)
-end
+-- for _, class in ipairs(classes) do
+-- 	ReplicaController.ReplicaOfClassCreated(class, onReplicaReceived)
+-- end
 
 ReplicaController.NewReplicaSignal:Connect(onReplicaReceived)
 ReplicaController.RequestData()
