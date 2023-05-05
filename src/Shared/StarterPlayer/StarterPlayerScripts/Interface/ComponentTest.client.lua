@@ -36,36 +36,47 @@ local doNothing = Fusion.doNothing
 
 -- #endregion
 
-local outlinedFrame = require(componentsFolder:WaitForChild("OutlinedFrame"))
-local bubbleButton = require(componentsFolder:WaitForChild("BubbleButton"))
-local playerGui = game:GetService "Players".LocalPlayer:WaitForChild "PlayerGui"
+local outlinedFrame = require(componentsFolder:WaitForChild "OutlinedFrame")
+local bubbleButton = require(componentsFolder:WaitForChild "BubbleButton")
+local bannerButton = require(componentsFolder:WaitForChild "BannerButton")
+local playerGui = game:GetService("Players").LocalPlayer:WaitForChild "PlayerGui"
 
 local disabled = Value(false)
 
 New "ScreenGui" {
-    Name = "TestGui",
-    Parent = playerGui,
+	Name = "TestGui",
+	Parent = playerGui,
 
-    [Children] = {
-        outlinedFrame {
-            Position = UDim2.new(0.5, 0, 0.5, 0),
-            Size = UDim2.new(0, 400, 0, 250),
-            AnchorPoint = Vector2.new(0.5, 0.5),
+	[Children] = {
+		outlinedFrame {
+			Position = UDim2.new(0.5, 0, 0.5, 0),
+			Size = UDim2.new(0, 400, 0, 250),
+			AnchorPoint = Vector2.new(0.5, 0.5),
 
-            OutlineColor = InterfaceConstants.colors.menuGreen1,
-            BackgroundColor = InterfaceConstants.colors.menuBackground,
+			OutlineColor = InterfaceConstants.colors.menuGreen1,
+			BackgroundColor = InterfaceConstants.colors.menuBackground,
 
-            PaddingTop = UDim.new(0, 20),
+			PaddingTop = UDim.new(0, 20),
 
-            Children = bubbleButton {
-                Position = UDim2.fromScale(0.5, 0.5),
-                AnchorPoint = Vector2.new(0.5, 0.5),
-                SizeX = 50,
-                Text = "Hello world!",
-                OnClick = function()
-                end,
-                Disabled = disabled,
-            }
-        }
-    }
+			Children = {
+				-- bubbleButton {
+				-- 	Position = UDim2.fromScale(0.5, 0.5),
+				-- 	AnchorPoint = Vector2.new(0.5, 0.5),
+				-- 	SizeX = 50,
+				-- 	Text = "Hello world!",
+				-- 	OnClick = function() end,
+				-- 	Disabled = disabled,
+				-- },
+
+				bannerButton {
+					BorderColor = InterfaceConstants.colors.menuGreen1,
+					Size = UDim2.fromOffset(250, 150),
+					Position = UDim2.fromScale(0.5, 0.5),
+					AnchorPoint = Vector2.new(0.5, 0.5),
+					ZoomOnHover = true,
+					Image = "rbxassetid://3317811687",
+				},
+			},
+		},
+	},
 }
