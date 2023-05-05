@@ -20,7 +20,6 @@ local peek = Fusion.peek
 
 ---@diagnostic disable-next-line: undefined-type wtf!!!!!!!
 type CanBeState<T> = Fusion.CanBeState<T>
----@diagnostic disable-next-line: undefined-type wtf!!!!!!!
 type Value<T> = Fusion.Value<T>
 -- #endregion
 
