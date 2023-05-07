@@ -39,6 +39,7 @@ local doNothing = Fusion.doNothing
 local outlinedFrame = require(componentsFolder:WaitForChild "OutlinedFrame")
 local bubbleButton = require(componentsFolder:WaitForChild "BubbleButton")
 local bannerButton = require(componentsFolder:WaitForChild "BannerButton")
+local floatingIconButton = require(componentsFolder:WaitForChild "FloatingIconButton")
 local playerGui = game:GetService("Players").LocalPlayer:WaitForChild "PlayerGui"
 
 local disabled = Value(false)
@@ -68,14 +69,23 @@ New "ScreenGui" {
 				-- 	Disabled = disabled,
 				-- },
 
-				bannerButton {
-					BorderColor = InterfaceConstants.colors.menuGreen1,
-					Size = UDim2.fromOffset(250, 150),
-					Position = UDim2.fromScale(0.5, 0.5),
+				-- bannerButton {
+				-- 	BorderColor = InterfaceConstants.colors.menuGreen1,
+				-- 	Size = UDim2.fromOffset(250, 150),
+				-- 	Position = UDim2.fromScale(0.5, 0.5),
+				-- 	AnchorPoint = Vector2.new(0.5, 0.5),
+				-- 	ZoomOnHover = true,
+				-- 	Image = "rbxassetid://3317811687",
+				-- },
+
+				floatingIconButton {
 					AnchorPoint = Vector2.new(0.5, 0.5),
-					ZoomOnHover = true,
-					Image = "rbxassetid://3317811687",
-				},
+					Position = UDim2.fromScale(0.5, 0.5),
+					Size = UDim2.fromOffset(48, 48),
+
+					Image = "rbxassetid://13370083015",
+					OutlineImage = "rbxassetid://13370082927"
+				}
 			},
 		},
 	},

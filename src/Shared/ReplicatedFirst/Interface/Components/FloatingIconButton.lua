@@ -88,6 +88,8 @@ local function Component(props: Props)
 			-- The outline image
 			New "ImageLabel" {
 				Name = "Outline",
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				Position = UDim2.fromScale(0.5, 0.5),
 				Size = Spring(
 					Computed(function(use)
 						local scale = 1
@@ -99,6 +101,7 @@ local function Component(props: Props)
 					SPRING_SPEED,
 					1
 				),
+				BackgroundTransparency = 1,
 				Image = props.OutlineImage,
                 ImageColor3 = Spring(
                     Computed(function(use)
@@ -137,7 +140,9 @@ local function Component(props: Props)
 				AnchorPoint = Vector2.new(0.5, 0.5),
 				Position = UDim2.fromScale(0.5, 0.5),
 				Size = Computed(function(use)
-					return UDim2.new(1, use(2 * props.InputExtraPx, 0), 1, use(2 * props.InputExtraPx, 0))
+					local computedPx = 2 * (use(props.InputExtraPx) or 0)
+
+					return UDim2.new(1, computedPx, 1, computedPx)
 				end),
 				ZIndex = 300,
 
