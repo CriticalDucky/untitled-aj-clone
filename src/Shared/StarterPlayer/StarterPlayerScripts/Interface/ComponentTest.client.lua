@@ -83,8 +83,8 @@ New "ScreenGui" {
 					Position = UDim2.fromScale(0.5, 0.5),
 					Size = UDim2.fromOffset(48, 48),
 
-					Image = "rbxassetid://13370083015",
-					OutlineImage = "rbxassetid://13370082927"
+					Image = "rbxassetid://13370286402",
+					OutlineImage = "rbxassetid://13370286263"
 				}
 			},
 		},
