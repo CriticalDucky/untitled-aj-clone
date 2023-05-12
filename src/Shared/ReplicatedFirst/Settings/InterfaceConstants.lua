@@ -3,12 +3,13 @@ patrickHandBold.Bold = true
 
 return {
 	colors = {
-		menuBackground = Color3.fromHex "#E4C5B0",
-		menuTitle = Color3.fromHex "#F1E3D7",
-		menuGreen1 = Color3.fromHex "#687822",
+		menuBackground = Color3.fromRGB(228, 197, 176),
+		menuTitle = Color3.fromRGB(241, 227, 215),
+		menuGreen1 = Color3.fromRGB(104, 120, 34),
+		settingsBlue = Color3.fromRGB(70, 101, 120),
 
-		buttonBluePrimary = Color3.fromHex "#53A3BC",
-		buttonBlueSecondary = Color3.fromHex "#3D788A",
+		buttonBluePrimary = Color3.fromRGB(83, 163, 188),
+		buttonBlueSecondary = Color3.fromRGB(61, 120, 138),
 
 		floatingIconButtonNormal = Color3.fromRGB(10, 66, 104),
 		floatingIconButtonHover = Color3.fromRGB(37, 91, 128),
