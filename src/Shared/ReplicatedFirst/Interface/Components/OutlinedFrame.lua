@@ -73,6 +73,7 @@ local function Component(props: Props)
 		ZIndex = props.ZIndex,
 		Rotation = props.Rotation or 0,
 		Visible = props.Visible,
+		Active = true,
 
 		BackgroundColor3 = props.OutlineColor or DEFUALT_OUTLINE_COLOR,
 
