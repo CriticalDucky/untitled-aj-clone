@@ -14,6 +14,7 @@ local New = Fusion.New
 local Hydrate = Fusion.Hydrate
 local Ref = Fusion.Ref
 local Children = Fusion.Children
+local Cleanup = Fusion.Cleanup
 local Out = Fusion.Out
 local OnEvent = Fusion.OnEvent
 local OnChange = Fusion.OnChange
