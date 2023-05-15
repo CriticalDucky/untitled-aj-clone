@@ -37,6 +37,8 @@ export type Props = {
     -- button-specific properties
     Text: CanBeState<string>?,
     OnClick: (() -> ())?,
+    OnMouseDown: (() -> ())?,
+    InputBegan: ((InputObject) -> ())?,
     Disabled: CanBeState<boolean>?,
     CornerRadius: CanBeState<UDim>?,
 
@@ -97,6 +99,16 @@ local function Component(props: Props)
 
         [OnEvent "MouseButton1Down"] = function()
             isHeldDown:set(true) -- it's good UX to give immediate feedback
+
+            if props.OnMouseDown ~= nil and not peek(props.Disabled) then
+                props.OnMouseDown()
+            end
+        end,
+
+        [OnEvent "InputBegan"] = function(inputObject: InputObject)
+            if props.InputBegan ~= nil and not peek(props.Disabled) then
+                props.InputBegan(inputObject)
+            end
         end,
 
         [OnEvent "MouseButton1Up"] = function()
