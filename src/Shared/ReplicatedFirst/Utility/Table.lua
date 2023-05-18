@@ -26,6 +26,13 @@ function Table.deepCopy(value) -- returns a deep copy of a table
 	return value
 end
 
+--[[
+	Makes a deep copy of the provided table and deep freezes it.
+]]
+function Table.deepSnapshot(t: table): table
+	return Table.deepFreeze(Table.deepCopy(t))
+end
+
 function Table.copy(t) -- returns a shallow copy of a table
 	assert(type(t) == "table", "Table.copy: t must be a table")
 	assert(t, "Table.copy: t must not be nil")
