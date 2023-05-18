@@ -42,6 +42,7 @@ local bannerButton = require(componentsFolder:WaitForChild "BannerButton")
 local floatingIconButton = require(componentsFolder:WaitForChild "FloatingIconButton")
 local sliderBase = require(componentsFolder:WaitForChild "SliderBase")
 local playerGui = game:GetService("Players").LocalPlayer:WaitForChild "PlayerGui"
+local bubbleSlider = require(componentsFolder:WaitForChild "BubbleSlider")
 
 local disabled = Value(false)
 
@@ -94,27 +95,36 @@ New "ScreenGui" {
 				-- 	OutlineImage = "rbxassetid://13370286263"
 				-- }
 
-				sliderBase {
+				-- sliderBase {
+				-- 	AnchorPoint = Vector2.new(0.5, 0.5),
+				-- 	Position = UDim2.fromScale(0.5, 0.5),
+				-- 	Size = UDim2.fromOffset(200, 20),
+
+				-- 	BackgroundBody = New "Frame" {
+				-- 		AnchorPoint = Vector2.new(0.5, 0.5),
+				-- 		Position = UDim2.fromScale(0.5, 0.5),
+				-- 		Size = UDim2.fromScale(1, 1),
+
+				-- 		BackgroundColor3 = Color3.new(0.678431, 0.678431, 0.678431),
+				-- 	},
+				-- 	SliderBody = New "Frame" {
+				-- 		AnchorPoint = Vector2.new(0.5, 0.5),
+				-- 		Position = UDim2.fromScale(0.5, 0.5),
+				-- 		Size = UDim2.fromScale(1, 1),
+				-- 		BackgroundTransparency = 0.2,
+
+				-- 		BackgroundColor3 = Color3.new(1, 1, 1),
+				-- 	},
+				-- 	SliderSize = UDim2.fromOffset(24, 24),
+				-- 	ProgressAlpha = progressAlpha,
+				-- 	InputProgressChanged = sliderFunction,
+				-- 	BackgroundInputShrink = Vector2.new(32,8)
+				-- }
+
+				bubbleSlider {
 					AnchorPoint = Vector2.new(0.5, 0.5),
 					Position = UDim2.fromScale(0.5, 0.5),
-					Size = UDim2.fromOffset(200, 20),
-
-					BackgroundBody = New "Frame" {
-						AnchorPoint = Vector2.new(0.5, 0.5),
-						Position = UDim2.fromScale(0.5, 0.5),
-						Size = UDim2.fromScale(1, 1),
-
-						BackgroundColor3 = Color3.new(0.678431, 0.678431, 0.678431),
-					},
-					SliderBody = New "Frame" {
-						AnchorPoint = Vector2.new(0.5, 0.5),
-						Position = UDim2.fromScale(0.5, 0.5),
-						Size = UDim2.fromScale(1, 1),
-						BackgroundTransparency = 0.2,
-
-						BackgroundColor3 = Color3.new(1, 1, 1),
-					},
-					SliderSize = UDim2.fromOffset(24, 24),
+					
 					ProgressAlpha = progressAlpha,
 					InputProgressChanged = sliderFunction,
 				}
