@@ -52,6 +52,13 @@ local sliderFunction = function(value)
 	progressAlpha:set(value)
 end
 
+-- task.spawn(function()
+-- 	while true do
+-- 		task.wait(3)
+-- 		disabled:set(not peek(disabled))
+-- 	end
+-- end)
+
 New "ScreenGui" {
 	Name = "TestGui",
 	Parent = playerGui,
@@ -124,6 +131,8 @@ New "ScreenGui" {
 				bubbleSlider {
 					AnchorPoint = Vector2.new(0.5, 0.5),
 					Position = UDim2.fromScale(0.5, 0.5),
+					SizeX = UDim.new(0, 250),
+					Disabled = disabled,
 					
 					ProgressAlpha = progressAlpha,
 					InputProgressChanged = sliderFunction,

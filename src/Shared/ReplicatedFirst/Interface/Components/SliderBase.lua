@@ -50,7 +50,9 @@ local peek = Fusion.peek
 local cleanup = Fusion.cleanup
 local doNothing = Fusion.doNothing
 
+---@diagnostic disable-next-line: undefined-type oh my godddd
 type CanBeState<T> = Fusion.CanBeState<T>
+type Value<T> = Fusion.Value<T>
 -- #endregion
 
 export type Props = {
@@ -71,10 +73,11 @@ export type Props = {
 	Disabled: CanBeState<boolean>?, -- Whether or not the slider is disabled
 	InputProgressChanged: CanBeState<(number) -> ()>?, -- Inexpensive, unyielding callback that runs every frame and updates ProgressAlpha called when the slider is changed
 
-	isHoveringBackground: CanBeState<boolean>?,
-	isHoveringSlider: CanBeState<boolean>?,
-	isHeldDownBackground: CanBeState<boolean>?,
-	isHeldDownSlider: CanBeState<boolean>?,
+	isHoveringBackground: Value<boolean>?,
+	isHoveringSlider: Value<boolean>?,
+	isHeldDownBackground: Value<boolean>?,
+	isHeldDownSlider: Value<boolean>?,
+	draggingMode: Value<("Background" | "Slider" | nil)>?,
 }
 
 --[[
@@ -82,7 +85,7 @@ export type Props = {
 ]]
 local function Component(props: Props)
 	local mousePosition: Vector2? = nil -- Mouse position in screen space
-	local selected: ("Background" | "Slider")?
+	local selected: Value<("Background" | "Slider" | nil)> = props.draggingMode or Value(nil) -- Which part of the slider is selected
 	local sliderInputOffset: Vector2? -- Only relevant when selected == "Slider"
 
 	local sliderAbsolutePosition = Value(Vector2.new(0, 0))
@@ -102,11 +105,11 @@ local function Component(props: Props)
 	local function updateProgress(input: InputObject)
 		mousePosition = Vector2.new(input.Position.X, input.Position.Y)
 
-		if MOVEMENT_INPUTS[input.UserInputType] and selected then
+		if MOVEMENT_INPUTS[input.UserInputType] and peek(selected) and not peek(props.Disabled) then
 			local backgroundPosition = peek(backgroundAbsolutePositionComputed)
 			local backgroundSize = peek(backgroundAbsoluteSizeComputed)
 
-			local offset = if selected == "Slider"
+			local offset = if peek(selected) == "Slider"
 				then (sliderInputOffset + peek(sliderAbsoluteSize) / 2)
 				else Vector2.new(0, 0)
 
@@ -123,7 +126,7 @@ local function Component(props: Props)
 
 	local inputEndedConnection = UserInputService.InputEnded:Connect(function(input)
 		if SELECT_INPUTS[input.UserInputType] then
-			selected = nil
+			selected:set(nil)
 			sliderInputOffset = nil
 		end
 	end)
@@ -160,7 +163,7 @@ local function Component(props: Props)
 
 				InputBegan = function(input: InputObject)
 					if SELECT_INPUTS[input.UserInputType] then
-						selected = "Background"
+						selected:set("Background")
 						updateProgress(input)
 					end
 				end,
@@ -205,7 +208,7 @@ local function Component(props: Props)
 
 								InputBegan = function(input: InputObject)
 									if SELECT_INPUTS[input.UserInputType] then
-										selected = "Slider"
+										selected:set("Slider")
 										sliderInputOffset = peek(sliderAbsolutePosition)
 											- Vector2.new(math.round(input.Position.X), math.round(input.Position.Y))
 										updateProgress(input)
