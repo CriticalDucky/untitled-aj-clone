@@ -1,5 +1,5 @@
-local SIZE_Y = 12
-local SPRING_SPEED = 65
+local SIZE_Y = 16
+local SLIDER_SIZE = 28
 
 --#region Imports
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
@@ -51,30 +51,33 @@ export type Props = {
 	SizeX: CanBeState<UDim>?,
 	ZIndex: CanBeState<number>?,
 
-    -- SliderBase props
-    ProgressAlpha: CanBeState<number>?, -- 0 to 1
-    Disabled: CanBeState<boolean>?, -- Whether or not the slider is disabled
-    InputProgressChanged: CanBeState<(number) -> ()>?, -- Inexpensive, unyielding callback that runs every time input changes and updates ProgressAlpha.
+	-- SliderBase props
+	ProgressAlpha: CanBeState<number>?, -- 0 to 1
+	Disabled: CanBeState<boolean>?, -- Whether or not the slider is disabled
+	InputProgressChanged: CanBeState<(number) -> ()>?, -- Inexpensive, unyielding callback that runs every time input changes and updates ProgressAlpha.
 
-    BackgroundColor: CanBeState<Color3>?, -- The color of the slider background; optional
-    SliderColor: CanBeState<Color3>?, -- The color of the slider; optional
+	BackgroundColor: CanBeState<Color3>?, -- The color of the slider background; optional
+	SliderColor: CanBeState<Color3>?, -- The color of the slider; optional
 }
 
 --[[
 	This component creates a bubble slider.
 ]]
 local function Component(props: Props)
-    local isHoveringBackground = Value(false)
-    local isHoveringSlider = Value(false)
-    local isHeldDownBackground = Value(false)
-    local isHeldDownSlider = Value(false)
+	local isHoveringBackground = Value(false)
+	local isHoveringSlider = Value(false)
+	local isHeldDownBackground = Value(false)
+	local isHeldDownSlider = Value(false)
+	local draggingMode = Value()
+	local isDragging = Computed(function(use) return use(draggingMode) ~= nil end)
 
-	local isHovering = Computed(function(use)
-        return use(isHoveringBackground) or use(isHoveringSlider)
-    end)
+    local springSpeed = InterfaceConstants.animation.bubbleButtonColorSpring.speed
+	local springDamping = InterfaceConstants.animation.bubbleButtonColorSpring.damping
+
+	local isHovering = Computed(function(use) return use(isHoveringBackground) or use(isHoveringSlider) end)
 	local isHeldDown = Computed(function(use) -- For possible future use
-        return use(isHeldDownBackground) or use(isHeldDownSlider)
-    end)
+		return use(isHeldDownBackground) or use(isHeldDownSlider)
+	end)
 
 	local function brighten(color: Color3)
 		local h, s, v = color:ToHSV()
@@ -93,11 +96,11 @@ local function Component(props: Props)
 			if use(props.Disabled) then
 				return desaturate(color)
 			else
-				return if use(isHovering) then brighten(color) else color
+				return if use(isHovering) or use(isDragging) then brighten(color) else color
 			end
 		end),
-		SPRING_SPEED,
-		1
+		springSpeed,
+		springDamping
 	)
 
 	local secondaryColor = Spring(
@@ -107,55 +110,89 @@ local function Component(props: Props)
 			if use(props.Disabled) then
 				return desaturate(color)
 			else
-				return if use(isHovering) then brighten(color) else color
+				return if use(isHovering) or use(isDragging) then brighten(color) else color
 			end
 		end),
-		SPRING_SPEED,
-		1
+		springSpeed,
+        springDamping
 	)
 
-    local slider = sliderBase {
-        Name = props.Name,
-        LayoutOrder = props.LayoutOrder,
-        Position = props.Position,
-        AnchorPoint = props.AnchorPoint,
-        Size = Computed(function(use)
-            return UDim2.new(use(props.SizeX) or UDim.new(0, 100), UDim.new(0, SIZE_Y))
-        end),
-        ZIndex = props.ZIndex,
+	local slider = sliderBase {
+		Name = props.Name,
+		LayoutOrder = props.LayoutOrder,
+		Position = props.Position,
+		AnchorPoint = props.AnchorPoint,
+		Size = Computed(function(use) return UDim2.new(use(props.SizeX) or UDim.new(0, 100), UDim.new(0, SIZE_Y)) end),
+		ZIndex = props.ZIndex,
 
-        BackgroundInputShrink = Vector2.new(SIZE_Y, 0),
-        BackgroundBody = New "Frame" {
-            AnchorPoint = Vector2.new(0.5, 0.5),
-            Position = UDim2.fromScale(0.5, 0.5),
-            Size = UDim2.fromScale(1, 1),
+		BackgroundInputShrink = Vector2.new(SIZE_Y, 0),
+		BackgroundBody = New "Frame" {
+			Name = "BackgroundBody",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.fromScale(0.5, 0.5),
+			Size = UDim2.fromScale(1, 1),
 
-            BackgroundColor3 = secondaryColor,
+			BackgroundColor3 = secondaryColor,
 
-            [Children] = New "UICorner" {
-                CornerRadius = UDim.new(1, 0),
-            }
-        },
+			[Children] = {
+				New "UICorner" {
+					CornerRadius = UDim.new(1, 0),
+				},
 
-        SliderSize = UDim2.fromOffset(SIZE_Y + 8, SIZE_Y + 8),
-        SliderBody = New "Frame" {
-            AnchorPoint = Vector2.new(0.5, 0.5),
-            Position = UDim2.fromScale(0.5, 0.5),
-            Size = UDim2.fromScale(1, 1),
+				New "Frame" {
+					Name = "Progress",
+					AnchorPoint = Vector2.new(0, 0.5),
+					Position = UDim2.new(0, 4, 0.5, 0),
+					Size = Computed(function(use)
+						local progressAlpha = use(props.ProgressAlpha) or 0
 
-            BackgroundColor3 = primaryColor,
+						return UDim2.new(progressAlpha * 1, progressAlpha * -8, 1, -8)
+					end),
 
-            [Children] = New "UICorner" {
-                CornerRadius = UDim.new(1, 0),
-            }
-        },
+					BackgroundColor3 = primaryColor,
 
-        ProgressAlpha = props.ProgressAlpha,
-        Disabled = props.Disabled,
-        InputProgressChanged = props.InputProgressChanged,
-    }
+					[Children] = {
+						New "UICorner" {
+							CornerRadius = UDim.new(1, 0),
+						},
+					},
+				},
+			},
+		},
 
-    return slider
+		SliderSize = UDim2.fromOffset(SLIDER_SIZE, SLIDER_SIZE),
+		SliderBody = New "Frame" {
+			Name = "SliderBody",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.fromScale(0.5, 0.5),
+			Size = UDim2.new(1, -8, 1, -8),
+
+			BackgroundColor3 = primaryColor,
+
+			[Children] = {
+				New "UICorner" {
+					CornerRadius = UDim.new(1, 0),
+				},
+
+				New "UIStroke" {
+					Color = secondaryColor,
+					Thickness = 4,
+				},
+			},
+		},
+
+		ProgressAlpha = props.ProgressAlpha,
+		Disabled = props.Disabled,
+		InputProgressChanged = props.InputProgressChanged,
+
+		isHeldDownBackground = isHeldDownBackground,
+		isHoveringBackground = isHoveringBackground,
+		isHeldDownSlider = isHeldDownSlider,
+		isHoveringSlider = isHoveringSlider,
+		draggingMode = draggingMode,
+	}
+
+	return slider
 end
 
 return Component

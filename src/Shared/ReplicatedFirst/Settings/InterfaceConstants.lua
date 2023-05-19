@@ -16,6 +16,19 @@ return {
 		floatingIconButtonPress = Color3.fromRGB(47, 114, 158),
 	},
 
+	sizes = {
+		bubbleButtonSizeY = 48,
+		bubbleButtonIconSize = 24,
+		bubbleButtonRoundness = 24,
+	},
+
+	animation = {
+		bubbleButtonColorSpring = {
+			speed = 65,
+			damping = 1,
+		},
+	},
+
 	fonts = {
 		body = {
 			font = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular),

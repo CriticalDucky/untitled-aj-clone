@@ -1,7 +1,4 @@
-local SIZE_Y = 48
 local DEFAULT_SIZE_X = 100
-local DEFAULT_ICON_SIZE = 24
-local SPRING_SPEED = 65
 local OUTER_ROUNDNESS = 24
 
 --#region Imports
@@ -77,6 +74,12 @@ local function Component(props: Props)
 	local textSize = InterfaceConstants.fonts.button.size
 	local textFont = InterfaceConstants.fonts.button.font
 
+	local springSpeed = InterfaceConstants.animation.bubbleButtonColorSpring.speed
+	local springDamping = InterfaceConstants.animation.bubbleButtonColorSpring.damping
+
+	local defaultIconSize = InterfaceConstants.sizes.bubbleButtonIconSize
+	local sizeY = InterfaceConstants.sizes.bubbleButtonSizeY
+
 	local isHovering = Value(false)
 	local isHeldDown = Value(false)
 
@@ -100,8 +103,8 @@ local function Component(props: Props)
 				return if use(isHovering) then brighten(color) else color
 			end
 		end),
-		SPRING_SPEED,
-		1
+		springSpeed,
+		springDamping
 	)
 
 	local secondaryColor = Spring(
@@ -114,8 +117,8 @@ local function Component(props: Props)
 				return if use(isHovering) then brighten(color) else color
 			end
 		end),
-		SPRING_SPEED,
-		1
+		springSpeed,
+		springDamping
 	)
 
 	local frame = New "Frame" {
@@ -123,7 +126,7 @@ local function Component(props: Props)
 		LayoutOrder = props.LayoutOrder,
 		Position = props.Position,
 		AnchorPoint = props.AnchorPoint,
-		Size = props.Size or UDim2.new(UDim.new(0, props.SizeX or if props.Square then SIZE_Y else DEFAULT_SIZE_X), UDim.new(0, SIZE_Y)),
+		Size = props.Size or UDim2.new(UDim.new(0, props.SizeX or if props.Square then sizeY else DEFAULT_SIZE_X), UDim.new(0, sizeY)),
 		AutomaticSize = if not isImageMode then Enum.AutomaticSize.X else nil,
 		ZIndex = props.ZIndex,
 
@@ -166,8 +169,8 @@ local function Component(props: Props)
 						if not use(props.Text) then
 							return New "ImageLabel" {
 								Size = UDim2.fromOffset(
-									props.IconSize or DEFAULT_ICON_SIZE,
-									props.IconSize or DEFAULT_ICON_SIZE
+									props.IconSize or defaultIconSize,
+									props.IconSize or defaultIconSize
 								),
 								Position = UDim2.fromScale(0.5, 0.5),
 								AnchorPoint = Vector2.new(0.5, 0.5),
