@@ -53,6 +53,7 @@ export type Props = {
 	SecondaryColor: CanBeState<Color3>?, -- outlines, text, icon color; defaults to a darker blue
 
     OnClick: (() -> ())?,
+    OnDown: (() -> ())?,
     Disabled: CanBeState<boolean>?,
 }
 
@@ -71,6 +72,7 @@ local function Component(props: Props)
         SecondaryColor = props.SecondaryColor or InterfaceConstants.colors.buttonBlueSecondary,
 
         OnClick = props.OnClick,
+        OnDown = props.OnDown,
         Disabled = props.Disabled,
 
         Icon = X_IMAGE_ID,
