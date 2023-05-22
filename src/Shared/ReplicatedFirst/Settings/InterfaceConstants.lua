@@ -5,6 +5,7 @@ return {
 	colors = {
 		menuBackground = Color3.fromRGB(228, 197, 176),
 		menuTitle = Color3.fromRGB(241, 227, 215),
+		menuShaded = Color3.fromRGB(208, 180, 161),
 		menuGreen1 = Color3.fromRGB(104, 120, 34),
 		settingsBlue = Color3.fromRGB(70, 101, 120),
 
