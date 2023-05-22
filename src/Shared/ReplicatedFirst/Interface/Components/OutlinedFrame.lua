@@ -1,6 +1,6 @@
 local ROUNDNESS = 32
 local MARGIN = 4
-local DEFUALT_PADDING = 24
+local DEFUALT_PADDING = 20
 local DEFUALT_OUTLINE_COLOR = Color3.fromRGB(0, 0, 0)
 
 --#region Imports
