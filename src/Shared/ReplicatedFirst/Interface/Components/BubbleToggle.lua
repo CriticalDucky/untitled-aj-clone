@@ -1,0 +1,184 @@
+--#region Imports
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
+local ReplicatedStorage = game:GetService "ReplicatedStorage"
+
+local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
+local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
+local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
+local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
+local componentsFolder = replicatedFirstShared:WaitForChild("Interface"):WaitForChild "Components"
+local settingsFolder = replicatedFirstShared:WaitForChild "Settings"
+
+local InterfaceConstants = require(settingsFolder:WaitForChild "InterfaceConstants")
+local buttonInput = require(componentsFolder:WaitForChild "ButtonInput")
+
+-- Optional: Remove imports that you don't need
+local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
+local New = Fusion.New
+local Hydrate = Fusion.Hydrate
+local Ref = Fusion.Ref
+local Children = Fusion.Children
+local Cleanup = Fusion.Cleanup
+local Out = Fusion.Out
+local OnEvent = Fusion.OnEvent
+local OnChange = Fusion.OnChange
+local Attribute = Fusion.Attribute
+local AttributeChange = Fusion.AttributeChange
+local AttributeOut = Fusion.AttributeOut
+local Value = Fusion.Value
+local Computed = Fusion.Computed
+local ForPairs = Fusion.ForPairs
+local ForKeys = Fusion.ForKeys
+local ForValues = Fusion.ForValues
+local Observer = Fusion.Observer
+local Tween = Fusion.Tween
+local Spring = Fusion.Spring
+local peek = Fusion.peek
+local cleanup = Fusion.cleanup
+local doNothing = Fusion.doNothing
+
+type CanBeState<T> = Fusion.CanBeState<T>
+-- #endregion
+
+export type Props = {
+	-- Default props
+	Name: CanBeState<string>?,
+	LayoutOrder: CanBeState<number>?,
+	Position: CanBeState<UDim2>?,
+	AnchorPoint: CanBeState<Vector2>?,
+	ZIndex: CanBeState<number>?,
+
+	-- Custom props
+	Disabled: CanBeState<boolean>?,
+	OnClick: (() -> ())?, -- Edits the state of the button
+	State: CanBeState<boolean>?, -- true = on, false = off
+}
+
+--[[
+	This component creates a stylized bubble toggle button.
+
+	Example usage:
+	```lua
+		
+	```
+]]
+local function Component(props: Props)
+	local state = props.State or Value(false)
+    local isHovering = Value(false)
+
+	local sizeY = InterfaceConstants.sizes.bubbleButtonSizeY
+	local sizeX = sizeY * 2
+
+	local springSpeed = InterfaceConstants.animation.bubbleButtonColorSpring.speed
+	local springDamping = InterfaceConstants.animation.bubbleButtonColorSpring.dampingRatio
+
+    local function brighten(color: Color3)
+		local h, s, v = color:ToHSV()
+		return Color3.fromHSV(h, s, math.min(v + 40 / 255, 1))
+	end
+
+	local function desaturate(color: Color3)
+		local h, s, v = color:ToHSV()
+		return Color3.fromHSV(h, math.max(s - 0.2, 0), v)
+	end
+
+	local primaryColor = Spring(
+		Computed(function(use)
+			local color = use(props.PrimaryColor or InterfaceConstants.colors.buttonBluePrimary)
+
+			if use(props.Disabled) then
+				return desaturate(color)
+			else
+				return if use(isHovering) then brighten(color) else color
+			end
+		end),
+		springSpeed,
+		springDamping
+	)
+
+	local secondaryColor = Spring(
+		Computed(function(use)
+			local color = use(props.SecondaryColor or InterfaceConstants.colors.buttonBlueSecondary)
+
+			if use(props.Disabled) then
+				return desaturate(color)
+			else
+				return if use(isHovering) then brighten(color) else color
+			end
+		end),
+		springSpeed,
+		springDamping
+	)
+
+	local frame = New "Frame" {
+		Name = props.Name or "BubbleToggle",
+		LayoutOrder = props.LayoutOrder,
+		Position = props.Position,
+		AnchorPoint = props.AnchorPoint,
+		ZIndex = props.ZIndex,
+		BackgroundTransparency = 1,
+		Size = UDim2.fromOffset(sizeX, sizeY),
+
+		[Children] = {
+			New "Frame" {
+				Name = "Background",
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				Position = UDim2.fromScale(0.5, 0.5),
+				BackgroundColor3 = secondaryColor,
+				Size = UDim2.fromScale(1, 1),
+
+				[Children] = {
+					New "UIPadding" {
+						PaddingLeft = UDim.new(0, 4),
+						PaddingRight = UDim.new(0, 4),
+					},
+
+					New "UICorner" {
+						CornerRadius = UDim.new(0, InterfaceConstants.sizes.bubbleButtonRoundness),
+					},
+
+					New "Frame" {
+						Name = "Bubble",
+						AnchorPoint = Spring(
+							Computed(function(use) return use(state) and Vector2.new(1, 0.5) or Vector2.new(0, 0.5) end),
+							springSpeed,
+							springDamping
+						),
+						Position = Spring(
+							Computed(
+								function(use) return use(state) and UDim2.fromScale(1, 0.5) or UDim2.fromScale(0, 0.5) end
+							),
+							springSpeed,
+							springDamping
+						),
+						BackgroundColor3 = primaryColor,
+						Size = UDim2.fromOffset(sizeY - 8, sizeY - 8),
+
+						[Children] = {
+							New "UICorner" {
+								CornerRadius = UDim.new(0, InterfaceConstants.sizes.bubbleButtonRoundness - 4),
+							},
+						},
+					},
+				},
+			},
+
+			buttonInput {
+				ZIndex = 2,
+				Size = UDim2.fromScale(1, 1),
+				Position = UDim2.fromScale(0.5, 0.5),
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				CornerRadius = UDim.new(0, InterfaceConstants.sizes.bubbleButtonRoundness),
+
+				OnDown = props.OnClick,
+				Disabled = props.Disabled,
+
+                isHovering = isHovering,
+			},
+		},
+	}
+
+	return frame
+end
+
+return Component
