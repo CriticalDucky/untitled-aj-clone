@@ -69,11 +69,18 @@ local function Component(props: Props)
             New "TextLabel" {
                 Name = "Inner",
                 Size = UDim2.fromScale(1, 1),
+                -- Position = UDim2.fromOffset(0, -5),
                 BackgroundTransparency = 1,
                 Text = props.Text,
                 FontFace = fontFace,
                 TextSize = textSize,
                 TextColor3 = props.TextColor,
+
+                [Children] = {
+                    New "UIPadding" {
+                        PaddingBottom = UDim.new(0, 5),
+                    }
+                }
             },
         }
     }
