@@ -61,6 +61,7 @@ export type Props = {
 	Square: CanBeState<boolean>?, -- if true, the button will be square
 
 	OnClick: (() -> ())?,
+	OnDown: (() -> ())?,
 	Disabled: CanBeState<boolean>?,
 }
 
@@ -187,6 +188,7 @@ local function Component(props: Props)
 			buttonInput {
 				Size = UDim2.new(1, 8, 1, 8),
 				OnClick = props.OnClick,
+				OnDown = props.OnDown,
 				Disabled = props.Disabled,
 				ZIndex = 10,
 				AnchorPoint = Vector2.new(0, 0),
