@@ -1,4 +1,4 @@
-local DEFAULT_SIZE_X = 100
+local DEFAULT_SIZE_X = 0
 local OUTER_ROUNDNESS = 24
 
 --#region Imports
