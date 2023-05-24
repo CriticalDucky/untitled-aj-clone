@@ -11,35 +11,16 @@ local componentsFolder = replicatedFirstShared:WaitForChild("Interface"):WaitFor
 -- Optional: Remove imports that you don't need
 local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
 local New = Fusion.New
-local Hydrate = Fusion.Hydrate
-local Ref = Fusion.Ref
-local Children = Fusion.Children
-local Cleanup = Fusion.Cleanup
-local Out = Fusion.Out
-local OnEvent = Fusion.OnEvent
-local OnChange = Fusion.OnChange
-local Attribute = Fusion.Attribute
-local AttributeChange = Fusion.AttributeChange
-local AttributeOut = Fusion.AttributeOut
-local Value = Fusion.Value
 local Computed = Fusion.Computed
-local ForPairs = Fusion.ForPairs
-local ForKeys = Fusion.ForKeys
-local ForValues = Fusion.ForValues
-local Observer = Fusion.Observer
-local Tween = Fusion.Tween
-local Spring = Fusion.Spring
-local peek = Fusion.peek
-local cleanup = Fusion.cleanup
-local doNothing = Fusion.doNothing
-
 type CanBeState<T> = Fusion.CanBeState<T>
 -- #endregion
 
 export type Props = {
 	-- Default props
 	CornerRadius: CanBeState<number>?,
-    Color: CanBeState<Color3>?,
+	Color: CanBeState<Color3>?,
+	ScrollbarOffset: CanBeState<number>?,
+	Disabled: CanBeState<boolean>?,
 }
 
 --[[
@@ -51,62 +32,84 @@ export type Props = {
     To use, create this component as a sibling to the scrolling frame you want to mask.
 ]]
 local function Component(props: Props)
-    local rounderImageId = "rbxassetid://8657765392"
+	local rounderImageId = "rbxassetid://8657765392"
 
-    local cornerRadius = props.CornerRadius or 8
-    local color = props.Color or Color3.new(1, 1, 1)
+	local cornerRadius = props.CornerRadius or 8
+	local color = props.Color or Color3.new(1, 1, 1)
 
-    local ZIndex = 10000000
+	local ZIndex = 10000000
 
-    return {
-        New "ImageLabel" {
-            AnchorPoint = Vector2.new(0, 0),
-            BackgroundTransparency = 1,
-            Position = UDim2.fromScale(0, 0),
-            Size = UDim2.fromOffset(cornerRadius, cornerRadius),
-            Image = rounderImageId,
-            ImageColor3 = color,
-            ImageRectSize = Vector2.new(128, 128),
-            ImageRectOffset = Vector2.new(0, 0),
-            ZIndex = ZIndex,
-        },
+	return {
+		New "ImageLabel" {
+			AnchorPoint = Vector2.new(0, 0),
+			BackgroundTransparency = 1,
+			Position = UDim2.fromScale(0, 0),
+			Size = UDim2.fromOffset(cornerRadius, cornerRadius),
+			Image = rounderImageId,
+			ImageColor3 = color,
+			ImageRectSize = Vector2.new(128, 128),
+			ImageRectOffset = Vector2.new(0, 0),
+			ZIndex = ZIndex,
+			Visible = Computed(function(use)
+				local disabled = use(props.Disabled) or false
+				return not disabled
+			end),
+		},
 
-        New "ImageLabel" {
-            AnchorPoint = Vector2.new(1, 0),
-            BackgroundTransparency = 1,
-            Position = UDim2.fromScale(1, 0),
-            Size = UDim2.fromOffset(cornerRadius, cornerRadius),
-            Image = rounderImageId,
-            ImageColor3 = color,
-            ImageRectSize = Vector2.new(128, 128),
-            ImageRectOffset = Vector2.new(128, 0),
-            ZIndex = ZIndex,
-        },
+		New "ImageLabel" {
+			AnchorPoint = Vector2.new(1, 0),
+			BackgroundTransparency = 1,
+			Position = Computed(function(use)
+				local scrollbarOffset = use(props.ScrollbarOffset) or 0
+				return UDim2.fromScale(1, 0) - UDim2.fromOffset(scrollbarOffset, 0)
+			end),
+			Size = UDim2.fromOffset(cornerRadius, cornerRadius),
+			Image = rounderImageId,
+			ImageColor3 = color,
+			ImageRectSize = Vector2.new(128, 128),
+			ImageRectOffset = Vector2.new(128, 0),
+			ZIndex = ZIndex,
+            Visible = Computed(function(use)
+				local disabled = use(props.Disabled) or false
+				return not disabled
+			end),
+		},
 
-        New "ImageLabel" {
-            AnchorPoint = Vector2.new(0, 1),
-            BackgroundTransparency = 1,
-            Position = UDim2.fromScale(0, 1),
-            Size = UDim2.fromOffset(cornerRadius, cornerRadius),
-            Image = rounderImageId,
-            ImageColor3 = color,
-            ImageRectSize = Vector2.new(128, 128),
-            ImageRectOffset = Vector2.new(0, 128),
-            ZIndex = ZIndex,
-        },
+		New "ImageLabel" {
+			AnchorPoint = Vector2.new(0, 1),
+			BackgroundTransparency = 1,
+			Position = UDim2.fromScale(0, 1),
+			Size = UDim2.fromOffset(cornerRadius, cornerRadius),
+			Image = rounderImageId,
+			ImageColor3 = color,
+			ImageRectSize = Vector2.new(128, 128),
+			ImageRectOffset = Vector2.new(0, 128),
+			ZIndex = ZIndex,
+            Visible = Computed(function(use)
+				local disabled = use(props.Disabled) or false
+				return not disabled
+			end)
+		},
 
-        New "ImageLabel" {
-            AnchorPoint = Vector2.new(1, 1),
-            BackgroundTransparency = 1,
-            Position = UDim2.fromScale(1, 1),
-            Size = UDim2.fromOffset(cornerRadius, cornerRadius),
-            Image = rounderImageId,
-            ImageColor3 = color,
-            ImageRectSize = Vector2.new(128, 128),
-            ImageRectOffset = Vector2.new(128, 128),
-            ZIndex = ZIndex,
-        },
-    }
+		New "ImageLabel" {
+			AnchorPoint = Vector2.new(1, 1),
+			BackgroundTransparency = 1,
+			Position = Computed(function(use)
+				local scrollbarOffset = use(props.ScrollbarOffset) or 0
+				return UDim2.fromScale(1, 1) - UDim2.fromOffset(scrollbarOffset, 0)
+			end),
+			Size = UDim2.fromOffset(cornerRadius, cornerRadius),
+			Image = rounderImageId,
+			ImageColor3 = color,
+			ImageRectSize = Vector2.new(128, 128),
+			ImageRectOffset = Vector2.new(128, 128),
+			ZIndex = ZIndex,
+            Visible = Computed(function(use)
+				local disabled = use(props.Disabled) or false
+				return not disabled
+			end)
+		},
+	}
 end
 
 return Component
