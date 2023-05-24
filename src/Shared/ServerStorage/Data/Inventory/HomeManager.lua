@@ -211,7 +211,7 @@ end
 function HomeManager.getHomeServerInfo(userId: number?): HomeServerInfo
 	userId = userId or getHomeOwner()
 
-	local profile = PlayerDataManager.viewPlayerProfile(userId)
+	local profile = PlayerDataManager.viewProfileAsync(userId)
 
 	return profile and profile.playerInfo.homeServerInfo
 end
@@ -225,7 +225,7 @@ end
 function HomeManager.isHomeIdentifierStamped(userId: number?): (boolean, boolean?)
 	userId = userId or getHomeOwner()
 
-	local profile = PlayerDataManager.viewPlayerProfile(userId)
+	local profile = PlayerDataManager.viewProfileAsync(userId)
 
 	if profile then return true, profile.playerInfo.homeInfoStamped end
 
@@ -432,8 +432,9 @@ function HomeManager.addPlacedItem(itemId: string, pivotCFrame: CFrame)
 	local homeOwner = getHomeOwner()
 	assert(homeOwner, "HomeManager.addPlacedItem: No home owner found.")
 
-	local playerData = PlayerDataManager.get(homeOwner)
-	assert(playerData, "HomeManager.addPlacedItem: No player data found.")
+	local player = Players:GetPlayerByUserId(homeOwner)
+
+	assert(player and PlayerDataManager.profileIsLoaded(player), "HomeManager.addPlacedItem: No player data found.")
 
 	local success, placedItem = HomeManager.getPlacedItemFromId(itemId, homeOwner)
 
@@ -470,9 +471,9 @@ function HomeManager.addPlacedItem(itemId: string, pivotCFrame: CFrame)
 			return false
 		end
 
-		playerData:arraySet(path, placedItemIndex, placedItem)
+		PlayerDataManager.arraySetProfile(player, path, placedItemIndex, placedItem)
 	else
-		playerData:arrayInsert(path, placedItem)
+		PlayerDataManager.arrayInsertProfile(player, path, placedItem)
 	end
 
 	return HomeManager.loadPlacedItem(placedItem)
@@ -486,9 +487,11 @@ end
 ]]
 function HomeManager.removePlacedItem(itemId: string, userId: number?)
 	userId = userId or getHomeOwner()
+	assert(userId, "HomeManager.removePlacedItem: No user id found.")
 
-	local playerData = PlayerDataManager.get(userId)
-	assert(playerData, "Player data not found")
+	local player = Players:GetPlayerByUserId(userId)
+
+	assert(player and PlayerDataManager.profileIsLoaded(player), "Player data not found")
 
 	local success, placedItem = HomeManager.getPlacedItemFromId(itemId, userId)
 	if not success then
@@ -517,7 +520,7 @@ function HomeManager.removePlacedItem(itemId: string, userId: number?)
 
 	local path = { "inventory", "homes", selectedHomeIndex, "placedItems" }
 
-	playerData:arrayRemove(path, placedItemIndex)
+	PlayerDataManager.arrayRemoveProfile(player, path, placedItemIndex)
 
 	if isHomeServer then HomeManager.unloadPlacedItem(placedItem) end
 
@@ -613,14 +616,13 @@ function HomeManager.unloadHome()
 	placedItemsFolder:ClearAllChildren()
 end
 
-PlayerDataManager.forAllPlayerData(function(playerData: PlayerData)
+local function loadProfile(player: Player)
 	LocalServerInfo.getServerIdentifier() -- Make sure server identifier is get
 
 	local function onError() -- If initialization failed for a player
 		warn "HomeManager: Initialization failed for player."
 	end
 
-	local player = playerData.player
 	local userId = player.UserId
 	local homes = InventoryManager.getHomes(userId)
 
@@ -669,7 +671,7 @@ PlayerDataManager.forAllPlayerData(function(playerData: PlayerData)
 
 		local success = Promise.retry(getReservedServer, 5)
 			:andThen(function(code, privateServerId)
-				playerData:setValue({ "playerInfo", "homeServerInfo" }, {
+				PlayerDataManager.setValueProfile(player, { "playerInfo", "homeServerInfo" }, {
 					serverCode = code,
 					privateServerId = privateServerId,
 				})
@@ -696,7 +698,7 @@ PlayerDataManager.forAllPlayerData(function(playerData: PlayerData)
 	if not isStamped then
 		print "Stamping home server..."
 
-		local success, response = ServerData.stampHomeServer(playerData)
+		local success, response = ServerData.stampHomeServer(player)
 
 		if not success then
 			warn("HomeManager: Failed to stamp home server: ", response)
@@ -746,7 +748,13 @@ PlayerDataManager.forAllPlayerData(function(playerData: PlayerData)
 			if not doesOwn then HomeManager.unloadPlacedItem(select(2, HomeManager.getPlacedItemFromId(itemId))) end
 		end
 	end
-end)
+end
+
+for _, player in PlayerDataManager.getPlayersWithLoadedProfiles() do
+	loadProfile(player)
+end
+
+PlayerDataManager.profileLoaded:Connect(loadProfile)
 
 InventoryManager.itemRemovedFromInventory:Connect(
 	function(player: Player, itemCategory: UserEnum, _, item: InventoryItem)

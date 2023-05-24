@@ -12,7 +12,6 @@ local peek = Fusion.peek
 
 type TimeInfo = Types.TimeInfo
 type TimeRange = Types.TimeRange
----@diagnostic disable-next-line: undefined-type -- wtf is this warning
 type Use = Fusion.Use
 
 local unixTimeValue = Value(os.time())
@@ -26,7 +25,7 @@ if RunService:IsClient() then
 	local replicationFolder = replicatedStorageShared:WaitForChild "Replication"
 	local ReplicaCollection = require(replicationFolder:WaitForChild "ReplicaCollection")
 
-	local unixTimeReplica = ReplicaCollection.get "ServerUnixTime"
+	local unixTimeReplica = ReplicaCollection.waitForReplica "ServerUnixTime"
 
 	unixTimeReplica:ListenToChange(
 		{ "timeInfo", "unix" },

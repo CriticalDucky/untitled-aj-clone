@@ -84,13 +84,12 @@ local InventoryManager = {}
 local function removeItem(player: Player, itemCategory: UserEnum, itemIndex: number)
 	assert(player and itemCategory and itemIndex, "removeItem: Invalid arguments")
 
-	local playerData = PlayerDataManager.get(player, true)
-	assert(playerData, "removeItem: Player data not found")
+	assert(PlayerDataManager.profileIsLoaded(player), "removeItem: Player data not found")
 
-	local item = InventoryManager.getItemFromIndex(playerData.player.UserId, itemCategory, itemIndex)
+	local item = InventoryManager.getItemFromIndex(player.UserId, itemCategory, itemIndex)
 	assert(item, "removeItem: Item not found")
 
-	playerData:arrayRemove({ "inventory", itemCategory }, itemIndex)
+	PlayerDataManager.arrayRemoveProfile(player, { "inventory", itemCategory }, itemIndex)
 	InventoryManager.itemRemovedFromInventory:Fire(player, itemCategory, itemIndex, item)
 end
 
@@ -105,15 +104,14 @@ end
 local function addItem(player: Player, itemCategory: UserEnum, item: InventoryItem)
 	assert(player and itemCategory and item, "addItem: Invalid arguments")
 
-	local playerData = PlayerDataManager.get(player)
-	assert(playerData, "addItem: Player data not found")
+	assert(PlayerDataManager.profileIsLoaded(player), "addItem: Player data not found")
 
 	local isInventoryFull = select(2, InventoryManager.isInventoryFull(player.UserId, itemCategory, 1))
 	assert(not isInventoryFull, "addItem: Inventory is full")
 
 	InventoryManager.itemPlacingInInventory:Fire(player, itemCategory, item)
 
-	playerData:arrayInsert({ "inventory", itemCategory }, item)
+	PlayerDataManager.arrayInsertProfile(player, { "inventory", itemCategory }, item)
 end
 
 --[[
@@ -145,7 +143,10 @@ local function changeOwnerOfItems(items: { InventoryItem }, currentOwner: Player
 			end
 
 			assert(
-				not select(2, InventoryManager.isInventoryFull(newOwner.UserId, item.itemCategory, #otherItemsOfSameCategory)),
+				not select(
+					2,
+					InventoryManager.isInventoryFull(newOwner.UserId, item.itemCategory, #otherItemsOfSameCategory)
+				),
 				"InventoryManager.changeOwnerOfItems: Inventory would be full for: " .. (item.itemCategory or "nil")
 			)
 		end
@@ -159,8 +160,10 @@ local function changeOwnerOfItems(items: { InventoryItem }, currentOwner: Player
 	end
 
 	if newOwner and currentOwner then
-		local currentOwnerData, newOwnerData = PlayerDataManager.get(currentOwner), PlayerDataManager.get(newOwner)
-		assert(currentOwnerData and newOwnerData, "InventoryManager.changeOwnerOfItems: Player data not found")
+		assert(
+			PlayerDataManager.profileIsLoaded(currentOwner) and PlayerDataManager.profileIsLoaded(newOwner),
+			"InventoryManager.changeOwnerOfItems: Player data not found"
+		)
 
 		checkIfInventoryWouldBeFull()
 
@@ -173,8 +176,10 @@ local function changeOwnerOfItems(items: { InventoryItem }, currentOwner: Player
 			addItem(newOwner, itemCategory, item)
 		end
 	elseif currentOwner and not newOwner then
-		local playerData = PlayerDataManager.get(currentOwner)
-		assert(playerData, "InventoryManager.changeOwnerOfItems: Player data not found")
+		assert(
+			PlayerDataManager.profileIsLoaded(currentOwner),
+			"InventoryManager.changeOwnerOfItems: Player data not found"
+		)
 
 		for _, item in pairs(items) do
 			local itemCategory, index = InventoryManager.getItemPathFromId(currentOwner.UserId, item.id)
@@ -184,8 +189,10 @@ local function changeOwnerOfItems(items: { InventoryItem }, currentOwner: Player
 			removeItem(currentOwner, itemCategory, index)
 		end
 	elseif not currentOwner and newOwner then
-		local playerData = PlayerDataManager.get(newOwner)
-		assert(playerData, "InventoryManager.changeOwnerOfItems: Player data not found")
+		assert(
+			PlayerDataManager.profileIsLoaded(newOwner),
+			"InventoryManager.changeOwnerOfItems: Player data not found"
+		)
 
 		checkIfInventoryWouldBeFull()
 
@@ -204,7 +211,7 @@ InventoryManager.itemRemovedFromInventory = Signal.new()
 	Can return nil in the rare case retrieving the player's profile data fails.
 ]]
 function InventoryManager.getInventory(userId: number): Inventory?
-	local profileData = PlayerDataManager.viewPlayerProfile(userId)
+	local profileData = PlayerDataManager.viewProfileAsync(userId)
 	return profileData and profileData.inventory
 end
 
@@ -357,7 +364,8 @@ end
 ]]
 function InventoryManager.playerOwnsItems(userId: number, itemIds: { string | InventoryItem }): (boolean, boolean)
 	for _, itemId in pairs(itemIds) do
-		local success, playerOwnsItem = InventoryManager.playerOwnsItem(userId, if type(itemId) == "string" then itemId else itemId.id)
+		local success, playerOwnsItem =
+			InventoryManager.playerOwnsItem(userId, if type(itemId) == "string" then itemId else itemId.id)
 
 		if not success then
 			return false
@@ -398,7 +406,11 @@ end
 	end
 	```
 ]]
-function InventoryManager.isInventoryFull(userId: number, itemCategory: UserEnum, numItemsToAdd: number?): (boolean, boolean)
+function InventoryManager.isInventoryFull(
+	userId: number,
+	itemCategory: UserEnum,
+	numItemsToAdd: number?
+): (boolean, boolean)
 	assert(userId and itemCategory, "InventoryManager.isInventoryFull: Invalid arguments")
 
 	numItemsToAdd = numItemsToAdd or 0
@@ -478,8 +490,10 @@ end
 --[[
 	Crude way to reconcile item props with the player's inventory. Will replace this function with a better one later.
 ]]
-local function reconcileItems(playerData) -- just like the function above, but no promises
-	local success, inventory = InventoryManager.getInventory(playerData.player.userId)
+local function reconcileItems(player) -- just like the function above, but no promises
+	local success, inventory = InventoryManager.getInventory(player.userId)
+
+	assert(PlayerDataManager.profileIsLoaded(player), "reconcileItems: Player profile not loaded")
 
 	if not success or not inventory then return end
 
@@ -501,7 +515,8 @@ local function reconcileItems(playerData) -- just like the function above, but n
 				end
 
 				if index(item, Table.copy(path)) == nil then
-					playerData:setValue(
+					PlayerDataManager.setValueProfile(
+						player,
 						{ "inventory", itemCategory, itemIndex, table.unpack(path) },
 						Table.deepCopy(value)
 					)
@@ -514,8 +529,11 @@ local function reconcileItems(playerData) -- just like the function above, but n
 end
 
 -- For all player data that's loaded in this server, reconcile items
-PlayerDataManager.forAllPlayerData(function(playerData)
-	reconcileItems(playerData)
-end)
+
+for _, player in PlayerDataManager.getPlayersWithLoadedProfiles() do
+	reconcileItems(player)
+end
+
+PlayerDataManager.profileLoaded:Connect(reconcileItems)
 
 return InventoryManager

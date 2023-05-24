@@ -23,7 +23,7 @@ local PlayerSettings = {}
 ]]
 function PlayerSettings.get(player: Player | number)
 	local profileData =
-		PlayerDataManager.viewPlayerProfile(if typeof(player) == "number" then player else player.UserId)
+		PlayerDataManager.viewProfileAsync(if typeof(player) == "number" then player else player.UserId)
 
 	if profileData then
 		return true, profileData.playerSettings
@@ -53,10 +53,9 @@ end
     Does not return anything.
 ]]
 function PlayerSettings.setSetting(player: Player | number, settingName: string, value: any)
-	local playerData = PlayerDataManager.get(player)
-	assert(playerData, "Player must be in this server")
+	assert(PlayerDataManager.profileIsLoaded(player), "Player must have loaded profile")
 
-	playerData:setValue({ "playerSettings", settingName }, value)
+	PlayerDataManager.setValueProfile(player, { "playerSettings", settingName }, value)
 end
 
 return PlayerSettings

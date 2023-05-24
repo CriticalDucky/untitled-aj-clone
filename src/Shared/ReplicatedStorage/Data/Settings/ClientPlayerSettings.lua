@@ -64,7 +64,7 @@ end
 	Sets a player's setting. Will return false if validation fails.
 ]]
 function ClientPlayerSettings.setSetting(settingName: string, value: any): boolean
-	local setSettingReplica = ReplicaCollection.get "SetSettingRequest"
+	local setSettingReplica = ReplicaCollection.waitForReplica "SetSettingRequest"
 
 	return unpack(ReplicaRequest.new(setSettingReplica, settingName, value))
 end

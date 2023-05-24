@@ -1,3 +1,4 @@
+local Players = game:GetService "Players"
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ServerStorage = game:GetService "ServerStorage"
 
@@ -11,16 +12,20 @@ local PlayerLocation = require(serverUtility.PlayerLocation)
 local Friends = require(utilityFolder.Friends)
 local PlayerDataManager = require(dataFolder.PlayerDataManager)
 
-PlayerDataManager.forAllPlayerData(function(playerData)
-	local player = playerData.player
-
+local function initFriendLocations(player: Player)
 	local friends = Friends.get(player.UserId)
 
 	for _, friendData in pairs(friends) do
 		local playerLocation = PlayerLocation.get(friendData.Id)
 
 		if playerLocation then
-			playerData:setValue({ "friendLocations", "locations", friendData.Id }, playerLocation)
+			PlayerDataManager.setValueTemp(player, { "friendLocations", friendData.Id }, playerLocation)
 		end
 	end
-end)
+end
+
+for _, player in PlayerDataManager.getPlayersWithLoadedTempData() do
+	initFriendLocations(player)
+end
+
+PlayerDataManager.tempDataLoaded:Connect(initFriendLocations)

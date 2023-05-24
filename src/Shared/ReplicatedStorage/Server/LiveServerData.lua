@@ -250,7 +250,7 @@ if RunService:IsServer() then
 		assert(serverIdentifier.serverType, "serverIdentifier.serverType is nil")
 
 		lastBroadcast = time()
-
+		
 		Message.publish(BROADCAST_CHANNEL, {
 			serverInfo = serverInfo,
 			serverIdentifier = serverIdentifier,
@@ -350,7 +350,7 @@ if RunService:IsServer() then
 elseif RunService:IsClient() then -- Client
 	local ReplicaCollection = require(replicatedStorageShared.Replication.ReplicaCollection)
 
-	local replicaData = ReplicaCollection.get "LiveServerData"
+	local replicaData = ReplicaCollection.waitForReplica "LiveServerData"
 
 	dataValue = Value(replicaData.Data) -- Simple convenience for UI development
 	-- Because of this, whenever we call any of the functions below,

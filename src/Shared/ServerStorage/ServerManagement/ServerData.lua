@@ -115,6 +115,7 @@ local LiveServerData = require(serverFolder.LiveServerData)
 local Math = require(replicatedFirstUtility.Math)
 local Table = require(replicatedFirstUtility.Table)
 local ReplicaService = require(serverStorageVendor.ReplicaService)
+local PlayerDataManager = require(dataFolder.PlayerDataManager)
 local Promise = require(replicatedFirstVendor.Promise)
 local Types = require(replicatedFirstUtility.Types)
 local ServerTypeEnum = require(enumsFolder.ServerType)
@@ -512,9 +513,10 @@ end
 	```
 	Returns a success value and an error message if the request failed.
 ]]
-function ServerData.stampHomeServer(playerData: PlayerData)
-	local owner = playerData.player
-	local homeServerInfo = playerData.profile.Data.playerInfo.homeServerInfo
+function ServerData.stampHomeServer(owner: Player)
+	assert(PlayerDataManager.profileIsLoaded(owner), "Player profile is not loaded")
+	
+	local homeServerInfo = PlayerDataManager.viewProfileAsync(owner.UserId).playerInfo.homeServerInfo
 	local privateServerId = homeServerInfo.privateServerId
 
 	assert(privateServerId, "Player does not have a home server")
@@ -539,7 +541,7 @@ function ServerData.stampHomeServer(playerData: PlayerData)
 			This may seem redundant, but it saves us from having to make a separate request to the datastore.
 			(this is stored in the player's profile)
 		]]
-		playerData:setValue({ "playerInfo", "homeInfoStamped" }, true)
+		PlayerDataManager.setValueProfile(owner, { "playerInfo", "homeInfoStamped" }, true)
 	else
 		warn("Failed to stamp home server: ", response)
 	end

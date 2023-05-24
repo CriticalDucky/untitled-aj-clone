@@ -33,7 +33,7 @@ function ClientPlayMinigame.request(minigameType, ...)
         return false, PlayMinigameResponseType.alreadyInPlace
     end
 
-    return unpack(ReplicaRequest.new(ReplicaCollection.get("PlayMinigameRequest"), minigameType, ...))
+    return unpack(ReplicaRequest.new(ReplicaCollection.waitForReplica("PlayMinigameRequest"), minigameType, ...))
 end
 
 return ClientPlayMinigame
