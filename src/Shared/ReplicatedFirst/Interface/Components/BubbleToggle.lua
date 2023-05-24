@@ -1,3 +1,5 @@
+local SIZE_Y = 28
+
 --#region Imports
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
@@ -66,8 +68,7 @@ local function Component(props: Props)
 	local state = props.State or Value(false)
     local isHovering = Value(false)
 
-	local sizeY = InterfaceConstants.sizes.bubbleButtonSizeY
-	local sizeX = sizeY * 2
+	local sizeX = SIZE_Y * 2
 
 	local springSpeed = InterfaceConstants.animation.bubbleButtonColorSpring.speed
 	local springDamping = InterfaceConstants.animation.bubbleButtonColorSpring.dampingRatio
@@ -117,7 +118,7 @@ local function Component(props: Props)
 		AnchorPoint = props.AnchorPoint,
 		ZIndex = props.ZIndex,
 		BackgroundTransparency = 1,
-		Size = UDim2.fromOffset(sizeX, sizeY),
+		Size = UDim2.fromOffset(sizeX, SIZE_Y),
 
 		[Children] = {
 			New "Frame" {
@@ -152,7 +153,7 @@ local function Component(props: Props)
 							springDamping
 						),
 						BackgroundColor3 = primaryColor,
-						Size = UDim2.fromOffset(sizeY - 8, sizeY - 8),
+						Size = UDim2.fromOffset(SIZE_Y - 8, SIZE_Y - 8),
 
 						[Children] = {
 							New "UICorner" {
