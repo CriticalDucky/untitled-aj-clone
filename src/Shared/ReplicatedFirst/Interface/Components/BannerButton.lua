@@ -52,6 +52,7 @@ export type Props = {
 	RoundnessPixels: CanBeState<number>?, -- Defaults to 24
 	BorderSizePixels: CanBeState<number>?, -- Defaults to 4
 	BorderColor: CanBeState<Color3>?, -- Defaults to black
+	BottomExtraPx: CanBeState<number>?, -- Defaults to 0, adds extra px to the bottom of the button
 	BorderHoverColor: CanBeState<Color3>?, -- Defaults to brightened border color
 	BorderClickColor: CanBeState<Color3>?, -- Hover color will be used if not provided
 	BorderDisabledColor: CanBeState<Color3>?, -- Defaults to slightly darkened border color
@@ -152,9 +153,9 @@ local function Component(props: Props)
 
 			New "CanvasGroup" {
 				Name = "ImageContainer",
-				AnchorPoint = Vector2.new(0.5, 0.5),
-				Position = UDim2.fromScale(0.5, 0.5),
-				Size = UDim2.new(1, -borderSizePixels * 2, 1, -borderSizePixels * 2),
+				AnchorPoint = Vector2.new(0.5, 0),
+				Position = UDim2.fromScale(0.5, 0) + UDim2.fromOffset(0, borderSizePixels),
+				Size = UDim2.new(1, -borderSizePixels * 2, 1, -borderSizePixels * 2 - inputExtraPx),
 				ZIndex = -1,
 
 				BackgroundTransparency = 1,
