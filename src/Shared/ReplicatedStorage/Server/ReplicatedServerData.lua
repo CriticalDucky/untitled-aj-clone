@@ -127,7 +127,7 @@ type Use = Fusion.Use
 local serverDataValue = Value {}
 
 local serverIdentifierPromise = Promise.new(function(resolve) -- Fat boy promise
-	local privateServerId = ReplicaCollection.get("SessionInfo").Data.privateServerId
+	local privateServerId = ReplicaCollection.waitForReplica("SessionInfo").Data.privateServerId
 
 	local disconnect
 
@@ -334,7 +334,7 @@ function ReplicatedServerData.getServerIdentifier(): ServerIdentifier
 end
 
 task.spawn(function()
-	local replica = ReplicaCollection.get "ServerData"
+	local replica = ReplicaCollection.waitForReplica "ServerData"
 
 	replica:ListenToRaw(function()
 		serverDataValue:set(replica.Data)

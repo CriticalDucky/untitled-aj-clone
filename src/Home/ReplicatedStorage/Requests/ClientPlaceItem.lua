@@ -27,7 +27,7 @@ local PlaceItem = {}
 	Internal function for sending a request to the server.
 ]]
 local function request(placeItemRequestType: UserEnum, info: { itemId: string, pivotCFrame: CFrame? })
-	local placeItemRequestReplica = ReplicaCollection.get "PlaceItemRequest"
+	local placeItemRequestReplica = ReplicaCollection.waitForReplica "PlaceItemRequest"
 	return unpack(ReplicaRequest.new(placeItemRequestReplica, placeItemRequestType, info))
 end
 

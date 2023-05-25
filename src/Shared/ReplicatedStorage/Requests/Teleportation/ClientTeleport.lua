@@ -60,7 +60,7 @@ local function requestTeleport(teleportRequestType, ...)
 
 	local vararg = { ... }
 
-	local TeleportRequest = ReplicaCollection.get "TeleportRequest"
+	local TeleportRequest = ReplicaCollection.waitForReplica "TeleportRequest"
 
 	local response = ReplicaRequest.new(TeleportRequest, teleportRequestType, unpack(vararg))
 

@@ -16,7 +16,6 @@ local replicationFolder = replicatedStorageShared:WaitForChild "Replication"
 local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
 local serverFolder = replicatedStorageShared:WaitForChild "Server"
-local requestsFolder = replicatedStorageShared:WaitForChild "Requests"
 
 local ReplicaCollection = require(replicationFolder:WaitForChild "ReplicaCollection")
 local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
@@ -24,7 +23,6 @@ local Types = require(utilityFolder:WaitForChild "Types")
 local Promise = require(replicatedFirstVendor:WaitForChild "Promise")
 local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
 local ServerTypeGroups = require(serverFolder:WaitForChild "ServerTypeGroups")
-local ReplicaRequest = require(requestsFolder:WaitForChild "ReplicaRequest")
 
 type InventoryCategory = Types.InventoryCategory
 type Promise = Types.Promise
@@ -35,6 +33,8 @@ local Value = Fusion.Value
 local Observer = Fusion.Observer
 local peek = Fusion.peek
 --#endregion
+
+local player = Players.LocalPlayer
 
 local playerDataValue = Value {}
 
@@ -71,7 +71,7 @@ end
 ]]
 function ReplicatedPlayerData.get(player: Player | number | nil): ProfileData?
 	if ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
-		warn("ReplicatedPlayerData.get should not be called on the routing server.")
+		warn "ReplicatedPlayerData.get should not be called on the routing server."
 		warn(debug.traceback())
 	end
 
@@ -92,23 +92,10 @@ function ReplicatedPlayerData.get(player: Player | number | nil): ProfileData?
 	end):expect()
 end
 
---[[
-	Requests an offline player's data and uses one credit if successful.
-	Clients have at max 5 credits and they replenish at a rate of 1 credit every 30 seconds.
-
-	Returns an allowed boolean and the data if successful.
-	Even if the allowed boolean is true, the data may be nil if retrieval failed.
-]]
-function ReplicatedPlayerData.requestData(userId: number): (boolean, ProfileData?)
-	local replica = ReplicaCollection.get "ProfileDataRequest"
-
-	return unpack(ReplicaRequest.new(replica, userId))
-end
-
 if not ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
 	task.spawn(function()
-		local publicDataReplica = ReplicaCollection.get "PlayerDataPublic"
-		local privateDataReplica = ReplicaCollection.get "PlayerDataPrivate"
+		local publicDataReplica = ReplicaCollection.waitForReplica "PublicPlayerData"
+		local privateDataReplica = ReplicaCollection.waitForReplica("PrivatePlayerData" .. player.UserId)
 
 		local function updateValue() -- Uses the data from the replicas to update and merge the data into playerDataValue
 			local playerDataTable = peek(playerDataValue)

@@ -20,7 +20,7 @@ function ClientPurchase.request(shopEnum, itemIndex)
 	assert(shopEnum and Shops[shopEnum], "shop must be a valid shop type")
 	assert(itemIndex and Shops[shopEnum].items[itemIndex], "item must be a valid item")
 
-	local purchaseRequestReplica = ReplicaCollection.get("PurchaseRequest")
+	local purchaseRequestReplica = ReplicaCollection.waitForReplica("PurchaseRequest")
 
 	return ReplicaRequest.new(purchaseRequestReplica, shopEnum, itemIndex)
 end

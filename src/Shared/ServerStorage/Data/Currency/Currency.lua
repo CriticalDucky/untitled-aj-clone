@@ -15,11 +15,11 @@ local Currency = {}
     CurrencyType is a CurrencyType.lua enum.
 ]]
 function Currency.get(player, currencyType)
-	local playerData = PlayerDataManager.get(player)
+	local profile = PlayerDataManager.viewProfileAsync(player.UserId)
 
-	if not playerData then return false end
+	if not profile then return false end
 
-	local currencyTable = playerData.profile.Data.currency
+	local currencyTable = profile.Data.currency
 
 	return true, if currencyType then currencyTable[currencyType] else currencyTable
 end
@@ -48,11 +48,9 @@ end
 function Currency.set(player: Player, currencyType, amount: number)
     assert(player and currencyType and amount, "Currency.set: Missing argument(s)")
 
-    local playerData = PlayerDataManager.get(player)
+    if not PlayerDataManager.profileIsLoaded(player) then return false end
 
-    if not playerData then return false end
-
-    playerData:setValue({ "currency", currencyType }, amount)
+    PlayerDataManager.setValueProfile(player, { "currency", currencyType }, amount)
 
     return true
 end
@@ -66,9 +64,7 @@ end
 function Currency.increment(player: Player, currencyType, amount: number)
 	assert(player and currencyType and amount, "Currency.increment: Missing argument(s)")
 
-	local playerData = PlayerDataManager.get(player)
-
-	if not playerData then return false end
+	if not PlayerDataManager.profileIsLoaded(player) then return false end
 
 	local success, currencyAmount = Currency.get(player, currencyType)
 

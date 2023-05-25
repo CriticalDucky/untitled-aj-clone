@@ -7,71 +7,37 @@ local ReplicaController = require(replicaServiceFolder:WaitForChild "ReplicaCont
 
 local replicas = {}
 
-local classes = {
-	"PlayerDataPublic",
-	"PurchaseRequest",
-	"TeleportRequest",
-	"ServerUnixTime",
-	"PlaceItemRequest",
-	"PlayMinigameRequest",
-	"LiveServerData",
-	"ServerData",
-	"SessionInfo",
-	"ProfileDataRequest",
-	"SetSettingRequest"
-}
-
-local inclusiveClasses =
-	{ -- Classes that can be found inside a string. For example, "PlayerDataPrivate" can be found inside "PlayerDataPrivate_1234567890"
-		"PlayerDataPrivate",
-	}
-
-local function getInclusiveClass(class)
-	for _, inclusiveClass in pairs(inclusiveClasses) do
-		if string.find(class, inclusiveClass) then return inclusiveClass end
-	end
-
-	return false
-end
-
-local function onReplicaReceived(replica)
-	local class = replica.Class
-
-	class = getInclusiveClass(class) or class
-
-	if not replicas[class] then print("Replica recieved: ", class) end
-
-	replicas[class] = replica
-end
-
-local replicaCollection = {}
+local ReplicaCollection = {}
 
 -- Gets the replica of the given class. Class must be a string.
-function replicaCollection.get(class: string)
+function ReplicaCollection.waitForReplica(class: string)
 	assert(type(class) == "string", "ReplicaCollection.get: class must be a string")
-	assert(table.find(classes, class) or getInclusiveClass(class), "ReplicaCollection.get: class must be a valid class")
 
-	class = getInclusiveClass(class) or class
-
-	local lastPrint = time()
+	local beginWaitTime = time()
+	local warned = false
 
 	while not replicas[class] do
 		task.wait()
 
-		if time() - lastPrint > 5 then
-			print("Waiting for replica", class)
-			lastPrint = time()
+		if time() - beginWaitTime > 5 and not warned then
+			warn("Infinite yield possible for replica of class ", class)
+			warned = true
 		end
 	end
 
 	return replicas[class]
 end
 
--- for _, class in ipairs(classes) do
--- 	ReplicaController.ReplicaOfClassCreated(class, onReplicaReceived)
--- end
+ReplicaController.NewReplicaSignal:Connect(function(replica)
+	local class = if string.find(replica.Class, "^.*__%$.-$")
+		then string.sub(replica.Class, 1, string.find(replica.Class, "__%$.-$") - 1)
+		else replica.Class
 
-ReplicaController.NewReplicaSignal:Connect(onReplicaReceived)
+	if replicas[class] then warn("A replica of class", class, "already exists, so the old one will be overwritten.") end
+
+	replicas[class] = replica
+end)
+
 ReplicaController.RequestData()
 
-return replicaCollection
+return ReplicaCollection

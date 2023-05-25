@@ -33,7 +33,7 @@ function ShopManager.canPlayerBuyItem(player, shopEnum, itemIndex)
 	local shopItem = shopInfoTable.items[itemIndex]
 	local itemInfo = Items[shopItem.itemCategory][shopItem.item]
 
-	local playerData = PlayerDataManager.get(player)
+	local playerData = PlayerDataManager.viewProfileAsync(player.UserId)
 
 	if not playerData then
 		warn "Player data not found"

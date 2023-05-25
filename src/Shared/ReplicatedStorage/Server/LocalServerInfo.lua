@@ -84,7 +84,7 @@ function LocalServerInfo.getServerIdentifier()
 		local ReplicaCollection =
 			require(replicatedStorageShared:WaitForChild("Replication"):WaitForChild "ReplicaCollection")
 
-		SessionInfo = ReplicaCollection.get("SessionInfo").Data
+		SessionInfo = ReplicaCollection.waitForReplica("SessionInfo").Data
 	end
 
 	if serverIdentifier then serverIdentifier.serverType = serverType end

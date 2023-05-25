@@ -36,9 +36,8 @@ local playerDataConstants = {
 		},
 	},
 	tempDataTemplate = {
-		friendLocations = {
-			locations = {},
-		},
+		-- The location of the player's friends
+		friendLocations = {},
 	},
 	dataKeyReplication = { -- Keys that have a private replicationType are replicated to the client, but not to other players. Public replicates to everyone. Absent keys are not replicated.
 		currency = ReplicationType.private,
@@ -46,7 +45,7 @@ local playerDataConstants = {
 		playerSettings = ReplicationType.public,
 		friendLocations = ReplicationType.private,
 	},
-    inventoryLimits = { -- The item limits for each inventory type
+	inventoryLimits = { -- The item limits for each inventory type
 		[ItemCategory.furniture] = 500,
 		[ItemCategory.accessory] = 500,
 		[ItemCategory.home] = 200,
