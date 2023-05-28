@@ -6,7 +6,7 @@ local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
 local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
 local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
 local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
-local componentsFolder = replicatedFirstShared:WaitForChild("Interface"):WaitForChild "Components"
+local componentsFolder = replicatedStorageShared:WaitForChild("Interface"):WaitForChild "Components"
 
 local InterfaceConstants = require(replicatedStorageShared:WaitForChild("Constants"):WaitForChild "InterfaceConstants")
 

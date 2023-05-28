@@ -3,10 +3,9 @@ local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
-local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
 local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
-local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
-local componentsFolder = replicatedFirstShared:WaitForChild("Interface"):WaitForChild "Components"
+local utilityFolder = replicatedStorageShared:WaitForChild "Utility"
+local componentsFolder = replicatedStorageShared:WaitForChild("Interface"):WaitForChild "Components"
 
 -- Optional: Remove imports that you don't need
 local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")

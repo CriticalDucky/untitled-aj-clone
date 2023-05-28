@@ -1,8 +1,8 @@
-local ReplicatedFirst = game:GetService("ReplicatedFirst")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
-local utilityFolder = replicatedFirstShared:WaitForChild("Utility")
-local componentsFolder = replicatedFirstShared:WaitForChild("Interface"):WaitForChild("Components")
+local replicatedStorageShared = ReplicatedStorage:WaitForChild("Shared")
+local utilityFolder = replicatedStorageShared:WaitForChild("Utility")
+local componentsFolder = replicatedStorageShared:WaitForChild("Interface"):WaitForChild("Components")
 
 local WaitForDescendant = require(utilityFolder:WaitForChild("WaitForDescendant"))
 

@@ -6,14 +6,14 @@ local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
-local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
 local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
-local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
+local utilityFolder = replicatedStorageShared:WaitForChild "Utility"
+local componentsFolder = replicatedStorageShared:WaitForChild("Interface"):WaitForChild "Components"
 local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
-local componentsFolder = replicatedFirstShared:WaitForChild("Interface"):WaitForChild "Components"
 local serverFolder = replicatedStorageShared:WaitForChild "Server"
+local constantsFolder = replicatedStorageShared:WaitForChild "Constants"
 
-local InterfaceConstants = require(replicatedStorageShared:WaitForChild "Constants":WaitForChild "InterfaceConstants")
+local InterfaceConstants = require(constantsFolder:WaitForChild "InterfaceConstants")
 local ActiveParties = require(serverFolder:WaitForChild "ActiveParties")
 local PartyType = require(enumsFolder:WaitForChild "PartyType")
 local outlinedMenu = require(componentsFolder:WaitForChild "OutlinedMenu")

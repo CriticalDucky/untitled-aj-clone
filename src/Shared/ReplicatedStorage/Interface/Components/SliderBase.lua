@@ -17,11 +17,9 @@ local UserInputService = game:GetService "UserInputService"
 local RunService = game:GetService "RunService"
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
-local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
 local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
-local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
-local componentsFolder = replicatedFirstShared:WaitForChild("Interface"):WaitForChild "Components"
-local playerGui = Players.LocalPlayer:WaitForChild "PlayerGui"
+local utilityFolder = replicatedStorageShared:WaitForChild "Utility"
+local componentsFolder = replicatedStorageShared:WaitForChild("Interface"):WaitForChild "Components"
 
 local buttonInput = require(componentsFolder:WaitForChild "ButtonInput")
 
