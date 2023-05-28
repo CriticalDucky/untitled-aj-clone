@@ -9,9 +9,9 @@ local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
 local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
 local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 local componentsFolder = replicatedFirstShared:WaitForChild("Interface"):WaitForChild "Components"
-local settingsFolder = replicatedFirstShared:WaitForChild "Settings"
+local ConstantsFolder = replicatedFirstShared:WaitForChild "Constants"
 
-local InterfaceConstants = require(settingsFolder:WaitForChild "InterfaceConstants")
+local InterfaceConstants = require(ConstantsFolder:WaitForChild "InterfaceConstants")
 local buttonInput = require(componentsFolder:WaitForChild "ButtonInput")
 
 -- Optional: Remove imports that you don't need

@@ -10,7 +10,7 @@ local ProfileService = require(ServerStorage.Vendor.ProfileService)
 local Promise = require(ReplicatedFirst.Vendor.Promise)
 local ReplicaService = require(ServerStorage.Vendor.ReplicaService)
 
-local PlayerDataConstants = require(ReplicatedFirst.Shared.Settings.PlayerDataConstants)
+local PlayerDataConstants = require(ReplicatedFirst.Shared.Constants.PlayerDataConstants)
 local Table = require(ReplicatedFirst.Shared.Utility.Table)
 
 type ProfileStore = typeof(ProfileService.GetProfileStore())

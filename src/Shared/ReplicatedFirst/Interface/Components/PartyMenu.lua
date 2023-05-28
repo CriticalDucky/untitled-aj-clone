@@ -13,7 +13,7 @@ local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
 local componentsFolder = replicatedFirstShared:WaitForChild("Interface"):WaitForChild "Components"
 local serverFolder = replicatedStorageShared:WaitForChild "Server"
 
-local InterfaceConstants = require(replicatedFirstShared:WaitForChild "Settings":WaitForChild "InterfaceConstants")
+local InterfaceConstants = require(replicatedFirstShared:WaitForChild "Constants":WaitForChild "InterfaceConstants")
 local ActiveParties = require(serverFolder:WaitForChild "ActiveParties")
 local PartyType = require(enumsFolder:WaitForChild "PartyType")
 local outlinedMenu = require(componentsFolder:WaitForChild "OutlinedMenu")

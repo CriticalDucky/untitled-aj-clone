@@ -12,7 +12,7 @@ local ServerTypeEnum = require(enumsFolder:WaitForChild "ServerType")
 local Locations = require(serverFolder:WaitForChild "Locations")
 local Parties = require(serverFolder:WaitForChild "Parties")
 local Minigames = require(serverFolder:WaitForChild "Minigames")
-local PlaceConstants = require(replicatedFirstShared:WaitForChild("Settings"):WaitForChild "PlaceConstants")
+local PlaceConstants = require(replicatedFirstShared:WaitForChild("Constants"):WaitForChild "PlaceConstants")
 local MinigameServerType = require(enumsFolder:WaitForChild "MinigameServerType")
 local Table = require(utilityFolder:WaitForChild "Table")
 

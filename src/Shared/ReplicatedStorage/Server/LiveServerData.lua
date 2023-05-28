@@ -112,7 +112,7 @@ local enumsFolder = replicatedStorageShared.Enums
 local utilityFolder = replicatedFirstShared.Utility
 
 local ServerTypeEnum = require(enumsFolder.ServerType)
-local PlaceConstants = require(replicatedFirstShared.Settings.PlaceConstants)
+local PlaceConstants = require(replicatedFirstShared.Constants.PlaceConstants)
 local Table = require(utilityFolder.Table)
 local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
 local ServerTypeGroups = require(serverFolder:WaitForChild "ServerTypeGroups")

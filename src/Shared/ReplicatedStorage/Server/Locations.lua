@@ -3,11 +3,11 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild("Shared")
 local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
-local settingsFolder = replicatedFirstShared:WaitForChild("Settings")
+local ConstantsFolder = replicatedFirstShared:WaitForChild("Constants")
 local enumsFolder = replicatedStorageShared:WaitForChild("Enums")
 
 local LocationTypeEnum = require(enumsFolder:WaitForChild("LocationType"))
-local PlaceConstants = require(settingsFolder:WaitForChild("PlaceConstants"))
+local PlaceConstants = require(ConstantsFolder:WaitForChild("PlaceConstants"))
 
 local Locations = {
     info = {

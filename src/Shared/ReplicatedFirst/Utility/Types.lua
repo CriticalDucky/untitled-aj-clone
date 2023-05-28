@@ -4,10 +4,10 @@ local RunService = game:GetService("RunService")
 local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
 local replicatedFirstVendor = ReplicatedFirst:WaitForChild("Vendor")
 local utilityFolder = replicatedFirstShared:WaitForChild("Utility")
-local settingsFolder = replicatedFirstShared:WaitForChild("Settings")
+local constantsFolder = replicatedFirstShared:WaitForChild("Constants")
 
 local Promise = require(replicatedFirstVendor:WaitForChild("Promise"))
-local PlayerDataConstants = require(settingsFolder:WaitForChild("PlayerDataConstants"))
+local PlayerDataConstants = require(constantsFolder:WaitForChild("PlayerDataConstants"))
 local Table = require(utilityFolder:WaitForChild("Table"))
 
 local profileTemplate = PlayerDataConstants.profileTemplate
