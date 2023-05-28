@@ -1,9 +1,8 @@
-local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
+
 local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
-local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
 local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
-local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
+local utilityFolder = replicatedStorageShared:WaitForChild "Utility"
 
 local ShopTypeEnum = require(enumsFolder:WaitForChild "ShopType")
 local ItemCategory = require(enumsFolder:WaitForChild "ItemCategory")

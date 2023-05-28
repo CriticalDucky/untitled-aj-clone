@@ -104,13 +104,14 @@ local serverUtilityFolder = serverStorageShared.Utility
 local utilityFolder = replicatedStorageShared.Utility
 local dataFolder = serverStorageShared.Data
 local enumsFolder = replicatedStorageShared.Enums
+local serverFolder = replicatedStorageShared.Server
 
 local Locations = require(ConstantsFolder.LocationConstants)
 local Parties = require(ConstantsFolder.PartyConstants)
 local Minigames = require(ConstantsFolder.MinigameConstants)
 local DataStore = require(serverUtilityFolder.DataStore)
 local MinigameServerType = require(enumsFolder.MinigameServerType)
-local LiveServerData = require(ConstantsFolder.LiveServerData)
+local LiveServerData = require(serverFolder.LiveServerData)
 local Math = require(utilityFolder.Math)
 local Table = require(utilityFolder.Table)
 local ReplicaService = require(serverStorageVendor.ReplicaService)
