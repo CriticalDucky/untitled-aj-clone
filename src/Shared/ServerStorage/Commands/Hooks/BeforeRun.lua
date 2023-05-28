@@ -1,9 +1,7 @@
-local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local replicatedFirstShared = ReplicatedFirst.Shared
-local replicatedFirstUtility = replicatedFirstShared.Utility
 local replicatedStorageShared = ReplicatedStorage.Shared
+local replicatedFirstUtility = replicatedStorageShared.Utility
 local enumsFolder = replicatedStorageShared.Enums
 
 local PlayerPermission = require(replicatedFirstUtility.PlayerPermission)

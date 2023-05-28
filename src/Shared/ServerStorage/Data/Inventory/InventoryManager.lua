@@ -31,12 +31,11 @@ local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
 local ServerStorage = game:GetService "ServerStorage"
 
-local replicatedFirstShared = ReplicatedFirst.Shared
 local replicatedFirstVendor = ReplicatedFirst.Vendor
 local replicatedStorageShared = ReplicatedStorage.Shared
 local serverStorageShared = ServerStorage.Shared
 local dataFolder = serverStorageShared.Data
-local utilityFolder = replicatedFirstShared.Utility
+local utilityFolder = replicatedStorageShared.Utility
 local replicatedStorageData = replicatedStorageShared.Data
 local replicatedStorageInventory = replicatedStorageData.Inventory
 local enumsFolder = replicatedStorageShared.Enums

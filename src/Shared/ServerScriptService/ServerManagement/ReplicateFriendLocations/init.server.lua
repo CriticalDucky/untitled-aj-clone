@@ -1,10 +1,9 @@
-local Players = game:GetService "Players"
-local ReplicatedFirst = game:GetService "ReplicatedFirst"
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService "ServerStorage"
 
 local serverStorageShared = ServerStorage.Shared
-local replicatedFirstShared = ReplicatedFirst.Shared
-local utilityFolder = replicatedFirstShared.Utility
+local replicatedStorageShared = ReplicatedStorage.Shared
+local utilityFolder = replicatedStorageShared.Utility
 local dataFolder = serverStorageShared.Data
 local serverUtility = serverStorageShared.Utility
 

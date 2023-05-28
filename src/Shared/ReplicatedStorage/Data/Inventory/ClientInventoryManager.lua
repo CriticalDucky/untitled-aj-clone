@@ -7,19 +7,13 @@
 ]]
 
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
-local ReplicatedFirst = game:GetService "ReplicatedFirst"
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
-local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
-local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
 local dataFolder = replicatedStorageShared:WaitForChild "Data"
-local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
+local utilityFolder = replicatedStorageShared:WaitForChild "Utility"
 
 local ReplicatedPlayerData = require(dataFolder:WaitForChild "ReplicatedPlayerData")
 local Types = require(utilityFolder:WaitForChild "Types")
-
-local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
-local peek = Fusion.peek
 
 type UserEnum = Types.UserEnum
 type Inventory = Types.Inventory

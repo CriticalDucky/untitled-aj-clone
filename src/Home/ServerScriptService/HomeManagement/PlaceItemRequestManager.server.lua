@@ -1,16 +1,14 @@
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
-local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ServerStorage = game:GetService "ServerStorage"
 
 local serverStorageShared = ServerStorage.Shared
 local serverStorageVendor = ServerStorage.Vendor
 local replicatedStorageShared = ReplicatedStorage.Shared
-local replicatedFirstShared = ReplicatedFirst.Shared
 local dataFolder = serverStorageShared.Data
 local inventoryFolder = dataFolder.Inventory
 local enumsFolder = replicatedStorageShared.Enums
 local serverFolder = replicatedStorageShared.Server
-local utilityFolder = replicatedFirstShared.Utility
+local utilityFolder = replicatedStorageShared.Utility
 local serverStorageSharedUtility = serverStorageShared.Utility
 
 local ReplicaService = require(serverStorageVendor.ReplicaService)

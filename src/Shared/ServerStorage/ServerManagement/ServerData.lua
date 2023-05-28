@@ -96,28 +96,27 @@ local ServerStorage = game:GetService "ServerStorage"
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
 local replicatedStorageShared = ReplicatedStorage.Shared
-local replicatedFirstShared = ReplicatedFirst.Shared
 local replicatedFirstVendor = ReplicatedFirst.Vendor
 local serverStorageShared = ServerStorage.Shared
 local serverStorageVendor = ServerStorage.Vendor
 local ConstantsFolder = replicatedStorageShared.Constants
-local utilityFolder = serverStorageShared.Utility
-local replicatedFirstUtility = replicatedFirstShared.Utility
+local serverUtilityFolder = serverStorageShared.Utility
+local utilityFolder = replicatedStorageShared.Utility
 local dataFolder = serverStorageShared.Data
 local enumsFolder = replicatedStorageShared.Enums
 
 local Locations = require(ConstantsFolder.LocationConstants)
 local Parties = require(ConstantsFolder.PartyConstants)
 local Minigames = require(ConstantsFolder.MinigameConstants)
-local DataStore = require(utilityFolder.DataStore)
+local DataStore = require(serverUtilityFolder.DataStore)
 local MinigameServerType = require(enumsFolder.MinigameServerType)
 local LiveServerData = require(ConstantsFolder.LiveServerData)
-local Math = require(replicatedFirstUtility.Math)
-local Table = require(replicatedFirstUtility.Table)
+local Math = require(utilityFolder.Math)
+local Table = require(utilityFolder.Table)
 local ReplicaService = require(serverStorageVendor.ReplicaService)
 local PlayerDataManager = require(dataFolder.PlayerDataManager)
 local Promise = require(replicatedFirstVendor.Promise)
-local Types = require(replicatedFirstUtility.Types)
+local Types = require(utilityFolder.Types)
 local ServerTypeEnum = require(enumsFolder.ServerType)
 
 type Promise = Types.Promise

@@ -10,9 +10,12 @@ local PARTY_PADDING_MINUTES = 5 -- minutes
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
 
-local utilityFolder = game:GetService("ReplicatedFirst"):WaitForChild("Shared"):WaitForChild "Utility"
+local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
 
-local Parties = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Constants"):WaitForChild "PartyConstants")
+local utilityFolder = replicatedStorageShared:WaitForChild "Utility"
+local constantsFolder = replicatedStorageShared:WaitForChild "Constants"
+
+local Parties = require(constantsFolder:WaitForChild "PartyConstants")
 local Table = require(utilityFolder:WaitForChild "Table")
 local Math = require(utilityFolder:WaitForChild "Math")
 local Time = require(utilityFolder:WaitForChild "Time")
@@ -23,9 +26,7 @@ local Fusion = require(ReplicatedFirst:WaitForChild("Vendor"):WaitForChild "Fusi
 type Use = Fusion.Use
 type PartyUnit = Types.PartyUnit
 
-local function halfHourIdToUnixTime(halfHourId)
-	return halfHourId * 1800
-end
+local function halfHourIdToUnixTime(halfHourId) return halfHourId * 1800 end
 
 local function getPossiblePartiesFromHalfHour(halfHour)
 	local possibleParties = {}
@@ -39,13 +40,9 @@ local function getPossiblePartiesFromHalfHour(halfHour)
 	return possibleParties
 end
 
-local function getWeekId(time, use: Use)
-	return math.floor((time or Time.getUnix(use)) / 604800)
-end
+local function getWeekId(time, use: Use) return math.floor((time or Time.getUnix(use)) / 604800) end
 
-local function getHalfHourId(time, use: Use?)
-	return math.floor((time or Time.getUnix(use)) / 1800)
-end
+local function getHalfHourId(time, use: Use?) return math.floor((time or Time.getUnix(use)) / 1800) end
 
 local function createWeekPartySchedule(weekId)
 	local random = Random.new(weekId)
@@ -114,7 +111,7 @@ local partySchedules = {}
 	Gets the party schedule for a given week.
 	Pass in a Use to dynamically update within computeds.
 ]]
-function getWeekPartySchedule(weekId, use: Use?): {[number]: PartyUnit}
+function getWeekPartySchedule(weekId, use: Use?): { [number]: PartyUnit }
 	weekId = weekId or getWeekId(use)
 
 	if not partySchedules[weekId] then partySchedules[weekId] = createWeekPartySchedule(weekId) end

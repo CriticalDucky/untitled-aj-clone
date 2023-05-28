@@ -4,10 +4,10 @@
 ]]
 
 --#region Imports
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService "ServerStorage"
-local ReplicatedFirst = game:GetService "ReplicatedFirst"
 
-local utilityFolder = ReplicatedFirst.Shared.Utility
+local utilityFolder = ReplicatedStorage.Shared.Utility
 
 local PlayerDataManager = require(ServerStorage.Shared.Data.PlayerDataManager)
 local Types = require(utilityFolder.Types)

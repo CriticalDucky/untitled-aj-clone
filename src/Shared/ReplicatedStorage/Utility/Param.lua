@@ -2,8 +2,8 @@
 	This script manages parameters for functions.
 ]]
 
-local ReplicatedFirst = game:GetService "ReplicatedFirst"
-local utilityFolder = ReplicatedFirst:WaitForChild("Shared"):WaitForChild "Utility"
+local ReplicatedStorage = game:GetService "ReplicatedStorage"
+local utilityFolder = ReplicatedStorage:WaitForChild("Shared"):WaitForChild "Utility"
 
 local Types = require(utilityFolder:WaitForChild "Types")
 
@@ -41,9 +41,7 @@ function Param.expect(...) -- desired types are put after the object in a list. 
 			end
 		end
 
-		if not found then
-			return false
-		end
+		if not found then return false end
 	end
 
 	return true

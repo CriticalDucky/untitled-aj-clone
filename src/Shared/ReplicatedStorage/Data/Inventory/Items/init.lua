@@ -1,5 +1,7 @@
-local ItemCategory = require(game:GetService("ReplicatedStorage").Shared.Enums.ItemCategory)
-local Types = require(game:GetService("ReplicatedFirst").Shared.Utility.Types)
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local ItemCategory = require(ReplicatedStorage.Shared.Enums.ItemCategory)
+local Types = require(ReplicatedStorage.Shared.Utility.Types)
 
 type InventoryCategory = Types.InventoryCategory
 type InventoryItem = Types.InventoryItem

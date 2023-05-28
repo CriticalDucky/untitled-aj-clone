@@ -1,7 +1,7 @@
-local PartyTypeEnum =
-	require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Enums"):WaitForChild "PartyType")
-local Time =
-	require(game:GetService("ReplicatedFirst"):WaitForChild("Shared"):WaitForChild("Utility"):WaitForChild "Time")
+local replicatedStorageShared = game:GetService("ReplicatedStorage"):WaitForChild "Shared"
+
+local PartyTypeEnum = require(replicatedStorageShared:WaitForChild("Enums"):WaitForChild "PartyType")
+local Time = require(replicatedStorageShared:WaitForChild("Utility"):WaitForChild "Time")
 
 local timeRange = Time.newRange
 local group = Time.newRangeGroup

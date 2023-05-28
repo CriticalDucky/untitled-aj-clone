@@ -5,13 +5,11 @@
     See FriendLocations.get for more information.
 ]]
 
-local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
-local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
 local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
 local dataFolder = replicatedStorageShared:WaitForChild "Data"
-local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
+local utilityFolder = replicatedStorageShared:WaitForChild "Utility"
 
 local ReplicatedPlayerData = require(dataFolder:WaitForChild "ReplicatedPlayerData")
 local Types = require(utilityFolder:WaitForChild "Types")

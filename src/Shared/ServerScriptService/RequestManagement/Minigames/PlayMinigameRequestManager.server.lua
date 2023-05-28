@@ -1,14 +1,12 @@
-local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
 local ServerStorage = game:GetService "ServerStorage"
 
 local serverStorageShared = ServerStorage.Shared
 local serverStorageVendor = ServerStorage.Vendor
 local replicatedStorageShared = ReplicatedStorage.Shared
-local replicatedFirstShared = ReplicatedFirst.Shared
 local serverStorageSharedUtility = serverStorageShared.Utility
 local enumsFolder = replicatedStorageShared.Enums
-local utilityFolder = replicatedFirstShared.Utility
+local utilityFolder = replicatedStorageShared.Utility
 local teleportationFolder = serverStorageShared.Teleportation
 local constantsFolder = replicatedStorageShared.Constants
 

@@ -1,14 +1,10 @@
-local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
-local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
 local replicationFolder = replicatedStorageShared:WaitForChild "Replication"
 local dataFolder = replicatedStorageShared:WaitForChild "Data"
 local shopInfoFolder = dataFolder:WaitForChild "ShopInfo"
-local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
 local requestsFolder = replicatedStorageShared:WaitForChild "Requests"
-local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 
 local ReplicaCollection = require(replicationFolder:WaitForChild "ReplicaCollection")
 local ReplicaRequest = require(requestsFolder:WaitForChild "ReplicaRequest")

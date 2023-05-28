@@ -7,7 +7,6 @@ local ServerStorage = game:GetService "ServerStorage"
 local TeleportService = game:GetService "TeleportService"
 
 local serverStorageShared = ServerStorage.Shared
-local replicatedFirstShared = ReplicatedFirst.Shared
 local replicatedFirstVendor = ReplicatedFirst.Vendor
 local dataServerStorage = serverStorageShared.Data
 local inventoryServerStorage = dataServerStorage.Inventory
@@ -17,7 +16,7 @@ local inventoryReplicatedStorage = dataReplicatedStorage.Inventory
 local settingsServerStorage = dataServerStorage.Settings
 local enums = replicatedStorageShared.Enums
 local serverFolder = replicatedStorageShared.Server
-local utilityFolder = replicatedFirstShared.Utility
+local utilityFolder = replicatedStorageShared.Utility
 local constantsFolder = replicatedStorageShared.Constants
 
 local InventoryManager = require(inventoryServerStorage.InventoryManager)

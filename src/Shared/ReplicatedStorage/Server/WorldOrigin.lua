@@ -15,12 +15,9 @@ local Players = game:GetService "Players"
 local RunService = game:GetService "RunService"
 local TeleportService = game:GetService "TeleportService"
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
-local ReplicatedFirst = game:GetService "ReplicatedFirst"
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
-local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
 local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
-local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 local serverFolder = replicatedStorageShared:WaitForChild "Server"
 local constantsFolder = replicatedStorageShared:WaitForChild "Constants"
 

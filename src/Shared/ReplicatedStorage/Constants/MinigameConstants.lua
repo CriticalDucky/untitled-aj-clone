@@ -1,9 +1,9 @@
 local enumsFolder = game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild "Enums"
-local replicatedFirstShared = game:GetService("ReplicatedFirst"):WaitForChild "Shared"
+local replicatedStorageShared = game:GetService("ReplicatedStorage"):WaitForChild "Shared"
 
 local MinigameTypeEnum = require(enumsFolder:WaitForChild "MinigameType")
 local MinigameServerType = require(enumsFolder:WaitForChild "MinigameServerType")
-local Time = require(replicatedFirstShared:WaitForChild("Utility"):WaitForChild "Time")
+local Time = require(replicatedStorageShared:WaitForChild("Utility"):WaitForChild "Time")
 
 local timeRange = Time.newRange
 local group = Time.newRangeGroup

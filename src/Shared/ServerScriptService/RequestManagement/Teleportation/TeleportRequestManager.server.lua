@@ -1,30 +1,23 @@
-local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
-local RunService = game:GetService("RunService")
 local ServerStorage = game:GetService "ServerStorage"
 
 local replicatedStorageShared = ReplicatedStorage.Shared
-local replicatedFirstShared = ReplicatedFirst.Shared
-local replicatedFirstVendor = ReplicatedFirst.Vendor
 local serverFolder = replicatedStorageShared.Server
 local serverStorageShared = ServerStorage.Shared
 local serverStorageVendor = ServerStorage.Vendor
-local dataFolder = serverStorageShared.Data
 local teleportationFolder = serverStorageShared.Teleportation
-local utilityFolder = replicatedFirstShared.Utility
+local utilityFolder = replicatedStorageShared.Utility
 local enumsFolder = replicatedStorageShared.Enums
 local serverStorageSharedUtility = serverStorageShared.Utility
 local constantsFolder = replicatedStorageShared.Constants
 
 local ReplicaService = require(serverStorageVendor.ReplicaService)
 local Teleport = require(teleportationFolder.Teleport)
-local Table = require(utilityFolder.Table)
 local TeleportRequestType = require(enumsFolder.TeleportRequestType)
 local TeleportResponseType = require(enumsFolder.TeleportResponseType)
 local ActiveParties = require(serverFolder.ActiveParties)
 local ReplicaResponse = require(serverStorageSharedUtility.ReplicaResponse)
 local Param = require(utilityFolder.Param)
-local Promise = require(replicatedFirstVendor.Promise)
 local ServerGroupEnum = require(enumsFolder.ServerGroup)
 local ServerTypeGroups = require(constantsFolder.ServerTypeGroups)
 
