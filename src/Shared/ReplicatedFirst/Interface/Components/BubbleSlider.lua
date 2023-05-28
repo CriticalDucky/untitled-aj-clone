@@ -12,7 +12,7 @@ local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 local componentsFolder = replicatedFirstShared:WaitForChild("Interface"):WaitForChild "Components"
 
 local sliderBase = require(componentsFolder:WaitForChild "SliderBase")
-local InterfaceConstants = require(replicatedFirstShared:WaitForChild("Constants"):WaitForChild "InterfaceConstants")
+local InterfaceConstants = require(replicatedStorageShared:WaitForChild("Constants"):WaitForChild "InterfaceConstants")
 
 -- Optional: Remove imports that you don't need
 local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")

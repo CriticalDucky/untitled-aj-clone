@@ -6,11 +6,12 @@ local serverStorageShared = ServerStorage.Shared
 local teleportationFolder = serverStorageShared.Teleportation
 local serverFolder = replicatedStorageShared.Server
 local enumsFolder = replicatedStorageShared.Enums
+local constantsFolder = replicatedStorageShared.Constants
 
 local ServerData = require(serverStorageShared.ServerManagement.ServerData)
 local Teleport = require(teleportationFolder.Teleport)
 local ServerGroupEnum = require(enumsFolder.ServerGroup)
-local ServerTypeGroups = require(serverFolder.ServerTypeGroups)
+local ServerTypeGroups = require(constantsFolder.ServerTypeGroups)
 local LocalServerInfo = require(serverFolder:WaitForChild "LocalServerInfo")
 
 if not ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then

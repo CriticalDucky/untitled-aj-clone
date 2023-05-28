@@ -11,14 +11,15 @@ local serverFolder = replicatedStorageShared:WaitForChild "Server"
 local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
 local requestsFolder = replicatedStorageShared:WaitForChild "Requests"
 local teleportationFolder = requestsFolder:WaitForChild "Teleportation"
+local constantsFolder = replicatedStorageShared:WaitForChild "Constants"
 
 local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
 local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
-local ServerTypeGroups = require(serverFolder:WaitForChild "ServerTypeGroups")
+local ServerTypeGroups = require(constantsFolder:WaitForChild "ServerTypeGroups")
 local ClientTeleport = require(teleportationFolder:WaitForChild "ClientTeleport")
 local LocalServerInfo = require(serverFolder:WaitForChild "LocalServerInfo")
 local ActiveParties = require(serverFolder:WaitForChild "ActiveParties")
-local Parties = require(serverFolder:WaitForChild "Parties")
+local Parties = require(constantsFolder:WaitForChild "PartyConstants")
 local Table = require(utilityFolder:WaitForChild "Table")
 local Component = require(utilityFolder:WaitForChild "GetComponent")
 local Types = require(utilityFolder:WaitForChild "Types")

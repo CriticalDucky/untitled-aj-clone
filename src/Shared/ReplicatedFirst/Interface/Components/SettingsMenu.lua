@@ -13,7 +13,7 @@ local bubbleButton = require(componentsFolder:WaitForChild "BubbleButton")
 local bubbleToggle = require(componentsFolder:WaitForChild "BubbleToggle")
 local bubbleSlider = require(componentsFolder:WaitForChild "BubbleSlider")
 local roundCornerMask = require(componentsFolder:WaitForChild "RoundCornerMask")
-local InterfanceConstants = require(replicatedFirstShared:WaitForChild("Constants"):WaitForChild "InterfaceConstants")
+local InterfanceConstants = require(replicatedStorageShared:WaitForChild("Constants"):WaitForChild "InterfaceConstants")
 
 -- Optional: Remove imports that you don't need
 local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")

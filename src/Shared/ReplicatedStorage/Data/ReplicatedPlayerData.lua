@@ -16,13 +16,14 @@ local replicationFolder = replicatedStorageShared:WaitForChild "Replication"
 local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
 local serverFolder = replicatedStorageShared:WaitForChild "Server"
+local constantsFolder = replicatedStorageShared:WaitForChild "Constants"
 
 local ReplicaCollection = require(replicationFolder:WaitForChild "ReplicaCollection")
 local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
 local Types = require(utilityFolder:WaitForChild "Types")
 local Promise = require(replicatedFirstVendor:WaitForChild "Promise")
 local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
-local ServerTypeGroups = require(serverFolder:WaitForChild "ServerTypeGroups")
+local ServerTypeGroups = require(constantsFolder:WaitForChild "ServerTypeGroups")
 
 type InventoryCategory = Types.InventoryCategory
 type Promise = Types.Promise

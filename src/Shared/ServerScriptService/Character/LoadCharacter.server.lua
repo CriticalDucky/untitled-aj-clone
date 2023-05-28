@@ -7,9 +7,10 @@ local replicatedStorageShared = ReplicatedStorage.Shared
 local enumsFolder = replicatedStorageShared.Enums
 local serverFolder = replicatedStorageShared.Server
 local utilityFolder = ReplicatedFirst.Shared.Utility
+local constantsFolder = replicatedStorageShared.Constants
 
 local ServerGroupEnum = require(enumsFolder.ServerGroup)
-local ServerTypeGroups = require(serverFolder.ServerTypeGroups)
+local ServerTypeGroups = require(constantsFolder.ServerTypeGroups)
 local WaitForDescendant = require(utilityFolder.WaitForDescendant)
 
 local function playerAdded(player: Player)

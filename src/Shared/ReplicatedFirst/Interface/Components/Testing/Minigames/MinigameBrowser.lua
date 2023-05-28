@@ -9,12 +9,13 @@ local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 local serverFolder = replicatedStorageShared:WaitForChild "Server"
 local requestsFolder = replicatedStorageShared:WaitForChild "Requests"
 local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
+local constantsFolder = replicatedStorageShared:WaitForChild "Constants"
 
 local Component = require(utilityFolder:WaitForChild "GetComponent")
 local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
-local Minigames = require(serverFolder:WaitForChild "Minigames")
+local Minigames = require(constantsFolder:WaitForChild "MinigameConstants")
 local ClientPlayMinigame = require(requestsFolder:WaitForChild("Minigames"):WaitForChild "ClientPlayMinigame")
-local ServerTypeGroups = require(serverFolder:WaitForChild "ServerTypeGroups")
+local ServerTypeGroups = require(constantsFolder:WaitForChild "ServerTypeGroups")
 local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
 local LocalServerInfo = require(serverFolder:WaitForChild "LocalServerInfo")
 local PlayMinigameResponseType = require(enumsFolder:WaitForChild "PlayMinigameResponseType")

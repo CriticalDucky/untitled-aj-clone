@@ -8,9 +8,10 @@ local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
 local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 local serverFolder = replicatedStorageShared:WaitForChild "Server"
 local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
+local constantsFolder = replicatedStorageShared:WaitForChild "Constants"
 
 local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
-local ServerTypeGroups = require(serverFolder:WaitForChild "ServerTypeGroups")
+local ServerTypeGroups = require(constantsFolder:WaitForChild "ServerTypeGroups")
 
 if not ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
 	local Component = require(utilityFolder:WaitForChild "GetComponent")

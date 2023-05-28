@@ -7,14 +7,15 @@ local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
 local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
 local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 local serverFolder = replicatedStorageShared:WaitForChild "Server"
+local constantsFolder = replicatedStorageShared:WaitForChild "Constants"
 local requestsFolder = replicatedStorageShared:WaitForChild "Requests"
 local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
 
 local Component = require(utilityFolder:WaitForChild "GetComponent")
 local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
-local Locations = require(serverFolder:WaitForChild "Locations")
+local Locations = require(constantsFolder:WaitForChild "LocationConstants")
 local ClientTeleport = require(requestsFolder:WaitForChild("Teleportation"):WaitForChild "ClientTeleport")
-local ServerTypeGroups = require(serverFolder:WaitForChild "ServerTypeGroups")
+local ServerTypeGroups = require(constantsFolder:WaitForChild "ServerTypeGroups")
 local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
 local LocalServerInfo = require(serverFolder:WaitForChild "LocalServerInfo")
 

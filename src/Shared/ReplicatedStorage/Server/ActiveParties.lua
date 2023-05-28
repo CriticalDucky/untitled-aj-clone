@@ -12,7 +12,7 @@ local ReplicatedFirst = game:GetService "ReplicatedFirst"
 
 local utilityFolder = game:GetService("ReplicatedFirst"):WaitForChild("Shared"):WaitForChild "Utility"
 
-local Parties = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Server"):WaitForChild "Parties")
+local Parties = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Constants"):WaitForChild "PartyConstants")
 local Table = require(utilityFolder:WaitForChild "Table")
 local Math = require(utilityFolder:WaitForChild "Math")
 local Time = require(utilityFolder:WaitForChild "Time")

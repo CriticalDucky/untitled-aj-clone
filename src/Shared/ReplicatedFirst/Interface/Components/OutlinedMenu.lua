@@ -8,7 +8,7 @@ local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
 local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 local componentsFolder = replicatedFirstShared:WaitForChild("Interface"):WaitForChild "Components"
 
-local InterfaceConstants = require(replicatedFirstShared:WaitForChild("Constants"):WaitForChild "InterfaceConstants")
+local InterfaceConstants = require(replicatedStorageShared:WaitForChild("Constants"):WaitForChild "InterfaceConstants")
 local outlinedFrame = require(componentsFolder:WaitForChild "OutlinedFrame")
 local bubbleText = require(componentsFolder:WaitForChild "BubbleText")
 local exitButton = require(componentsFolder:WaitForChild "ExitButton")

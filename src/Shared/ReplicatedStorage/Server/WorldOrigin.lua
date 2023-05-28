@@ -22,8 +22,9 @@ local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
 local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
 local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 local serverFolder = replicatedStorageShared:WaitForChild "Server"
+local constantsFolder = replicatedStorageShared:WaitForChild "Constants"
 
-local ServerTypeGroups = require(serverFolder:WaitForChild "ServerTypeGroups")
+local ServerTypeGroups = require(constantsFolder:WaitForChild "ServerTypeGroups")
 local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
 local LocalServerInfo = require(serverFolder:WaitForChild "LocalServerInfo")
 --#endregion Imports

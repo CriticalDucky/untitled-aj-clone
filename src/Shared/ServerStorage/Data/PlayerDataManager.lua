@@ -4,13 +4,14 @@ local OFFLINE_PROFILE_RETRIEVAL_INTERVAL = 5
 
 local Players = game:GetService "Players"
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService "ServerStorage"
 
 local ProfileService = require(ServerStorage.Vendor.ProfileService)
 local Promise = require(ReplicatedFirst.Vendor.Promise)
 local ReplicaService = require(ServerStorage.Vendor.ReplicaService)
 
-local PlayerDataConstants = require(ReplicatedFirst.Shared.Constants.PlayerDataConstants)
+local PlayerDataConstants = require(ReplicatedStorage.Shared.Constants.PlayerDataConstants)
 local Table = require(ReplicatedFirst.Shared.Utility.Table)
 
 type ProfileStore = typeof(ProfileService.GetProfileStore())

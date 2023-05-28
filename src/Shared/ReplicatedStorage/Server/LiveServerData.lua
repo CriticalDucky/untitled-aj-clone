@@ -107,18 +107,18 @@ local ReplicatedStorage = game:GetService "ReplicatedStorage"
 local replicatedFirstShared = ReplicatedFirst.Shared
 local replicatedFirstVendor = ReplicatedFirst.Vendor
 local replicatedStorageShared = ReplicatedStorage.Shared
-local serverFolder = replicatedStorageShared.Server
 local enumsFolder = replicatedStorageShared.Enums
 local utilityFolder = replicatedFirstShared.Utility
+local constantsFolder = replicatedStorageShared.Constants
 
 local ServerTypeEnum = require(enumsFolder.ServerType)
-local PlaceConstants = require(replicatedFirstShared.Constants.PlaceConstants)
+local PlaceConstants = require(constantsFolder.PlaceConstants)
 local Table = require(utilityFolder.Table)
 local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
-local ServerTypeGroups = require(serverFolder:WaitForChild "ServerTypeGroups")
-local Minigames = require(serverFolder:WaitForChild "Minigames")
-local Parties = require(serverFolder:WaitForChild "Parties")
-local Locations = require(serverFolder:WaitForChild "Locations")
+local ServerTypeGroups = require(constantsFolder:WaitForChild "ServerTypeGroups")
+local Minigames = require(constantsFolder:WaitForChild "MinigameConstants")
+local Parties = require(constantsFolder:WaitForChild "PartyConstants")
+local Locations = require(constantsFolder:WaitForChild "LocationConstants")
 local Signal = require(replicatedFirstVendor.Signal.Signal)
 local Types = require(utilityFolder.Types)
 

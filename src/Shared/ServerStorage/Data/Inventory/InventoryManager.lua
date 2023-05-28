@@ -40,14 +40,14 @@ local utilityFolder = replicatedFirstShared.Utility
 local replicatedStorageData = replicatedStorageShared.Data
 local replicatedStorageInventory = replicatedStorageData.Inventory
 local enumsFolder = replicatedStorageShared.Enums
+local constantsFolder = replicatedStorageShared.Constants
 
 local PlayerDataManager = require(dataFolder.PlayerDataManager)
 local Items = require(replicatedStorageInventory.Items)
 local Table = require(utilityFolder.Table)
 local Signal = require(replicatedFirstVendor.Signal.Signal)
-local PlayerDataConstants = require(replicatedFirstShared.Constants.PlayerDataConstants)
+local PlayerDataConstants = require(constantsFolder.PlayerDataConstants)
 local MiniId = require(utilityFolder.MiniId)
-local Promise = require(replicatedFirstVendor.Promise)
 local Types = require(utilityFolder.Types)
 local ItemCategory = require(enumsFolder.ItemCategory)
 

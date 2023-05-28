@@ -11,11 +11,12 @@ local serverStorageShared = ServerStorage.Shared
 local utilityFolder = replicatedFirstShared.Utility
 local enumsFolder = replicatedStorageShared.Enums
 local serverFolder = replicatedStorageShared.Server
+local constantsFolder = replicatedStorageShared.Constants
 
 local LiveServerData = require(serverFolder.LiveServerData)
 local LocalServerInfo = require(serverFolder.LocalServerInfo)
 local ServerGroupEnum = require(enumsFolder.ServerGroup)
-local ServerTypeGroups = require(serverFolder.ServerTypeGroups)
+local ServerTypeGroups = require(constantsFolder.ServerTypeGroups)
 local Promise = require(replicatedFirstVendor.Promise)
 
 local serverIdentifier = LocalServerInfo.getServerIdentifier()

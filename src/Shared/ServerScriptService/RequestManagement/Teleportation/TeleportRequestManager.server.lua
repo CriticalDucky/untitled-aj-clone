@@ -14,6 +14,7 @@ local teleportationFolder = serverStorageShared.Teleportation
 local utilityFolder = replicatedFirstShared.Utility
 local enumsFolder = replicatedStorageShared.Enums
 local serverStorageSharedUtility = serverStorageShared.Utility
+local constantsFolder = replicatedStorageShared.Constants
 
 local ReplicaService = require(serverStorageVendor.ReplicaService)
 local Teleport = require(teleportationFolder.Teleport)
@@ -25,7 +26,7 @@ local ReplicaResponse = require(serverStorageSharedUtility.ReplicaResponse)
 local Param = require(utilityFolder.Param)
 local Promise = require(replicatedFirstVendor.Promise)
 local ServerGroupEnum = require(enumsFolder.ServerGroup)
-local ServerTypeGroups = require(serverFolder.ServerTypeGroups)
+local ServerTypeGroups = require(constantsFolder.ServerTypeGroups)
 
 local Types = require(utilityFolder.Types)
 

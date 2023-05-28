@@ -16,10 +16,10 @@ local serverFolder = replicatedStorageShared:WaitForChild "Server"
 local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
 local dataFolder = replicatedStorageShared:WaitForChild "Data"
+local constantsFolder = replicatedStorageShared:WaitForChild "Constants"
 
-local ServerTypeGroups = require(serverFolder.ServerTypeGroups)
+local ServerTypeGroups = require(constantsFolder.ServerTypeGroups)
 local ServerGroupEnum = require(enumsFolder.ServerGroup)
-
 local ReplicaCollection = require(replicationFolder:WaitForChild "ReplicaCollection")
 local ReplicaRequest = require(requestsFolder:WaitForChild "ReplicaRequest")
 local ReplicatedServerData = require(serverFolder:WaitForChild "ReplicatedServerData")
@@ -28,7 +28,7 @@ local ClientPlayerSettings = require(dataFolder:WaitForChild("Settings"):WaitFor
 local Table = require(utilityFolder:WaitForChild "Table")
 local TeleportRequestType = require(enumsFolder:WaitForChild "TeleportRequestType")
 local TeleportResponseType = require(enumsFolder:WaitForChild "TeleportResponseType")
-local Locations = require(serverFolder:WaitForChild "Locations")
+local Locations = require(constantsFolder:WaitForChild "LocationConstants")
 local FriendLocations = require(serverFolder:WaitForChild "FriendLocations")
 local WorldOrigin = require(serverFolder:WaitForChild "WorldOrigin")
 local ActiveParties = require(serverFolder:WaitForChild "ActiveParties")

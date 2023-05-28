@@ -10,7 +10,7 @@ local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
 local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
 local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 local componentsFolder = replicatedFirstShared:WaitForChild("Interface"):WaitForChild "Components"
-local constantsFolder = replicatedFirstShared:WaitForChild "Constants"
+local constantsFolder = replicatedStorageShared:WaitForChild "Constants"
 
 local buttonInput = require(componentsFolder:WaitForChild "ButtonInput")
 local InterfaceConstants = require(constantsFolder:WaitForChild "InterfaceConstants")
