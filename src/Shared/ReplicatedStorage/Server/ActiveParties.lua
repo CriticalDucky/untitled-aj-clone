@@ -147,7 +147,7 @@ end
 	Gets the party list for the next x half hours.
 	Pass in a Use to dynamically update within computeds.
 ]]
-function ActiveParties.generatePartyList(length, time, use: Use?): { PartyUnit }
+function ActiveParties.generatePartyList(length, time: number?, use: Use?): { PartyUnit }
 	local partyList = {}
 
 	local halfHourId = getHalfHourId(time, use)
