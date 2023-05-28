@@ -65,12 +65,16 @@ export type Props = {
 
 	InputExtraPx: CanBeState<number>?, -- Defaults to 0, adds extra px to the input area
 
-	Children: CanBeState<{}>?, -- Children will be placed inside the button
+	Children: CanBeState<{}>?, -- Members of this table will be added as children to the canvas group
 
 	Disabled: CanBeState<boolean>?, -- Defaults to false
 
 	Image: CanBeState<string>?, -- Defaults to nil
 	ResampleMode: CanBeState<Enum.ResamplerMode>?, -- Defaults to Enum.ResamplerMode.Default
+
+	OnClick: (() -> ())?,
+	OnDown: (() -> ())?,
+	InputBegan: ((InputObject) -> ())?,
 }
 
 --[[
@@ -146,6 +150,9 @@ local function Component(props: Props)
 				Size = UDim2.new(1, inputExtraPx * 2, 1, inputExtraPx * 2),
 
 				Disabled = props.Disabled,
+				OnClick = props.OnClick,
+				OnDown = props.OnDown,
+				InputBegan = props.InputBegan,
 
 				isHeldDown = isHeldDown,
 				isHovering = isHovering,
