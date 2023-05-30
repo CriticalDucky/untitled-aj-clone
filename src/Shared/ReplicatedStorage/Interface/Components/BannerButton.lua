@@ -96,10 +96,14 @@ local function Component(props: Props)
 
 	local roundnessPixels = props.RoundnessPixels or 24
 	local borderColor = props.BorderColor or Color3.new(0, 0, 0)
-	local borderHoverColor = props.BorderHoverColor or brighten(borderColor)
+	local borderHoverColor = props.BorderHoverColor or Computed(function(use)
+		return brighten(use(borderColor))
+	end)
 	local borderClickColor = props.BorderClickColor or borderHoverColor
 	local borderSizePixels = props.BorderSizePixels or 4
-	local borderDisabledColor = props.BorderDisabledColor or darken(borderColor)
+	local borderDisabledColor = props.BorderDisabledColor or Computed(function(use)
+		return darken(use(borderColor))
+	end)
 
 	local darkenOnHover = props.DarkenOnHover or false
 	local darkness = props.Darkness or 0.1
@@ -124,7 +128,7 @@ local function Component(props: Props)
 			Computed(function(use)
 				local color = borderColor
 
-				if use(props.Disabled) then return borderDisabledColor end
+				if use(props.Disabled) then return use(borderDisabledColor) end
 
 				if use(isHeldDown) then
 					color = borderClickColor
@@ -132,7 +136,7 @@ local function Component(props: Props)
 					color = borderHoverColor
 				end
 
-				return color
+				return use(color)
 			end),
 			SPRING_SPEED,
 			1
@@ -182,7 +186,7 @@ local function Component(props: Props)
 							Computed(function(use)
 								local scale = 1
 
-								if use(isHovering) and use(zoomOnHover) then scale = use(zoomScale) end
+								if use(isHovering) and use(zoomOnHover) and not use(props.Disabled) then scale = use(zoomScale) end
 
 								return UDim2.fromScale(scale, scale)
 							end),
