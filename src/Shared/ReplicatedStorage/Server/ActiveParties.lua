@@ -137,7 +137,7 @@ end
 	Pass in a Use to dynamically update within computeds.
 ]]
 function ActiveParties.getActiveParty(use: Use?): PartyUnit
-	return ActiveParties.getPartyAtHalfHourId(getHalfHourId(use), use)
+	return ActiveParties.getPartyAtHalfHourId(getHalfHourId(nil, use), use)
 end
 
 --[[
