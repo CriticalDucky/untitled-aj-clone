@@ -49,5 +49,13 @@ return {
 			font = patrickHandBold,
 			size = 60,
 		},
+		partyTitle = {
+			font = patrickHandBold,
+			size = 36,
+		},
+		partyTime = {
+			font = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold),
+			size = 12,
+		},
 	},
 }

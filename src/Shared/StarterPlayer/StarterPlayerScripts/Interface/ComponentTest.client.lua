@@ -44,6 +44,7 @@ local bubbleSlider = require(componentsFolder:WaitForChild "BubbleSlider")
 local bubbleToggle = require(componentsFolder:WaitForChild "BubbleToggle")
 local outlinedMenu = require(componentsFolder:WaitForChild "OutlinedMenu")
 local settingsMenu = require(componentsFolder:WaitForChild "SettingsMenu")
+local partyMenu = require(componentsFolder:WaitForChild "PartyMenu")
 
 local disabled = Value(false)
 
@@ -158,10 +159,18 @@ New "ScreenGui" {
 		-- 	onExitButtonClicked = function() print "Exit button clicked!" end,
 		-- },
 
-		settingsMenu {
-			AnchorPoint = Vector2.new(0.5, 0.5),
+		-- settingsMenu {
+		-- 	AnchorPoint = Vector2.new(0.5, 0.5),
+		-- 	Position = UDim2.fromScale(0.5, 0.5),
+		-- 	Size = UDim2.fromOffset(325, 400),
+
+		-- 	onExitRequest = function() print "Exit button clicked!" end,
+		-- }
+
+		partyMenu {
 			Position = UDim2.fromScale(0.5, 0.5),
-			Size = UDim2.fromOffset(325, 400),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Size = UDim2.fromOffset(400, 400),
 
 			onExitRequest = function() print "Exit button clicked!" end,
 		}
