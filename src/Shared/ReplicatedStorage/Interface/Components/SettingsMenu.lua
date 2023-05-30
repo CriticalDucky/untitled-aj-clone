@@ -12,7 +12,7 @@ local bubbleButton = require(componentsFolder:WaitForChild "BubbleButton")
 local bubbleToggle = require(componentsFolder:WaitForChild "BubbleToggle")
 local bubbleSlider = require(componentsFolder:WaitForChild "BubbleSlider")
 local roundCornerMask = require(componentsFolder:WaitForChild "RoundCornerMask")
-local InterfanceConstants = require(replicatedStorageShared:WaitForChild("Constants"):WaitForChild "InterfaceConstants")
+local InterfaceConstants = require(replicatedStorageShared:WaitForChild("Constants"):WaitForChild "InterfaceConstants")
 
 -- Optional: Remove imports that you don't need
 local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
@@ -86,7 +86,7 @@ local function Component(props: Props)
 
 		local frame = New "Frame" {
 			Size = Computed(function(use) return UDim2.new(1, use(isScrollingMode) and -12, 0, 64) end),
-			BackgroundColor3 = InterfanceConstants.colors.menuShaded,
+			BackgroundColor3 = InterfaceConstants.colors.menuShaded,
 
 			[Children] = {
 				New "UICorner" {
@@ -98,9 +98,9 @@ local function Component(props: Props)
 					BackgroundTransparency = 1,
 
 					Text = pelletProps.Text,
-					TextColor3 = InterfanceConstants.colors.menuText,
-					FontFace = InterfanceConstants.fonts.body.font,
-					TextSize = InterfanceConstants.fonts.body.size,
+					TextColor3 = InterfaceConstants.colors.menuText,
+					FontFace = InterfaceConstants.fonts.body.font,
+					TextSize = InterfaceConstants.fonts.body.size,
 					TextXAlignment = Enum.TextXAlignment.Left,
 					TextYAlignment = Enum.TextYAlignment.Center,
 					TextWrapped = true,
@@ -122,7 +122,7 @@ local function Component(props: Props)
 					end),
 					BackgroundTransparency = 1,
 					ImageColor3 = Computed(
-						function(use) return use(pelletProps.ImageColor3) or InterfanceConstants.colors.menuText end
+						function(use) return use(pelletProps.ImageColor3) or InterfaceConstants.colors.menuText end
 					),
 					Image = pelletProps.ImageId,
 				},
@@ -177,7 +177,7 @@ local function Component(props: Props)
 		Size = props.Size,
 		ZIndex = props.ZIndex,
 
-		OutlineColor = InterfanceConstants.colors.settingsBlue,
+		OutlineColor = InterfaceConstants.colors.settingsBlue,
 
 		TitleText = "Settings",
 		RemoveExitButton = true,
@@ -205,13 +205,13 @@ local function Component(props: Props)
 				Name = "ScrollingFrameContainer",
 				AnchorPoint = Vector2.new(0.5, 0),
 				Position = UDim2.fromScale(0.5, 0),
-				Size = UDim2.new(1, 0, 1, -InterfanceConstants.sizes.bubbleButtonSizeY - 8),
+				Size = UDim2.new(1, 0, 1, -InterfaceConstants.sizes.bubbleButtonSizeY - 8),
 				BackgroundTransparency = 1,
 
 				[Children] = {
 					roundCornerMask {
 						CornerRadius = 24,
-						Color = InterfanceConstants.colors.menuBackground,
+						Color = InterfaceConstants.colors.menuBackground,
 						ScrollbarOffset = 12,
 						Disabled = Computed(function(use) return not use(isScrollingMode) end),
 					},
