@@ -50,6 +50,8 @@ local function Component(props: Props)
 
 		[Children] = {
 			New "TextLabel" {
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				Position = UDim2.fromScale(0.5, 0.5),
 				BackgroundColor3 = InterfaceConstants.colors.menuBackground,
 				Text = props.Text or "New Section",
 				TextColor3 = props.TextColor3 or InterfaceConstants.colors.menuText,
