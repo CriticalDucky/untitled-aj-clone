@@ -95,11 +95,6 @@ local function Component(props: Props)
 	local activePartyUnit = Computed(function(use) return ActiveParties.getActiveParty(use) end)
 
 	local function partyPellet(index: number)
-		local function brighten(color: Color3)
-			local h, s, v = color:ToHSV()
-			return Color3.fromHSV(h, s, math.min(v + 120 / 255, 1))
-		end
-
 		local indexPartyUnit = Computed(function(use) return use(partyList)[index] end)
 
 		local partyEnum = Computed(function(use) return use(indexPartyUnit).partyType end)
