@@ -74,6 +74,10 @@ export type Props = {
 	OnClick: (() -> ())?,
 	OnDown: (() -> ())?,
 	InputBegan: ((InputObject) -> ())?,
+
+	-- Edited states
+	isHovering: CanBeState<boolean>?,
+	isHeldDown: CanBeState<boolean>?,
 }
 
 --[[
@@ -113,8 +117,8 @@ local function Component(props: Props)
 
 	local inputExtraPx = props.InputExtraPx or 0
 
-	local isHovering = Value(false)
-	local isHeldDown = Value(false)
+	local isHovering = props.isHovering or Value(false)
+	local isHeldDown = props.isHeldDown or Value(false)
 
 	local frame = New "Frame" {
 		Name = props.Name or "BannerButton",
@@ -144,7 +148,9 @@ local function Component(props: Props)
 
 		[Children] = {
 			New "UICorner" {
-				CornerRadius = UDim.new(0, roundnessPixels),
+				CornerRadius = Computed(function(use)
+					return UDim.new(0, use(roundnessPixels))
+				end),
 			},
 
 			buttonInput {
@@ -172,7 +178,9 @@ local function Component(props: Props)
 
 				[Children] = {
 					New "UICorner" {
-						CornerRadius = UDim.new(0, roundnessPixels - 4),
+						CornerRadius = Computed(function(use)
+							return UDim.new(0, use(roundnessPixels) - use(borderSizePixels))
+						end)
 					},
 
 					New "UIPadding" {
