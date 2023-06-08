@@ -1,48 +1,33 @@
 local enumsFolder = game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild "Enums"
 local replicatedStorageShared = game:GetService("ReplicatedStorage"):WaitForChild "Shared"
+local utiltiyFolder = replicatedStorageShared:WaitForChild "Utility"
 
 local MinigameTypeEnum = require(enumsFolder:WaitForChild "MinigameType")
 local MinigameServerType = require(enumsFolder:WaitForChild "MinigameServerType")
-local Time = require(replicatedStorageShared:WaitForChild("Utility"):WaitForChild "Time")
+local Time = require(utiltiyFolder:WaitForChild "Time")
+local Types = require(utiltiyFolder:WaitForChild "Types")
+
+type TimeRange = Types.TimeRange
 
 local timeRange = Time.newRange
 local group = Time.newRangeGroup
 
---[[ Example minigame entry
-
-	[MinigameTypeEnum.example] = {
-		name = "Example", -- Name of the minigame
-		placeId = 123456789, -- PlaceId of the minigame
-		serverType = MinigameServerType.public, -- Type of server the minigame is on
-		populationInfo = { -- Information about the population of the minigame. Can be nil if the minigame is not public.
-			max = 100,
-			recommended = 50,
-		},
-		isBrowsable = true, -- Whether the minigame is browsable in the minigame list
-		enabledTime = group (
-			timeRange(
-				{
-					year = 2020,
-					month = 1,
-					day = 1,
-					hour = 0,
-					min = 0,
-					sec = 0
-				},
-
-				{
-					year = 2025,
-					month = 1,
-					day = 1,
-					hour = 0,
-					min = 0,
-					sec = 0
-				}
-			)
-		)
-	}
-
-]]
+export type minigameEntry = {
+	name: string,
+	placeId: number,
+	minigameServerType: string,
+	isBrowsable: boolean?, -- If not specified, minigame will not appear in the minigame menu
+	enabledTime: TimeRange?,
+	layoutOrder: number?, -- What order the minigame appears in the minigame menu
+	minigameIcon: {
+		image: string,
+		color: Color3,
+	},
+	populationInfo: {
+		max: number,
+		recommended: number,
+	}?,
+}
 
 return {
 	[MinigameTypeEnum.fishing] = {
@@ -50,6 +35,10 @@ return {
 		placeId = 11569189394,
 		minigameServerType = MinigameServerType.instance,
 		isBrowsable = true,
+		minigameIcon = {
+			image = "rbxassetid://2692649113",
+			color = Color3.fromRGB(0, 159, 167),
+		}
 	},
 
 	[MinigameTypeEnum.gatherer] = {
@@ -57,5 +46,9 @@ return {
 		placeId = 12939855185,
 		minigameServerType = MinigameServerType.public,
 		isBrowsable = true,
+		minigameIcon = {
+			image = "rbxassetid://1014006459",
+			color = Color3.fromRGB(54, 85, 66),
+		}
 	}
-}
+} :: {[string]: minigameEntry}
