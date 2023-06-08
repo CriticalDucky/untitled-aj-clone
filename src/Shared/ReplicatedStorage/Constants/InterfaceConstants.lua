@@ -9,6 +9,7 @@ return {
 		menuText = Color3.fromRGB(138, 119, 107),
 		menuGreen1 = Color3.fromRGB(104, 120, 34),
 		partiesPink = Color3.fromRGB(168, 72, 82),
+		minigameBlue = Color3.fromRGB(14, 75, 125),
 		settingsBlue = Color3.fromRGB(70, 101, 120),
 
 		buttonBluePrimary = Color3.fromRGB(83, 163, 188),
