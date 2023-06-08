@@ -9,9 +9,12 @@ local constantsFolder = replicatedStorageShared:WaitForChild("Constants")
 local Promise = require(replicatedFirstVendor:WaitForChild("Promise"))
 local PlayerDataConstants = require(constantsFolder:WaitForChild("PlayerDataConstants"))
 local Table = require(utilityFolder:WaitForChild("Table"))
+local Fusion = require(replicatedFirstVendor:WaitForChild("Fusion"))
 
 local profileTemplate = PlayerDataConstants.profileTemplate
 local tempDataTemplate = PlayerDataConstants.tempDataTemplate
+
+type Use = Fusion.Use
 
 export type ProfileData = typeof(profileTemplate) & typeof(tempDataTemplate)
 export type Inventory = typeof(profileTemplate.inventory)
@@ -36,9 +39,9 @@ export type PlayerData = {
 export type TimeRange = {
 	introduction: number | table,
 	closing: number | table,
-	isInRange: (TimeRange, timeInfo: TimeInfo?) -> boolean,
-	distanceToClosing: (TimeRange, timeInfo: TimeInfo?, ()->()) -> number,
-	distanceToIntroduction: (TimeRange, timeInfo: TimeInfo?, ()->()) -> number,
+	isInRange: (TimeRange, timeInfo: TimeInfo?, Use) -> boolean,
+	distanceToClosing: (TimeRange, timeInfo: TimeInfo?, Use) -> number,
+	distanceToIntroduction: (TimeRange, timeInfo: TimeInfo?, Use) -> number,
 	isATimeRange: true,
 }
 
