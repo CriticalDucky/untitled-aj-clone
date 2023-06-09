@@ -1,3 +1,5 @@
+-- TODO: Rename "PlayerData" in replicas, variables, methods, etc. to "PersistentPlayerData" or similar.
+
 local OFFLINE_PROFILE_RETRIEVAL_INTERVAL = 5
 
 --#region Imports
@@ -6,9 +8,11 @@ local Players = game:GetService "Players"
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ServerStorage = game:GetService "ServerStorage"
 
-local ProfileService = require(ServerStorage.Vendor.ProfileService)
+local serverStorageVendor = ServerStorage.Vendor
+
+local ProfileService = require(serverStorageVendor.ProfileService)
 local Promise = require(ReplicatedFirst.Vendor.Promise)
-local ReplicaService = require(ServerStorage.Vendor.ReplicaService)
+local ReplicaService = require(serverStorageVendor.ReplicaService)
 
 local PlayerDataConstants = require(ReplicatedFirst.Shared.Settings.PlayerDataConstants)
 local Table = require(ReplicatedFirst.Shared.Utility.Table)
@@ -17,11 +21,6 @@ type ProfileStore = typeof(ProfileService.GetProfileStore())
 type Profile = typeof(ProfileService.GetProfileStore():LoadProfileAsync())
 
 --#endregion
-
---[[
-	Manages persistent and temporary player data. Uses `ProfileService` and `ReplicaService`.
-]]
-local PlayerDataManager = {}
 
 --#region Profile Setup
 
@@ -44,7 +43,7 @@ local publicPlayerDataReplica = ReplicaService.NewReplica {
 
 local function filterProfileForPublic(data: table?): table?
 	if not data then return end
-	
+
 	local filteredData = {}
 
 	filteredData.inventory = Table.deepCopy(data.inventory)
@@ -123,7 +122,7 @@ local function loadPlayerAsync(player: Player)
 	local profile = ProfileStore:LoadProfileAsync("Player_" .. player.UserId, "ForceLoad")
 
 	if not profile then
-		warn(("Failed to load profile for %s (User ID %d)"):format(player.Name, player.UserId))
+		warn(`Failed to load profile for {player.Name} (User ID {player.UserId})`)
 		-- TODO: Reroute player. Ideally this should reroute to the previous place they were if it's open, and simply
 		-- reroute them otherwise.
 
@@ -156,9 +155,7 @@ local function loadPlayerAsync(player: Player)
 	-- Set up private data replica for player
 
 	local privatePlayerData = ReplicaService.NewReplica {
-		ClassToken = ReplicaService.NewClassToken(
-			("PrivatePlayerData%d__$%d"):format(player.UserId, math.floor(time()))
-		),
+		ClassToken = ReplicaService.NewClassToken(`PrivatePlayerData{player.UserId}__${math.floor(time() * 10)}`),
 		Data = profile.Data,
 		Replication = "All",
 	}
@@ -243,7 +240,7 @@ local tempDataLoadedEvent = Instance.new "BindableEvent"
 -- Takes a temporary data and returns a copy filtered for public availability.
 local function filterTempDataForPublic(data: table?): table?
 	if not data then return end
-	
+
 	-- For now, no temporary data is public
 
 	return {}
@@ -253,12 +250,10 @@ local function loadPlayerTempData(player: Player)
 	local initialTempData = Table.deepCopy(PlayerDataConstants.tempDataTemplate)
 
 	local privatePlayerTempData = ReplicaService.NewReplica {
-			ClassToken = ReplicaService.NewClassToken(
-				("PrivatePlayerTempData%d__$%d"):format(player.UserId, math.floor(time()))
-			),
-			Data = initialTempData,
-			Replication = "All",
-		}
+		ClassToken = ReplicaService.NewClassToken(`PrivatePlayerTempData{player.UserId}__${math.floor(time() * 10)}`),
+		Data = initialTempData,
+		Replication = "All",
+	}
 	privatePlayerTempDataReplicas[player] = privatePlayerTempData
 
 	publicPlayerTempDataReplica:SetValue({ player.UserId }, filterTempDataForPublic(initialTempData))
@@ -288,6 +283,15 @@ Players.PlayerAdded:Connect(loadPlayerTempData)
 Players.PlayerRemoving:Connect(unloadPlayerTempData)
 
 --#endregion
+
+--[[
+	Manages persistent and temporary player data.
+
+	Should only be used directly by the `PlayerState` module. Other modules should use `PlayerState` instead.
+	
+	*Uses `ProfileService` and `ReplicaService`.*
+]]
+local PlayerDataManager = {}
 
 --[[
 	Performs `ArrayInsert()` on the player's persistent data and updates the public data replica accordingly.
@@ -580,6 +584,9 @@ end
 
 --[[
 	Returns a read-only snapshot of the player's persistent data, even if the player is offline.
+
+	**WARNING:** Do NOT motify the returned profile data under any circumstances! It should only be modified internally
+	by this module.
 ]]
 function PlayerDataManager.viewProfileAsync(playerId: number): table?
 	local player = Players:GetPlayerByUserId(playerId)
@@ -587,21 +594,24 @@ function PlayerDataManager.viewProfileAsync(playerId: number): table?
 	if player then
 		local profile = viewOnlineProfileAsync(player)
 
-		if profile then return Table.deepSnapshot(profile.Data) end
+		if profile then return profile.Data end
 	end
 
 	local profile = viewOfflineProfileAsync(playerId)
 
-	if profile then return Table.deepSnapshot(profile.Data) end
+	if profile then return profile.Data end
 end
 
 --[[
 	Returns a read-only snapshot of the player's temporary data if it exists.
+
+	*Do **NOT** motify the returned profile data under any circumstances! It should only be managed internally by this
+	module.*
 ]]
 function PlayerDataManager.viewTemp(player: Player): table?
 	local privatePlayerTempData = privatePlayerTempDataReplicas[player]
 
-	if privatePlayerTempData then return Table.deepSnapshot(privatePlayerTempData.Data) end
+	if privatePlayerTempData then return privatePlayerTempData.Data end
 end
 
 --[[
