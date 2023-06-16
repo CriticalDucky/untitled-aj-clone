@@ -50,7 +50,7 @@ function Currency.set(player: Player, currencyType, amount: number)
 
     if not PlayerDataManager.profileIsLoaded(player) then return false end
 
-    PlayerDataManager.setValueProfile(player, { "currency", currencyType }, amount)
+    PlayerDataManager.setValueProfileAsync(player, { "currency", currencyType }, amount)
 
     return true
 end

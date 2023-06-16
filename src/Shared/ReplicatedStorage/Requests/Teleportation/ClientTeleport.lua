@@ -24,7 +24,7 @@ local ReplicaCollection = require(replicationFolder:WaitForChild "ReplicaCollect
 local ReplicaRequest = require(requestsFolder:WaitForChild "ReplicaRequest")
 local ReplicatedServerData = require(serverFolder:WaitForChild "ReplicatedServerData")
 local LiveServerData = require(serverFolder:WaitForChild "LiveServerData")
-local ClientPlayerSettings = require(dataFolder:WaitForChild("Settings"):WaitForChild "ClientPlayerSettings")
+local PlayerState = require(dataFolder:WaitForChild "PlayerState")
 local Table = require(utilityFolder:WaitForChild "Table")
 local TeleportRequestType = require(enumsFolder:WaitForChild "TeleportRequestType")
 local TeleportResponseType = require(enumsFolder:WaitForChild "TeleportResponseType")
@@ -128,7 +128,7 @@ function Authorize.toLocation(locationEnum: UserEnum)
 	end
 
 	if LiveServerData.isLocationFull(localWorldIndex, locationEnum, 1) then
-		local setting = ClientPlayerSettings.getSetting("findOpenWorld", nil) -- nil means use local player, true means wait for setting to load
+		local setting = 
 
 		if setting then
 			return true

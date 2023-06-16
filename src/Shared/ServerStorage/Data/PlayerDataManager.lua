@@ -1,5 +1,3 @@
--- TODO: Rename "PlayerData" in replicas, variables, methods, etc. to "PersistentPlayerData" or similar.
-
 local OFFLINE_PROFILE_RETRIEVAL_INTERVAL = 5
 
 --#region Imports
@@ -24,34 +22,20 @@ type Profile = typeof(ProfileService.GetProfileStore():LoadProfileAsync())
 
 --#region Profile Setup
 
-local ProfileStore: ProfileStore = Promise.retry(
-	function() return ProfileService.GetProfileStore("PlayerData", PlayerDataConstants.profileTemplate) end,
-	5
-)
-	:catch(function(err)
-		warn("Failed to get profile store: " .. tostring(err))
-		-- TODO: Boot server
-
-		task.wait(math.huge)
-	end)
-	:expect()
+local ProfileStore = ProfileService.GetProfileStore("PlayerData", PlayerDataConstants.profileTemplate)
 
 local publicPlayerDataReplica = ReplicaService.NewReplica {
 	ClassToken = ReplicaService.NewClassToken "PublicPlayerData",
 	Replication = "All",
 }
 
-local function filterProfileForPublic(data: table?): table?
-	if not data then return end
-
+local function filterProfileForPublic(data: table): table
 	local filteredData = {}
 
 	filteredData.inventory = Table.deepCopy(data.inventory)
 
-	if data.playerSettings then
-		filteredData.playerSettings = {}
-		filteredData.playerSettings.homeLock = data.playerSettings.homeLock
-	end
+	filteredData.playerSettings = {}
+	filteredData.playerSettings.homeLock = data.playerSettings.homeLock
 
 	return filteredData
 end
@@ -64,7 +48,15 @@ local offlineProfileInfos = {}
 
 local loadingOfflineProfiles = {}
 
-local function loadOfflineProfile(playerId: number, profile: Profile)
+--[[
+	Loads a profile as offline.
+
+	If no profile is given, the time is updated, but the profile data is not updated, so retrievals still have a
+	cooldown.
+	
+	We don't update the profile when none is given because in case of error, we don't want to overwrite existing data.
+]]
+local function loadOfflineProfile(playerId: number, profile: Profile?)
 	local profileInfo = offlineProfileInfos[playerId] or {}
 	offlineProfileInfos[playerId] = profileInfo
 
@@ -97,7 +89,7 @@ local function viewOfflineProfileAsync(playerId: number)
 	end
 
 	loadingOfflineProfiles[playerId] = true
-	local profile = ProfileStore:ViewProfileAsync("Player_" .. playerId)
+	local profile = ProfileStore:ViewProfileAsync(`Player_{playerId}`) :: Profile
 	loadingOfflineProfiles[playerId] = nil
 
 	loadOfflineProfile(playerId, profile)
@@ -113,18 +105,71 @@ local privatePlayerDataReplicas = {}
 
 local profiles = {}
 
-local profileLoadedEvent = Instance.new "BindableEvent"
+--#region Profile Status Management
 
 --[[
-    Loads the player's data and replicates it to the client.
+	`nil` means the profile is not loaded and is not loading. Either the profile has not started loading yet, or the
+	profile has been released.
+
+	`Loading` means the profile is loading.
+
+	`Loaded` means the profile is loaded.
+
+	`Failed` means the profile failed to load.
 ]]
-local function loadPlayerAsync(player: Player)
-	local profile = ProfileStore:LoadProfileAsync("Player_" .. player.UserId, "ForceLoad")
+
+local profileStatusLoading = 1
+local profileStatusLoaded = 2
+local profileStatusFailed = 3
+
+local profileStatuses = {}
+
+local profileStatusUpdatedEvent = Instance.new "BindableEvent"
+
+local function updateProfileStatus(player: Player, status: number?)
+	profileStatuses[player] = status
+
+	profileStatusUpdatedEvent:Fire(player, status)
+end
+
+local function waitForProfileStatusUpdatedForPlayer(player: Player)
+	while true do
+		local eventPlayer, eventStatus = profileStatusUpdatedEvent.Event:Wait()
+
+		if eventPlayer == player then return eventStatus end
+	end
+end
+
+--#endregion
+
+--[[
+	Loads the player's data and replicates it to the client.
+
+	When the player joins, their profile is loaded, which takes some time. The profile is guaranteed to be loaded, at
+	least for a moment (when the `ProfileLoaded` event is fired), even if the player leaves the game before the profile
+	loads.
+
+	```text
+	(Player joins) --> (Profile loaded) --> (Player leaves and profile released)
+	(Player joins) --> (Player leaves) --> (Profile loaded for a moment, then released)
+	```
+
+	If the profile fails to load, 
+]]
+local function loadPlayerProfileAsync(player: Player)
+	updateProfileStatus(player, profileStatusLoading)
+
+	local profile = ProfileStore:LoadProfileAsync(`Player_{player.UserId}`, "ForceLoad")
 
 	if not profile then
 		warn(`Failed to load profile for {player.Name} (User ID {player.UserId})`)
+
+		updateProfileStatus(player, profileStatusFailed)
+
 		-- TODO: Reroute player. Ideally this should reroute to the previous place they were if it's open, and simply
 		-- reroute them otherwise.
+
+		player:Kick "Failed to load your data."
 
 		return
 	end
@@ -135,22 +180,6 @@ local function loadPlayerAsync(player: Player)
 
 	profile:AddUserId(player.UserId)
 	profile:Reconcile()
-	profile:ListenToRelease(function()
-		-- TODO: Reroute player. Ideally this should reroute to the previous place
-		-- they were if it's open, and simply reroute them otherwise.
-
-		loadOfflineProfile(player.UserId, profile)
-
-		privatePlayerDataReplicas[player]:Destroy()
-		privatePlayerDataReplicas[player] = nil
-
-		profiles[player] = nil
-	end)
-
-	if not player:IsDescendantOf(game) then
-		profile:Release()
-		return
-	end
 
 	-- Set up private data replica for player
 
@@ -165,21 +194,45 @@ local function loadPlayerAsync(player: Player)
 
 	publicPlayerDataReplica:SetValue({ player.UserId }, filterProfileForPublic(profile.Data))
 
-	-- Fire profile loaded event
+	-- Update profile status
 
-	profileLoadedEvent:Fire(player)
+	updateProfileStatus(player, profileStatusLoaded)
+
+	-- Manage release of profile
+
+	profile:ListenToRelease(function()
+		-- TODO: Reroute player. Ideally this should reroute to the previous place they were if it's open, and simply
+		-- reroute them otherwise.
+
+		player:Kick "You have joined another server."
+
+		loadOfflineProfile(player.UserId, profile)
+
+		privatePlayerDataReplicas[player]:Destroy()
+		privatePlayerDataReplicas[player] = nil
+
+		profiles[player] = nil
+
+		updateProfileStatus(player, nil)
+	end)
+
+	if not player:IsDescendantOf(game) then
+		profile:Release()
+		return
+	end
 end
 
-local function unloadPlayer(player: Player)
+local function unloadPlayerProfile(player: Player)
 	local profile = profiles[player]
 
 	if profile then profile:Release() end
 end
 
-local function viewOnlineProfileAsync(player: Player)
-	while player:IsDescendantOf(game) and not profiles[player] do
-		task.wait()
-	end
+--[[
+	Returns the player's profile (waiting if it is not yet loaded), or `nil` if it failed to load.
+]]
+local function getOnlineProfileAsync(player: Player): Profile?
+	if profileStatuses[player] == profileStatusLoading then waitForProfileStatusUpdatedForPlayer(player) end
 
 	return profiles[player]
 end
@@ -187,21 +240,21 @@ end
 -- Initialization
 
 for _, player in Players:GetPlayers() do
-	task.spawn(loadPlayerAsync, player)
+	task.spawn(loadPlayerProfileAsync, player)
 end
 
-Players.PlayerAdded:Connect(loadPlayerAsync)
+Players.PlayerAdded:Connect(loadPlayerProfileAsync)
 
-Players.PlayerRemoving:Connect(unloadPlayer)
+Players.PlayerRemoving:Connect(unloadPlayerProfile)
 
 --#endregion
 
 --#region Profile Subscriptions
 
--- Map of players to the user ID of the player whose profile they are subscribed to
+-- Map of players to the user ID of the player whose profile they are subscribed to.
 local subscriptions = {}
 
--- Map of user IDs (of players who are subscribed to) to the subscription info
+-- Map of user IDs (of players who are subscribed to) to the subscription info.
 local subscriptionInfos = {}
 
 local function unsubscribePlayer(player: Player)
@@ -233,14 +286,10 @@ local publicPlayerTempDataReplica = ReplicaService.NewReplica {
 
 local privatePlayerTempDataReplicas = {}
 
-local loadedTempDatas = {}
-
 local tempDataLoadedEvent = Instance.new "BindableEvent"
 
 -- Takes a temporary data and returns a copy filtered for public availability.
-local function filterTempDataForPublic(data: table?): table?
-	if not data then return end
-
+local function filterTempDataForPublic(data: table): table
 	-- For now, no temporary data is public
 
 	return {}
@@ -258,8 +307,6 @@ local function loadPlayerTempData(player: Player)
 
 	publicPlayerTempDataReplica:SetValue({ player.UserId }, filterTempDataForPublic(initialTempData))
 
-	loadedTempDatas[player] = true
-
 	tempDataLoadedEvent:Fire(player)
 end
 
@@ -268,8 +315,12 @@ local function unloadPlayerTempData(player: Player)
 	privatePlayerTempDataReplicas[player] = nil
 
 	publicPlayerTempDataReplica:SetValue({ player.UserId }, nil)
+end
 
-	loadedTempDatas[player] = nil
+local function getPrivateTempDataReplica(player: Player)
+	if not privatePlayerTempDataReplicas[player] then tempDataLoadedEvent.Event:Wait() end
+
+	return privatePlayerTempDataReplicas[player]
 end
 
 -- Initialization
@@ -285,132 +336,100 @@ Players.PlayerRemoving:Connect(unloadPlayerTempData)
 --#endregion
 
 --[[
-	Manages persistent and temporary player data.
+	Manages persistent and temporary player data using `ProfileService` and `ReplicaService`.
 
-	Should only be used directly by the `PlayerState` module. Other modules should use `PlayerState` instead.
-	
-	*Uses `ProfileService` and `ReplicaService`.*
+	*Should only be used directly by the `PlayerState` module. Other modules should use `PlayerState` instead.*
 ]]
 local PlayerDataManager = {}
 
 --[[
-	Performs `ArrayInsert()` on the player's persistent data and updates the public data replica accordingly.
+	Performs `ArrayInsert()` on the player's persistent data replica and updates the public data replica accordingly.
+	Waits for the data to load if it is not loaded already.
 
-	This will only work if the player's profile is loaded, so ensure that it is beforehand.
+	No operation will be performed if the player's profile fails to load.
 ]]
-function PlayerDataManager.arrayInsertProfile(player: Player, path: { any }, value: any): boolean
-	local profile = profiles[player]
+function PlayerDataManager.arrayInsertProfileAsync(player: Player, path: { any }, value: any): boolean
+	local profile = getOnlineProfileAsync(player)
 
 	if not profile then
-		warn "The player's profile could not be found"
+		warn "This player's profile failed to load, so no operation will be performed."
 		return
 	end
 
 	privatePlayerDataReplicas[player.UserId]:ArrayInsert(path, value)
 
 	publicPlayerDataReplica:SetValue({ player.UserId }, filterProfileForPublic(profile.Data))
-
-	return
 end
 
 --[[
-	Performs `ArrayInsert()` on the player's temporary data and updates the public data replica accordingly.
-
-	This will only work if the player's temporary data is loaded, so ensure that it is beforehand.
+	Performs `ArrayInsert()` on the player's temporary data replica and updates the public data replica accordingly.
 ]]
 function PlayerDataManager.arrayInsertTemp(player: Player, path: { any }, value: any): boolean
-	local privatePlayerTempData = privatePlayerTempDataReplicas[player]
+	local privateTempDataReplica = getPrivateTempDataReplica(player)
 
-	if not privatePlayerTempData then
-		warn "The player's temporary data could not be found"
-		return
-	end
+	privateTempDataReplica:ArrayInsert(path, value)
 
-	privatePlayerTempData:ArrayInsert(path, value)
-
-	publicPlayerTempDataReplica:SetValue({ player.UserId }, filterTempDataForPublic(privatePlayerTempData.Data))
-
-	return
+	publicPlayerTempDataReplica:SetValue({ player.UserId }, filterTempDataForPublic(privateTempDataReplica.Data))
 end
 
 --[[
-	Performs `ArrayRemove()` on the player's persistent data and updates the public data replica accordingly.
+	Performs `ArrayRemove()` on the player's persistent data replica and updates the public data replica accordingly.
+	Waits for the data to load if it is not loaded already.
 
-	This will only work if the player's profile is loaded, so ensure that it is beforehand.
+	No operation will be performed if the player's profile fails to load.
 ]]
-function PlayerDataManager.arrayRemoveProfile(player: Player, path: { any }, index: number): boolean
-	local profile = profiles[player]
+function PlayerDataManager.arrayRemoveProfileAsync(player: Player, path: { any }, index: number): boolean
+	local profile = getOnlineProfileAsync(player)
 
 	if not profile then
-		warn "The player's profile could not be found"
+		warn "This player's profile failed to load, so no operation will be performed."
 		return
 	end
 
 	privatePlayerDataReplicas[player.UserId]:ArrayRemove(path, index)
 
 	publicPlayerDataReplica:SetValue({ player.UserId }, filterProfileForPublic(profile.Data))
-
-	return
 end
 
 --[[
-	Performs `ArrayRemove()` on the player's temporary data and updates the public data replica accordingly.
-
-	This will only work if the player's temporary data is loaded, so ensure that it is beforehand.
+	Performs `ArrayRemove()` on the player's temporary data replica and updates the public data replica accordingly.
 ]]
 function PlayerDataManager.arrayRemoveTemp(player: Player, path: { any }, index: number): boolean
-	local privatePlayerTempData = privatePlayerTempDataReplicas[player]
+	local privateTempDataReplica = getPrivateTempDataReplica(player)
 
-	if not privatePlayerTempData then
-		warn "The player's temporary data could not be found"
-		return
-	end
+	privateTempDataReplica:ArrayRemove(path, index)
 
-	privatePlayerTempData:ArrayRemove(path, index)
-
-	publicPlayerTempDataReplica:SetValue({ player.UserId }, filterTempDataForPublic(privatePlayerTempData.Data))
-
-	return
+	publicPlayerTempDataReplica:SetValue({ player.UserId }, filterTempDataForPublic(privateTempDataReplica.Data))
 end
 
 --[[
-	Performs `ArraySet()` on the player's persistent data and updates the public data replica accordingly.
+	Performs `ArraySet()` on the player's persistent data replica and updates the public data replica accordingly.
+	Waits for the data to load if it is not loaded already.
 
-	This will only work if the player's profile is loaded, so ensure that it is beforehand.
+	No operation will be performed if the player's profile fails to load.
 ]]
-function PlayerDataManager.arraySetProfile(player: Player, path: { any }, index: number, value: any): boolean
-	local profile = profiles[player]
+function PlayerDataManager.arraySetProfileAsync(player: Player, path: { any }, index: number, value: any): boolean
+	local profile = getOnlineProfileAsync(player)
 
 	if not profile then
-		warn "The player's profile could not be found"
+		warn "This player's profile failed to load, so no operation will be performed."
 		return
 	end
 
 	privatePlayerDataReplicas[player.UserId]:ArraySet(path, index, value)
 
 	publicPlayerDataReplica:SetValue({ player.UserId }, filterProfileForPublic(profile.Data))
-
-	return
 end
 
 --[[
-	Performs `ArraySet()` on the player's temporary data and updates the public data replica accordingly.
-
-	This will only work if the player's temporary data is loaded, so ensure that it is beforehand.
+	Performs `ArraySet()` on the player's temporary data replica and updates the public data replica accordingly.
 ]]
 function PlayerDataManager.arraySetTemp(player: Player, path: { any }, index: number, value: any): boolean
-	local privatePlayerTempData = privatePlayerTempDataReplicas[player]
+	local privateTempDataReplica = getPrivateTempDataReplica(player)
 
-	if not privatePlayerTempData then
-		warn "The player's temporary data could not be found"
-		return
-	end
+	privateTempDataReplica:ArraySet(path, index, value)
 
-	privatePlayerTempData:ArraySet(path, index, value)
-
-	publicPlayerTempDataReplica:SetValue({ player.UserId }, filterTempDataForPublic(privatePlayerTempData.Data))
-
-	return
+	publicPlayerTempDataReplica:SetValue({ player.UserId }, filterTempDataForPublic(privateTempDataReplica.Data))
 end
 
 --[[
@@ -432,7 +451,7 @@ end
 function PlayerDataManager.getPlayersWithLoadedTempData(): { Player }
 	local players = {}
 
-	for player in loadedTempDatas do
+	for player in privatePlayerTempDataReplicas do
 		table.insert(players, player)
 	end
 
@@ -447,100 +466,87 @@ function PlayerDataManager.profileIsLoaded(player: Player): boolean return profi
 --[[
 	Returns if the player's temporary data is loaded.
 ]]
-function PlayerDataManager.tempDataIsLoaded(player: Player): boolean return loadedTempDatas[player] ~= nil end
+function PlayerDataManager.tempDataIsLoaded(player: Player): boolean
+	--
+	return privatePlayerTempDataReplicas[player] ~= nil
+end
 
 --[[
-	Performs `SetValue()` on the player's persistent data and updates the public data replica accordingly.
+	Performs `SetValue()` on the player's persistent data replica and updates the public data replica accordingly. Waits
+	for the data to load if it is not loaded already.
 
-	This will only work if the player's profile is loaded, so ensure that it is beforehand.
+	No operation will be performed if the player's profile fails to load.
 ]]
-function PlayerDataManager.setValueProfile(player: Player, path: { any }, value: any): boolean
-	local profile = profiles[player]
+function PlayerDataManager.setValueProfileAsync(player: Player, path: { any }, value: any): boolean
+	local profile = getOnlineProfileAsync(player)
 
 	if not profile then
-		warn "The player's profile could not be found"
+		warn "This player's profile failed to load, so no operation will be performed."
 		return
 	end
 
 	privatePlayerDataReplicas[player.UserId]:SetValue(path, value)
 
 	publicPlayerDataReplica:SetValue({ player.UserId }, filterProfileForPublic(profile.Data))
-
-	return
 end
 
 --[[
-	Performs `SetValue()` on the player's temporary data and updates the public data replica accordingly.
-
-	This will only work if the player's temporary data is loaded, so ensure that it is beforehand.
+	Performs `SetValue()` on the player's temporary data replica and updates the public data replica accordingly.
 ]]
 function PlayerDataManager.setValueTemp(player: Player, path: { any }, value: any): boolean
-	local privatePlayerTempData = privatePlayerTempDataReplicas[player]
+	local privateTempDataReplica = getPrivateTempDataReplica(player)
 
-	if not privatePlayerTempData then
-		warn "The player's temporary data could not be found"
-		return
-	end
+	privateTempDataReplica:SetValue(path, value)
 
-	privatePlayerTempData:SetValue(path, value)
-
-	publicPlayerTempDataReplica:SetValue({ player.UserId }, filterTempDataForPublic(privatePlayerTempData.Data))
-
-	return
+	publicPlayerTempDataReplica:SetValue({ player.UserId }, filterTempDataForPublic(privateTempDataReplica.Data))
 end
 
 --[[
-	Performs `SetValues()` on the player's persistent data and updates the public data replica accordingly.
+	Performs `SetValues()` on the player's persistent data replica and updates the public data replica accordingly.
+	Waits for the data to load if it is not loaded already.
 
-	This will only work if the player's profile is loaded, so ensure that it is beforehand.
+	No operation will be performed if the player's profile fails to load.
 ]]
-function PlayerDataManager.setValuesProfile(player: Player, path: { any }, values: table): boolean
-	local profile = profiles[player]
+function PlayerDataManager.setValuesProfileAsync(player: Player, path: { any }, values: table): boolean
+	local profile = getOnlineProfileAsync(player)
 
 	if not profile then
-		warn "The player's profile could not be found"
+		warn "This player's profile failed to load, so no operation will be performed."
 		return
 	end
 
 	privatePlayerDataReplicas[player.UserId]:SetValues(path, values)
 
 	publicPlayerDataReplica:SetValue({ player.UserId }, filterProfileForPublic(profile.Data))
-
-	return
 end
 
 --[[
-	Performs `SetValues()` on the player's temporary data and updates the public data replica accordingly.
-
-	This will only work if the player's temporary data is loaded, so ensure that it is beforehand.
+	Performs `SetValues()` on the player's temporary data replica and updates the public data replica accordingly.
 ]]
 function PlayerDataManager.setValuesTemp(player: Player, path: { any }, values: table): boolean
-	local privatePlayerTempData = privatePlayerTempDataReplicas[player]
+	local privateTempDataReplica = getPrivateTempDataReplica(player)
 
-	if not privatePlayerTempData then
-		warn "The player's temporary data could not be found"
-		return
-	end
+	privateTempDataReplica:SetValues(path, values)
 
-	privatePlayerTempData:SetValues(path, values)
-
-	publicPlayerTempDataReplica:SetValue({ player.UserId }, filterTempDataForPublic(privatePlayerTempData.Data))
-
-	return
+	publicPlayerTempDataReplica:SetValue({ player.UserId }, filterTempDataForPublic(privateTempDataReplica.Data))
 end
 
 --[[
-	Subscribes the given player to the profile of the player with the given ID. (This means that the given player wants
-	to view the profile of the player with the given ID, and therefore that profile will be routinely retrieved and
-	updated in the public replica.) If no ID is given, the player will be unsubscribed from any profile they're
-	currently subscribed to.
+	Subscribes* the given player to the profile of the player with the given ID. If no ID is given, the player will be
+	unsubscribed from any profile they're currently subscribed to.
 
-	A player can only be subscribed to one profile at a time, and the subscription will be cancelled if the player
-	leaves the game.
+	A player can only be subscribed to one profile at a time, so subscribing to a new player while already having a 
+	subscription will cancel the previous one. Any subscription will be cancelled if the player leaves the game.
 
-	It is recommended that the player be unsubscribed when they no longer need to view the profile.
+	It is recommended that the player be unsubscribed when they no longer need to view the profile to reduce
+	unnecessary requests.
+
+	*\*If a player subscribes to another player's profile, this means that the former player wants to view the profile
+	of the latter player, and therefore that profile will be routinely retrieved and updated in the public replica.*
 ]]
 function PlayerDataManager.subscribePlayerToProfile(player: Player, profileUserId: number?)
+	if subscriptions[player] == profileUserId then return end
+
 	unsubscribePlayer(player)
 
 	if not profileUserId then return end
@@ -557,24 +563,26 @@ function PlayerDataManager.subscribePlayerToProfile(player: Player, profileUserI
 	subscriptionInfo = {
 		numberOfSubscribers = 1,
 		thread = task.spawn(function()
+			viewOfflineProfileAsync(profileUserId)
+
+			local profileInfo = offlineProfileInfos[profileUserId]
+
 			while true do
-				-- First ensure that the player that was subscribed to is offline. If not, we pause the subscription.
+				-- Wait for the next interval. The player must be offline and the profile old enough.
 
-				local subscribedPlayer = Players:GetPlayerByUserId(profileUserId)
-
-				while subscribedPlayer do
-					task.wait()
+				while true do
+					if time() - profileInfo.lastUpdated < OFFLINE_PROFILE_RETRIEVAL_INTERVAL then
+						task.wait(OFFLINE_PROFILE_RETRIEVAL_INTERVAL - (time() - profileInfo.lastUpdated))
+					elseif Players:GetPlayerByUserId(profileUserId) then
+						task.wait()
+					else
+						break
+					end
 				end
 
-				-- Retrieve the profile and wait for the next interval.
+				-- Update the profile.
 
 				viewOfflineProfileAsync(profileUserId)
-
-				local profileInfo = offlineProfileInfos[profileUserId]
-
-				if time() - profileInfo.lastUpdated < OFFLINE_PROFILE_RETRIEVAL_INTERVAL then
-					task.wait(OFFLINE_PROFILE_RETRIEVAL_INTERVAL - (time() - profileInfo.lastUpdated))
-				end
 			end
 		end),
 	}
@@ -583,18 +591,27 @@ function PlayerDataManager.subscribePlayerToProfile(player: Player, profileUserI
 end
 
 --[[
-	Returns a read-only snapshot of the player's persistent data, even if the player is offline.
+	Returns a read-only snapshot of the player's persistent data, even if the player is offline. Waits for the data to
+	load if it is not loaded already.
 
-	**WARNING:** Do NOT motify the returned profile data under any circumstances! It should only be modified internally
-	by this module.
+	If the player doesn't have a profile, `nil` will be returned. Even if the player is online, this may return `nil`
+	if the profile failed to load.
+
+	*Do **NOT** motify the returned profile data under any circumstances! It should only be modified internally
+	by this module.*
 ]]
 function PlayerDataManager.viewProfileAsync(playerId: number): table?
 	local player = Players:GetPlayerByUserId(playerId)
 
 	if player then
-		local profile = viewOnlineProfileAsync(player)
+		local profile = getOnlineProfileAsync(player)
 
-		if profile then return profile.Data end
+		if not profile then
+			warn "This player's profile failed to load, so it cannot be viewed."
+			return
+		end
+
+		return profile.Data
 	end
 
 	local profile = viewOfflineProfileAsync(playerId)
@@ -609,7 +626,7 @@ end
 	module.*
 ]]
 function PlayerDataManager.viewTemp(player: Player): table?
-	local privatePlayerTempData = privatePlayerTempDataReplicas[player]
+	local privatePlayerTempData = getPrivateTempDataReplica(player)
 
 	if privatePlayerTempData then return privatePlayerTempData.Data end
 end
@@ -617,7 +634,7 @@ end
 --[[
 	An event that fires when the player's profile is loaded. The player is passed as the first argument.
 ]]
-PlayerDataManager.profileLoaded = profileLoadedEvent.Event
+PlayerDataManager.profileLoaded = profileStatusUpdatedEvent.Event
 
 --[[
 	An event that fires when the player's temporary data is loaded. The player is passed as the first argument.
