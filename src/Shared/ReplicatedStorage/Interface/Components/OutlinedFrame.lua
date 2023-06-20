@@ -19,9 +19,11 @@ local InterfaceConstants = require(constantsFolder:WaitForChild "InterfaceConsta
 local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
 local New = Fusion.New
 local Children = Fusion.Children
+local Value = Fusion.Value
 
 ---@diagnostic disable-next-line: undefined-type wtf
 type CanBeState<T> = Fusion.CanBeState<T>
+type StateObject<T> = Fusion.StateObject<T>
 -- #endregion
 
 export type Props = {
@@ -50,7 +52,10 @@ export type Props = {
 	Rotation: CanBeState<number>?, -- Defaults to 0
 
 	OuterChildren: any,
-	Children: any
+	Children: any,
+
+	-- Edited props
+	PeripheralPx: StateObject<Vector2>?, -- The amount of pixels that the area other than the inner frame takes up.
 }
 
 --[[
@@ -59,6 +64,10 @@ export type Props = {
 local function Component(props: Props)
 	local outerRoundness = props.OuterRoundness or ROUNDNESS
 	local innerRoundness = outerRoundness - MARGIN
+
+	local peripheralPx = props.PeripheralPx or Value(Vector2.new(0, 0))
+	local innerSizePx = Value(Vector2.new(0, 0)) -- Just the size of the inner frame.
+	local totalSizePx = Value(Vector2.new(0, 0)) -- The total size of the frame, including the peripheral area.
 
 	local defaultMenuColor = InterfaceConstants.colors.menuBackground
 
