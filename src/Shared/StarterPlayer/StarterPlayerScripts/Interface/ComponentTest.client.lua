@@ -53,10 +53,23 @@ local state = Value(false)
 
 local sliderFunction = function(value) progressAlpha:set(value) end
 
+local a = Value(1)
+local b = Value(2)
+
+local computed = Computed(function(use)
+	return use(a) * use(b)
+end)
+
+Observer(computed):onChange(function()
+	print("Computed value changed to", peek(computed))
+end)
+
 task.spawn(function()
 	while true do
 		task.wait(3)
-		disabled:set(not peek(disabled))
+		-- disabled:set(not peek(disabled))
+		a:set(peek(a) + 1)
+		b:set(peek(b) + 3)
 	end
 end)
 
