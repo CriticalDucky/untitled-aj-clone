@@ -9,7 +9,6 @@ local ServerStorage = game:GetService "ServerStorage"
 local serverStorageVendor = ServerStorage.Vendor
 
 local ProfileService = require(serverStorageVendor.ProfileService)
-local Promise = require(ReplicatedFirst.Vendor.Promise)
 local ReplicaService = require(serverStorageVendor.ReplicaService)
 
 local PlayerDataConstants = require(ReplicatedFirst.Shared.Settings.PlayerDataConstants)
@@ -105,6 +104,8 @@ local privatePlayerDataReplicas = {}
 
 local profiles = {}
 
+local profileLoadedEvent = Instance.new "BindableEvent"
+
 --#region Profile Status Management
 
 --[[
@@ -126,17 +127,26 @@ local profileStatuses = {}
 
 local profileStatusUpdatedEvent = Instance.new "BindableEvent"
 
-local function updateProfileStatus(player: Player, status: number?)
-	profileStatuses[player] = status
+local function updateProfileStatus(playerId: number, status: number?)
+	if status == profileStatuses[playerId] then return end
 
-	profileStatusUpdatedEvent:Fire(player, status)
+	profileStatuses[playerId] = status
+
+	profileStatusUpdatedEvent:Fire(playerId, status)
+
+	if status == profileStatusLoaded then profileLoadedEvent:Fire(playerId) end
 end
 
-local function waitForProfileStatusUpdatedForPlayer(player: Player)
-	while true do
-		local eventPlayer, eventStatus = profileStatusUpdatedEvent.Event:Wait()
+-- Returns whether the profile loaded successfully, or `nil` if the profile is neither loaded nor loading.
+local function waitForProfileLoaded(playerId: number)
+	if not profileStatuses[playerId] then return end
+	if profileStatuses[playerId] == profileStatusLoaded then return true end
+	if profileStatuses[playerId] == profileStatusFailed then return false end
 
-		if eventPlayer == player then return eventStatus end
+	while true do
+		local eventPlayerId, eventStatus = profileStatusUpdatedEvent.Event:Wait()
+
+		if eventPlayerId == playerId then return eventStatus == profileStatusLoaded end
 	end
 end
 
@@ -145,26 +155,18 @@ end
 --[[
 	Loads the player's data and replicates it to the client.
 
-	When the player joins, their profile is loaded, which takes some time. The profile is guaranteed to be loaded, at
-	least for a moment (when the `ProfileLoaded` event is fired), even if the player leaves the game before the profile
-	loads.
-
-	```text
-	(Player joins) --> (Profile loaded) --> (Player leaves and profile released)
-	(Player joins) --> (Player leaves) --> (Profile loaded for a moment, then released)
-	```
-
-	If the profile fails to load, 
+	When the player joins, their profile is loaded. The function still loads the profile for a moment (when the
+	`ProfileLoaded` event fires) even if the player has left.
 ]]
 local function loadPlayerProfileAsync(player: Player)
-	updateProfileStatus(player, profileStatusLoading)
+	updateProfileStatus(player.UserId, profileStatusLoading)
 
 	local profile = ProfileStore:LoadProfileAsync(`Player_{player.UserId}`, "ForceLoad")
 
 	if not profile then
 		warn(`Failed to load profile for {player.Name} (User ID {player.UserId})`)
 
-		updateProfileStatus(player, profileStatusFailed)
+		updateProfileStatus(player.UserId, profileStatusFailed)
 
 		-- TODO: Reroute player. Ideally this should reroute to the previous place they were if it's open, and simply
 		-- reroute them otherwise.
@@ -176,7 +178,7 @@ local function loadPlayerProfileAsync(player: Player)
 
 	-- Set up profile
 
-	profiles[player] = profile
+	profiles[player.UserId] = profile
 
 	profile:AddUserId(player.UserId)
 	profile:Reconcile()
@@ -196,7 +198,7 @@ local function loadPlayerProfileAsync(player: Player)
 
 	-- Update profile status
 
-	updateProfileStatus(player, profileStatusLoaded)
+	updateProfileStatus(player.UserId, profileStatusLoaded)
 
 	-- Manage release of profile
 
@@ -211,9 +213,9 @@ local function loadPlayerProfileAsync(player: Player)
 		privatePlayerDataReplicas[player]:Destroy()
 		privatePlayerDataReplicas[player] = nil
 
-		profiles[player] = nil
+		profiles[player.UserId] = nil
 
-		updateProfileStatus(player, nil)
+		updateProfileStatus(player.UserId, nil)
 	end)
 
 	if not player:IsDescendantOf(game) then
@@ -223,18 +225,16 @@ local function loadPlayerProfileAsync(player: Player)
 end
 
 local function unloadPlayerProfile(player: Player)
-	local profile = profiles[player]
+	local profile = profiles[player.UserId]
 
 	if profile then profile:Release() end
 end
 
 --[[
-	Returns the player's profile (waiting if it is not yet loaded), or `nil` if it failed to load.
+	Returns the player's profile (waiting if it is loading), or `nil` if it is neither loaded nor loading.
 ]]
-local function getOnlineProfileAsync(player: Player): Profile?
-	if profileStatuses[player] == profileStatusLoading then waitForProfileStatusUpdatedForPlayer(player) end
-
-	return profiles[player]
+local function getActiveProfileAsync(playerId: number): Profile?
+	return profiles[playerId], waitForProfileLoaded(playerId)
 end
 
 -- Initialization
@@ -303,7 +303,7 @@ local function loadPlayerTempData(player: Player)
 		Data = initialTempData,
 		Replication = "All",
 	}
-	privatePlayerTempDataReplicas[player] = privatePlayerTempData
+	privatePlayerTempDataReplicas[player.UserId] = privatePlayerTempData
 
 	publicPlayerTempDataReplica:SetValue({ player.UserId }, filterTempDataForPublic(initialTempData))
 
@@ -311,16 +311,16 @@ local function loadPlayerTempData(player: Player)
 end
 
 local function unloadPlayerTempData(player: Player)
-	privatePlayerTempDataReplicas[player]:Destroy()
-	privatePlayerTempDataReplicas[player] = nil
+	privatePlayerTempDataReplicas[player.UserId]:Destroy()
+	privatePlayerTempDataReplicas[player.UserId] = nil
 
 	publicPlayerTempDataReplica:SetValue({ player.UserId }, nil)
 end
 
 local function getPrivateTempDataReplica(player: Player)
-	if not privatePlayerTempDataReplicas[player] then tempDataLoadedEvent.Event:Wait() end
+	if not privatePlayerTempDataReplicas[player.UserId] then tempDataLoadedEvent.Event:Wait() end
 
-	return privatePlayerTempDataReplicas[player]
+	return privatePlayerTempDataReplicas[player.UserId]
 end
 
 -- Initialization
@@ -349,7 +349,7 @@ local PlayerDataManager = {}
 	No operation will be performed if the player's profile fails to load.
 ]]
 function PlayerDataManager.arrayInsertProfileAsync(player: Player, path: { any }, value: any): boolean
-	local profile = getOnlineProfileAsync(player)
+	local profile = getActiveProfileAsync(player)
 
 	if not profile then
 		warn "This player's profile failed to load, so no operation will be performed."
@@ -379,7 +379,7 @@ end
 	No operation will be performed if the player's profile fails to load.
 ]]
 function PlayerDataManager.arrayRemoveProfileAsync(player: Player, path: { any }, index: number): boolean
-	local profile = getOnlineProfileAsync(player)
+	local profile = getActiveProfileAsync(player)
 
 	if not profile then
 		warn "This player's profile failed to load, so no operation will be performed."
@@ -409,7 +409,7 @@ end
 	No operation will be performed if the player's profile fails to load.
 ]]
 function PlayerDataManager.arraySetProfileAsync(player: Player, path: { any }, index: number, value: any): boolean
-	local profile = getOnlineProfileAsync(player)
+	local profile = getActiveProfileAsync(player)
 
 	if not profile then
 		warn "This player's profile failed to load, so no operation will be performed."
@@ -438,8 +438,9 @@ end
 function PlayerDataManager.getPlayersWithLoadedProfiles(): { Player }
 	local players = {}
 
-	for player in profiles do
-		table.insert(players, player)
+	for playerId in profiles do
+		local player = Players:GetPlayerByUserId(playerId)
+		if player then table.insert(players, player) end
 	end
 
 	return players
@@ -451,8 +452,10 @@ end
 function PlayerDataManager.getPlayersWithLoadedTempData(): { Player }
 	local players = {}
 
-	for player in privatePlayerTempDataReplicas do
-		table.insert(players, player)
+	for playerId in privatePlayerTempDataReplicas do
+		local player = Players:GetPlayerByUserId(playerId)
+
+		if player then table.insert(players, player) end
 	end
 
 	return players
@@ -461,14 +464,14 @@ end
 --[[
 	Returns if the player's profile is loaded.
 ]]
-function PlayerDataManager.profileIsLoaded(player: Player): boolean return profiles[player] ~= nil end
+function PlayerDataManager.profileIsLoaded(player: Player): boolean return profiles[player.UserId] ~= nil end
 
 --[[
 	Returns if the player's temporary data is loaded.
 ]]
 function PlayerDataManager.tempDataIsLoaded(player: Player): boolean
 	--
-	return privatePlayerTempDataReplicas[player] ~= nil
+	return privatePlayerTempDataReplicas[player.UserId] ~= nil
 end
 
 --[[
@@ -478,7 +481,7 @@ end
 	No operation will be performed if the player's profile fails to load.
 ]]
 function PlayerDataManager.setValueProfileAsync(player: Player, path: { any }, value: any): boolean
-	local profile = getOnlineProfileAsync(player)
+	local profile = getActiveProfileAsync(player)
 
 	if not profile then
 		warn "This player's profile failed to load, so no operation will be performed."
@@ -508,7 +511,7 @@ end
 	No operation will be performed if the player's profile fails to load.
 ]]
 function PlayerDataManager.setValuesProfileAsync(player: Player, path: { any }, values: table): boolean
-	local profile = getOnlineProfileAsync(player)
+	local profile = getActiveProfileAsync(player)
 
 	if not profile then
 		warn "This player's profile failed to load, so no operation will be performed."
@@ -601,10 +604,16 @@ end
 	by this module.*
 ]]
 function PlayerDataManager.viewProfileAsync(playerId: number): table?
+	if not profileStatuses[playerId] then
+		local profile = viewOfflineProfileAsync(playerId)
+
+		return if profile then profile.Data else nil
+	end
+
 	local player = Players:GetPlayerByUserId(playerId)
 
 	if player then
-		local profile = getOnlineProfileAsync(player)
+		local profile = getActiveProfileAsync(player)
 
 		if not profile then
 			warn "This player's profile failed to load, so it cannot be viewed."
@@ -613,10 +622,6 @@ function PlayerDataManager.viewProfileAsync(playerId: number): table?
 
 		return profile.Data
 	end
-
-	local profile = viewOfflineProfileAsync(playerId)
-
-	if profile then return profile.Data end
 end
 
 --[[
@@ -634,7 +639,7 @@ end
 --[[
 	An event that fires when the player's profile is loaded. The player is passed as the first argument.
 ]]
-PlayerDataManager.profileLoaded = profileStatusUpdatedEvent.Event
+PlayerDataManager.profileLoaded = profileLoadedEvent.Event
 
 --[[
 	An event that fires when the player's temporary data is loaded. The player is passed as the first argument.
