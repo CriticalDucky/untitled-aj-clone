@@ -23,7 +23,7 @@ local PlayerSettings = {}
 ]]
 function PlayerSettings.get(player: Player | number)
 	local profileData =
-		PlayerDataManager.viewProfileAsync(if typeof(player) == "number" then player else player.UserId)
+		PlayerDataManager.viewPersistentDataAsync(if typeof(player) == "number" then player else player.UserId)
 
 	if profileData then
 		return true, profileData.playerSettings

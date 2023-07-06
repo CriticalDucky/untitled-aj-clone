@@ -211,7 +211,7 @@ end
 function HomeManager.getHomeServerInfo(userId: number?): HomeServerInfo
 	userId = userId or getHomeOwner()
 
-	local profile = PlayerDataManager.viewProfileAsync(userId)
+	local profile = PlayerDataManager.viewPersistentDataAsync(userId)
 
 	return profile and profile.playerInfo.homeServerInfo
 end
@@ -225,7 +225,7 @@ end
 function HomeManager.isHomeIdentifierStamped(userId: number?): (boolean, boolean?)
 	userId = userId or getHomeOwner()
 
-	local profile = PlayerDataManager.viewProfileAsync(userId)
+	local profile = PlayerDataManager.viewPersistentDataAsync(userId)
 
 	if profile then return true, profile.playerInfo.homeInfoStamped end
 

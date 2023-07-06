@@ -211,7 +211,7 @@ InventoryManager.itemRemovedFromInventory = Signal.new()
 	Can return nil in the rare case retrieving the player's profile data fails.
 ]]
 function InventoryManager.getInventory(userId: number): Inventory?
-	local profileData = PlayerDataManager.viewProfileAsync(userId)
+	local profileData = PlayerDataManager.viewPersistentDataAsync(userId)
 	return profileData and profileData.inventory
 end
 
