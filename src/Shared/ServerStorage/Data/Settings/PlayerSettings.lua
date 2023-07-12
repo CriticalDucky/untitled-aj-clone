@@ -53,9 +53,9 @@ end
     Does not return anything.
 ]]
 function PlayerSettings.setSetting(player: Player | number, settingName: string, value: any)
-	assert(PlayerDataManager.profileIsLoaded(player), "Player must have loaded profile")
+	assert(PlayerDataManager.persistentDataIsLoaded(player), "Player must have loaded profile")
 
-	PlayerDataManager.setValueProfileAsync(player, { "playerSettings", settingName }, value)
+	PlayerDataManager.setValuePersistentAsync(player, { "playerSettings", settingName }, value)
 end
 
 return PlayerSettings

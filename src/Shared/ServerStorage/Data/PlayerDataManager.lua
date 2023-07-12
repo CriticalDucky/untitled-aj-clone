@@ -288,7 +288,7 @@ Players.PlayerRemoving:Connect(unloadPlayerTempData)
 --#endregion
 
 --[[
-	Manages persistent and temporary player data using `ProfileService` and `ReplicaService`.
+	Manages players' persistent and temporary player data.
 
 	*Should only be used directly by the `PlayerState` module. Other modules should use `PlayerState` instead.*
 ]]
@@ -297,9 +297,9 @@ local PlayerDataManager = {}
 --[[
 	Performs `ArrayInsert()` on the player's persistent data replica and updates the public data replica accordingly.
 
-	The player's profile must be loaded.
+	The player's persistent data must be loaded.
 ]]
-function PlayerDataManager.arrayInsertProfileAsync(player: Player, path: { any }, value: any): boolean
+function PlayerDataManager.arrayInsertPersistentAsync(player: Player, path: { any }, value: any): boolean
 	local profile = profiles[player]
 
 	if not profile then
@@ -331,9 +331,9 @@ end
 --[[
 	Performs `ArrayRemove()` on the player's persistent data replica and updates the public data replica accordingly.
 
-	The player's profile must be loaded.
+	The player's persistent data must be loaded.
 ]]
-function PlayerDataManager.arrayRemoveProfileAsync(player: Player, path: { any }, index: number): boolean
+function PlayerDataManager.arrayRemovePersistentAsync(player: Player, path: { any }, index: number): boolean
 	local profile = profiles[player]
 
 	if not profile then
@@ -365,9 +365,9 @@ end
 --[[
 	Performs `ArraySet()` on the player's persistent data replica and updates the public data replica accordingly.
 
-	The player's profile must be loaded.
+	The player's persistent data must be loaded.
 ]]
-function PlayerDataManager.arraySetProfileAsync(player: Player, path: { any }, index: number, value: any): boolean
+function PlayerDataManager.arraySetPersistentAsync(player: Player, path: { any }, index: number, value: any): boolean
 	local profile = profiles[player]
 
 	if not profile then
@@ -397,9 +397,9 @@ function PlayerDataManager.arraySetTemp(player: Player, path: { any }, index: nu
 end
 
 --[[
-	Returns an array of all players whose profiles are loaded.
+	Returns an array of all players whose persistent data are loaded.
 ]]
-function PlayerDataManager.getPlayersWithLoadedProfiles(): { Player }
+function PlayerDataManager.getPlayersWithLoadedPersistentData(): { Player }
 	local players = {}
 
 	for player in profiles do
@@ -423,9 +423,9 @@ function PlayerDataManager.getPlayersWithLoadedTempData(): { Player }
 end
 
 --[[
-	Returns if the player's profile is loaded.
+	Returns if the player's persistent data is loaded.
 ]]
-function PlayerDataManager.profileIsLoaded(player: Player): boolean
+function PlayerDataManager.persistentDataIsLoaded(player: Player): boolean
 	--
 	return profiles[player] ~= nil
 end
@@ -441,9 +441,9 @@ end
 --[[
 	Performs `SetValue()` on the player's persistent data replica and updates the public data replica accordingly.
 
-	The player's profile must be loaded.
+	The player's persistent data must be loaded.
 ]]
-function PlayerDataManager.setValueProfileAsync(player: Player, path: { any }, value: any): boolean
+function PlayerDataManager.setValuePersistentAsync(player: Player, path: { any }, value: any): boolean
 	local profile = profiles[player]
 
 	if not profile then
@@ -475,9 +475,9 @@ end
 --[[
 	Performs `SetValues()` on the player's persistent data replica and updates the public data replica accordingly.
 
-	The player's profile must be loaded.
+	The player's persistent data must be loaded.
 ]]
-function PlayerDataManager.setValuesProfileAsync(player: Player, path: { any }, values: table): boolean
+function PlayerDataManager.setValuesPersistentAsync(player: Player, path: { any }, values: table): boolean
 	local profile = profiles[player]
 
 	if not profile then
@@ -507,28 +507,29 @@ function PlayerDataManager.setValuesTemp(player: Player, path: { any }, values: 
 end
 
 --[[
-	Subscribes* the given player to the profile of the player with the given ID. If no ID is given, the player will be
-	unsubscribed from any profile they're currently subscribed to.
+	Subscribes* the given player to the persistent data of the player with the given ID. If no ID is given, the player
+	will be unsubscribed from any persistent data they're currently subscribed to.
 
-	A player can only be subscribed to one profile at a time, so subscribing to a new player while already having a
-	subscription will cancel the previous one. Any subscription will be cancelled if the player leaves the game.
+	A player can only be subscribed to one player's persistent data at a time, so subscribing to a new player while
+	already having a subscription will cancel the previous one. Any subscription will be cancelled if the player leaves
+	the game.
 
-	It is recommended that the player be unsubscribed when they no longer need to view the profile to reduce
+	It is recommended that the player be unsubscribed when they no longer need to view the persistent data to reduce
 	unnecessary requests.
 
-	*\*If Player A subscribes to Player B's profile, this means that the Player A wants to view the profile of offline
-	Player B, and therefore Player B's will be routinely retrieved and updated in the public replica.*
+	*\*If Player A subscribes to Player B's persistent data, this means that the Player A wants to view the persistent
+	data of offline Player B, and therefore Player B's will be routinely retrieved and updated in the public replica.*
 ]]
-function PlayerDataManager.subscribePlayerToProfile(player: Player, profileUserId: number?)
-	if subscriptions[player] == profileUserId then return end
+function PlayerDataManager.subscribePlayerToPersistentData(player: Player, dataUserId: number?)
+	if subscriptions[player] == dataUserId then return end
 
 	unsubscribePlayer(player)
 
-	if not profileUserId then return end
+	if not dataUserId then return end
 
-	subscriptions[player] = profileUserId
+	subscriptions[player] = dataUserId
 
-	local subscriptionInfo = subscriptionInfos[profileUserId]
+	local subscriptionInfo = subscriptionInfos[dataUserId]
 
 	if subscriptionInfo then
 		subscriptionInfo.numberOfSubscribers += 1
@@ -542,8 +543,8 @@ function PlayerDataManager.subscribePlayerToProfile(player: Player, profileUserI
 				-- Wait for the next interval. The player must be offline and the profile old enough.
 
 				while true do
-					local profileInfo = offlineProfileInfos[profileUserId]
-					local playerSubscribedTo = Players:GetPlayerByUserId(profileUserId)
+					local profileInfo = offlineProfileInfos[dataUserId]
+					local playerSubscribedTo = Players:GetPlayerByUserId(dataUserId)
 
 					if time() - profileInfo.lastUpdated < OFFLINE_PROFILE_RETRIEVAL_INTERVAL then
 						task.wait(OFFLINE_PROFILE_RETRIEVAL_INTERVAL - (time() - profileInfo.lastUpdated))
@@ -556,18 +557,18 @@ function PlayerDataManager.subscribePlayerToProfile(player: Player, profileUserI
 
 				-- Update the profile.
 
-				viewOfflineProfileAsync(profileUserId)
+				viewOfflineProfileAsync(dataUserId)
 			end
 		end),
 	}
-	subscriptionInfos[profileUserId] = subscriptionInfo
+	subscriptionInfos[dataUserId] = subscriptionInfo
 end
 
 --[[
 	Returns the player's persistent data for viewing only. Returns `nil` if no such data exists.
 
-	If the player's profile is loaded, the function is guarunteed not to yield and to return existing data. Otherwise,
-	the function may need to yield to retrieve the profile.
+	If the player's persistent data is loaded, the function is guarunteed not to yield and to return existing data.
+	Otherwise, the function may need to yield to retrieve the persistent data.
 
 	*Do **NOT** motify the returned data under any circumstances! Use the modifier functions in this module instead.*
 ]]
@@ -588,7 +589,7 @@ end
 
 	*Do **NOT** motify the returned data under any circumstances! Use the modifier functions in this module instead.*
 ]]
-function PlayerDataManager.viewTemp(player: Player): table?
+function PlayerDataManager.viewTempData(player: Player): table?
 	local privateTempDataReplica = privatePlayerTempDataReplicas[player]
 
 	if not privateTempDataReplica then
@@ -600,14 +601,14 @@ function PlayerDataManager.viewTemp(player: Player): table?
 end
 
 --[[
-	An event that fires when the player's profile is loaded. The player is passed as the first argument.
+	An event that fires when the player's persistent data is loaded. The player is passed as the first argument.
 ]]
-PlayerDataManager.profileLoaded = profileLoadedEvent.Event
+PlayerDataManager.persistentDataLoaded = profileLoadedEvent.Event
 
 --[[
-	An event that fires when the player's profile is unloaded. The player is passed as the first argument.
+	An event that fires when the player's persistent data is unloaded. The player is passed as the first argument.
 ]]
-PlayerDataManager.profileUnloaded = profileUnloadedEvent.Event
+PlayerDataManager.persistentDataUnloaded = profileUnloadedEvent.Event
 
 --[[
 	An event that fires when the player's temporary data is loaded. The player is passed as the first argument.

@@ -84,12 +84,12 @@ local InventoryManager = {}
 local function removeItem(player: Player, itemCategory: UserEnum, itemIndex: number)
 	assert(player and itemCategory and itemIndex, "removeItem: Invalid arguments")
 
-	assert(PlayerDataManager.profileIsLoaded(player), "removeItem: Player data not found")
+	assert(PlayerDataManager.persistentDataIsLoaded(player), "removeItem: Player data not found")
 
 	local item = InventoryManager.getItemFromIndex(player.UserId, itemCategory, itemIndex)
 	assert(item, "removeItem: Item not found")
 
-	PlayerDataManager.arrayRemoveProfileAsync(player, { "inventory", itemCategory }, itemIndex)
+	PlayerDataManager.arrayRemovePersistentAsync(player, { "inventory", itemCategory }, itemIndex)
 	InventoryManager.itemRemovedFromInventory:Fire(player, itemCategory, itemIndex, item)
 end
 
@@ -104,14 +104,14 @@ end
 local function addItem(player: Player, itemCategory: UserEnum, item: InventoryItem)
 	assert(player and itemCategory and item, "addItem: Invalid arguments")
 
-	assert(PlayerDataManager.profileIsLoaded(player), "addItem: Player data not found")
+	assert(PlayerDataManager.persistentDataIsLoaded(player), "addItem: Player data not found")
 
 	local isInventoryFull = select(2, InventoryManager.isInventoryFull(player.UserId, itemCategory, 1))
 	assert(not isInventoryFull, "addItem: Inventory is full")
 
 	InventoryManager.itemPlacingInInventory:Fire(player, itemCategory, item)
 
-	PlayerDataManager.arrayInsertProfileAsync(player, { "inventory", itemCategory }, item)
+	PlayerDataManager.arrayInsertPersistentAsync(player, { "inventory", itemCategory }, item)
 end
 
 --[[
@@ -161,7 +161,7 @@ local function changeOwnerOfItems(items: { InventoryItem }, currentOwner: Player
 
 	if newOwner and currentOwner then
 		assert(
-			PlayerDataManager.profileIsLoaded(currentOwner) and PlayerDataManager.profileIsLoaded(newOwner),
+			PlayerDataManager.persistentDataIsLoaded(currentOwner) and PlayerDataManager.persistentDataIsLoaded(newOwner),
 			"InventoryManager.changeOwnerOfItems: Player data not found"
 		)
 
@@ -177,7 +177,7 @@ local function changeOwnerOfItems(items: { InventoryItem }, currentOwner: Player
 		end
 	elseif currentOwner and not newOwner then
 		assert(
-			PlayerDataManager.profileIsLoaded(currentOwner),
+			PlayerDataManager.persistentDataIsLoaded(currentOwner),
 			"InventoryManager.changeOwnerOfItems: Player data not found"
 		)
 
@@ -190,7 +190,7 @@ local function changeOwnerOfItems(items: { InventoryItem }, currentOwner: Player
 		end
 	elseif not currentOwner and newOwner then
 		assert(
-			PlayerDataManager.profileIsLoaded(newOwner),
+			PlayerDataManager.persistentDataIsLoaded(newOwner),
 			"InventoryManager.changeOwnerOfItems: Player data not found"
 		)
 
@@ -493,7 +493,7 @@ end
 local function reconcileItems(player) -- just like the function above, but no promises
 	local success, inventory = InventoryManager.getInventory(player.userId)
 
-	assert(PlayerDataManager.profileIsLoaded(player), "reconcileItems: Player profile not loaded")
+	assert(PlayerDataManager.persistentDataIsLoaded(player), "reconcileItems: Player profile not loaded")
 
 	if not success or not inventory then return end
 
@@ -515,7 +515,7 @@ local function reconcileItems(player) -- just like the function above, but no pr
 				end
 
 				if index(item, Table.copy(path)) == nil then
-					PlayerDataManager.setValueProfileAsync(
+					PlayerDataManager.setValuePersistentAsync(
 						player,
 						{ "inventory", itemCategory, itemIndex, table.unpack(path) },
 						Table.deepCopy(value)
@@ -530,10 +530,10 @@ end
 
 -- For all player data that's loaded in this server, reconcile items
 
-for _, player in PlayerDataManager.getPlayersWithLoadedProfiles() do
+for _, player in PlayerDataManager.getPlayersWithLoadedPersistentData() do
 	reconcileItems(player)
 end
 
-PlayerDataManager.profileLoaded:Connect(reconcileItems)
+PlayerDataManager.persistentDataLoaded:Connect(reconcileItems)
 
 return InventoryManager

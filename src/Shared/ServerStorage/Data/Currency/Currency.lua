@@ -48,9 +48,9 @@ end
 function Currency.set(player: Player, currencyType, amount: number)
     assert(player and currencyType and amount, "Currency.set: Missing argument(s)")
 
-    if not PlayerDataManager.profileIsLoaded(player) then return false end
+    if not PlayerDataManager.persistentDataIsLoaded(player) then return false end
 
-    PlayerDataManager.setValueProfileAsync(player, { "currency", currencyType }, amount)
+    PlayerDataManager.setValuePersistentAsync(player, { "currency", currencyType }, amount)
 
     return true
 end
@@ -64,7 +64,7 @@ end
 function Currency.increment(player: Player, currencyType, amount: number)
 	assert(player and currencyType and amount, "Currency.increment: Missing argument(s)")
 
-	if not PlayerDataManager.profileIsLoaded(player) then return false end
+	if not PlayerDataManager.persistentDataIsLoaded(player) then return false end
 
 	local success, currencyAmount = Currency.get(player, currencyType)
 

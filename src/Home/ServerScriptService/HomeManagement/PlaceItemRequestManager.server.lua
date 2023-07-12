@@ -53,7 +53,7 @@ ReplicaResponse.listen(requestReplica, function(player: Player, placeItemRequest
 		return PlaceItemResponseType.invalid
 	end
 
-	if not PlayerDataManager.profileIsLoaded(player) then
+	if not PlayerDataManager.persistentDataIsLoaded(player) then
 		warn "PlaceItemRequest: Invalid player data"
 		return PlaceItemResponseType.invalid
 	end

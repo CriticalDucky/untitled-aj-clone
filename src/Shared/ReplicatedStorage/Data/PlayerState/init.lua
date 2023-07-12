@@ -1,4 +1,14 @@
-local REPLICATION_COOLDOWN = 0.5
+--[[
+	STRUCTURE OF THIS MODULE
+
+	This module allows access to submodules that manage specific parts of the player's state.
+
+	Each state submodule has getters and setters for states in their respective categories.
+
+	The client's copy of the player's state is stored in the `ClientState` submodule. The server's copy of the player's
+	state is stored in the separate `PlayerDataManager` module. The `StateReplication` remote event is used for
+	replicating state changes.
+]]
 
 --#region Imports
 
@@ -25,38 +35,6 @@ local StateReplicationEvent = script:WaitForChild "StateReplication"
 
 --#endregion
 
---#region Client Event Queue
-
--- local lastReplicationEvent
-
--- local replicationEventQueue = {}
-
--- local queueProcessThread
-
--- local function queueReplicationEvent(action: string, data)
--- 	assert(not isServer, "Only the client must queue a replication event")
-
--- 	if not lastReplicationEvent or time() - lastReplicationEvent >= REPLICATION_COOLDOWN then
--- 		StateReplicationEvent:FireServer { [action] = data }
--- 		lastReplicationEvent = time()
--- 	else
--- 		replicationEventQueue[action] = data
-
--- 		if not queueProcessThread then
--- 			queueProcessThread = task.delay(lastReplicationEvent + REPLICATION_COOLDOWN - time(), function()
--- 				queueProcessThread = nil
-
--- 				StateReplicationEvent:FireServer(replicationEventQueue)
--- 				lastReplicationEvent = time()
-
--- 				replicationEventQueue = {}
--- 			end)
--- 		end
--- 	end
--- end
-
---#endregion
-
 --#region Process Replicated Events
 
 --[[
@@ -77,15 +55,15 @@ if isServer then
 					continue
 				end
 				
-				PlayerDataManager.setValueProfile(player, { "playerSettings", "findOpenWorld" }, data)
+				PlayerDataManager.setValueProfileAsync(player, { "playerSettings", "findOpenWorld" }, data)
 			elseif action == "SetHomeLock" then
-				PlayerDataManager.setValueProfile(player, { "playerSettings", "homeLock" }, data)
+				PlayerDataManager.setValueProfileAsync(player, { "playerSettings", "homeLock" }, data)
 			elseif action == "SetSelectedHome" then
-				PlayerDataManager.setValueProfile(player, { "playerSettings", "selectedHome" }, data)
+				PlayerDataManager.setValueProfileAsync(player, { "playerSettings", "selectedHome" }, data)
 			elseif action == "SetMusicVolume" then
-				PlayerDataManager.setValueProfile(player, { "playerSettings", "musicVolume" }, data)
+				PlayerDataManager.setValueProfileAsync(player, { "playerSettings", "musicVolume" }, data)
 			elseif action == "SetSFXVolume" then
-				PlayerDataManager.setValueProfile(player, { "playerSettings", "sfxVolume" }, data)
+				PlayerDataManager.setValueProfileAsync(player, { "playerSettings", "sfxVolume" }, data)
 			end
 		end
 	end)
@@ -112,7 +90,7 @@ end
 --#endregion
 
 --[[
-    Manages the player's state (including replication) on both the client and server.
+    Manages the player's state on both the client and server.
 ]]
 local PlayerState = {}
 
@@ -127,7 +105,7 @@ function PlayerState.getMoney(player: Player?): number?
 	if isServer then
 		assert(player, "A player must be provided when calling from the server")
 
-		local data = PlayerDataManager.viewProfileAsync(player.UserId)
+		local data = PlayerDataManager.viewPersistentDataAsync(player.UserId)
 
 		if not data then
 			warn("Player data not found for player", player)
@@ -164,7 +142,7 @@ function PlayerState.getSettingFindOpenWorld(player: Player?)
 	if isServer then
 		assert(player, "A player must be provided when calling from the server")
 
-		local data = PlayerDataManager.viewProfileAsync(player.UserId)
+		local data = PlayerDataManager.viewPersistentDataAsync(player.UserId)
 
 		if not data then
 			warn("Player data not found for player", player)
@@ -201,7 +179,7 @@ function PlayerState.getSettingHomeLock(player: Player?)
 	if isServer then
 		assert(player, "A player must be provided when calling from the server")
 
-		return PlayerDataManager.viewProfileAsync(player.UserId).playerSettings.homeLock
+		return PlayerDataManager.viewPersistentDataAsync(player.UserId).playerSettings.homeLock
 	else
 		if player then warn "The player parameter is unnecessary and ignored when calling from the client" end
 
@@ -231,7 +209,7 @@ function PlayerState.getSettingSelectedHome(player: Player)
 	if isServer then
 		assert(player, "A player must be provided when calling from the server")
 
-		return PlayerDataManager.viewProfileAsync(player.UserId).playerSettings.selectedHome
+		return PlayerDataManager.viewPersistentDataAsync(player.UserId).playerSettings.selectedHome
 	else
 		if player then warn "The player parameter is unnecessary and ignored when calling from the client" end
 
@@ -261,7 +239,7 @@ function PlayerState.getSettingMusicVolume(player: Player)
 	if isServer then
 		assert(player, "A player must be provided when calling from the server")
 
-		return PlayerDataManager.viewProfileAsync(player.UserId).playerSettings.musicVolume
+		return PlayerDataManager.viewPersistentDataAsync(player.UserId).playerSettings.musicVolume
 	else
 		if player then warn "The player parameter is unnecessary and ignored when calling from the client" end
 
@@ -291,7 +269,7 @@ function PlayerState.getSettingSfxVolume(player: Player)
 	if isServer then
 		assert(player, "A player must be provided when calling from the server")
 
-		return PlayerDataManager.viewProfileAsync(player.UserId).playerSettings.sfxVolume
+		return PlayerDataManager.viewPersistentDataAsync(player.UserId).playerSettings.sfxVolume
 	else
 		if player then warn "The player parameter is unnecessary and ignored when calling from the client" end
 
@@ -320,7 +298,7 @@ end
 function PlayerState.incrementMoney(amount: number, player: Player)
 	assert(isServer, "Only the server can modify a player's money")
 
-	local data = PlayerDataManager.viewProfileAsync(player.UserId)
+	local data = PlayerDataManager.viewPersistentDataAsync(player.UserId)
 
 	if not data then
 		warn("Could not increment money for player", player, "because their data could not be loaded.")
@@ -358,7 +336,7 @@ function PlayerState.setSettingFindOpenWorld(value: boolean, player: Player?)
 			return
 		end
 
-		PlayerDataManager.setValueProfile(player, { "playerSettings", "findOpenWorld" }, value)
+		PlayerDataManager.setValueProfileAsync(player, { "playerSettings", "findOpenWorld" }, value)
 		StateReplicationEvent:FireClient(player, { SetSettingFindOpenWorld = value })
 	else
 		if player then warn "The player parameter is ignored when calling from the client" end
@@ -380,7 +358,7 @@ function PlayerState.setSettingHomeLock(value: number, player: Player?)
 			return
 		end
 
-		PlayerDataManager.setValueProfile(player, { "playerSettings", "homeLock" }, value)
+		PlayerDataManager.setValueProfileAsync(player, { "playerSettings", "homeLock" }, value)
 		StateReplicationEvent:FireClient(player, { SetSettingHomeLock = value })
 	else
 		if player then warn "The player parameter is ignored when calling from the client" end
@@ -402,7 +380,7 @@ function PlayerState.setSettingSelectedHome(value: number, player: Player?)
 			return
 		end
 
-		PlayerDataManager.setValueProfile(player, { "playerSettings", "selectedHome" }, value)
+		PlayerDataManager.setValueProfileAsync(player, { "playerSettings", "selectedHome" }, value)
 		StateReplicationEvent:FireClient(player, { SetSettingSelectedHome = value })
 	else
 		if player then warn "The player parameter is ignored when calling from the client" end
@@ -424,7 +402,7 @@ function PlayerState.setSettingMusicVolume(value: number, player: Player?)
 			return
 		end
 
-		PlayerDataManager.setValueProfile(player, { "playerSettings", "musicVolume" }, value)
+		PlayerDataManager.setValueProfileAsync(player, { "playerSettings", "musicVolume" }, value)
 		StateReplicationEvent:FireClient(player, { SetSettingMusicVolume = value })
 	else
 		if player then warn "The player parameter is ignored when calling from the client" end
@@ -446,7 +424,7 @@ function PlayerState.setSettingSfxVolume(value: number, player: Player?)
 			return
 		end
 
-		PlayerDataManager.setValueProfile(player, { "playerSettings", "sfxVolume" }, value)
+		PlayerDataManager.setValueProfileAsync(player, { "playerSettings", "sfxVolume" }, value)
 		StateReplicationEvent:FireClient(player, { SetSettingSfxVolume = value })
 	else
 		if player then warn "The player parameter is ignored when calling from the client" end

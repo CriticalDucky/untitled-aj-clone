@@ -434,7 +434,7 @@ function HomeManager.addPlacedItem(itemId: string, pivotCFrame: CFrame)
 
 	local player = Players:GetPlayerByUserId(homeOwner)
 
-	assert(player and PlayerDataManager.profileIsLoaded(player), "HomeManager.addPlacedItem: No player data found.")
+	assert(player and PlayerDataManager.persistentDataIsLoaded(player), "HomeManager.addPlacedItem: No player data found.")
 
 	local success, placedItem = HomeManager.getPlacedItemFromId(itemId, homeOwner)
 
@@ -471,9 +471,9 @@ function HomeManager.addPlacedItem(itemId: string, pivotCFrame: CFrame)
 			return false
 		end
 
-		PlayerDataManager.arraySetProfileAsync(player, path, placedItemIndex, placedItem)
+		PlayerDataManager.arraySetPersistentAsync(player, path, placedItemIndex, placedItem)
 	else
-		PlayerDataManager.arrayInsertProfileAsync(player, path, placedItem)
+		PlayerDataManager.arrayInsertPersistentAsync(player, path, placedItem)
 	end
 
 	return HomeManager.loadPlacedItem(placedItem)
@@ -491,7 +491,7 @@ function HomeManager.removePlacedItem(itemId: string, userId: number?)
 
 	local player = Players:GetPlayerByUserId(userId)
 
-	assert(player and PlayerDataManager.profileIsLoaded(player), "Player data not found")
+	assert(player and PlayerDataManager.persistentDataIsLoaded(player), "Player data not found")
 
 	local success, placedItem = HomeManager.getPlacedItemFromId(itemId, userId)
 	if not success then
@@ -520,7 +520,7 @@ function HomeManager.removePlacedItem(itemId: string, userId: number?)
 
 	local path = { "inventory", "homes", selectedHomeIndex, "placedItems" }
 
-	PlayerDataManager.arrayRemoveProfileAsync(player, path, placedItemIndex)
+	PlayerDataManager.arrayRemovePersistentAsync(player, path, placedItemIndex)
 
 	if isHomeServer then HomeManager.unloadPlacedItem(placedItem) end
 
@@ -671,7 +671,7 @@ local function loadProfile(player: Player)
 
 		local success = Promise.retry(getReservedServer, 5)
 			:andThen(function(code, privateServerId)
-				PlayerDataManager.setValueProfileAsync(player, { "playerInfo", "homeServerInfo" }, {
+				PlayerDataManager.setValuePersistentAsync(player, { "playerInfo", "homeServerInfo" }, {
 					serverCode = code,
 					privateServerId = privateServerId,
 				})
@@ -750,11 +750,11 @@ local function loadProfile(player: Player)
 	end
 end
 
-for _, player in PlayerDataManager.getPlayersWithLoadedProfiles() do
+for _, player in PlayerDataManager.getPlayersWithLoadedPersistentData() do
 	loadProfile(player)
 end
 
-PlayerDataManager.profileLoaded:Connect(loadProfile)
+PlayerDataManager.persistentDataLoaded:Connect(loadProfile)
 
 InventoryManager.itemRemovedFromInventory:Connect(
 	function(player: Player, itemCategory: UserEnum, _, item: InventoryItem)

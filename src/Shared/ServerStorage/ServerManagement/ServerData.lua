@@ -514,7 +514,7 @@ end
 	Returns a success value and an error message if the request failed.
 ]]
 function ServerData.stampHomeServer(owner: Player)
-	assert(PlayerDataManager.profileIsLoaded(owner), "Player profile is not loaded")
+	assert(PlayerDataManager.persistentDataIsLoaded(owner), "Player profile is not loaded")
 	
 	local homeServerInfo = PlayerDataManager.viewPersistentDataAsync(owner.UserId).playerInfo.homeServerInfo
 	local privateServerId = homeServerInfo.privateServerId
@@ -541,7 +541,7 @@ function ServerData.stampHomeServer(owner: Player)
 			This may seem redundant, but it saves us from having to make a separate request to the datastore.
 			(this is stored in the player's profile)
 		]]
-		PlayerDataManager.setValueProfileAsync(owner, { "playerInfo", "homeInfoStamped" }, true)
+		PlayerDataManager.setValuePersistentAsync(owner, { "playerInfo", "homeInfoStamped" }, true)
 	else
 		warn("Failed to stamp home server: ", response)
 	end

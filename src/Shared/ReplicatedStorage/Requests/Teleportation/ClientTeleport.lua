@@ -128,7 +128,7 @@ function Authorize.toLocation(locationEnum: UserEnum)
 	end
 
 	if LiveServerData.isLocationFull(localWorldIndex, locationEnum, 1) then
-		local setting = 
+		-- local setting = 
 
 		if setting then
 			return true
