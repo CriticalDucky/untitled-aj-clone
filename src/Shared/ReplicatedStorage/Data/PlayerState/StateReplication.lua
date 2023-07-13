@@ -6,54 +6,9 @@ local isServer = RunService:IsServer()
 
 --#endregion
 
---#region State Replication Event
+--#region State Replication Management
 
-local stateReplicationEvent
-
-if isServer then
-	stateReplicationEvent = Instance.new "RemoteEvent"
-	stateReplicationEvent.Name = "StateReplicationEvent"
-	stateReplicationEvent.Parent = script
-else
-	stateReplicationEvent = script:WaitForChild "StateReplicationEvent"
-end
-
---#endregion
-
---#region State Replication Handling
-
-local stateReplicationHandlers: { string: (Player, any) -> () | (any) -> () } = {}
-
-local queuedStateChanges: { string: any } | { Player: { string: any } } = {}
-
-if isServer then
-	stateReplicationEvent.OnServerEvent:Connect(function(player, actions: { string: any })
-		for action: string, data in actions do
-			local handler = stateReplicationHandlers[action]
-
-			if handler then
-				handler(player, data)
-			else
-				local playerQueuedStateChanges = queuedStateChanges[player] or {}
-				queuedStateChanges[player] = playerQueuedStateChanges
-
-				playerQueuedStateChanges[action] = data
-			end
-		end
-	end)
-else
-	stateReplicationEvent.OnClientEvent:Connect(function(actions: { string: any })
-		for action: string, data in actions do
-			local handler = stateReplicationHandlers[action]
-
-			if handler then
-				handler(data)
-			else
-				queuedStateChanges[action] = data
-			end
-		end
-	end)
-end
+local stateReplicationEvents: { string: RemoteEvent } = {}
 
 --#endregion
 
@@ -65,28 +20,42 @@ local StateReplication = {}
 --[[
 	Replicates the given action(s) to the server or specified client (depending on where this function was called).
 
-	`actions` is a dictionary of actions to replicate. The key is the action name and the value is the action data. You
-	may pass as many actions as you want.
+	`action` is the name of the action to replicate.
+
+	`data` is the data to replicate with the action. This can be any replicatable value.
+
+	---
+
+	Actions must be registered before they can be replicated; otherwise, they will be ignored. See
+	`StateReplication.registerActionAsync` for more information.
 
 	*The player parameter is **required** on the server and **ignored** on the client.*
 ]]
-function StateReplication.replicate(actions: { string: any }, player: Player?)
+function StateReplication.replicate(action: string, data: any, player: Player?)
 	if isServer and not player then
 		warn "Player parameter is missing, so no actions will be replicated."
+
 		return
 	elseif not isServer and player then
 		warn "Player parameter is unnecessary on the client, so it will be ignored."
 	end
 
-	if isServer then
-		stateReplicationEvent:FireClient(player, actions)
+	local handler = stateReplicationEvents[action]
+
+	if handler then
+		if isServer then
+			handler:FireClient(player, data)
+		else
+			handler:FireServer(data)
+		end
 	else
-		stateReplicationEvent:FireServer(actions)
+		warn("Action '" .. action .. "' is not registered, so this replication request will be ignored.")
 	end
 end
 
 --[[
-	Registers a state replication action, allowing it to be handled.
+	Registers a state replication action. This adds it to the list of actions that can be replicated and sets up the
+	handler function that will be called when the action is replicated to this context.
 
 	`action` is the name of the action to register. This is the name that will be used when replicating the action.
 
@@ -94,27 +63,32 @@ end
 	the player that replicated the action, while the second parameter is the action data. On the client, the first and
 	only parameter is the action data.
 
+	---
+
 	This function is available on both the client and server. The context of where this function is called determines
-	whether the action is registered to be handled on the client or server.
+	whether the action is registered in that context only. For replication to work, the action must be registered in
+	both contexts. (Requests will queue if necessary.)
 
 	An action can only be registered once per context. Attempting to register an action again will fail.
+
+	On the client, this function will yield until the action is registered on the server.
 ]]
-function StateReplication.registerAction(action: string, handler: (Player, any) -> () | (any) -> ())
-	if stateReplicationHandlers[action] then
-		warn("Action '" .. action .. "' is already registered.")
+function StateReplication.registerActionAsync(action: string, handler: (Player, any) -> () | (any) -> ())
+	if stateReplicationEvents[action] then
+		warn("Action '" .. action .. "' is already registered. You cannot reregister an action.")
 		return
 	end
 
-	stateReplicationHandlers[action] = handler
-
 	if isServer then
-		
-
-	local queuedStateChange = queuedStateChanges[action]
-
-	if queuedStateChange then
-		handler(queuedStateChange)
-		queuedStateChanges[action] = nil
+		local replicationEvent = Instance.new "RemoteEvent"
+		replicationEvent.Name = action
+		replicationEvent.OnServerEvent:Connect(handler)
+		replicationEvent.Parent = script
+		stateReplicationEvents[action] = replicationEvent
+	else
+		local replicationEvent = script:WaitForChild(action)
+		replicationEvent.OnClientEvent:Connect(handler)
+		stateReplicationEvents[action] = replicationEvent
 	end
 end
 
