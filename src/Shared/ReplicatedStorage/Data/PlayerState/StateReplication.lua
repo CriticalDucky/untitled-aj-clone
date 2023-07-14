@@ -1,8 +1,13 @@
 --#region Imports
 
 local RunService = game:GetService "RunService"
+local ServerStorage = game:GetService "ServerStorage"
 
 local isServer = RunService:IsServer()
+
+local PlayerDataManager = if isServer
+	then require(ServerStorage:WaitForChild("Shared"):WaitForChild("Data"):WaitForChild "PlayerDataManager")
+	else nil
 
 --#endregion
 
@@ -34,7 +39,6 @@ local StateReplication = {}
 function StateReplication.replicate(action: string, data: any, player: Player?)
 	if isServer and not player then
 		warn "Player parameter is missing, so no actions will be replicated."
-
 		return
 	elseif not isServer and player then
 		warn "Player parameter is unnecessary on the client, so it will be ignored."
@@ -57,7 +61,7 @@ end
 	Registers a state replication action. This adds it to the list of actions that can be replicated and sets up the
 	handler function that will be called when the action is replicated to this context.
 
-	`action` is the name of the action to register. This is the name that will be used when replicating the action.
+	`name` is the name of the action to register. This is the name that will be used when replicating the action.
 
 	`handler` is the function that will be called when the action is replicated. On the server, the first parameter is
 	the player that replicated the action, while the second parameter is the action data. On the client, the first and
@@ -72,23 +76,38 @@ end
 	An action can only be registered once per context. Attempting to register an action again will fail.
 
 	On the client, this function will yield until the action is registered on the server.
+
+	When registering an action on the server, the provided handler should ensure that the given data is valid. If
+	possible, it must try to salvage a valid state from invalid data. Otherwise, it should resort to the existing
+	state when given data is invalid. In all cases where the data is invalid, the handler should replicate the valid
+	state back to the client.
+
+	All actions must be absolute and not relative to existing values so that if the client and server somehow desync,
+	they can resynchronize.
+
+	On the server, you can assume that the player's persistent data is loaded when the handler is called. (This is
+	because the opposite should never happen; and if it somehow does, the handler will automatically be ignored.)
 ]]
-function StateReplication.registerActionAsync(action: string, handler: (Player, any) -> () | (any) -> ())
-	if stateReplicationEvents[action] then
-		warn("Action '" .. action .. "' is already registered. You cannot reregister an action.")
+function StateReplication.registerActionAsync(name: string, handler: (Player, any) -> () | (any) -> ())
+	if stateReplicationEvents[name] then
+		warn("Action '" .. name .. "' is already registered. You cannot reregister an action.")
 		return
 	end
 
 	if isServer then
 		local replicationEvent = Instance.new "RemoteEvent"
-		replicationEvent.Name = action
-		replicationEvent.OnServerEvent:Connect(handler)
+		replicationEvent.Name = name
+		replicationEvent.OnServerEvent:Connect(function(player, ...)
+			if not PlayerDataManager.persistentDataIsLoaded(player) then return end
+
+			handler(player, ...)
+		end)
 		replicationEvent.Parent = script
-		stateReplicationEvents[action] = replicationEvent
+		stateReplicationEvents[name] = replicationEvent
 	else
-		local replicationEvent = script:WaitForChild(action)
+		local replicationEvent = script:WaitForChild(name)
 		replicationEvent.OnClientEvent:Connect(handler)
-		stateReplicationEvents[action] = replicationEvent
+		stateReplicationEvents[name] = replicationEvent
 	end
 end
 

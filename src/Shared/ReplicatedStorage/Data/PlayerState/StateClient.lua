@@ -32,16 +32,15 @@ local ClientState = {
 
 	inventory = {
 		accessories = Value(playerData.inventory.accessories),
-		homeItems = Value(playerData.inventory.homeItems),
+		furniture = Value(playerData.inventory.furniture),
 		homes = Value(playerData.inventory.homes),
 	},
 
-	playerSettings = {
-		findOpenWorld = Value(playerData.playerSettings.findOpenWorld),
-		homeLock = Value(playerData.playerSettings.homeLock),
-		selectedHome = Value(playerData.playerSettings.selectedHome),
-		musicVolume = Value(playerData.playerSettings.musicVolume),
-		sfxVolume = Value(playerData.playerSettings.sfxVolume),
+	settings = {
+		findOpenWorld = Value(playerData.settings.findOpenWorld),
+		homeLock = Value(playerData.settings.homeLock),
+		musicVolume = Value(playerData.settings.musicVolume),
+		sfxVolume = Value(playerData.settings.sfxVolume),
 	},
 }
 

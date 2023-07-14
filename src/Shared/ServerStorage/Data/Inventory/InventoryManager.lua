@@ -19,7 +19,7 @@
 		accessories = {inventoryItem}, -- Accessories are items that one's character can wear.
 		homeItems = {inventoryItem}, -- Home items (furniture, decorations, etc.) are items that can be placed or applied to a home. The enum name for this is "furniture"
 		homes = {inventoryItem}, -- An array of homes that the player owns.
-		-- more can be added here. To add a new category, visit PlayerDataConstants.lua and search for "inventory".
+		-- more can be added here. To add a new category, visit PlayerDataConfig.lua and search for "inventory".
 	},
 	```
 
@@ -45,7 +45,7 @@ local PlayerDataManager = require(dataFolder.PlayerDataManager)
 local Items = require(replicatedStorageInventory.Items)
 local Table = require(utilityFolder.Table)
 local Signal = require(replicatedFirstVendor.Signal.Signal)
-local PlayerDataConstants = require(replicatedFirstShared.Settings.PlayerDataConstants)
+local PlayerDataConfig = require(replicatedFirstShared.Settings.PlayerDataConfig)
 local MiniId = require(utilityFolder.MiniId)
 local Promise = require(replicatedFirstVendor.Promise)
 local Types = require(utilityFolder.Types)
@@ -60,7 +60,7 @@ type UserEnum = Types.UserEnum
 local function addPropsToItem(item: InventoryItem)
 	local itemCategory = item.itemCategory
 
-	local props = PlayerDataConstants.itemProps[itemCategory]
+	local props = PlayerDataConfig.itemProps[itemCategory]
 
 	if props then
 		for propName, propValue in pairs(props) do
@@ -211,7 +211,7 @@ InventoryManager.itemRemovedFromInventory = Signal.new()
 	Can return nil in the rare case retrieving the player's profile data fails.
 ]]
 function InventoryManager.getInventory(userId: number): Inventory?
-	local profileData = PlayerDataManager.viewPersistentDataAsync(userId)
+	local profileData = PlayerDataManager.viewPersistentData(userId)
 	return profileData and profileData.inventory
 end
 
@@ -420,7 +420,7 @@ function InventoryManager.isInventoryFull(
 	if not inventoryCategory then return false, nil end
 
 	local numItems = #inventoryCategory
-	local limit = PlayerDataConstants.inventoryLimits[itemCategory]
+	local limit = PlayerDataConfig.inventoryLimits[itemCategory]
 
 	if numItems == limit then return true, true end
 
@@ -498,7 +498,7 @@ local function reconcileItems(player) -- just like the function above, but no pr
 	if not success or not inventory then return end
 
 	for itemCategory, items in pairs(inventory) do
-		local propTemplate = PlayerDataConstants.itemProps[itemCategory]
+		local propTemplate = PlayerDataConfig.itemProps[itemCategory]
 
 		if not propTemplate then continue end
 

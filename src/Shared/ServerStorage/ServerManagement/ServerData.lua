@@ -516,7 +516,7 @@ end
 function ServerData.stampHomeServer(owner: Player)
 	assert(PlayerDataManager.persistentDataIsLoaded(owner), "Player profile is not loaded")
 	
-	local homeServerInfo = PlayerDataManager.viewPersistentDataAsync(owner.UserId).playerInfo.homeServerInfo
+	local homeServerInfo = PlayerDataManager.viewPersistentData(owner.UserId).playerInfo.homeServerInfo
 	local privateServerId = homeServerInfo.privateServerId
 
 	assert(privateServerId, "Player does not have a home server")

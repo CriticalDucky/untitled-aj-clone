@@ -1,7 +1,5 @@
 --[[
 	Client access to person player data and limited access to other players' data.
-
-	See PlayerDataConstants.lua to see how player data is structured and replicated.
 ]]
 
 --#region Imports

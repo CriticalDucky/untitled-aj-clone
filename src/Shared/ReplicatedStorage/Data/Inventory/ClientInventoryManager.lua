@@ -1,9 +1,6 @@
 --[[
 	Provides an inventory interface for the client.
 	Wrapper for ReplicatedPlayerData.lua.
-
-	See PlayerDataConstants.lua to see how player data is structured and replicated.
-	The player inventory is privately replicated, meaning that the client can only see their own inventory.
 ]]
 
 local ReplicatedStorage = game:GetService "ReplicatedStorage"

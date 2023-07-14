@@ -15,7 +15,7 @@ local Currency = {}
     CurrencyType is a CurrencyType.lua enum.
 ]]
 function Currency.get(player, currencyType)
-	local profile = PlayerDataManager.viewPersistentDataAsync(player.UserId)
+	local profile = PlayerDataManager.viewPersistentData(player.UserId)
 
 	if not profile then return false end
 

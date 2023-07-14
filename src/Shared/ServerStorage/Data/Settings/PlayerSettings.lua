@@ -17,13 +17,13 @@ local PlayerSettings = {}
 
 --[[
 	Gets the PlayerSettings table. The player does not need to be in this server.
-	Refer to PlayerDataConstants.lua and search for "playerSettings" for the structure of this table.
+	Refer to PlayerDataConfig.lua and search for "playerSettings" for the structure of this table.
 
 	Returns a success boolean and the PlayerSettings table if successful.
 ]]
 function PlayerSettings.get(player: Player | number)
 	local profileData =
-		PlayerDataManager.viewPersistentDataAsync(if typeof(player) == "number" then player else player.UserId)
+		PlayerDataManager.viewPersistentData(if typeof(player) == "number" then player else player.UserId)
 
 	if profileData then
 		return true, profileData.playerSettings

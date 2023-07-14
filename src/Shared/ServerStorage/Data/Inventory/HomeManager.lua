@@ -25,7 +25,7 @@ local Items = require(inventoryReplicatedStorage.Items)
 local ItemCategory = require(enums.ItemCategory)
 local HomeType = require(enums.HomeType)
 local PlayerSettings = require(settingsServerStorage.PlayerSettings)
-local PlayerDataConstants = require(replicatedFirstShared.Settings.PlayerDataConstants)
+local PlayerDataConfig = require(replicatedFirstShared.Settings.PlayerDataConfig)
 local ServerGroupEnum = require(enums.ServerGroup)
 local ServerTypeGroups = require(serverFolder.ServerTypeGroups)
 local Table = require(utilityFolder.Table)
@@ -201,7 +201,7 @@ end
 	Gets the home server info of a player. The player does not need to be in this server.
 	If there was an error getting the player's data, this will return nil.
 
-	```lua
+	```luam
 	homeServerInfo = {
 		privateServerId = string,
 		serverCode = string,
@@ -211,7 +211,7 @@ end
 function HomeManager.getHomeServerInfo(userId: number?): HomeServerInfo
 	userId = userId or getHomeOwner()
 
-	local profile = PlayerDataManager.viewPersistentDataAsync(userId)
+	local profile = PlayerDataManager.viewPersistentData(userId)
 
 	return profile and profile.playerInfo.homeServerInfo
 end
@@ -225,7 +225,7 @@ end
 function HomeManager.isHomeIdentifierStamped(userId: number?): (boolean, boolean?)
 	userId = userId or getHomeOwner()
 
-	local profile = PlayerDataManager.viewPersistentDataAsync(userId)
+	local profile = PlayerDataManager.viewPersistentData(userId)
 
 	if profile then return true, profile.playerInfo.homeInfoStamped end
 
@@ -324,7 +324,7 @@ function HomeManager.isPlacedItemsFull(userId: number?, numItemsToAdd: number?, 
 	userId = userId or getHomeOwner()
 
 	local numItemsToAdd = numItemsToAdd or 0
-	local maxFurniturePlaced = PlayerDataConstants.maxFurniturePlaced
+	local maxFurniturePlaced = PlayerDataConfig.maxFurniturePlaced
 
 	local success, placedItems = HomeManager.getPlacedItems(userId, slot)
 
@@ -434,7 +434,10 @@ function HomeManager.addPlacedItem(itemId: string, pivotCFrame: CFrame)
 
 	local player = Players:GetPlayerByUserId(homeOwner)
 
-	assert(player and PlayerDataManager.persistentDataIsLoaded(player), "HomeManager.addPlacedItem: No player data found.")
+	assert(
+		player and PlayerDataManager.persistentDataIsLoaded(player),
+		"HomeManager.addPlacedItem: No player data found."
+	)
 
 	local success, placedItem = HomeManager.getPlacedItemFromId(itemId, homeOwner)
 
@@ -659,7 +662,7 @@ local function loadProfile(player: Player)
 	if not (homeServerInfo and homeServerInfo.privateServerId and homeServerInfo.serverCode) then
 		local function getReservedServer()
 			return Promise.try(function()
-				local code, privateServerId = TeleportService:ReserveServer(PlayerDataConstants.homePlaceId)
+				local code, privateServerId = TeleportService:ReserveServer(PlayerDataConfig.homePlaceId)
 
 				if code and privateServerId then
 					return code, privateServerId
@@ -670,12 +673,14 @@ local function loadProfile(player: Player)
 		end
 
 		local success = Promise.retry(getReservedServer, 5)
-			:andThen(function(code, privateServerId)
-				PlayerDataManager.setValuePersistentAsync(player, { "playerInfo", "homeServerInfo" }, {
-					serverCode = code,
-					privateServerId = privateServerId,
-				})
-			end)
+			:andThen(
+				function(code, privateServerId)
+					PlayerDataManager.setValuePersistentAsync(player, { "playerInfo", "homeServerInfo" }, {
+						serverCode = code,
+						privateServerId = privateServerId,
+					})
+				end
+			)
 			:await()
 
 		if not success then
