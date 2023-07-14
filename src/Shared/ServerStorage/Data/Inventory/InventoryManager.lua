@@ -46,7 +46,7 @@ local Items = require(replicatedStorageInventory.Items)
 local Table = require(utilityFolder.Table)
 local Signal = require(replicatedFirstVendor.Signal.Signal)
 local PlayerDataConfig = require(replicatedFirstShared.Settings.PlayerDataConfig)
-local MiniId = require(utilityFolder.MiniId)
+local IdUtil = require(utilityFolder.IdUtil)
 local Promise = require(replicatedFirstVendor.Promise)
 local Types = require(utilityFolder.Types)
 local ItemCategory = require(enumsFolder.ItemCategory)
@@ -442,7 +442,7 @@ function InventoryManager.newItem(itemCategory: UserEnum, itemEnum: UserEnum, pr
 	assert(Items.getItem(itemCategory, itemEnum), "InventoryManager.newItem: Item does not exist")
 
 	local item = addPropsToItem {
-		id = MiniId(10), -- Chance of collision is: 64^10: 1 in 1152921504606846976. Not bad.
+		id = IdUtil(10), -- Chance of collision is: 64^10: 1 in 1152921504606846976. Not bad.
 		itemCategory = itemCategory,
 		itemEnum = itemEnum,
 	}

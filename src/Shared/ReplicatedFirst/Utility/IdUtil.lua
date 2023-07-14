@@ -30,7 +30,7 @@ function IdUtil.get(exclude: table?)
 		end
 		
 		id = table.concat(id)
-	until not exclude[id]
+	until not exclude or not exclude[id]
 
 	return id
 end
