@@ -11,7 +11,7 @@ end
 
 --#endregion
 
-local IdUtil = {}
+local Id = {}
 
 --[[
 	Generates a random ID with the given number of digits.
@@ -19,7 +19,7 @@ local IdUtil = {}
 	Given IDs should not be assumed to be universally unique. The `exclude` parameter is an optional set of IDs to
 	exclude from possible results. It must contain the IDs as keys, with the values being any truthy value.
 ]]
-function IdUtil.get(exclude: table?)
+function Id.get(exclude: table?)
 	local id
 
 	repeat
@@ -35,4 +35,4 @@ function IdUtil.get(exclude: table?)
 	return id
 end
 
-return IdUtil
+return Id
