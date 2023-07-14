@@ -50,7 +50,7 @@ function Currency.set(player: Player, currencyType, amount: number)
 
     if not PlayerDataManager.persistentDataIsLoaded(player) then return false end
 
-    PlayerDataManager.setValuePersistentAsync(player, { "currency", currencyType }, amount)
+    PlayerDataManager.setValuePersistent(player, { "currency", currencyType }, amount)
 
     return true
 end

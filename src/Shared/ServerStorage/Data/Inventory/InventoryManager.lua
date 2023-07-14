@@ -89,7 +89,7 @@ local function removeItem(player: Player, itemCategory: UserEnum, itemIndex: num
 	local item = InventoryManager.getItemFromIndex(player.UserId, itemCategory, itemIndex)
 	assert(item, "removeItem: Item not found")
 
-	PlayerDataManager.arrayRemovePersistentAsync(player, { "inventory", itemCategory }, itemIndex)
+	PlayerDataManager.arrayRemovePersistent(player, { "inventory", itemCategory }, itemIndex)
 	InventoryManager.itemRemovedFromInventory:Fire(player, itemCategory, itemIndex, item)
 end
 
@@ -111,7 +111,7 @@ local function addItem(player: Player, itemCategory: UserEnum, item: InventoryIt
 
 	InventoryManager.itemPlacingInInventory:Fire(player, itemCategory, item)
 
-	PlayerDataManager.arrayInsertPersistentAsync(player, { "inventory", itemCategory }, item)
+	PlayerDataManager.arrayInsertPersistent(player, { "inventory", itemCategory }, item)
 end
 
 --[[
@@ -515,7 +515,7 @@ local function reconcileItems(player) -- just like the function above, but no pr
 				end
 
 				if index(item, Table.copy(path)) == nil then
-					PlayerDataManager.setValuePersistentAsync(
+					PlayerDataManager.setValuePersistent(
 						player,
 						{ "inventory", itemCategory, itemIndex, table.unpack(path) },
 						Table.deepCopy(value)

@@ -1,18 +1,38 @@
-local characters = {
-    "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
-    "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
-    "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
-    "_", "-",
-}
+local CHAR_LIST = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-"
+local ID_LENGTH = 4
 
-local function getId(digits)
-    local id = ""
+--#region Character Array Setup
 
-    for _ = 1, digits do
-        id = id .. characters[math.random(1, #characters)]
-    end
+local characters = {}
 
-    return id
+for i = 1, CHAR_LIST:len() do
+	characters[i] = CHAR_LIST:sub(i, i)
 end
 
-return getId
+--#endregion
+
+local IdUtil = {}
+
+--[[
+	Generates a random ID with the given number of digits.
+
+	Given IDs should not be assumed to be universally unique. The `exclude` parameter is an optional set of IDs to
+	exclude from possible results. It must contain the IDs as keys, with the values being any truthy value.
+]]
+function IdUtil.get(exclude: table?)
+	local id
+
+	repeat
+		id = {}
+		
+		for _ = 1, ID_LENGTH do
+			table.insert(id, characters[math.random(1, #characters)])
+		end
+		
+		id = table.concat(id)
+	until not exclude[id]
+
+	return id
+end
+
+return IdUtil

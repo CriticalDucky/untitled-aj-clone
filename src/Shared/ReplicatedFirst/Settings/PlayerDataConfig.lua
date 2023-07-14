@@ -13,7 +13,7 @@ local PlayerDataConfig = {
 	persistentDataTemplate = {
 		-- The player's currencies.
 		currency = {
-			money = 0 :: number,
+			money = 0,
 		},
 
 		-- The player's Items.

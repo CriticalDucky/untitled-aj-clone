@@ -78,15 +78,14 @@ end
 	On the client, this function will yield until the action is registered on the server.
 
 	When registering an action on the server, the provided handler should ensure that the given data is valid. If
-	possible, it must try to salvage a valid state from invalid data. Otherwise, it should resort to the existing
-	state when given data is invalid. In all cases where the data is invalid, the handler should replicate the valid
-	state back to the client.
+	it is not, it should not accept the request and instead send a replication request back to the client with the
+	current data to resync.
 
 	All actions must be absolute and not relative to existing values so that if the client and server somehow desync,
 	they can resynchronize.
 
 	On the server, you can assume that the player's persistent data is loaded when the handler is called. (This is
-	because the opposite should never happen; and if it somehow does, the handler will automatically be ignored.)
+	because the inverse should never happen; and if it somehow does, the handler will automatically be ignored.)
 ]]
 function StateReplication.registerActionAsync(name: string, handler: (Player, any) -> () | (any) -> ())
 	if stateReplicationEvents[name] then

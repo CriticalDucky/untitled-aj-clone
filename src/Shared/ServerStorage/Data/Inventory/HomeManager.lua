@@ -474,9 +474,9 @@ function HomeManager.addPlacedItem(itemId: string, pivotCFrame: CFrame)
 			return false
 		end
 
-		PlayerDataManager.arraySetPersistentAsync(player, path, placedItemIndex, placedItem)
+		PlayerDataManager.arraySetPersistent(player, path, placedItemIndex, placedItem)
 	else
-		PlayerDataManager.arrayInsertPersistentAsync(player, path, placedItem)
+		PlayerDataManager.arrayInsertPersistent(player, path, placedItem)
 	end
 
 	return HomeManager.loadPlacedItem(placedItem)
@@ -523,7 +523,7 @@ function HomeManager.removePlacedItem(itemId: string, userId: number?)
 
 	local path = { "inventory", "homes", selectedHomeIndex, "placedItems" }
 
-	PlayerDataManager.arrayRemovePersistentAsync(player, path, placedItemIndex)
+	PlayerDataManager.arrayRemovePersistent(player, path, placedItemIndex)
 
 	if isHomeServer then HomeManager.unloadPlacedItem(placedItem) end
 
@@ -675,7 +675,7 @@ local function loadProfile(player: Player)
 		local success = Promise.retry(getReservedServer, 5)
 			:andThen(
 				function(code, privateServerId)
-					PlayerDataManager.setValuePersistentAsync(player, { "playerInfo", "homeServerInfo" }, {
+					PlayerDataManager.setValuePersistent(player, { "playerInfo", "homeServerInfo" }, {
 						serverCode = code,
 						privateServerId = privateServerId,
 					})

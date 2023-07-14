@@ -317,7 +317,7 @@ local PlayerDataManager = {}
 
 	The player's persistent data must be loaded.
 ]]
-function PlayerDataManager.arrayInsertPersistentAsync(player: Player, path: { any }, value: any): boolean
+function PlayerDataManager.arrayInsertPersistent(player: Player, path: { any }, value: any): boolean
 	local profile = profiles[player]
 
 	if not profile then
@@ -357,7 +357,7 @@ end
 
 	The player's persistent data must be loaded.
 ]]
-function PlayerDataManager.arrayRemovePersistentAsync(player: Player, path: { any }, index: number): boolean
+function PlayerDataManager.arrayRemovePersistent(player: Player, path: { any }, index: number): boolean
 	local profile = profiles[player]
 
 	if not profile then
@@ -397,7 +397,7 @@ end
 
 	The player's persistent data must be loaded.
 ]]
-function PlayerDataManager.arraySetPersistentAsync(player: Player, path: { any }, index: number, value: any): boolean
+function PlayerDataManager.arraySetPersistent(player: Player, path: { any }, index: number, value: any): boolean
 	local profile = profiles[player]
 
 	if not profile then
@@ -479,7 +479,7 @@ end
 
 	The player's persistent data must be loaded.
 ]]
-function PlayerDataManager.setValuePersistentAsync(player: Player, path: { any }, value: any): boolean
+function PlayerDataManager.setValuePersistent(player: Player, path: { any }, value: any): boolean
 	local profile = profiles[player]
 
 	if not profile then
@@ -519,7 +519,7 @@ end
 
 	The player's persistent data must be loaded.
 ]]
-function PlayerDataManager.setValuesPersistentAsync(player: Player, path: { any }, values: table): boolean
+function PlayerDataManager.setValuesPersistent(player: Player, path: { any }, values: table): boolean
 	local profile = profiles[player]
 
 	if not profile then
