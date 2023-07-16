@@ -20,8 +20,7 @@ local ReplicaCollection =
 
 local player = Players.LocalPlayer
 
-local playerData = ReplicaCollection.waitForReplica("PrivatePlayerData" .. player.UserId).Data
--- local tempData = ReplicaCollection.waitForReplica("PrivatePlayerTempData" .. player.UserId).Data
+local playerData = ReplicaCollection.waitForReplica(`PrivatePlayerData{player.UserId}`).Data
 
 --#endregion
 

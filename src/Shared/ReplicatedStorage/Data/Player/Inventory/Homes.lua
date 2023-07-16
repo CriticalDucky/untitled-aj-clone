@@ -137,7 +137,7 @@ function Homes.addHome(homeType: number, player: Player)
 		return
 	end
 
-	local homes = Homes.getHomes(player)
+	local homes = PlayerDataManager.viewPersistentData(player).inventory.homes
 
 	local newHome = {
 		type = homeType,
@@ -175,7 +175,7 @@ function Homes.removeHome(homeId: string, player: Player)
 	end
 
 	PlayerDataManager.setValuePersistent(player, { "inventory", "homes", homeId }, nil)
-	StateReplication.replicate("RemoveHome", { id = homeId }, player)
+	StateReplication.replicate("SetHomes", homes, player)
 end
 
 return Homes

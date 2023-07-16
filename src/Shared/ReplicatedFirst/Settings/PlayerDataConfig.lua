@@ -76,8 +76,6 @@ local PlayerDataConfig = {
 
 export type PlayerData = typeof(PlayerDataConfig.persistentDataTemplate)
 
-local a: PlayerData = {}
-
-a.currency.money = 1
+local a: PlayerData = {} :: PlayerData
 
 return PlayerDataConfig
