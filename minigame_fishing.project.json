@@ -6,7 +6,7 @@
 
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
-      "$path": "src/Minigames/Fishing/ReplicatedStorage",
+      "$path": "src/MinigameFishing/ReplicatedStorage",
 
       "Vendor": {
         "$className": "Folder",
@@ -33,7 +33,7 @@
 
     "ReplicatedFirst": {
       "$className": "ReplicatedFirst",
-      "$path": "src/Minigames/Fishing/ReplicatedStorage",
+      "$path": "src/MinigameFishing/ReplicatedStorage",
 
       "Vendor": {
         "$className": "Folder",
@@ -64,7 +64,7 @@
 
     "ServerScriptService": {
       "$className": "ServerScriptService",
-      "$path": "src/Minigames/Fishing/ServerScriptService",
+      "$path": "src/MinigameFishing/ServerScriptService",
 
       "Shared": {
         "$className": "Folder",
@@ -79,7 +79,7 @@
 
     "ServerStorage": {
       "$className": "ServerStorage",
-      "$path": "src/Minigames/Fishing/ServerStorage",
+      "$path": "src/MinigameFishing/ServerStorage",
 
       "Vendor": {
         "$className": "Folder",
@@ -125,7 +125,7 @@
 
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
-        "$path": "src/Minigames/Fishing/StarterPlayer/StarterPlayerScripts",
+        "$path": "src/MinigameFishing/StarterPlayer/StarterPlayerScripts",
 
         "Shared": {
           "$className": "Folder",
@@ -140,7 +140,7 @@
 
       "StarterCharacterScripts": {
         "$className": "StarterCharacterScripts",
-        "$path": "src/Minigames/Fishing/StarterPlayer/StarterCharacterScripts",
+        "$path": "src/MinigameFishing/StarterPlayer/StarterCharacterScripts",
 
         "Shared": {
           "$className": "Folder",
@@ -156,7 +156,7 @@
 
     "Workspace": {
       "$className": "Workspace",
-      "$path": "src/Minigames/Fishing/Workspace",
+      "$path": "src/MinigameFishing/Workspace",
 
       "Terrain": {
         "$className": "Terrain"

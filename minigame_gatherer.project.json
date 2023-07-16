@@ -6,7 +6,7 @@
 
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
-      "$path": "src/Minigames/Gatherer/ReplicatedStorage",
+      "$path": "src/MinigameGatherer/ReplicatedStorage",
 
       "Vendor": {
         "$className": "Folder",
@@ -33,7 +33,7 @@
 
     "ReplicatedFirst": {
       "$className": "ReplicatedFirst",
-      "$path": "src/Minigames/Gatherer/ReplicatedStorage",
+      "$path": "src/MinigameGatherer/ReplicatedStorage",
 
       "Vendor": {
         "$className": "Folder",
@@ -64,7 +64,7 @@
 
     "ServerScriptService": {
       "$className": "ServerScriptService",
-      "$path": "src/Minigames/Gatherer/ServerScriptService",
+      "$path": "src/MinigameGatherer/ServerScriptService",
 
       "Shared": {
         "$className": "Folder",
@@ -79,7 +79,7 @@
 
     "ServerStorage": {
       "$className": "ServerStorage",
-      "$path": "src/Minigames/Gatherer/ServerStorage",
+      "$path": "src/MinigameGatherer/ServerStorage",
 
       "Vendor": {
         "$className": "Folder",
@@ -125,7 +125,7 @@
 
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
-        "$path": "src/Minigames/Gatherer/StarterPlayer/StarterPlayerScripts",
+        "$path": "src/MinigameGatherer/StarterPlayer/StarterPlayerScripts",
 
         "Shared": {
           "$className": "Folder",
@@ -140,7 +140,7 @@
 
       "StarterCharacterScripts": {
         "$className": "StarterCharacterScripts",
-        "$path": "src/Minigames/Gatherer/StarterPlayer/StarterCharacterScripts",
+        "$path": "src/MinigameGatherer/StarterPlayer/StarterCharacterScripts",
 
         "Shared": {
           "$className": "Folder",
@@ -156,7 +156,7 @@
 
     "Workspace": {
       "$className": "Workspace",
-      "$path": "src/Minigames/Gatherer/Workspace",
+      "$path": "src/MinigameGatherer/Workspace",
 
       "Terrain": {
         "$className": "Terrain"

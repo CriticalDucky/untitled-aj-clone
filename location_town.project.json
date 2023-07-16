@@ -6,7 +6,7 @@
 
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
-      "$path": "src/Locations/Town/ReplicatedStorage",
+      "$path": "src/LocationTown/ReplicatedStorage",
 
       "Vendor": {
         "$className": "Folder",
@@ -33,7 +33,7 @@
 
     "ReplicatedFirst": {
       "$className": "ReplicatedFirst",
-      "$path": "src/Locations/Town/ReplicatedStorage",
+      "$path": "src/LocationTown/ReplicatedStorage",
 
       "Vendor": {
         "$className": "Folder",
@@ -64,7 +64,7 @@
 
     "ServerScriptService": {
       "$className": "ServerScriptService",
-      "$path": "src/Locations/Town/ServerScriptService",
+      "$path": "src/LocationTown/ServerScriptService",
 
       "Shared": {
         "$className": "Folder",
@@ -79,7 +79,7 @@
 
     "ServerStorage": {
       "$className": "ServerStorage",
-      "$path": "src/Locations/Town/ServerStorage",
+      "$path": "src/LocationTown/ServerStorage",
 
       "Vendor": {
         "$className": "Folder",
@@ -125,7 +125,7 @@
 
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
-        "$path": "src/Locations/Town/StarterPlayer/StarterPlayerScripts",
+        "$path": "src/LocationTown/StarterPlayer/StarterPlayerScripts",
 
         "Shared": {
           "$className": "Folder",
@@ -140,7 +140,7 @@
 
       "StarterCharacterScripts": {
         "$className": "StarterCharacterScripts",
-        "$path": "src/Locations/Town/StarterPlayer/StarterCharacterScripts",
+        "$path": "src/LocationTown/StarterPlayer/StarterCharacterScripts",
 
         "Shared": {
           "$className": "Folder",
@@ -156,7 +156,7 @@
 
     "Workspace": {
       "$className": "Workspace",
-      "$path": "src/Locations/Town/Workspace",
+      "$path": "src/LocationTown/Workspace",
 
       "Terrain": {
         "$className": "Terrain"

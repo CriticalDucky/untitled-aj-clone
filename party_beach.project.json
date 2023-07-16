@@ -6,7 +6,7 @@
 
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
-      "$path": "src/Parties/BeachParty/ReplicatedStorage",
+      "$path": "src/PartyBeach/ReplicatedStorage",
 
       "Vendor": {
         "$className": "Folder",
@@ -33,7 +33,7 @@
 
     "ReplicatedFirst": {
       "$className": "ReplicatedFirst",
-      "$path": "src/Parties/BeachParty/ReplicatedStorage",
+      "$path": "src/PartyBeach/ReplicatedStorage",
 
       "Vendor": {
         "$className": "Folder",
@@ -64,7 +64,7 @@
 
     "ServerScriptService": {
       "$className": "ServerScriptService",
-      "$path": "src/Parties/BeachParty/ServerScriptService",
+      "$path": "src/PartyBeach/ServerScriptService",
 
       "Shared": {
         "$className": "Folder",
@@ -79,7 +79,7 @@
 
     "ServerStorage": {
       "$className": "ServerStorage",
-      "$path": "src/Parties/BeachParty/ServerStorage",
+      "$path": "src/PartyBeach/ServerStorage",
 
       "Vendor": {
         "$className": "Folder",
@@ -125,7 +125,7 @@
 
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
-        "$path": "src/Parties/BeachParty/StarterPlayer/StarterPlayerScripts",
+        "$path": "src/PartyBeach/StarterPlayer/StarterPlayerScripts",
 
         "Shared": {
           "$className": "Folder",
@@ -140,7 +140,7 @@
 
       "StarterCharacterScripts": {
         "$className": "StarterCharacterScripts",
-        "$path": "src/Parties/BeachParty/StarterPlayer/StarterCharacterScripts",
+        "$path": "src/PartyBeach/StarterPlayer/StarterCharacterScripts",
 
         "Shared": {
           "$className": "Folder",
@@ -156,7 +156,7 @@
 
     "Workspace": {
       "$className": "Workspace",
-      "$path": "src/Parties/BeachParty/Workspace",
+      "$path": "src/PartyBeach/Workspace",
 
       "Terrain": {
         "$className": "Terrain"

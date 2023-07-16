@@ -1,0 +1,83 @@
+{
+  "folders": [
+    {
+      "name": "Untitled AJ Clone",
+      "path": "."
+    },
+    {
+      "name": "(Shared)",
+      "path": "src/Shared"
+    },
+    {
+      "name": "Home",
+      "path": "src/Home"
+    },
+    {
+      "name": "Location (Shared)",
+      "path": "src/LocationShared"
+    },
+    {
+      "name": "Location: Forest",
+      "path": "src/LocationForest"
+    },
+    {
+      "name": "Location: Town",
+      "path": "src/LocationTown"
+    },
+    {
+      "name": "Minigame (Shared)",
+      "path": "src/MinigameShared"
+    },
+    {
+      "name": "Minigame: Fishing",
+      "path": "src/MinigameFishing"
+    },
+    {
+      "name": "Minigame: Gatherer",
+      "path": "src/MinigameGatherer"
+    },
+    {
+      "name": "Party: Beach",
+      "path": "src/PartyBeach"
+    },
+    {
+      "name": "Routing",
+      "path": "src/Routing"
+    }
+  ],
+  "settings": {
+    "editor.rulers": [120],
+    "stylua.searchParentDirectories": true
+  },
+  "extensions": {
+    "recommendations": [
+      "johnnymorganz.stylua",
+      "evaera.vscode-rojo",
+      "nightrains.robloxlsp"
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "build and publish to testing game",
+        "type": "shell",
+        "command": "remodel run build.lua",
+        "problemMatcher": [],
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        }
+      },
+      {
+        "label": "build and publish to production game",
+        "type": "shell",
+        "command": "remodel run build.lua production",
+        "problemMatcher": [],
+        "group": {
+          "kind": "build"
+        }
+      }
+    ]
+  }
+}

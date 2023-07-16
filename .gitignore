@@ -1,5 +1,9 @@
+# Build output
 /build
 
 # Roblox Studio lock files
 /*.rbxlx.lock
 /*.rbxl.lock
+
+# macOS
+.DS_Store
