@@ -30,6 +30,10 @@ local ClientState = {
 		money = Value(playerData.currency.money),
 	},
 
+	home = {
+		selected = Value(playerData.home.selected),
+	},
+
 	inventory = {
 		accessories = Value(playerData.inventory.accessories),
 		furniture = Value(playerData.inventory.furniture),

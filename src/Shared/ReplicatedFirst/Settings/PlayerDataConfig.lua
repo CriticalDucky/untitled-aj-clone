@@ -16,6 +16,18 @@ local PlayerDataConfig = {
 			money = 0,
 		},
 
+		home = {
+			selected = nil :: string?,
+			
+			server = {
+				-- The ID of the player's home server.
+				id = nil :: string?,
+
+				-- The access code of the player's home server.
+				accessCode = nil :: string?,
+			}
+		},
+
 		-- The player's Items.
 		inventory = {
 			-- Items that can be worn by the player.
@@ -26,15 +38,6 @@ local PlayerDataConfig = {
 
 			-- The player's homes.
 			homes = {},
-		},
-
-		-- The player's owned servers.
-		servers = {
-			-- The player's home server.
-			home = {
-				-- id
-				-- accessCode
-			},
 		},
 
 		-- The player's settings.
@@ -70,5 +73,11 @@ local PlayerDataConfig = {
 		},
 	},
 }
+
+export type PlayerData = typeof(PlayerDataConfig.persistentDataTemplate)
+
+local a: PlayerData = {}
+
+a.currency.money = 1
 
 return PlayerDataConfig

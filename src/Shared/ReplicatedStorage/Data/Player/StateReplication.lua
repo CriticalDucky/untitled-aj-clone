@@ -61,6 +61,8 @@ end
 	Registers a state replication action. This adds it to the list of actions that can be replicated and sets up the
 	handler function that will be called when the action is replicated to this context.
 
+	---
+
 	`name` is the name of the action to register. This is the name that will be used when replicating the action.
 
 	`handler` is the function that will be called when the action is replicated. On the server, the first parameter is
@@ -80,9 +82,6 @@ end
 	When registering an action on the server, the provided handler should ensure that the given data is valid. If
 	it is not, it should not accept the request and instead send a replication request back to the client with the
 	current data to resync.
-
-	All actions must be absolute and not relative to existing values so that if the client and server somehow desync,
-	they can resynchronize.
 
 	On the server, you can assume that the player's persistent data is loaded when the handler is called. (This is
 	because the inverse should never happen; and if it somehow does, the handler will automatically be ignored.)

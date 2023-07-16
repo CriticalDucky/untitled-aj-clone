@@ -110,7 +110,7 @@ end
 ]]
 function Currency.setMoney(player: Player, amount: number)
 	if not isServer then
-		warn "This function can only be called on the server. No state will be modified."
+		warn "This function can only be called on the server. No data will be modified."
 		return
 	end
 

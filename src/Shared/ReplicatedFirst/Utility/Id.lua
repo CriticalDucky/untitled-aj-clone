@@ -14,21 +14,23 @@ end
 local Id = {}
 
 --[[
-	Generates a random ID with the given number of digits.
+	Generates a random ID.
+
+	---
 
 	Given IDs should not be assumed to be universally unique. The `exclude` parameter is an optional set of IDs to
 	exclude from possible results. It must contain the IDs as keys, with the values being any truthy value.
 ]]
-function Id.get(exclude: table?)
+function Id.generate(exclude: table?): string
 	local id
 
 	repeat
 		id = {}
-		
+
 		for _ = 1, ID_LENGTH do
 			table.insert(id, characters[math.random(1, #characters)])
 		end
-		
+
 		id = table.concat(id)
 	until not exclude or not exclude[id]
 

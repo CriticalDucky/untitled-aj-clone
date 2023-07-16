@@ -117,11 +117,11 @@ end
 local Settings = {}
 
 --[[
-    Gets the player's *Find Open World* setting.
+	Gets the player's *Find Open World* setting.
 
 	---
 
-    *The player parameter is **required** on the server and **ignored** on the client.*
+	*The player parameter is **required** on the server and **ignored** on the client.*
 ]]
 function Settings.getSettingFindOpenWorld(player: Player?)
 	if isServer and not player then
@@ -305,11 +305,11 @@ function Settings.getSettingSFXVolumeState()
 end
 
 --[[
-    Sets the player's *Find Open World* setting.
+	Sets the player's *Find Open World* setting.
 
 	---
 
-    *The player parameter is **required** on the server and **ignored** on the client.*
+	*The player parameter is **required** on the server and **ignored** on the client.*
 ]]
 function Settings.setSettingFindOpenWorld(value: boolean, player: Player?)
 	if isServer and not player then
@@ -329,11 +329,11 @@ function Settings.setSettingFindOpenWorld(value: boolean, player: Player?)
 end
 
 --[[
-    Sets the player's *Home Lock* setting. The given home lock type must be a valid `HomeLockType` enum value.
+	Sets the player's *Home Lock* setting. The given home lock type must be a valid `HomeLockType` enum value.
 
 	---
 
-    *The player parameter is **required** on the server and **ignored** on the client.*
+	*The player parameter is **required** on the server and **ignored** on the client.*
 ]]
 function Settings.setSettingHomeLock(homeLockType: number, player: Player?)
 	if isServer and not player then
@@ -353,11 +353,11 @@ function Settings.setSettingHomeLock(homeLockType: number, player: Player?)
 end
 
 --[[
-    Sets the player's *Music Volume* setting. The given volume must be a number between 0 and 1.
+	Sets the player's *Music Volume* setting. The given volume must be a number between 0 and 1.
 
 	---
 
-    *The player parameter is **required** on the server and **ignored** on the client.*
+	*The player parameter is **required** on the server and **ignored** on the client.*
 ]]
 function Settings.setSettingMusicVolume(volume: number, player: Player?)
 	if isServer and not player then
@@ -377,11 +377,11 @@ function Settings.setSettingMusicVolume(volume: number, player: Player?)
 end
 
 --[[
-    Sets the player's *SFX Volume* setting. The given volume must be a number between 0 and 1.
+	Sets the player's *SFX Volume* setting. The given volume must be a number between 0 and 1.
 
 	---
 
-    *The player parameter is **required** on the server and **ignored** on the client.*
+	*The player parameter is **required** on the server and **ignored** on the client.*
 ]]
 function Settings.setSettingSFXVolume(volume: number, player: Player?)
 	if isServer and not player then
