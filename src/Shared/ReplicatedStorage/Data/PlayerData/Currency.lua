@@ -9,8 +9,8 @@ local isServer = RunService:IsServer()
 local Fusion = if not isServer then require(ReplicatedFirst.Vendor.Fusion) else nil
 
 local PlayerDataManager = if isServer then require(ServerStorage.Shared.Data.PlayerDataManager) else nil
-local StateClient = if not isServer then require(script.Parent:WaitForChild "StateClient") else nil
-local StateReplication = require(script.Parent:WaitForChild "StateReplication")
+local DataClient = if not isServer then require(script.Parent:WaitForChild "DataClient") else nil
+local DataReplication = require(script.Parent:WaitForChild "DataReplication")
 
 local peek = if Fusion then Fusion.peek else nil
 
@@ -19,8 +19,8 @@ local peek = if Fusion then Fusion.peek else nil
 --#region Action Registration
 
 if not isServer then
-	StateReplication.registerActionAsync("SetMoney", function(amount)
-		StateClient.currency.money:set(amount)
+	DataReplication.registerActionAsync("SetMoney", function(amount)
+		DataClient.currency.money:set(amount)
 	end)
 end
 
@@ -56,7 +56,7 @@ function Currency.getMoney(player: Player?)
 
 		return data.currency.money
 	else
-		return peek(StateClient.currency.money)
+		return peek(DataClient.currency.money)
 	end
 end
 
@@ -75,7 +75,7 @@ function Currency.getMoneyState()
 		return
 	end
 
-	return StateClient.currency.money
+	return DataClient.currency.money
 end
 
 --[[
@@ -122,7 +122,7 @@ function Currency.setMoney(player: Player, amount: number)
 	amount = math.ceil(amount)
 
 	PlayerDataManager.setValuePersistent(player, { "currency", "money" }, amount)
-	StateReplication.replicate("SetMoney", amount, player)
+	DataReplication.replicate("SetMoney", amount, player)
 end
 
 return Currency

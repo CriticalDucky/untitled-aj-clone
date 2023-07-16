@@ -13,8 +13,8 @@ local Fusion = if not isServer then require(ReplicatedFirst.Vendor.Fusion) else 
 
 local Id = if isServer then require(ReplicatedFirst.Shared.Utility.Id) else nil
 local PlayerDataManager = if isServer then require(ServerStorage.Shared.Data.PlayerDataManager) else nil
-local StateClient = if not isServer then require(script.Parent.Parent:WaitForChild "StateClient") else nil
-local StateReplication = require(script.Parent.Parent:WaitForChild "StateReplication")
+local DataClient = if not isServer then require(script.Parent.Parent:WaitForChild "DataClient") else nil
+local DataReplication = require(script.Parent.Parent:WaitForChild "DataReplication")
 
 local peek = if Fusion then Fusion.peek else nil
 
@@ -45,16 +45,14 @@ function Homes.getHome(homeId: string, player: Player?)
 	end
 
 	if isServer then
-		local data = PlayerDataManager.viewPersistentData(player)
-
-		if not data then
-			warn "The player's persistent data is not loaded, so homes cannot be retrieved."
+		if not PlayerDataManager.persistentDataIsLoaded(player) then
+			warn "The player's persistent data is not loaded, so no home can be retrieved."
 			return
 		end
 
-		return data.inventory.homes[homeId]
+		return PlayerDataManager.viewPersistentData(player).inventory.homes[homeId]
 	else
-		return peek(StateClient.inventory.homes)[homeId]
+		return peek(DataClient.inventory.homes)[homeId]
 	end
 end
 
@@ -81,16 +79,14 @@ function Homes.getHomes(player: Player?)
 	end
 
 	if isServer then
-		local data = PlayerDataManager.viewPersistentData(player)
-
-		if not data then
-			warn "The player's persistent data is not loaded, so homes cannot be retrieved."
+		if not PlayerDataManager.persistentDataIsLoaded(player) then
+			warn "The player's persistent data is not loaded, so no homes can be retrieved."
 			return
 		end
 
-		return data.inventory.homes
+		return PlayerDataManager.viewPersistentData(player).inventory.homes
 	else
-		return peek(StateClient.inventory.homes)
+		return peek(DataClient.inventory.homes)
 	end
 end
 
@@ -114,7 +110,7 @@ function Homes.getHomesState()
 		return
 	end
 
-	return peek(StateClient.inventory.homes)
+	return peek(DataClient.inventory.homes)
 end
 
 --[[
@@ -123,6 +119,8 @@ end
 	---
 
 	The `homeType` parameter must be a valid `ItemHomeType` enum value.
+
+	The ID of the new home is returned.
 
 	This function is **server only**.
 ]]
@@ -146,7 +144,9 @@ function Homes.addHome(homeType: number, player: Player)
 	local newHomeId = Id.generate(homes)
 
 	PlayerDataManager.setValuePersistent(player, { "inventory", "homes", newHomeId }, newHome)
-	StateReplication.replicate("AddHome", { id = newHomeId, data = newHome }, player)
+	DataReplication.replicate("SetHomes", homes, player)
+
+	return newHomeId
 end
 
 --[[
@@ -175,7 +175,7 @@ function Homes.removeHome(homeId: string, player: Player)
 	end
 
 	PlayerDataManager.setValuePersistent(player, { "inventory", "homes", homeId }, nil)
-	StateReplication.replicate("SetHomes", homes, player)
+	DataReplication.replicate("SetHomes", homes, player)
 end
 
 return Homes
