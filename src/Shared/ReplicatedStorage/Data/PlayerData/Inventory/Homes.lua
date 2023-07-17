@@ -1,23 +1,34 @@
 --#region Imports
 
+-- Services
+
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local RunService = game:GetService "RunService"
 local ServerStorage = game:GetService "ServerStorage"
 
 local isServer = RunService:IsServer()
 
+-- Vendor
+
 local Fusion = if not isServer then require(ReplicatedFirst.Vendor.Fusion) else nil
+
+-- Source
 
 local Id = if isServer then require(ReplicatedFirst.Shared.Utility.Id) else nil
 local PlayerDataManager = if isServer then require(ServerStorage.Shared.Data.PlayerDataManager) else nil
 local ClientState = if not isServer then require(script.Parent.Parent:WaitForChild "ClientState") else nil
 local DataReplication = require(script.Parent.Parent:WaitForChild "DataReplication")
 
-local peek = if Fusion then Fusion.peek else nil
+-- Types
 
-export type Home = {
-	type: number,
-}
+local Types = require(ReplicatedFirst:WaitForChild("Shared"):WaitForChild("Utility"):WaitForChild("Types"))
+
+type Home = Types.Home
+type ItemHomeType = Types.ItemHomeType
+
+-- Methods
+
+local peek = if Fusion then Fusion.peek else nil
 
 --#endregion
 
@@ -41,13 +52,11 @@ local Homes = {}
 
 	---
 
-	The `homeVariant` parameter must be a valid `ItemHomeVariant` enum value.
-
 	The ID of the new home is returned.
 
 	This function is **server only**.
 ]]
-function Homes.addHome(homeVariant: number, player: Player)
+function Homes.addHome(home: Home, player: Player)
 	if not isServer then
 		warn "Adding homes can only be done on the server."
 		return
@@ -60,13 +69,9 @@ function Homes.addHome(homeVariant: number, player: Player)
 
 	local homes = PlayerDataManager.viewPersistentData(player).inventory.homes
 
-	local newHome = {
-		type = homeVariant,
-	}
-
 	local newHomeId = Id.generate(homes)
 
-	PlayerDataManager.setValuePersistent(player, { "inventory", "homes", newHomeId }, newHome)
+	PlayerDataManager.setValuePersistent(player, { "inventory", "homes", newHomeId }, home)
 	DataReplication.replicate("SetHomes", homes, player)
 
 	return newHomeId

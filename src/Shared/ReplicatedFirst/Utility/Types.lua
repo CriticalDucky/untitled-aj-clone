@@ -58,6 +58,10 @@ export type PartyUnit = {
 	time: TimeRange,
 }
 
+export type Home = {
+	type: ItemHomeType
+}
+
 export type HomeServerInfo = {
 	serverCode: string,
 	privateServerId: string,
@@ -90,5 +94,11 @@ export type ServerIdentifier = {
 	minigameIndex: number?,
 	privateServerId: string?,
 }
+
+-- Enums
+
+export type ItemAccessoryType = number
+export type ItemFurnitureType = number
+export type ItemHomeType = number
 
 return nil
