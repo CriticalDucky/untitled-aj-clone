@@ -32,58 +32,11 @@ end
 local Currency = {}
 
 --[[
-    Gets the amount of money the player has.
-
-    ---
-
-    The player parameter is **required** on the server and **ignored** on the client.
-]]
-function Currency.getMoney(player: Player?)
-	if isServer and not player then
-		warn "A player must be provided when calling from the server."
-		return
-	elseif not isServer and player then
-		warn "No player needs to be given when calling from the client, so this parameter will be ignored."
-	end
-
-	if isServer then
-		local data = PlayerDataManager.viewPersistentData(player)
-
-		if not data then
-			warn "The player's persistent data is not loaded, so this setting cannot be retrieved."
-			return
-		end
-
-		return data.currency.money
-	else
-		return peek(ClientState.currency.money)
-	end
-end
-
---[[
-	Gets the Fusion state object for the amount of money the player has.
-
-	---
-
-	This function is **client only**.
-
-	*Do **NOT** modify the state object returned by this function under any circumstances!*
-]]
-function Currency.getMoneyState()
-	if isServer then
-		warn "This function can only be called on the client. No state will be returned."
-		return
-	end
-
-	return ClientState.currency.money
-end
-
---[[
 	Increments the amount of money the player has. The amount provided will be rounded up to the nearest integer.
 
 	---
 
-	*Server only.*
+	This function is **server only**.
 ]]
 function Currency.incrementMoney(player: Player, amount: number)
 	if not isServer then
@@ -106,7 +59,7 @@ end
 
 	---
 
-	*Server only.*
+	This function is **server only**.
 ]]
 function Currency.setMoney(player: Player, amount: number)
 	if not isServer then

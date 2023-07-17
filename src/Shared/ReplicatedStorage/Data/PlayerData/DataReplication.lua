@@ -25,16 +25,16 @@ local StateReplication = {}
 --[[
 	Replicates the given action(s) to the server or specified client (depending on where this function was called).
 
+	---
+
 	`action` is the name of the action to replicate.
 
 	`data` is the data to replicate with the action. This can be any replicatable value.
 
-	---
-
 	Actions must be registered before they can be replicated; otherwise, they will be ignored. See
 	`StateReplication.registerActionAsync` for more information.
 
-	*The player parameter is **required** on the server and **ignored** on the client.*
+	The player parameter is **required** on the server and **ignored** on the client.
 ]]
 function StateReplication.replicate(action: string, data: any, player: Player?)
 	if isServer and not player then
@@ -68,8 +68,6 @@ end
 	`handler` is the function that will be called when the action is replicated. On the server, the first parameter is
 	the player that replicated the action, while the second parameter is the action data. On the client, the first and
 	only parameter is the action data.
-
-	---
 
 	This function is available on both the client and server. The context of where this function is called determines
 	whether the action is registered in that context only. For replication to work, the action must be registered in

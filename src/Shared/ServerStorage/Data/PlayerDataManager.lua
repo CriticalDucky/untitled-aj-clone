@@ -308,7 +308,7 @@ Players.PlayerRemoving:Connect(unloadPlayerTempData)
 
 	---
 
-	This module should only be used directly by the `PlayerState` module. Other users should use `PlayerState` instead.
+	For proper client replication when modifying player data, use the `PlayerData` module.
 ]]
 local PlayerDataManager = {}
 
