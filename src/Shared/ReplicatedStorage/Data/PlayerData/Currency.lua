@@ -9,7 +9,7 @@ local isServer = RunService:IsServer()
 local Fusion = if not isServer then require(ReplicatedFirst.Vendor.Fusion) else nil
 
 local PlayerDataManager = if isServer then require(ServerStorage.Shared.Data.PlayerDataManager) else nil
-local DataClient = if not isServer then require(script.Parent:WaitForChild "DataClient") else nil
+local ClientState = if not isServer then require(script.Parent:WaitForChild "ClientState") else nil
 local DataReplication = require(script.Parent:WaitForChild "DataReplication")
 
 local peek = if Fusion then Fusion.peek else nil
@@ -20,14 +20,14 @@ local peek = if Fusion then Fusion.peek else nil
 
 if not isServer then
 	DataReplication.registerActionAsync("SetMoney", function(amount)
-		DataClient.currency.money:set(amount)
+		ClientState.currency.money:set(amount)
 	end)
 end
 
 --#endregion
 
 --[[
-	A submodule of `PlayerState` that handles the player's currency.
+	A submodule of `PlayerData` that handles the player's currency.
 ]]
 local Currency = {}
 
@@ -36,7 +36,7 @@ local Currency = {}
 
     ---
 
-    *The player parameter is **required** on the server and **ignored** on the client.*
+    The player parameter is **required** on the server and **ignored** on the client.
 ]]
 function Currency.getMoney(player: Player?)
 	if isServer and not player then
@@ -56,16 +56,16 @@ function Currency.getMoney(player: Player?)
 
 		return data.currency.money
 	else
-		return peek(DataClient.currency.money)
+		return peek(ClientState.currency.money)
 	end
 end
 
 --[[
-	Gets the state object for the amount of money the player has.
+	Gets the Fusion state object for the amount of money the player has.
 
 	---
 
-	*Client only.*
+	This function is **client only**.
 
 	*Do **NOT** modify the state object returned by this function under any circumstances!*
 ]]
@@ -75,7 +75,7 @@ function Currency.getMoneyState()
 		return
 	end
 
-	return DataClient.currency.money
+	return ClientState.currency.money
 end
 
 --[[

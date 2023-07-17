@@ -1,6 +1,8 @@
 --#region Imports
 
 local Currency = require(script.Currency)
+local Inventory = require(script.Inventory)
+local PublicPlayerData = require(script.PublicPlayerData)
 local Settings = require(script.Settings)
 
 --#endregion
@@ -11,6 +13,10 @@ local Settings = require(script.Settings)
 local PlayerState = {}
 
 PlayerState.currency = Currency
+
+PlayerState.inventory = Inventory
+
+PlayerState.publicPlayerData = PublicPlayerData
 
 PlayerState.settings = Settings
 

@@ -1,25 +1,35 @@
 --#region Imports
 
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
--- local ReplicatedStorage = game:GetService "ReplicatedStorage"
 local RunService = game:GetService "RunService"
 local ServerStorage = game:GetService "ServerStorage"
 
 local isServer = RunService:IsServer()
 
--- local enumsFolder = ReplicatedStorage:WaitForChild("Shared"):WaitForChild "Enums"
-
 local Fusion = if not isServer then require(ReplicatedFirst.Vendor.Fusion) else nil
 
 local Id = if isServer then require(ReplicatedFirst.Shared.Utility.Id) else nil
 local PlayerDataManager = if isServer then require(ServerStorage.Shared.Data.PlayerDataManager) else nil
-local DataClient = if not isServer then require(script.Parent.Parent:WaitForChild "DataClient") else nil
+local ClientState = if not isServer then require(script.Parent.Parent:WaitForChild "ClientState") else nil
 local DataReplication = require(script.Parent.Parent:WaitForChild "DataReplication")
 
 local peek = if Fusion then Fusion.peek else nil
 
 --#endregion
 
+--#region Action Registration
+
+if not isServer then
+	DataReplication.registerActionAsync("SetHomes", function(homes)
+		ClientState.inventory.homes:set(homes)
+	end)
+end
+
+--#endregion
+
+--[[
+	A submodule of `PlayerData` that handles the player's homes.
+]]
 local Homes = {}
 
 --[[
@@ -35,7 +45,7 @@ local Homes = {}
 
 	*Do **NOT** modify the returned table under any circumstances!*
 ]]
-function Homes.getHome(homeId: string, player: Player?)
+function Homes.getHome(homeId: string, player: Player?): table
 	if isServer and not player then
 		warn "A player must be provided when calling from the server."
 		return
@@ -52,7 +62,7 @@ function Homes.getHome(homeId: string, player: Player?)
 
 		return PlayerDataManager.viewPersistentData(player).inventory.homes[homeId]
 	else
-		return peek(DataClient.inventory.homes)[homeId]
+		return peek(ClientState.inventory.homes)[homeId]
 	end
 end
 
@@ -70,7 +80,7 @@ end
 
 	*Do **NOT** modify the returned table under any circumstances!*
 ]]
-function Homes.getHomes(player: Player?)
+function Homes.getHomes(player: Player?): table
 	if isServer and not player then
 		warn "A player must be provided when calling from the server."
 		return
@@ -86,12 +96,12 @@ function Homes.getHomes(player: Player?)
 
 		return PlayerDataManager.viewPersistentData(player).inventory.homes
 	else
-		return peek(DataClient.inventory.homes)
+		return peek(ClientState.inventory.homes)
 	end
 end
 
 --[[
-	Gets the state object for the player's homes.
+	Gets the Fusion state object for the player's homes.
 
 	---
 
@@ -110,7 +120,60 @@ function Homes.getHomesState()
 		return
 	end
 
-	return peek(DataClient.inventory.homes)
+	return ClientState.inventory.homes
+end
+
+--[[
+	Gets the ID of the player's selected home.
+
+	---
+
+	The `player` parameter is **required** on the server and **ignored** on the client.
+
+	The return value is a string containing the ID of the selected home. If the player does not have a selected home,
+	`nil` will be returned.
+]]
+function Homes.getSelectedHomeId(player: Player?): string
+	if isServer and not player then
+		warn "A player must be provided when calling from the server."
+		return
+	elseif not isServer and player then
+		warn "No player needs to be given when calling from the client, so this parameter will be ignored."
+	end
+
+	if isServer then
+		if not PlayerDataManager.persistentDataIsLoaded(player) then
+			warn "The player's persistent data is not loaded, so the selected home cannot be retrieved."
+			return
+		end
+
+		return PlayerDataManager.viewPersistentData(player).home.selected
+	else
+		return peek(ClientState.home.selected)
+	end
+end
+
+--[[
+	Gets the Fusion state object for the ID of the player's selected home.
+
+	---
+
+	The return value is a Fusion `Value` object. The value of the `Value` object is a string containing the ID of the
+	selected home, or `nil` if the player does not have a selected home.
+
+	This function is **client only**.
+	
+	---
+
+	*Do **NOT** modify the state object returned by this function under any circumstances!*
+]]
+function Homes.getSelectedHomeIdState()
+	if isServer then
+		warn "This function can only be called on the client. No state will be returned."
+		return
+	end
+
+	return ClientState.home.selected
 end
 
 --[[

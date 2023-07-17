@@ -18,14 +18,14 @@ local PlayerDataConfig = {
 
 		home = {
 			selected = nil :: string?,
-			
+
 			server = {
 				-- The ID of the player's home server.
 				id = nil :: string?,
 
 				-- The access code of the player's home server.
 				accessCode = nil :: string?,
-			}
+			},
 		},
 
 		-- The player's Items.
@@ -64,13 +64,6 @@ local PlayerDataConfig = {
 		accessories = 500,
 		furniture = 500,
 		homes = 200,
-	},
-
-	-- TODO: Remove
-	itemProps = { -- Custom additional properties for each item type, if needed
-		[ItemCategory.home] = {
-			placedItems = {}, -- The items that are placed in the home
-		},
 	},
 }
 

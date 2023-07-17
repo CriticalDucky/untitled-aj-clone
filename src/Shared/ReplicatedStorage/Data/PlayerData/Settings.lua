@@ -13,7 +13,7 @@ local Fusion = if not isServer then require(ReplicatedFirst.Vendor.Fusion) else 
 
 local HomeLockType = require(enumsFolder:WaitForChild "HomeLockType")
 local PlayerDataManager = if isServer then require(ServerStorage.Shared.Data.PlayerDataManager) else nil
-local DataClient = if not isServer then require(script.Parent:WaitForChild "DataClient") else nil
+local ClientState = if not isServer then require(script.Parent:WaitForChild "ClientState") else nil
 local DataReplication = require(script.Parent:WaitForChild "DataReplication")
 
 local peek = if Fusion then Fusion.peek else nil
@@ -90,29 +90,29 @@ if isServer then
 else
 	DataReplication.registerActionAsync(
 		"SetSettingFindOpenWorld",
-		function(value: boolean) DataClient.playerSettings.findOpenWorld:set(value) end
+		function(value: boolean) ClientState.playerSettings.findOpenWorld:set(value) end
 	)
 
 	DataReplication.registerActionAsync(
 		"SetSettingHomeLock",
-		function(value: number) DataClient.playerSettings.homeLock:set(value) end
+		function(value: number) ClientState.playerSettings.homeLock:set(value) end
 	)
 
 	DataReplication.registerActionAsync(
 		"SetSettingMusicVolume",
-		function(value: number) DataClient.playerSettings.musicVolume:set(value) end
+		function(value: number) ClientState.playerSettings.musicVolume:set(value) end
 	)
 
 	DataReplication.registerActionAsync(
 		"SetSettingSFXVolume",
-		function(value: number) DataClient.playerSettings.sfxVolume:set(value) end
+		function(value: number) ClientState.playerSettings.sfxVolume:set(value) end
 	)
 end
 
 --#endregion
 
 --[[
-	A submodule of `PlayerState` that handles the player's settings.
+	A submodule of `PlayerData` that handles the player's settings.
 ]]
 local Settings = {}
 
@@ -121,7 +121,7 @@ local Settings = {}
 
 	---
 
-	*The player parameter is **required** on the server and **ignored** on the client.*
+	The player parameter is **required** on the server and **ignored** on the client.
 ]]
 function Settings.getSettingFindOpenWorld(player: Player?)
 	if isServer and not player then
@@ -141,16 +141,18 @@ function Settings.getSettingFindOpenWorld(player: Player?)
 
 		return data.settings.findOpenWorld
 	else
-		return peek(DataClient.settings.findOpenWorld)
+		return peek(ClientState.settings.findOpenWorld)
 	end
 end
 
 --[[
-	Gets the the state object for the player's *Find Open World* setting.
+	Gets the Fusion state object for the player's *Find Open World* setting.
 
 	---
 
-	*Client only.*
+	This function is **client only**.
+
+	---
 
 	*Do **NOT** modify the state object returned by this function under any circumstances!*
 ]]
@@ -160,7 +162,7 @@ function Settings.getSettingFindOpenWorldState()
 		return
 	end
 
-	return DataClient.settings.findOpenWorld
+	return ClientState.settings.findOpenWorld
 end
 
 --[[
@@ -168,7 +170,7 @@ end
 
 	---
 
-	*The player parameter is **required** on the server and **ignored** on the client.*
+	The player parameter is **required** on the server and **ignored** on the client.
 ]]
 function Settings.getSettingHomeLock(player: Player?)
 	if isServer and not player then
@@ -188,16 +190,18 @@ function Settings.getSettingHomeLock(player: Player?)
 
 		return data.settings.homeLock
 	else
-		return peek(DataClient.settings.homeLock)
+		return peek(ClientState.settings.homeLock)
 	end
 end
 
 --[[
-	Gets the the state object for the player's *Home Lock* setting.
+	Gets the Fusion state object for the player's *Home Lock* setting.
 
 	---
 
-	*Client only.*
+	This function is **client only**.
+
+	---
 
 	*Do **NOT** modify the state object returned by this function under any circumstances!*
 ]]
@@ -207,7 +211,7 @@ function Settings.getSettingHomeLockState()
 		return
 	end
 
-	return DataClient.settings.homeLock
+	return ClientState.settings.homeLock
 end
 
 --[[
@@ -215,7 +219,7 @@ end
 
 	---
 
-	*The player parameter is **required** on the server and **ignored** on the client.*
+	The player parameter is **required** on the server and **ignored** on the client.
 ]]
 function Settings.getSettingMusicVolume(player: Player?)
 	if isServer and not player then
@@ -235,16 +239,18 @@ function Settings.getSettingMusicVolume(player: Player?)
 
 		return data.settings.musicVolume
 	else
-		return peek(DataClient.settings.musicVolume)
+		return peek(ClientState.settings.musicVolume)
 	end
 end
 
 --[[
-	Gets the the state object for the player's *Music Volume* setting.
+	Gets the Fusion state object for the player's *Music Volume* setting.
 
 	---
 
-	*Client only.*
+	This function is **client only**.
+
+	---
 
 	*Do **NOT** modify the state object returned by this function under any circumstances!*
 ]]
@@ -254,7 +260,7 @@ function Settings.getSettingMusicVolumeState()
 		return
 	end
 
-	return DataClient.settings.musicVolume
+	return ClientState.settings.musicVolume
 end
 
 --[[
@@ -262,7 +268,7 @@ end
 
 	---
 
-	*The player parameter is **required** on the server and **ignored** on the client.*
+	The player parameter is **required** on the server and **ignored** on the client.
 ]]
 function Settings.getSettingSFXVolume(player: Player?)
 	if isServer and not player then
@@ -282,16 +288,18 @@ function Settings.getSettingSFXVolume(player: Player?)
 
 		return data.settings.sfxVolume
 	else
-		return peek(DataClient.settings.sfxVolume)
+		return peek(ClientState.settings.sfxVolume)
 	end
 end
 
 --[[
-	Gets the the state object for the player's *SFX Volume* setting.
+	Gets the Fusion state object for the player's *SFX Volume* setting.
 
 	---
 
-	*Client only.*
+	This function is **client only**.
+
+	---
 
 	*Do **NOT** modify the state object returned by this function under any circumstances!*
 ]]
@@ -301,7 +309,7 @@ function Settings.getSettingSFXVolumeState()
 		return
 	end
 
-	return DataClient.settings.sfxVolume
+	return ClientState.settings.sfxVolume
 end
 
 --[[
@@ -309,7 +317,7 @@ end
 
 	---
 
-	*The player parameter is **required** on the server and **ignored** on the client.*
+	The player parameter is **required** on the server and **ignored** on the client.
 ]]
 function Settings.setSettingFindOpenWorld(value: boolean, player: Player?)
 	if isServer and not player then
@@ -323,17 +331,19 @@ function Settings.setSettingFindOpenWorld(value: boolean, player: Player?)
 		PlayerDataManager.setValuePersistentAsync(player, { "settings", "findOpenWorld" }, value)
 		DataReplication.replicate("SetSettingFindOpenWorld", value, player)
 	else
-		DataClient.playerSettings.findOpenWorld:set(value)
+		ClientState.playerSettings.findOpenWorld:set(value)
 		DataReplication.replicate("SetSettingFindOpenWorld", value)
 	end
 end
 
 --[[
-	Sets the player's *Home Lock* setting. The given home lock type must be a valid `HomeLockType` enum value.
+	Sets the player's *Home Lock* setting.
 
 	---
+	
+	The given home lock type must be a valid `HomeLockType` enum value.
 
-	*The player parameter is **required** on the server and **ignored** on the client.*
+	The player parameter is **required** on the server and **ignored** on the client.
 ]]
 function Settings.setSettingHomeLock(homeLockType: number, player: Player?)
 	if isServer and not player then
@@ -347,17 +357,19 @@ function Settings.setSettingHomeLock(homeLockType: number, player: Player?)
 		PlayerDataManager.setValuePersistentAsync(player, { "settings", "homeLock" }, homeLockType)
 		DataReplication.replicate("SetSettingHomeLock", homeLockType, player)
 	else
-		DataClient.playerSettings.homeLock:set(homeLockType)
+		ClientState.playerSettings.homeLock:set(homeLockType)
 		DataReplication.replicate("SetSettingHomeLock", homeLockType)
 	end
 end
 
 --[[
-	Sets the player's *Music Volume* setting. The given volume must be a number between 0 and 1.
-
+	Sets the player's *Music Volume* setting.
+	
 	---
+	
+	The given volume must be a number between 0 and 1.
 
-	*The player parameter is **required** on the server and **ignored** on the client.*
+	The player parameter is **required** on the server and **ignored** on the client.
 ]]
 function Settings.setSettingMusicVolume(volume: number, player: Player?)
 	if isServer and not player then
@@ -371,17 +383,19 @@ function Settings.setSettingMusicVolume(volume: number, player: Player?)
 		PlayerDataManager.setValuePersistentAsync(player, { "settings", "musicVolume" }, volume)
 		DataReplication.replicate("SetSettingMusicVolume", volume, player)
 	else
-		DataClient.playerSettings.musicVolume:set(volume)
+		ClientState.playerSettings.musicVolume:set(volume)
 		DataReplication.replicate("SetSettingMusicVolume", volume)
 	end
 end
 
 --[[
-	Sets the player's *SFX Volume* setting. The given volume must be a number between 0 and 1.
-
+	Sets the player's *SFX Volume* setting.
+	
 	---
-
-	*The player parameter is **required** on the server and **ignored** on the client.*
+	
+	The given volume must be a number between 0 and 1.
+	
+	The player parameter is **required** on the server and **ignored** on the client.
 ]]
 function Settings.setSettingSFXVolume(volume: number, player: Player?)
 	if isServer and not player then
@@ -395,7 +409,7 @@ function Settings.setSettingSFXVolume(volume: number, player: Player?)
 		PlayerDataManager.setValuePersistentAsync(player, { "settings", "sfxVolume" }, volume)
 		DataReplication.replicate("SetSettingSFXVolume", volume, player)
 	else
-		DataClient.playerSettings.sfxVolume:set(volume)
+		ClientState.playerSettings.sfxVolume:set(volume)
 		DataReplication.replicate("SetSettingSFXVolume", volume)
 	end
 end

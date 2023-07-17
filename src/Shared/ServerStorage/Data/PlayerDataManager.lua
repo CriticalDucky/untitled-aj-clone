@@ -204,7 +204,9 @@ local function viewOfflineProfileAsync(playerId: number): table?
 
 	player = Players:GetPlayerByUserId(playerId)
 
-	if profile and not profiles[player] then
+	if not profile and not profileArchive[playerId].profile then
+		publicPlayerDataReplica:SetValue({ playerId }, false)
+	elseif profile and not profiles[player] then
 		publicPlayerDataReplica:SetValue({ playerId }, filterProfileForPublic(profile.Data))
 	end
 
@@ -306,7 +308,7 @@ Players.PlayerRemoving:Connect(unloadPlayerTempData)
 
 	---
 
-	*Should only be used directly by the `PlayerState` module. Other modules should use `PlayerState` instead.*
+	This module should only be used directly by the `PlayerState` module. Other users should use `PlayerState` instead.
 ]]
 local PlayerDataManager = {}
 
