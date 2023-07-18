@@ -13,4 +13,7 @@ local DataReplication = require(replicatedStorageSharedData:WaitForChild "DataRe
 
 --#endregion
 
-DataReplication.registerActionAsync("SetHomes", function(homes) ClientState.inventory.homes:set(homes) end)
+DataReplication.registerActionAsync(
+	"SetAccessories",
+	function(accessories) ClientState.inventory.accessories:set(accessories) end
+)

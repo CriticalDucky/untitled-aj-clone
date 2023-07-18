@@ -1,9 +1,6 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ReplicatedFirst = game:GetService("ReplicatedFirst")
 
-local replicatedStorageShared = ReplicatedStorage.Shared
-local enumsFolder = replicatedStorageShared.Enums
-
-local ShopTypeEnum = require(enumsFolder.ShopType)
+local ShopTypeEnum = require(ReplicatedFirst.Shared.Enums.ShopType)
 
 return {
 	[ShopTypeEnum.test1] = true

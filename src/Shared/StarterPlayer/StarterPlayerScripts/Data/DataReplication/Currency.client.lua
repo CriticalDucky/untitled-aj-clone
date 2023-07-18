@@ -2,8 +2,10 @@
 
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
-local ClientState = require(ReplicatedStorage.Shared.Data.ClientState)
-local DataReplication = require(ReplicatedStorage.Shared.Data.DataReplication)
+local replicatedStorageSharedData = ReplicatedStorage:WaitForChild("Shared"):WaitForChild "Data"
+
+local ClientState = require(replicatedStorageSharedData:WaitForChild "ClientState")
+local DataReplication = require(replicatedStorageSharedData:WaitForChild "DataReplication")
 
 --#endregion
 

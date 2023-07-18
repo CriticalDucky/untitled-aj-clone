@@ -1,113 +1,20 @@
 --#region Imports
 
-local ReplicatedFirst = game:GetService "ReplicatedFirst"
+-- Services
+
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
 local RunService = game:GetService "RunService"
 local ServerStorage = game:GetService "ServerStorage"
 
 local isServer = RunService:IsServer()
 
-local enumsFolder = ReplicatedStorage:WaitForChild("Shared"):WaitForChild "Enums"
+-- Source
 
-local Fusion = if not isServer then require(ReplicatedFirst.Vendor.Fusion) else nil
+local replicatedStorageSharedData = ReplicatedStorage:WaitForChild("Shared"):WaitForChild "Data"
 
-local HomeLockType = require(enumsFolder:WaitForChild "HomeLockType")
 local PlayerDataManager = if isServer then require(ServerStorage.Shared.Data.PlayerDataManager) else nil
-local ClientState = if not isServer then require(script.Parent:WaitForChild "ClientState") else nil
-local DataReplication = require(script.Parent:WaitForChild "DataReplication")
-
-local peek = if Fusion then Fusion.peek else nil
-
---#endregion
-
---#region Action Registration
-
-if isServer then
-	DataReplication.registerActionAsync("SetSettingFindOpenWorld", function(player: Player, value: boolean)
-		if typeof(value) ~= "boolean" then
-			DataReplication.replicate(
-				"SetSettingFindOpenWorld",
-				PlayerDataManager.viewPersistentData(player).settings.findOpenWorld,
-				player
-			)
-
-			return
-		end
-
-		PlayerDataManager.setValuePersistentAsync(player, { "settings", "findOpenWorld" }, value)
-	end)
-
-	DataReplication.registerActionAsync("SetSettingHomeLock", function(player: Player, value: number)
-		local validValue = false
-
-		for _, enumValue: number in HomeLockType do
-			if value == enumValue then
-				validValue = true
-				break
-			end
-		end
-
-		if not validValue then
-			DataReplication.replicate(
-				"SetSettingHomeLock",
-				PlayerDataManager.viewPersistentData(player).settings.homeLock,
-				player
-			)
-
-			return
-		end
-
-		PlayerDataManager.setValuePersistentAsync(player, { "settings", "homeLock" }, value)
-	end)
-
-	DataReplication.registerActionAsync("SetSettingMusicVolume", function(player: Player, value: number)
-		if typeof(value) ~= "number" or value ~= value or value ~= math.clamp(value, 0, 1) then
-			DataReplication.replicate(
-				"SetSettingMusicVolume",
-				PlayerDataManager.viewPersistentData(player).settings.musicVolume,
-				player
-			)
-
-			return
-		end
-
-		PlayerDataManager.setValuePersistentAsync(player, { "settings", "musicVolume" }, value)
-	end)
-
-	DataReplication.registerActionAsync("SetSettingSFXVolume", function(player: Player, value: number)
-		if typeof(value) ~= "number" or value ~= value or value ~= math.clamp(value, 0, 1) then
-			DataReplication.replicate(
-				"SetSettingSFXVolume",
-				PlayerDataManager.viewPersistentData(player).settings.sfxVolume,
-				player
-			)
-
-			return
-		end
-
-		PlayerDataManager.setValuePersistentAsync(player, { "settings", "sfxVolume" }, value)
-	end)
-else
-	DataReplication.registerActionAsync(
-		"SetSettingFindOpenWorld",
-		function(value: boolean) ClientState.playerSettings.findOpenWorld:set(value) end
-	)
-
-	DataReplication.registerActionAsync(
-		"SetSettingHomeLock",
-		function(value: number) ClientState.playerSettings.homeLock:set(value) end
-	)
-
-	DataReplication.registerActionAsync(
-		"SetSettingMusicVolume",
-		function(value: number) ClientState.playerSettings.musicVolume:set(value) end
-	)
-
-	DataReplication.registerActionAsync(
-		"SetSettingSFXVolume",
-		function(value: number) ClientState.playerSettings.sfxVolume:set(value) end
-	)
-end
+local ClientState = if not isServer then require(replicatedStorageSharedData:WaitForChild "ClientState") else nil
+local DataReplication = require(replicatedStorageSharedData:WaitForChild "DataReplication")
 
 --#endregion
 
@@ -133,10 +40,10 @@ function Settings.setSettingFindOpenWorld(value: boolean, player: Player?)
 
 	if isServer then
 		PlayerDataManager.setValuePersistentAsync(player, { "settings", "findOpenWorld" }, value)
-		DataReplication.replicate("SetSettingFindOpenWorld", value, player)
+		DataReplication.replicateAsync("SetSettingFindOpenWorld", value, player)
 	else
 		ClientState.playerSettings.findOpenWorld:set(value)
-		DataReplication.replicate("SetSettingFindOpenWorld", value)
+		DataReplication.replicateAsync("SetSettingFindOpenWorld", value)
 	end
 end
 
@@ -144,7 +51,7 @@ end
 	Sets the player's *Home Lock* setting.
 
 	---
-	
+
 	The given home lock type must be a valid `HomeLockType` enum value.
 
 	The player parameter is **required** on the server and **ignored** on the client.
@@ -159,18 +66,18 @@ function Settings.setSettingHomeLock(homeLockType: number, player: Player?)
 
 	if isServer then
 		PlayerDataManager.setValuePersistentAsync(player, { "settings", "homeLock" }, homeLockType)
-		DataReplication.replicate("SetSettingHomeLock", homeLockType, player)
+		DataReplication.replicateAsync("SetSettingHomeLock", homeLockType, player)
 	else
 		ClientState.playerSettings.homeLock:set(homeLockType)
-		DataReplication.replicate("SetSettingHomeLock", homeLockType)
+		DataReplication.replicateAsync("SetSettingHomeLock", homeLockType)
 	end
 end
 
 --[[
 	Sets the player's *Music Volume* setting.
-	
+
 	---
-	
+
 	The given volume must be a number between 0 and 1.
 
 	The player parameter is **required** on the server and **ignored** on the client.
@@ -185,20 +92,20 @@ function Settings.setSettingMusicVolume(volume: number, player: Player?)
 
 	if isServer then
 		PlayerDataManager.setValuePersistentAsync(player, { "settings", "musicVolume" }, volume)
-		DataReplication.replicate("SetSettingMusicVolume", volume, player)
+		DataReplication.replicateAsync("SetSettingMusicVolume", volume, player)
 	else
 		ClientState.playerSettings.musicVolume:set(volume)
-		DataReplication.replicate("SetSettingMusicVolume", volume)
+		DataReplication.replicateAsync("SetSettingMusicVolume", volume)
 	end
 end
 
 --[[
 	Sets the player's *SFX Volume* setting.
-	
+
 	---
-	
+
 	The given volume must be a number between 0 and 1.
-	
+
 	The player parameter is **required** on the server and **ignored** on the client.
 ]]
 function Settings.setSettingSFXVolume(volume: number, player: Player?)
@@ -211,10 +118,10 @@ function Settings.setSettingSFXVolume(volume: number, player: Player?)
 
 	if isServer then
 		PlayerDataManager.setValuePersistentAsync(player, { "settings", "sfxVolume" }, volume)
-		DataReplication.replicate("SetSettingSFXVolume", volume, player)
+		DataReplication.replicateAsync("SetSettingSFXVolume", volume, player)
 	else
 		ClientState.playerSettings.sfxVolume:set(volume)
-		DataReplication.replicate("SetSettingSFXVolume", volume)
+		DataReplication.replicateAsync("SetSettingSFXVolume", volume)
 	end
 end
 

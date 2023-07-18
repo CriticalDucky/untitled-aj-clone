@@ -1,28 +1,19 @@
 --#region Imports
 
-local ReplicatedFirst = game:GetService "ReplicatedFirst"
+-- Services
+
+local ReplicatedStorage = game:GetService "ReplicatedStorage"
 local RunService = game:GetService "RunService"
 local ServerStorage = game:GetService "ServerStorage"
 
 local isServer = RunService:IsServer()
 
-local Fusion = if not isServer then require(ReplicatedFirst.Vendor.Fusion) else nil
+-- Source
+
+local replicatedStorageSharedData = ReplicatedStorage:WaitForChild("Shared"):WaitForChild "Data"
 
 local PlayerDataManager = if isServer then require(ServerStorage.Shared.Data.PlayerDataManager) else nil
-local ClientState = if not isServer then require(script.Parent:WaitForChild "ClientState") else nil
-local DataReplication = require(script.Parent:WaitForChild "DataReplication")
-
-local peek = if Fusion then Fusion.peek else nil
-
---#endregion
-
---#region Action Registration
-
-if not isServer then
-	DataReplication.registerActionAsync("SetMoney", function(amount)
-		ClientState.currency.money:set(amount)
-	end)
-end
+local DataReplication = require(replicatedStorageSharedData:WaitForChild "DataReplication")
 
 --#endregion
 
@@ -49,9 +40,10 @@ function Currency.incrementMoney(player: Player, amount: number)
 		return
 	end
 
-	local currentMoney = PlayerDataManager.viewPersistentData(player).currency.money
+	amount = math.ciel(amount) + PlayerDataManager.viewPersistentData(player).currency.money
 
-	Currency.setMoney(player, currentMoney + amount)
+	PlayerDataManager.setValuePersistent(player, { "currency", "money" }, amount)
+	DataReplication.replicateAsync("SetMoney", amount, player)
 end
 
 --[[
@@ -75,7 +67,7 @@ function Currency.setMoney(player: Player, amount: number)
 	amount = math.ceil(amount)
 
 	PlayerDataManager.setValuePersistent(player, { "currency", "money" }, amount)
-	DataReplication.replicate("SetMoney", amount, player)
+	DataReplication.replicateAsync("SetMoney", amount, player)
 end
 
 return Currency

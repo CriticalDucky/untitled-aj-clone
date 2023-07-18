@@ -1,28 +1,17 @@
 --#region Imports
 
-local Players = game:GetService "Players"
+-- Services
+
+local ReplicatedStorage = game:GetService "ReplicatedStorage"
 local RunService = game:GetService "RunService"
-local ServerStorage = game:GetService "ServerStorage"
 
 local isServer = RunService:IsServer()
 
-local ClientState = if not isServer then require(script.Parent:WaitForChild "ClientState") else nil
-local DataReplication = require(script.Parent:WaitForChild "DataReplication")
-local PlayerDataManager =
-	require(ServerStorage:WaitForChild("Shared"):WaitForChild("Data"):WaitForChild "PlayerDataManager")
+-- Source
 
-local localPlayer = Players.LocalPlayer
+local replicatedStorageSharedData = ReplicatedStorage:WaitForChild("Shared"):WaitForChild "Data"
 
---#endregion
-
---#region Action Registration
-
-if isServer then
-	DataReplication.registerActionAsync(
-		"SubscribeToPersistentData",
-		function(player, userId) PlayerDataManager.subscribePlayerToPersistentData(player, userId) end
-	)
-end
+local DataReplication = require(replicatedStorageSharedData:WaitForChild "DataReplication")
 
 --#endregion
 
@@ -47,7 +36,7 @@ function PublicPlayerData.subscribeToPersistentData(userId: number)
 		return
 	end
 
-	DataReplication.replicate("SubscribeToPersistentData", userId)
+	DataReplication.replicateAsync("SubscribeToPersistentData", userId)
 end
 
 return PublicPlayerData

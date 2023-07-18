@@ -1,17 +1,25 @@
-local ReplicatedFirst = game:GetService("ReplicatedFirst")
-local RunService = game:GetService("RunService")
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
+local RunService = game:GetService "RunService"
 
-local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
-local replicatedFirstVendor = ReplicatedFirst:WaitForChild("Vendor")
-local utilityFolder = replicatedFirstShared:WaitForChild("Utility")
-local settingsFolder = replicatedFirstShared:WaitForChild("Settings")
+local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
+local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
+local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
+local settingsFolder = replicatedFirstShared:WaitForChild "Settings"
 
-local Promise = require(replicatedFirstVendor:WaitForChild("Promise"))
-local PlayerDataConfig = require(settingsFolder:WaitForChild("PlayerDataConfig"))
-local Table = require(utilityFolder:WaitForChild("Table"))
+local Promise = require(replicatedFirstVendor:WaitForChild "Promise")
+local PlayerDataConfig = require(settingsFolder:WaitForChild "PlayerDataConfig")
+local Table = require(utilityFolder:WaitForChild "Table")
 
 local profileTemplate = PlayerDataConfig.persistentDataTemplate
 local tempDataTemplate = PlayerDataConfig.tempDataTemplate
+
+export type Accessory = {
+	type: ItemAccessoryType,
+}
+
+export type Furniture = {
+	type: ItemFurnitureType,
+}
 
 export type ProfileData = typeof(profileTemplate) & typeof(tempDataTemplate)
 export type Inventory = typeof(profileTemplate.inventory)
@@ -37,8 +45,8 @@ export type TimeRange = {
 	introduction: number | table,
 	closing: number | table,
 	isInRange: (TimeRange, timeInfo: TimeInfo?) -> boolean,
-	distanceToClosing: (TimeRange, timeInfo: TimeInfo?, ()->()) -> number,
-	distanceToIntroduction: (TimeRange, timeInfo: TimeInfo?, ()->()) -> number,
+	distanceToClosing: (TimeRange, timeInfo: TimeInfo?, () -> ()) -> number,
+	distanceToIntroduction: (TimeRange, timeInfo: TimeInfo?, () -> ()) -> number,
 	isATimeRange: true,
 }
 
@@ -59,7 +67,7 @@ export type PartyUnit = {
 }
 
 export type Home = {
-	type: ItemHomeType
+	type: ItemHomeType,
 }
 
 export type HomeServerInfo = {

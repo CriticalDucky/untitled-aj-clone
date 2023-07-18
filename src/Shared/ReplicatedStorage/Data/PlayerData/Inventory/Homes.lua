@@ -3,40 +3,25 @@
 -- Services
 
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
+local ReplicatedStorage = game:GetService "ReplicatedStorage"
 local RunService = game:GetService "RunService"
 local ServerStorage = game:GetService "ServerStorage"
 
 local isServer = RunService:IsServer()
 
--- Vendor
-
-local Fusion = if not isServer then require(ReplicatedFirst.Vendor.Fusion) else nil
-
 -- Source
+
+local replicatedStorageSharedData = ReplicatedStorage:WaitForChild("Shared"):WaitForChild "Data"
 
 local Id = if isServer then require(ReplicatedFirst.Shared.Utility.Id) else nil
 local PlayerDataManager = if isServer then require(ServerStorage.Shared.Data.PlayerDataManager) else nil
-local ClientState = if not isServer then require(script.Parent.Parent:WaitForChild "ClientState") else nil
-local DataReplication = require(script.Parent.Parent:WaitForChild "DataReplication")
+local DataReplication = require(replicatedStorageSharedData:WaitForChild "DataReplication")
 
 -- Types
 
 local Types = require(ReplicatedFirst:WaitForChild("Shared"):WaitForChild("Utility"):WaitForChild "Types")
 
 type Home = Types.Home
-type ItemHomeType = Types.ItemHomeType
-
--- Methods
-
-local peek = if Fusion then Fusion.peek else nil
-
---#endregion
-
---#region Action Registration
-
-if not isServer then
-	DataReplication.registerActionAsync("SetHomes", function(homes) ClientState.inventory.homes:set(homes) end)
-end
 
 --#endregion
 
@@ -50,9 +35,11 @@ local Homes = {}
 
 	---
 
-	The ID of the new home is returned.
+	The ID of the added home is returned.
 
 	This function is **server only**.
+
+	This function does not check if the home inventory is full. It is up to the caller to check this when necessary.
 ]]
 function Homes.addHome(home: Home, player: Player)
 	if not isServer then
@@ -70,7 +57,7 @@ function Homes.addHome(home: Home, player: Player)
 	local newHomeId = Id.generate(homes)
 
 	PlayerDataManager.setValuePersistent(player, { "inventory", "homes", newHomeId }, home)
-	DataReplication.replicate("SetHomes", homes, player)
+	DataReplication.replicateAsync("SetHomes", homes, player)
 
 	return newHomeId
 end
@@ -101,7 +88,7 @@ function Homes.removeHome(homeId: string, player: Player)
 	end
 
 	PlayerDataManager.setValuePersistent(player, { "inventory", "homes", homeId }, nil)
-	DataReplication.replicate("SetHomes", homes, player)
+	DataReplication.replicateAsync("SetHomes", homes, player)
 end
 
 return Homes

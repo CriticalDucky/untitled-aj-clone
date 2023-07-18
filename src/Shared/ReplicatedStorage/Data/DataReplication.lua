@@ -31,12 +31,13 @@ local StateReplication = {}
 
 	`data` is the data to replicate with the action. This can be any replicatable value.
 
-	Actions must be registered before they can be replicated; otherwise, they will be ignored. See
-	`StateReplication.registerActionAsync` for more information.
+	`player` is the client to replicate to, when called from the server. It is **required** on the server and
+	**ignored** on the client.
 
-	The player parameter is **required** on the server and **ignored** on the client.
+	The given action must be registered for it to replicate. If it is not, this function will yield until it is. See
+	`StateReplication.registerActionAsync` for more information.
 ]]
-function StateReplication.replicate(action: string, data: any, player: Player?)
+function StateReplication.replicateAsync(action: string, data: any, player: Player?)
 	if isServer and not player then
 		warn "Player parameter is missing, so no actions will be replicated."
 		return
@@ -44,16 +45,28 @@ function StateReplication.replicate(action: string, data: any, player: Player?)
 		warn "Player parameter is unnecessary on the client, so it will be ignored."
 	end
 
-	local handler = stateReplicationEvents[action]
+	local actionEvent = stateReplicationEvents[action]
 
-	if handler then
-		if isServer then
-			handler:FireClient(player, data)
-		else
-			handler:FireServer(data)
-		end
+	if not actionEvent then
+		local warned = false
+		local totalTime = 0
+
+		repeat
+			if totalTime >= 5 and not warned then
+				warned = true
+				warn(`Infinite yield possible for action '{action}' to register.`)
+			end
+
+			totalTime += task.wait()
+
+			actionEvent = stateReplicationEvents[action]
+		until actionEvent
+	end
+
+	if isServer then
+		actionEvent:FireClient(player, data)
 	else
-		warn("Action '" .. action .. "' is not registered, so this replication request will be ignored.")
+		actionEvent:FireServer(data)
 	end
 end
 
@@ -67,7 +80,8 @@ end
 
 	`handler` is the function that will be called when the action is replicated. On the server, the first parameter is
 	the player that replicated the action, while the second parameter is the action data. On the client, the first and
-	only parameter is the action data.
+	only parameter is the action data. This parameter may be ommitted if the action will only be used to replicate to
+	the opposite context.
 
 	This function is available on both the client and server. The context of where this function is called determines
 	whether the action is registered in that context only. For replication to work, the action must be registered in
@@ -77,33 +91,39 @@ end
 
 	On the client, this function will yield until the action is registered on the server.
 
-	When registering an action on the server, the provided handler should ensure that the given data is valid. If
-	it is not, it should not accept the request and instead send a replication request back to the client with the
-	current data to resync.
+	When registering an action on the server with a handler, the provided handler should ensure that the given data is
+	valid. If it is not, it should not accept the request and instead send a replication request back to the client
+	with the current data to resync.
 
 	On the server, you can assume that the player's persistent data is loaded when the handler is called. (This is
 	because the inverse should never happen; and if it somehow does, the handler will automatically be ignored.)
 ]]
-function StateReplication.registerActionAsync(name: string, handler: (Player, any) -> () | (any) -> ())
+function StateReplication.registerActionAsync(name: string, handler: ((Player, any) -> () | (any) -> ())?)
 	if stateReplicationEvents[name] then
-		warn("Action '" .. name .. "' is already registered. You cannot reregister an action.")
+		warn(`Action '{name}' is already registered. You cannot reregister an action.`)
 		return
 	end
 
 	if isServer then
 		local replicationEvent = Instance.new "RemoteEvent"
 		replicationEvent.Name = name
-		replicationEvent.OnServerEvent:Connect(function(player, ...)
-			if not PlayerDataManager.persistentDataIsLoaded(player) then return end
-
-			handler(player, ...)
-		end)
 		replicationEvent.Parent = script
+
 		stateReplicationEvents[name] = replicationEvent
+
+		if handler then
+			replicationEvent.OnServerEvent:Connect(function(player, ...)
+				if not PlayerDataManager.persistentDataIsLoaded(player) then return end
+
+				handler(player, ...)
+			end)
+		end
 	else
 		local replicationEvent = script:WaitForChild(name)
-		replicationEvent.OnClientEvent:Connect(handler)
+
 		stateReplicationEvents[name] = replicationEvent
+
+		if handler then replicationEvent.OnClientEvent:Connect(handler) end
 	end
 end
 
