@@ -1,110 +1,106 @@
 {
-  "name": "Location: Town",
-  "servePlaceIds": [10189748812, 10189748812, 0],
+  "name": "Location (Shared)",
+  "servePlaceIds": [],
   "tree": {
     "$className": "DataModel",
 
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
-      "$path": "src/LocationTown/ReplicatedStorage",
 
       "Vendor": {
         "$className": "Folder",
 
         "ReplicaService": {
-          "$path": "vendor/MadStudioRoblox/ReplicaService/src/ReplicatedStorage"
+          "$path": "../../vendor/MadStudioRoblox/ReplicaService/src/ReplicatedStorage"
         },
 
         "Loadstring": {
-          "$path": "vendor/Reinitialized/Loadstring"
+          "$path": "../../vendor/Reinitialized/Loadstring"
         }
       },
 
       "Shared": {
         "$className": "Folder",
-        "$path": "src/Shared/ReplicatedStorage"
+        "$path": "../../src/Shared/ReplicatedStorage"
       },
 
       "LocationShared": {
         "$className": "Folder",
-        "$path": "src/LocationShared/ReplicatedStorage"
+        "$path": "ReplicatedStorage"
       }
     },
 
     "ReplicatedFirst": {
       "$className": "ReplicatedFirst",
-      "$path": "src/LocationTown/ReplicatedStorage",
 
       "Vendor": {
         "$className": "Folder",
 
         "Fusion": {
-          "$path": "vendor/Elttob/Fusion/src"
+          "$path": "../../vendor/Elttob/Fusion/src"
         },
 
         "Promise": {
-          "$path": "vendor/evaera/roblox-lua-promise/lib"
+          "$path": "../../vendor/evaera/roblox-lua-promise/lib"
         },
 
         "Signal": {
-          "$path": "vendor/Quenty/NevermoreEngine/src/signal/src/Shared"
+          "$path": "../../vendor/Quenty/NevermoreEngine/src/signal/src/Shared"
         }
       },
 
       "Shared": {
         "$className": "Folder",
-        "$path": "src/Shared/ReplicatedFirst"
+        "$path": "../../src/Shared/ReplicatedFirst"
       },
 
       "LocationShared": {
         "$className": "Folder",
-        "$path": "src/LocationShared/ReplicatedFirst"
+        "$path": "ReplicatedFirst"
       }
     },
 
     "ServerScriptService": {
       "$className": "ServerScriptService",
-      "$path": "src/LocationTown/ServerScriptService",
 
       "Shared": {
         "$className": "Folder",
-        "$path": "src/Shared/ServerScriptService"
+        "$path": "../../src/Shared/ServerScriptService"
       },
 
       "LocationShared": {
         "$className": "Folder",
-        "$path": "src/LocationShared/ServerScriptService"
+        "$path": "ServerScriptService"
       }
     },
 
     "ServerStorage": {
       "$className": "ServerStorage",
-      "$path": "src/LocationTown/ServerStorage",
 
       "Vendor": {
         "$className": "Folder",
 
         "Cmdr": {
-          "$path": "vendor/evaera/Cmdr/Cmdr"
+          "$path": "../../vendor/evaera/Cmdr/Cmdr"
         },
 
         "ProfileService": {
-          "$path": "vendor/MadStudioRoblox/ProfileService/ProfileService.lua"
+          "$path": "../../vendor/MadStudioRoblox/ProfileService/ProfileService.lua"
         },
 
         "ReplicaService": {
-          "$path": "vendor/MadStudioRoblox/ReplicaService/src/ServerScriptService/ReplicaService.lua"
+          "$path": "../../vendor/MadStudioRoblox/ReplicaService/src/ServerScriptService/ReplicaService.lua"
         }
       },
 
       "Shared": {
         "$className": "Folder",
-        "$path": "src/Shared/ServerStorage"
+        "$path": "../../src/Shared/ServerStorage"
       },
 
       "LocationShared": {
         "$className": "Folder",
-        "$path": "src/LocationShared/ServerStorage"
+        "$path": "ServerStorage"
       }
     },
 
@@ -125,38 +121,35 @@
 
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
-        "$path": "src/LocationTown/StarterPlayer/StarterPlayerScripts",
 
         "Shared": {
           "$className": "Folder",
-          "$path": "src/Shared/StarterPlayer/StarterPlayerScripts"
+          "$path": "../../src/Shared/StarterPlayer/StarterPlayerScripts"
         },
 
         "LocationShared": {
           "$className": "Folder",
-          "$path": "src/LocationShared/StarterPlayer/StarterPlayerScripts"
+          "$path": "StarterPlayer/StarterPlayerScripts"
         }
       },
 
       "StarterCharacterScripts": {
         "$className": "StarterCharacterScripts",
-        "$path": "src/LocationTown/StarterPlayer/StarterCharacterScripts",
 
         "Shared": {
           "$className": "Folder",
-          "$path": "src/Shared/StarterPlayer/StarterCharacterScripts"
+          "$path": "../../src/Shared/StarterPlayer/StarterCharacterScripts"
         },
 
         "LocationShared": {
           "$className": "Folder",
-          "$path": "src/LocationShared/StarterPlayer/StarterCharacterScripts"
+          "$path": "StarterPlayer/StarterCharacterScripts"
         }
       }
     },
 
     "Workspace": {
       "$className": "Workspace",
-      "$path": "src/LocationTown/Workspace",
 
       "Terrain": {
         "$className": "Terrain"
@@ -164,12 +157,12 @@
 
       "Shared": {
         "$className": "Folder",
-        "$path": "src/Shared/Workspace"
+        "$path": "../../src/Shared/Workspace"
       },
 
       "LocationShared": {
         "$className": "Folder",
-        "$path": "src/LocationShared/Workspace"
+        "$path": "Workspace"
       }
     },
 

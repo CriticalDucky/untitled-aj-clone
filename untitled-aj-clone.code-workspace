@@ -47,7 +47,12 @@
   ],
   "settings": {
     "editor.rulers": [120],
-    "stylua.searchParentDirectories": true
+    "stylua.searchParentDirectories": true,
+    "files.exclude": {
+      "**/sourcemap.json": true
+    },
+    "luau-lsp.diagnostics.workspace": true,
+    "luau-lsp.ignoreGlobs": ["**/_Index/**", "vendor/**", "build.lua"]
   },
   "extensions": {
     "recommendations": [

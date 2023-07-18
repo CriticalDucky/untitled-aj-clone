@@ -1,0 +1,176 @@
+{
+    "name": "Minigame (Shared)",
+    "servePlaceIds": [],
+    "tree": {
+      "$className": "DataModel",
+
+      "ReplicatedStorage": {
+        "$className": "ReplicatedStorage",
+
+        "Vendor": {
+          "$className": "Folder",
+
+          "ReplicaService": {
+            "$path": "../../vendor/MadStudioRoblox/ReplicaService/src/ReplicatedStorage"
+          },
+
+          "Loadstring": {
+            "$path": "../../vendor/Reinitialized/Loadstring"
+          }
+        },
+
+        "Shared": {
+          "$className": "Folder",
+          "$path": "../../src/Shared/ReplicatedStorage"
+        },
+
+        "MinigameShared": {
+          "$className": "Folder",
+          "$path": "ReplicatedStorage"
+        }
+      },
+
+      "ReplicatedFirst": {
+        "$className": "ReplicatedFirst",
+
+        "Vendor": {
+          "$className": "Folder",
+
+          "Fusion": {
+            "$path": "../../vendor/Elttob/Fusion/src"
+          },
+
+          "Promise": {
+            "$path": "../../vendor/evaera/roblox-lua-promise/lib"
+          },
+
+          "Signal": {
+            "$path": "../../vendor/Quenty/NevermoreEngine/src/signal/src/Shared"
+          }
+        },
+
+        "Shared": {
+          "$className": "Folder",
+          "$path": "../../src/Shared/ReplicatedFirst"
+        },
+
+        "MinigameShared": {
+          "$className": "Folder",
+          "$path": "ReplicatedFirst"
+        }
+      },
+
+      "ServerScriptService": {
+        "$className": "ServerScriptService",
+
+        "Shared": {
+          "$className": "Folder",
+          "$path": "../../src/Shared/ServerScriptService"
+        },
+
+        "MinigameShared": {
+          "$className": "Folder",
+          "$path": "ServerScriptService"
+        }
+      },
+
+      "ServerStorage": {
+        "$className": "ServerStorage",
+
+        "Vendor": {
+          "$className": "Folder",
+
+          "Cmdr": {
+            "$path": "../../vendor/evaera/Cmdr/Cmdr"
+          },
+
+          "ProfileService": {
+            "$path": "../../vendor/MadStudioRoblox/ProfileService/ProfileService.lua"
+          },
+
+          "ReplicaService": {
+            "$path": "../../vendor/MadStudioRoblox/ReplicaService/src/ServerScriptService/ReplicaService.lua"
+          }
+        },
+
+        "Shared": {
+          "$className": "Folder",
+          "$path": "../../src/Shared/ServerStorage"
+        },
+
+        "MinigameShared": {
+          "$className": "Folder",
+          "$path": "ServerStorage"
+        }
+      },
+
+      "Players": {
+        "$className": "Players",
+        "$properties": {
+          "CharacterAutoLoads": false
+        }
+      },
+
+      "StarterPlayer": {
+        "$className": "StarterPlayer",
+        "$properties": {
+          "DevComputerMovementMode": "KeyboardMouse",
+          "DevTouchMovementMode": "DynamicThumbstick",
+          "EnableMouseLockOption": false
+        },
+
+        "StarterPlayerScripts": {
+          "$className": "StarterPlayerScripts",
+
+          "Shared": {
+            "$className": "Folder",
+            "$path": "../../src/Shared/StarterPlayer/StarterPlayerScripts"
+          },
+
+          "MinigameShared": {
+            "$className": "Folder",
+            "$path": "StarterPlayer/StarterPlayerScripts"
+          }
+        },
+
+        "StarterCharacterScripts": {
+          "$className": "StarterCharacterScripts",
+
+          "Shared": {
+            "$className": "Folder",
+            "$path": "../../src/Shared/StarterPlayer/StarterCharacterScripts"
+          },
+
+          "MinigameShared": {
+            "$className": "Folder",
+            "$path": "StarterPlayer/StarterCharacterScripts"
+          }
+        }
+      },
+
+      "Workspace": {
+        "$className": "Workspace",
+
+        "Terrain": {
+          "$className": "Terrain"
+        },
+
+        "Shared": {
+          "$className": "Folder",
+          "$path": "../../src/Shared/Workspace"
+        },
+
+        "MinigameShared": {
+          "$className": "Folder",
+          "$path": "Workspace"
+        }
+      },
+
+      "Lighting": {
+        "$className": "Lighting",
+        "$properties": {
+          "Technology": "Future"
+        }
+      }
+    }
+  }

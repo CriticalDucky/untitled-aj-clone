@@ -1,110 +1,110 @@
 {
-  "name": "Party: Beach",
-  "servePlaceIds": [11353468067, 11353468067, 0],
+  "name": "Location: Forest",
+  "servePlaceIds": [10212920968, 10212920968, 0],
   "tree": {
     "$className": "DataModel",
 
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
-      "$path": "src/PartyBeach/ReplicatedStorage",
+      "$path": "ReplicatedStorage",
 
       "Vendor": {
         "$className": "Folder",
 
         "ReplicaService": {
-          "$path": "vendor/MadStudioRoblox/ReplicaService/src/ReplicatedStorage"
+          "$path": "../../vendor/MadStudioRoblox/ReplicaService/src/ReplicatedStorage"
         },
 
         "Loadstring": {
-          "$path": "vendor/Reinitialized/Loadstring"
+          "$path": "../../vendor/Reinitialized/Loadstring"
         }
       },
 
       "Shared": {
         "$className": "Folder",
-        "$path": "src/Shared/ReplicatedStorage"
+        "$path": "../../src/Shared/ReplicatedStorage"
       },
 
-      "PartyShared": {
+      "LocationShared": {
         "$className": "Folder",
-        "$path": "src/PartyShared/ReplicatedStorage"
+        "$path": "../../src/LocationShared/ReplicatedStorage"
       }
     },
 
     "ReplicatedFirst": {
       "$className": "ReplicatedFirst",
-      "$path": "src/PartyBeach/ReplicatedStorage",
+      "$path": "ReplicatedStorage",
 
       "Vendor": {
         "$className": "Folder",
 
         "Fusion": {
-          "$path": "vendor/Elttob/Fusion/src"
+          "$path": "../../vendor/Elttob/Fusion/src"
         },
 
         "Promise": {
-          "$path": "vendor/evaera/roblox-lua-promise/lib"
+          "$path": "../../vendor/evaera/roblox-lua-promise/lib"
         },
 
         "Signal": {
-          "$path": "vendor/Quenty/NevermoreEngine/src/signal/src/Shared"
+          "$path": "../../vendor/Quenty/NevermoreEngine/src/signal/src/Shared"
         }
       },
 
       "Shared": {
         "$className": "Folder",
-        "$path": "src/Shared/ReplicatedFirst"
+        "$path": "../../src/Shared/ReplicatedFirst"
       },
 
-      "PartyShared": {
+      "LocationShared": {
         "$className": "Folder",
-        "$path": "src/PartyShared/ReplicatedFirst"
+        "$path": "../../src/LocationShared/ReplicatedFirst"
       }
     },
 
     "ServerScriptService": {
       "$className": "ServerScriptService",
-      "$path": "src/PartyBeach/ServerScriptService",
+      "$path": "ServerScriptService",
 
       "Shared": {
         "$className": "Folder",
-        "$path": "src/Shared/ServerScriptService"
+        "$path": "../../src/Shared/ServerScriptService"
       },
 
-      "PartyShared": {
+      "LocationShared": {
         "$className": "Folder",
-        "$path": "src/PartyShared/ServerScriptService"
+        "$path": "../../src/LocationShared/ServerScriptService"
       }
     },
 
     "ServerStorage": {
       "$className": "ServerStorage",
-      "$path": "src/PartyBeach/ServerStorage",
+      "$path": "ServerStorage",
 
       "Vendor": {
         "$className": "Folder",
 
         "Cmdr": {
-          "$path": "vendor/evaera/Cmdr/Cmdr"
+          "$path": "../../vendor/evaera/Cmdr/Cmdr"
         },
 
         "ProfileService": {
-          "$path": "vendor/MadStudioRoblox/ProfileService/ProfileService.lua"
+          "$path": "../../vendor/MadStudioRoblox/ProfileService/ProfileService.lua"
         },
 
         "ReplicaService": {
-          "$path": "vendor/MadStudioRoblox/ReplicaService/src/ServerScriptService/ReplicaService.lua"
+          "$path": "../../vendor/MadStudioRoblox/ReplicaService/src/ServerScriptService/ReplicaService.lua"
         }
       },
 
       "Shared": {
         "$className": "Folder",
-        "$path": "src/Shared/ServerStorage"
+        "$path": "../../src/Shared/ServerStorage"
       },
 
-      "PartyShared": {
+      "LocationShared": {
         "$className": "Folder",
-        "$path": "src/PartyShared/ServerStorage"
+        "$path": "../../src/LocationShared/ServerStorage"
       }
     },
 
@@ -125,38 +125,38 @@
 
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
-        "$path": "src/PartyBeach/StarterPlayer/StarterPlayerScripts",
+        "$path": "StarterPlayer/StarterPlayerScripts",
 
         "Shared": {
           "$className": "Folder",
-          "$path": "src/Shared/StarterPlayer/StarterPlayerScripts"
+          "$path": "../../src/Shared/StarterPlayer/StarterPlayerScripts"
         },
 
-        "PartyShared": {
+        "LocationShared": {
           "$className": "Folder",
-          "$path": "src/PartyShared/StarterPlayer/StarterPlayerScripts"
+          "$path": "../../src/LocationShared/StarterPlayer/StarterPlayerScripts"
         }
       },
 
       "StarterCharacterScripts": {
         "$className": "StarterCharacterScripts",
-        "$path": "src/PartyBeach/StarterPlayer/StarterCharacterScripts",
+        "$path": "StarterPlayer/StarterCharacterScripts",
 
         "Shared": {
           "$className": "Folder",
-          "$path": "src/Shared/StarterPlayer/StarterCharacterScripts"
+          "$path": "../../src/Shared/StarterPlayer/StarterCharacterScripts"
         },
 
-        "PartyShared": {
+        "LocationShared": {
           "$className": "Folder",
-          "$path": "src/PartyShared/StarterPlayer/StarterCharacterScripts"
+          "$path": "../../src/LocationShared/StarterPlayer/StarterCharacterScripts"
         }
       }
     },
 
     "Workspace": {
       "$className": "Workspace",
-      "$path": "src/PartyBeach/Workspace",
+      "$path": "Workspace",
 
       "Terrain": {
         "$className": "Terrain"
@@ -164,12 +164,12 @@
 
       "Shared": {
         "$className": "Folder",
-        "$path": "src/Shared/Workspace"
+        "$path": "../../src/Shared/Workspace"
       },
 
-      "PartyShared": {
+      "LocationShared": {
         "$className": "Folder",
-        "$path": "src/PartyShared/Workspace"
+        "$path": "../../src/LocationShared/Workspace"
       }
     },
 

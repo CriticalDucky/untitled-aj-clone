@@ -1,110 +1,110 @@
 {
-  "name": "Minigame: Gatherer",
-  "servePlaceIds": [12939855185, 12939855185, 0],
+  "name": "Party: Beach",
+  "servePlaceIds": [11353468067, 11353468067, 0],
   "tree": {
     "$className": "DataModel",
 
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
-      "$path": "src/MinigameGatherer/ReplicatedStorage",
+      "$path": "ReplicatedStorage",
 
       "Vendor": {
         "$className": "Folder",
 
         "ReplicaService": {
-          "$path": "vendor/MadStudioRoblox/ReplicaService/src/ReplicatedStorage"
+          "$path": "../../vendor/MadStudioRoblox/ReplicaService/src/ReplicatedStorage"
         },
 
         "Loadstring": {
-          "$path": "vendor/Reinitialized/Loadstring"
+          "$path": "../../vendor/Reinitialized/Loadstring"
         }
       },
 
       "Shared": {
         "$className": "Folder",
-        "$path": "src/Shared/ReplicatedStorage"
+        "$path": "../../src/Shared/ReplicatedStorage"
       },
 
-      "MinigameShared": {
+      "PartyShared": {
         "$className": "Folder",
-        "$path": "src/MinigameShared/ReplicatedStorage"
+        "$path": "../../src/PartyShared/ReplicatedStorage"
       }
     },
 
     "ReplicatedFirst": {
       "$className": "ReplicatedFirst",
-      "$path": "src/MinigameGatherer/ReplicatedStorage",
+      "$path": "ReplicatedStorage",
 
       "Vendor": {
         "$className": "Folder",
 
         "Fusion": {
-          "$path": "vendor/Elttob/Fusion/src"
+          "$path": "../../vendor/Elttob/Fusion/src"
         },
 
         "Promise": {
-          "$path": "vendor/evaera/roblox-lua-promise/lib"
+          "$path": "../../vendor/evaera/roblox-lua-promise/lib"
         },
 
         "Signal": {
-          "$path": "vendor/Quenty/NevermoreEngine/src/signal/src/Shared"
+          "$path": "../../vendor/Quenty/NevermoreEngine/src/signal/src/Shared"
         }
       },
 
       "Shared": {
         "$className": "Folder",
-        "$path": "src/Shared/ReplicatedFirst"
+        "$path": "../../src/Shared/ReplicatedFirst"
       },
 
-      "MinigameShared": {
+      "PartyShared": {
         "$className": "Folder",
-        "$path": "src/MinigameShared/ReplicatedFirst"
+        "$path": "../../src/PartyShared/ReplicatedFirst"
       }
     },
 
     "ServerScriptService": {
       "$className": "ServerScriptService",
-      "$path": "src/MinigameGatherer/ServerScriptService",
+      "$path": "ServerScriptService",
 
       "Shared": {
         "$className": "Folder",
-        "$path": "src/Shared/ServerScriptService"
+        "$path": "../../src/Shared/ServerScriptService"
       },
 
-      "MinigameShared": {
+      "PartyShared": {
         "$className": "Folder",
-        "$path": "src/MinigameShared/ServerScriptService"
+        "$path": "../../src/PartyShared/ServerScriptService"
       }
     },
 
     "ServerStorage": {
       "$className": "ServerStorage",
-      "$path": "src/MinigameGatherer/ServerStorage",
+      "$path": "ServerStorage",
 
       "Vendor": {
         "$className": "Folder",
 
         "Cmdr": {
-          "$path": "vendor/evaera/Cmdr/Cmdr"
+          "$path": "../../vendor/evaera/Cmdr/Cmdr"
         },
 
         "ProfileService": {
-          "$path": "vendor/MadStudioRoblox/ProfileService/ProfileService.lua"
+          "$path": "../../vendor/MadStudioRoblox/ProfileService/ProfileService.lua"
         },
 
         "ReplicaService": {
-          "$path": "vendor/MadStudioRoblox/ReplicaService/src/ServerScriptService/ReplicaService.lua"
+          "$path": "../../vendor/MadStudioRoblox/ReplicaService/src/ServerScriptService/ReplicaService.lua"
         }
       },
 
       "Shared": {
         "$className": "Folder",
-        "$path": "src/Shared/ServerStorage"
+        "$path": "../../src/Shared/ServerStorage"
       },
 
-      "MinigameShared": {
+      "PartyShared": {
         "$className": "Folder",
-        "$path": "src/MinigameShared/ServerStorage"
+        "$path": "../../src/PartyShared/ServerStorage"
       }
     },
 
@@ -125,38 +125,38 @@
 
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
-        "$path": "src/MinigameGatherer/StarterPlayer/StarterPlayerScripts",
+        "$path": "StarterPlayer/StarterPlayerScripts",
 
         "Shared": {
           "$className": "Folder",
-          "$path": "src/Shared/StarterPlayer/StarterPlayerScripts"
+          "$path": "../../src/Shared/StarterPlayer/StarterPlayerScripts"
         },
 
-        "MinigameShared": {
+        "PartyShared": {
           "$className": "Folder",
-          "$path": "src/MinigameShared/StarterPlayer/StarterPlayerScripts"
+          "$path": "../../src/PartyShared/StarterPlayer/StarterPlayerScripts"
         }
       },
 
       "StarterCharacterScripts": {
         "$className": "StarterCharacterScripts",
-        "$path": "src/MinigameGatherer/StarterPlayer/StarterCharacterScripts",
+        "$path": "StarterPlayer/StarterCharacterScripts",
 
         "Shared": {
           "$className": "Folder",
-          "$path": "src/Shared/StarterPlayer/StarterCharacterScripts"
+          "$path": "../../src/Shared/StarterPlayer/StarterCharacterScripts"
         },
 
-        "MinigameShared": {
+        "PartyShared": {
           "$className": "Folder",
-          "$path": "src/MinigameShared/StarterPlayer/StarterCharacterScripts"
+          "$path": "../../src/PartyShared/StarterPlayer/StarterCharacterScripts"
         }
       }
     },
 
     "Workspace": {
       "$className": "Workspace",
-      "$path": "src/MinigameGatherer/Workspace",
+      "$path": "Workspace",
 
       "Terrain": {
         "$className": "Terrain"
@@ -164,12 +164,12 @@
 
       "Shared": {
         "$className": "Folder",
-        "$path": "src/Shared/Workspace"
+        "$path": "../../src/Shared/Workspace"
       },
 
-      "MinigameShared": {
+      "PartyShared": {
         "$className": "Folder",
-        "$path": "src/MinigameShared/Workspace"
+        "$path": "../../src/PartyShared/Workspace"
       }
     },
 

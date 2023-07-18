@@ -1,5 +1,3 @@
----@diagnostic disable
-
 --[[
 	This script builds and publishes the project to Roblox. It will overwrite the existing place asset.
 
@@ -10,8 +8,8 @@
 	Run this script using the following command:
 	> remodel run build.lua
 
-	By default, this command will attempt to publish to the testing game. You may optionally pass in an argument to
-	specify whether to attempt to publish to the testing or production game, like so:
+	By default, this command will simply build place files. You may optionally pass in an argument to specify whether
+	to attempt to publish to the testing or production game, like so:
 	> remodel run build.lua testing
 	> remodel run build.lua production
 
@@ -22,37 +20,58 @@
 	https://github.com/rojo-rbx/remodel#authentication
 ]]
 
+local function sleep(time)
+	local start = os.time(os.date "*t")
+
+	while true do
+		local now = os.time(os.date "*t")
+
+		if now > start + time then break end
+	end
+end
+
 local args = { ... }
 
-local testingMode
+local mode = args[1]
 
-if not args[1] or args[1] == "testing" then
-	testingMode = true
-elseif args[1] == "production" then
-	testingMode = false
-else
-	error "First argument must be 'testing' or 'production'."
+mode = mode or "build"
+
+if mode and mode ~= "build" and mode ~= "testing" and mode ~= "production" then
+	print "First argument must be 'build', 'testing', or 'production'."
+
+	return
 end
 
 -- Search for projects
 
 print()
 
-local files = remodel.readDir "."
+local files = remodel.readDir "src"
 
 local projectsToBuild = {}
 local numProjects = 0
 
-for _, fileName in pairs(files) do
-	local projectId = fileName:match "(.+).project.json"
+for _, placeFileName in pairs(files) do
+	if not remodel.isDir("src/" .. placeFileName) then goto continue end
 
-	if projectId then
-		local project = json.fromString(remodel.readFile(fileName))
+	local placeFiles = remodel.readDir("src/" .. placeFileName)
+
+	for _, fileName in pairs(placeFiles) do
+		local projectId = fileName:match "(.+).project.json"
+
+		if not projectId then goto continue end
+
+		local path = ("src/%s/%s"):format(placeFileName, fileName)
+
+		local project = json.fromString(remodel.readFile(path))
+
+		if project.name:find "%(Shared%)" then goto continue end
+
 		local servePlaceIds = project.servePlaceIds
 		local name = project.name
 		local placeId
 
-		if testingMode then
+		if mode == "testing" then
 			placeId = servePlaceIds[2]
 		else
 			placeId = servePlaceIds[1]
@@ -60,34 +79,44 @@ for _, fileName in pairs(files) do
 
 		projectsToBuild[projectId] = {
 			name = name,
+			path = path,
 			placeId = placeId,
 		}
 
 		numProjects = numProjects + 1
+
+		::continue::
 	end
+
+	::continue::
 end
 
 print(
-	("Found %d project%s to build and publish to a %s place:"):format(
+	("Found %d project%s to build%s:"):format(
 		numProjects,
 		numProjects == 1 and "" or "s",
-		testingMode and "testing" or "production"
+		mode ~= "build" and (" and publish to a %s place"):format(mode) or ""
 	)
 )
 
 for _, project in pairs(projectsToBuild) do
 	print(
-		("\t%s (%s Place ID: %s)"):format(
+		("\t%s%s"):format(
 			project.name,
-			testingMode and "Testing" or "Production",
-			project.placeId or "No Place ID"
+			mode ~= "build"
+			and ("%s(%s Place ID: %s)"):format(
+				("."):rep(30 - project.name:len()),
+				mode == "testing" and "Testing" or "Production",
+				project.placeId or "No Place ID"
+			)
+			or ""
 		)
 	)
 end
 
-if not testingMode then
+if mode == "production" then
 	local confirmationMessage =
-		"I confirm that I would like to publish to production and understand that this is final."
+	"I confirm that I would like to publish to production and understand that this is final."
 
 	print()
 	print "=================================================="
@@ -106,6 +135,8 @@ end
 
 -- Build and publish projects
 
+::buildAndPublish::
+
 local builtProjectsFolder = "build"
 
 remodel.createDirAll(builtProjectsFolder)
@@ -114,33 +145,35 @@ local failures = 0
 
 for projectId, project in pairs(projectsToBuild) do
 	local projectName = project.name
+	local projectPath = project.path
 	local projectPlaceId = project.placeId
 
 	print(
-		("\n=== %s (%s Place ID: %s) ===\n"):format(
+		("\n=== %s%s ===\n"):format(
 			projectName,
-			testingMode and "Testing" or "Production",
-			projectPlaceId and tostring(projectPlaceId) or "None"
+			mode ~= "build"
+			and (" (%s Place ID: %s)"):format(
+				mode == "testing" and "Testing" or "Production",
+				projectPlaceId and tostring(projectPlaceId) or "None"
+			)
+			or ""
 		)
 	)
 
 	local rbxlx = ("%s/%s.rbxlx"):format(builtProjectsFolder, projectId)
 
-	os.execute(("rojo build %s.project.json --output %s"):format(projectId, rbxlx))
+	os.execute(("rojo build %s --output %s"):format(projectPath, rbxlx))
 
-	if projectPlaceId then
+	if projectPlaceId and mode ~= "build" then
 		print(("Publishing project '%s'"):format(projectName))
 
 		local success, err =
 			pcall(remodel.writeExistingPlaceAsset, remodel.readPlaceFile(rbxlx), tostring(projectPlaceId))
 
 		if success then
-			print(
-				("Published project to %s place ID %s"):format(
-					testingMode and "testing" or "production",
-					projectPlaceId
-				)
-			)
+			print(("Published project to %s place ID %s"):format(mode, projectPlaceId))
+
+			projectsToBuild[projectId] = nil
 		else
 			errMessage = tostring(err):match "caused by: (.+)"
 
@@ -148,50 +181,60 @@ for projectId, project in pairs(projectsToBuild) do
 
 			failures = failures + 1
 		end
-	else
-		print(
-			("No %s place ID found for project '%s'. Will not publish."):format(
-				testingMode and "testing" or "production",
-				projectName
-			)
-		)
+	elseif mode ~= "build" then
+		print(("No %s place ID found for project '%s'. Will not publish."):format(mode, projectName))
 	end
 end
 
 print "\n==================================================\n"
-print(("Finished building and publishing all projects at %s."):format(os.date "%I:%M %p"))
+print(
+	("Finished building%s all projects at %s."):format(mode ~= "build" and " and publishing" or "", os.date "%I:%M %p")
+)
 
-if failures == 0 then
-	print(("All projects published to the %s game successfully."):format(testingMode and "testing" or "production"))
-elseif failures == numProjects then
-	print(
-		(
-			"WARNING: All projects FAILED to publish to the %s game. "
-			.. "Check that you have a valid authentication cookie set."
-		):format(testingMode and "testing" or "production")
-	)
-else
-	print(
-		("%d project%s failed to publish to the %s game. Would you like to retry? (y/n)"):format(
-			failures,
-			failures == 1 and "" or "s",
-			testingMode and "testing" or "production"
+if mode ~= "build" then
+	if failures == 0 then
+		print(("All projects published to the %s game successfully."):format(testingMode and "testing" or "production"))
+	elseif failures == numProjects then
+		print(
+			(
+				"WARNING: All projects FAILED to publish to the %s game. "
+				.. "Check that you have a valid authentication cookie set."
+			):format(mode)
 		)
-	)
+	else
+		print(
+			("%d project%s failed to publish to the %s game. Retrying..."):format(
+				failures,
+				failures == 1 and "" or "s",
+				mode
+			)
+		)
 
-	while true do
-		io.write "> "
-		local input = io.read()
+		sleep(3)
 
-		if input:lower() == "y" or input:lower() == "yes" then
-			os.execute(("remodel run build.lua %s"):format(table.concat(args, " ")))
-			break
-		elseif input:lower() == "n" or input:lower() == "no" then
-			print "Aborting."
-			break
-		else
-			print "Invalid input."
-		end
+		goto buildAndPublish
+		-- print(
+		-- 	("%d project%s failed to publish to the %s game. Would you like to retry? (y/n)"):format(
+		-- 		failures,
+		-- 		failures == 1 and "" or "s",
+		-- 		mode
+		-- 	)
+		-- )
+
+		-- while true do
+		-- 	io.write "> "
+		-- 	local input = io.read()
+
+		-- 	if input:lower() == "y" or input:lower() == "yes" then
+		-- 		goto buildAndPublish
+		-- 		break
+		-- 	elseif input:lower() == "n" or input:lower() == "no" then
+		-- 		print "Aborting."
+		-- 		break
+		-- 	else
+		-- 		print "Invalid input."
+		-- 	end
+		-- end
 	end
 end
 
