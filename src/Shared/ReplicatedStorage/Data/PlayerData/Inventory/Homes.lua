@@ -21,7 +21,7 @@ local DataReplication = require(script.Parent.Parent:WaitForChild "DataReplicati
 
 -- Types
 
-local Types = require(ReplicatedFirst:WaitForChild("Shared"):WaitForChild("Utility"):WaitForChild("Types"))
+local Types = require(ReplicatedFirst:WaitForChild("Shared"):WaitForChild("Utility"):WaitForChild "Types")
 
 type Home = Types.Home
 type ItemHomeType = Types.ItemHomeType
@@ -35,9 +35,7 @@ local peek = if Fusion then Fusion.peek else nil
 --#region Action Registration
 
 if not isServer then
-	DataReplication.registerActionAsync("SetHomes", function(homes)
-		ClientState.inventory.homes:set(homes)
-	end)
+	DataReplication.registerActionAsync("SetHomes", function(homes) ClientState.inventory.homes:set(homes) end)
 end
 
 --#endregion

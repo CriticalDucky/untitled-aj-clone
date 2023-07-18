@@ -39,8 +39,7 @@ publicPlayerData:ListenToRaw(function(action) publicPlayerDataState:set(publicPl
 
 	---
 
-	*Do **NOT** modify the state objects in this module under any circumstances! They are for viewing only. To modify
-	state, use the functions in other submodules of `PlayerData`.*
+	For proper server replication when modifying player data, use the `PlayerData` module.
 ]]
 local ClientState = {
 	currency = {
