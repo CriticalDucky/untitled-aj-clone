@@ -3,17 +3,18 @@ local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
 local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
-local utilityFolder = replicatedStorageShared:WaitForChild "Utility"
+local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
+local configurationFolder = replicatedFirstShared:WaitForChild "Configuration"
+local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 local serverFolder = replicatedStorageShared:WaitForChild "Server"
 local requestsFolder = replicatedStorageShared:WaitForChild "Requests"
-local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
-local constantsFolder = replicatedStorageShared:WaitForChild "Constants"
+local enumsFolder = replicatedFirstShared:WaitForChild "Enums"
 
 local Component = require(utilityFolder:WaitForChild "GetComponent")
 local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
-local Minigames = require(constantsFolder:WaitForChild "MinigameConstants")
+local Minigames = require(configurationFolder:WaitForChild "MinigameConstants")
 local ClientPlayMinigame = require(requestsFolder:WaitForChild("Minigames"):WaitForChild "ClientPlayMinigame")
-local ServerTypeGroups = require(constantsFolder:WaitForChild "ServerTypeGroups")
+local ServerTypeGroups = require(configurationFolder:WaitForChild "ServerTypeGroups")
 local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
 local LocalServerInfo = require(serverFolder:WaitForChild "LocalServerInfo")
 local PlayMinigameResponseType = require(enumsFolder:WaitForChild "PlayMinigameResponseType")
@@ -23,11 +24,6 @@ local New = Fusion.New
 local Children = Fusion.Children
 local Computed = Fusion.Computed
 local OnEvent = Fusion.OnEvent
-local OnChange = Fusion.OnChange
-local Observer = Fusion.Observer
-local Tween = Fusion.Tween
-local Spring = Fusion.Spring
-local Hydrate = Fusion.Hydrate
 local peek = Fusion.peek
 
 local component = function(props)

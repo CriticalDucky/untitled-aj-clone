@@ -7,15 +7,14 @@
 local NO_REPEAT_ZONE = 1 / 2 -- of current active parties
 local PARTY_PADDING_MINUTES = 5 -- minutes
 
-local ReplicatedStorage = game:GetService "ReplicatedStorage"
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
 
-local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
+local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
 
-local utilityFolder = replicatedStorageShared:WaitForChild "Utility"
-local constantsFolder = replicatedStorageShared:WaitForChild "Constants"
+local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
+local configurationFolder = replicatedFirstShared:WaitForChild "Configuration"
 
-local Parties = require(constantsFolder:WaitForChild "PartyConstants")
+local Parties = require(configurationFolder:WaitForChild "PartyConstants")
 local Table = require(utilityFolder:WaitForChild "Table")
 local Math = require(utilityFolder:WaitForChild "Math")
 local Time = require(utilityFolder:WaitForChild "Time")
@@ -40,7 +39,7 @@ local function getPossiblePartiesFromHalfHour(halfHour)
 	return possibleParties
 end
 
-local function getWeekId(time, use: Use) return math.floor((time or Time.getUnix(use)) / 604800) end
+-- local function getWeekId(time, use: Use) return math.floor((time or Time.getUnix(use :: Use?)) / 604800) end
 
 local function getHalfHourId(time, use: Use?) return math.floor((time or Time.getUnix(use)) / 1800) end
 
@@ -112,7 +111,7 @@ local partySchedules = {}
 	Pass in a Use to dynamically update within computeds.
 ]]
 function getWeekPartySchedule(weekId, use: Use?): { [number]: PartyUnit }
-	weekId = weekId or getWeekId(use)
+	-- weekId = weekId or getWeekId(use)
 
 	if not partySchedules[weekId] then partySchedules[weekId] = createWeekPartySchedule(weekId) end
 

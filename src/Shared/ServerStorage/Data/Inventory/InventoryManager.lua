@@ -19,7 +19,7 @@
 		accessories = {inventoryItem}, -- Accessories are items that one's character can wear.
 		homeItems = {inventoryItem}, -- Home items (furniture, decorations, etc.) are items that can be placed or applied to a home. The enum name for this is "furniture"
 		homes = {inventoryItem}, -- An array of homes that the player owns.
-		-- more can be added here. To add a new category, visit PlayerDataConstants.lua and search for "inventory".
+		-- more can be added here. To add a new category, visit PlayerDataConfig.lua and search for "inventory".
 	},
 	```
 
@@ -32,40 +32,38 @@ local ReplicatedStorage = game:GetService "ReplicatedStorage"
 local ServerStorage = game:GetService "ServerStorage"
 
 local replicatedFirstVendor = ReplicatedFirst.Vendor
+local replicatedFirstShared = ReplicatedFirst.Shared
 local replicatedStorageShared = ReplicatedStorage.Shared
 local serverStorageShared = ServerStorage.Shared
 local dataFolder = serverStorageShared.Data
-local utilityFolder = replicatedStorageShared.Utility
+local utilityFolder = replicatedFirstShared.Utility
 local replicatedStorageData = replicatedStorageShared.Data
 local replicatedStorageInventory = replicatedStorageData.Inventory
-local enumsFolder = replicatedStorageShared.Enums
-local constantsFolder = replicatedStorageShared.Constants
+local enumsFolder = replicatedFirstShared.Enums
 
 local PlayerDataManager = require(dataFolder.PlayerDataManager)
 local Items = require(replicatedStorageInventory.Items)
 local Table = require(utilityFolder.Table)
 local Signal = require(replicatedFirstVendor.Signal.Signal)
-local PlayerDataConstants = require(constantsFolder.PlayerDataConstants)
-local MiniId = require(utilityFolder.MiniId)
+local PlayerDataConfig = require(replicatedFirstShared.Configuration.PlayerDataConfig)
+local Id = require(utilityFolder.Id)
 local Types = require(utilityFolder.Types)
-local ItemCategory = require(enumsFolder.ItemCategory)
+local ItemCategory = require(enumsFolder.InventoryCategory)
 
-type PlayerData = Types.PlayerData
 type InventoryItem = Types.InventoryItem
 type InventoryCategory = Types.InventoryCategory
-type Inventory = Types.Inventory
 type UserEnum = Types.UserEnum
 
 local function addPropsToItem(item: InventoryItem)
-	local itemCategory = item.itemCategory
+	-- local itemCategory = item.itemCategory
 
-	local props = PlayerDataConstants.itemProps[itemCategory]
+	-- local props = PlayerDataConfig.itemProps[itemCategory]
 
-	if props then
-		for propName, propValue in pairs(props) do
-			if item[propName] == nil then item[propName] = Table.deepCopy(propValue) end
-		end
-	end
+	-- if props then
+	-- 	for propName, propValue in pairs(props) do
+	-- 		if item[propName] == nil then item[propName] = Table.deepCopy(propValue) end
+	-- 	end
+	-- end
 
 	return item
 end
@@ -80,15 +78,15 @@ local InventoryManager = {}
 
 	If no errors occur, assume the item was removed successfully.
 ]]
-local function removeItem(player: Player, itemCategory: UserEnum, itemIndex: number)
+local function removeItem(player: Player, itemCategory: string, itemIndex: number)
 	assert(player and itemCategory and itemIndex, "removeItem: Invalid arguments")
 
-	assert(PlayerDataManager.profileIsLoaded(player), "removeItem: Player data not found")
+	assert(PlayerDataManager.persistentDataIsLoaded(player), "removeItem: Player data not found")
 
 	local item = InventoryManager.getItemFromIndex(player.UserId, itemCategory, itemIndex)
 	assert(item, "removeItem: Item not found")
 
-	PlayerDataManager.arrayRemoveProfile(player, { "inventory", itemCategory }, itemIndex)
+	PlayerDataManager.arrayRemovePersistent(player, { "inventory", itemCategory }, itemIndex)
 	InventoryManager.itemRemovedFromInventory:Fire(player, itemCategory, itemIndex, item)
 end
 
@@ -100,17 +98,17 @@ end
 
 	You're expected to make all necessary checks before calling this function.
 ]]
-local function addItem(player: Player, itemCategory: UserEnum, item: InventoryItem)
+local function addItem(player: Player, itemCategory: string, item: InventoryItem)
 	assert(player and itemCategory and item, "addItem: Invalid arguments")
 
-	assert(PlayerDataManager.profileIsLoaded(player), "addItem: Player data not found")
+	assert(PlayerDataManager.persistentDataIsLoaded(player), "addItem: Player data not found")
 
 	local isInventoryFull = select(2, InventoryManager.isInventoryFull(player.UserId, itemCategory, 1))
 	assert(not isInventoryFull, "addItem: Inventory is full")
 
 	InventoryManager.itemPlacingInInventory:Fire(player, itemCategory, item)
 
-	PlayerDataManager.arrayInsertProfile(player, { "inventory", itemCategory }, item)
+	PlayerDataManager.arrayInsertPersistent(player, { "inventory", itemCategory }, item)
 end
 
 --[[
@@ -144,7 +142,11 @@ local function changeOwnerOfItems(items: { InventoryItem }, currentOwner: Player
 			assert(
 				not select(
 					2,
-					InventoryManager.isInventoryFull(newOwner.UserId, item.itemCategory, #otherItemsOfSameCategory)
+					InventoryManager.isInventoryFull(
+						(newOwner :: Player).UserId,
+						item.itemCategory,
+						#otherItemsOfSameCategory
+					)
 				),
 				"InventoryManager.changeOwnerOfItems: Inventory would be full for: " .. (item.itemCategory or "nil")
 			)
@@ -160,7 +162,8 @@ local function changeOwnerOfItems(items: { InventoryItem }, currentOwner: Player
 
 	if newOwner and currentOwner then
 		assert(
-			PlayerDataManager.profileIsLoaded(currentOwner) and PlayerDataManager.profileIsLoaded(newOwner),
+			PlayerDataManager.persistentDataIsLoaded(currentOwner)
+				and PlayerDataManager.persistentDataIsLoaded(newOwner),
 			"InventoryManager.changeOwnerOfItems: Player data not found"
 		)
 
@@ -176,7 +179,7 @@ local function changeOwnerOfItems(items: { InventoryItem }, currentOwner: Player
 		end
 	elseif currentOwner and not newOwner then
 		assert(
-			PlayerDataManager.profileIsLoaded(currentOwner),
+			PlayerDataManager.persistentDataIsLoaded(currentOwner),
 			"InventoryManager.changeOwnerOfItems: Player data not found"
 		)
 
@@ -189,7 +192,7 @@ local function changeOwnerOfItems(items: { InventoryItem }, currentOwner: Player
 		end
 	elseif not currentOwner and newOwner then
 		assert(
-			PlayerDataManager.profileIsLoaded(newOwner),
+			PlayerDataManager.persistentDataIsLoaded(newOwner),
 			"InventoryManager.changeOwnerOfItems: Player data not found"
 		)
 
@@ -209,8 +212,8 @@ InventoryManager.itemRemovedFromInventory = Signal.new()
 
 	Can return nil in the rare case retrieving the player's profile data fails.
 ]]
-function InventoryManager.getInventory(userId: number): Inventory?
-	local profileData = PlayerDataManager.viewProfileAsync(userId)
+function InventoryManager.getInventory(userId: number)
+	local profileData = PlayerDataManager.viewOfflinePersistentDataAsync(userId)
 	return profileData and profileData.inventory
 end
 
@@ -361,7 +364,7 @@ end
 	end
 	```
 ]]
-function InventoryManager.playerOwnsItems(userId: number, itemIds: { string | InventoryItem }): (boolean, boolean)
+function InventoryManager.playerOwnsItems(userId: number, itemIds: { string | InventoryItem }): (boolean, boolean?)
 	for _, itemId in pairs(itemIds) do
 		local success, playerOwnsItem =
 			InventoryManager.playerOwnsItem(userId, if type(itemId) == "string" then itemId else itemId.id)
@@ -405,11 +408,12 @@ end
 	end
 	```
 ]]
+
 function InventoryManager.isInventoryFull(
 	userId: number,
 	itemCategory: UserEnum,
 	numItemsToAdd: number?
-): (boolean, boolean)
+)
 	assert(userId and itemCategory, "InventoryManager.isInventoryFull: Invalid arguments")
 
 	numItemsToAdd = numItemsToAdd or 0
@@ -419,7 +423,7 @@ function InventoryManager.isInventoryFull(
 	if not inventoryCategory then return false, nil end
 
 	local numItems = #inventoryCategory
-	local limit = PlayerDataConstants.inventoryLimits[itemCategory]
+	local limit = PlayerDataConfig.inventoryLimits[itemCategory]
 
 	if numItems == limit then return true, true end
 
@@ -436,12 +440,12 @@ end
 
 	You're expected to add the item to the player's inventory yourself.
 ]]
-function InventoryManager.newItem(itemCategory: UserEnum, itemEnum: UserEnum, props: table?): InventoryItem
+function InventoryManager.newItem(itemCategory: UserEnum, itemEnum: UserEnum, props: {}?): InventoryItem
 	assert(itemCategory and itemEnum, "InventoryManager.newItem: Invalid arguments")
 	assert(Items.getItem(itemCategory, itemEnum), "InventoryManager.newItem: Item does not exist")
 
 	local item = addPropsToItem {
-		id = MiniId(10), -- Chance of collision is: 64^10: 1 in 1152921504606846976. Not bad.
+		id = Id.generate(), -- Chance of collision is: 64^10: 1 in 1152921504606846976. Not bad.
 		itemCategory = itemCategory,
 		itemEnum = itemEnum,
 	}
@@ -477,7 +481,7 @@ function InventoryManager.newItemInInventory(
 	itemCategory: UserEnum,
 	itemEnum: UserEnum,
 	player: Player,
-	props: { [string]: any }
+	props: { [string]: any }?
 )
 	assert(itemCategory and itemEnum and player, "InventoryManager.newItemInInventory: Missing argument(s)")
 
@@ -490,49 +494,49 @@ end
 	Crude way to reconcile item props with the player's inventory. Will replace this function with a better one later.
 ]]
 local function reconcileItems(player) -- just like the function above, but no promises
-	local success, inventory = InventoryManager.getInventory(player.userId)
+	-- local success, inventory = InventoryManager.getInventory(player.userId)
 
-	assert(PlayerDataManager.profileIsLoaded(player), "reconcileItems: Player profile not loaded")
+	-- assert(PlayerDataManager.persistentDataIsLoaded(player), "reconcileItems: Player profile not loaded")
 
-	if not success or not inventory then return end
+	-- if not success or not inventory then return end
 
-	for itemCategory, items in pairs(inventory) do
-		local propTemplate = PlayerDataConstants.itemProps[itemCategory]
+	-- for itemCategory, items in pairs(inventory) do
+	-- 	local propTemplate = PlayerDataConfig.itemProps[itemCategory]
 
-		if not propTemplate then continue end
+	-- 	if not propTemplate then continue end
 
-		for itemIndex, item in ipairs(items) do
-			Table.recursiveIterate(propTemplate, function(path, value)
-				local function index(t, indexPath)
-					local element = t
+	-- 	for itemIndex, item in ipairs(items) do
+	-- 		Table.recursiveIterate(propTemplate, function(path, value)
+	-- 			local function index(t, indexPath)
+	-- 				local element = t
 
-					for _, i in ipairs(indexPath) do
-						element = element[i]
-					end
+	-- 				for _, i in ipairs(indexPath) do
+	-- 					element = element[i]
+	-- 				end
 
-					return element
-				end
+	-- 				return element
+	-- 			end
 
-				if index(item, Table.copy(path)) == nil then
-					PlayerDataManager.setValueProfile(
-						player,
-						{ "inventory", itemCategory, itemIndex, table.unpack(path) },
-						Table.deepCopy(value)
-					)
-				end
-			end)
-		end
-	end
+	-- 			if index(item, Table.copy(path)) == nil then
+	-- 				PlayerDataManager.setValuePersistent(
+	-- 					player,
+	-- 					{ "inventory", itemCategory, itemIndex, table.unpack(path) },
+	-- 					Table.deepCopy(value)
+	-- 				)
+	-- 			end
+	-- 		end)
+	-- 	end
+	-- end
 
-	return true
+	-- return true
 end
 
 -- For all player data that's loaded in this server, reconcile items
 
-for _, player in PlayerDataManager.getPlayersWithLoadedProfiles() do
+for _, player in PlayerDataManager.getPlayersWithLoadedPersistentData() do
 	reconcileItems(player)
 end
 
-PlayerDataManager.profileLoaded:Connect(reconcileItems)
+PlayerDataManager.persistentDataLoaded:Connect(reconcileItems)
 
 return InventoryManager

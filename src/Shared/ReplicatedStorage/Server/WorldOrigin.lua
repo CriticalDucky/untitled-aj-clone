@@ -15,13 +15,15 @@ local Players = game:GetService "Players"
 local RunService = game:GetService "RunService"
 local TeleportService = game:GetService "TeleportService"
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
-local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
+local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
+local enumsFolder = replicatedFirstShared:WaitForChild "Enums"
 local serverFolder = replicatedStorageShared:WaitForChild "Server"
-local constantsFolder = replicatedStorageShared:WaitForChild "Constants"
+local configurationFolder = replicatedFirstShared:WaitForChild "Configuration"
 
-local ServerTypeGroups = require(constantsFolder:WaitForChild "ServerTypeGroups")
+local ServerTypeGroups = require(configurationFolder:WaitForChild "ServerTypeGroups")
 local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
 local LocalServerInfo = require(serverFolder:WaitForChild "LocalServerInfo")
 --#endregion Imports
@@ -66,11 +68,11 @@ function WorldOrigin.get(player: number | Player | nil): number
 		elseif RunService:IsServer() then -- Player will never be nil
 			assert(player ~= nil, "Player cannot be nil on the server.")
 
-			player = if typeof(player) == "number" then Players:GetPlayerByUserId(player) else player
+			player = (if typeof(player) == "number" then Players:GetPlayerByUserId(player) else player)
 
 			assert(player ~= nil, "Nonexistent player provided to WorldOrigin.get().")
 
-			teleportData = player:GetJoinData().TeleportData
+			teleportData = (player :: Player):GetJoinData().TeleportData
 
 			if teleportData == nil or teleportData.worldOrigin == nil then
 				local success, worldIndex = ServerData.findAvailableWorld()

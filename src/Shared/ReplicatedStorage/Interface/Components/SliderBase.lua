@@ -10,15 +10,12 @@ local MOVEMENT_INPUTS = {
 }
 
 --#region Imports
-local Players = game:GetService "Players"
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
 local UserInputService = game:GetService "UserInputService"
-local RunService = game:GetService "RunService"
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
 local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
-local utilityFolder = replicatedStorageShared:WaitForChild "Utility"
 local componentsFolder = replicatedStorageShared:WaitForChild("Interface"):WaitForChild "Components"
 
 local buttonInput = require(componentsFolder:WaitForChild "ButtonInput")
@@ -26,27 +23,12 @@ local buttonInput = require(componentsFolder:WaitForChild "ButtonInput")
 -- Optional: Remove imports that you don't need
 local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
 local New = Fusion.New
-local Hydrate = Fusion.Hydrate
-local Ref = Fusion.Ref
 local Children = Fusion.Children
 local Cleanup = Fusion.Cleanup
 local Out = Fusion.Out
-local OnEvent = Fusion.OnEvent
-local OnChange = Fusion.OnChange
-local Attribute = Fusion.Attribute
-local AttributeChange = Fusion.AttributeChange
-local AttributeOut = Fusion.AttributeOut
 local Value = Fusion.Value
 local Computed = Fusion.Computed
-local ForPairs = Fusion.ForPairs
-local ForKeys = Fusion.ForKeys
-local ForValues = Fusion.ForValues
-local Observer = Fusion.Observer
-local Tween = Fusion.Tween
-local Spring = Fusion.Spring
 local peek = Fusion.peek
-local cleanup = Fusion.cleanup
-local doNothing = Fusion.doNothing
 
 ---@diagnostic disable-next-line: undefined-type oh my godddd
 type CanBeState<T> = Fusion.CanBeState<T>
@@ -69,7 +51,7 @@ export type Props = {
 	SliderSize: CanBeState<UDim2>?, -- The size of the slider, which centers with the input body
 	ProgressAlpha: CanBeState<number>?, -- Between 0 and 1, what the slider displays.
 	Disabled: CanBeState<boolean>?, -- Whether or not the slider is disabled
-	InputProgressChanged: CanBeState<(number) -> ()>?, -- Inexpensive, unyielding callback that runs every frame and updates ProgressAlpha called when the slider is changed
+	InputProgressChanged: (number) -> (), -- Inexpensive, unyielding callback that runs every frame and updates ProgressAlpha called when the slider is changed
 
 	isHoveringBackground: Value<boolean>?,
 	isHoveringSlider: Value<boolean>?,

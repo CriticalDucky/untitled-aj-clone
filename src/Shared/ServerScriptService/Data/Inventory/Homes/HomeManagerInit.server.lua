@@ -1,13 +1,12 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local ServerStorage = game:GetService("ServerStorage")
 
 local dataFolder = ServerStorage.Shared.Data
-local serverFolder = ReplicatedStorage.Shared.Server
-local enumsFolder = ReplicatedStorage.Shared.Enums
-local constantsFolder = ReplicatedStorage.Shared.Constants
+local enumsFolder = ReplicatedFirst.Shared.Enums
+local configurationFolder = ReplicatedFirst.Shared.Configuration
 
 local HomeManager = require(dataFolder.Inventory.HomeManager)
-local ServerTypeGroups = require(constantsFolder.ServerTypeGroups)
+local ServerTypeGroups = require(configurationFolder.ServerTypeGroups)
 local ServerGroupEnum = require(enumsFolder.ServerGroup)
 local Teleport = require(ServerStorage.Shared.Teleportation.Teleport)
 

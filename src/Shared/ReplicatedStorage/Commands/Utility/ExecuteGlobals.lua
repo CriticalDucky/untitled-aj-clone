@@ -7,7 +7,7 @@ end
 function ExecuteGlobals.m(moduleName: string): any?
     local module = ExecuteGlobals.i(moduleName)
 
-    if module and module:IsA("ModuleScript") then return require(module) end
+    return if module and module:IsA("ModuleScript") then require(module) else nil
 end
 
 return ExecuteGlobals

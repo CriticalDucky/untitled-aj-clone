@@ -3,37 +3,32 @@ local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
 local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
-local utilityFolder = replicatedStorageShared:WaitForChild "Utility"
+local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
+local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 local serverFolder = replicatedStorageShared:WaitForChild "Server"
-local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
+local enumsFolder = replicatedFirstShared:WaitForChild "Enums"
 local requestsFolder = replicatedStorageShared:WaitForChild "Requests"
-local constantsFolder = replicatedStorageShared:WaitForChild "Constants"
+local configurationFolder = replicatedFirstShared:WaitForChild "Configuration"
 
 local Component = require(utilityFolder:WaitForChild "GetComponent")
 local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
 local ReplicatedServerData = require(serverFolder:WaitForChild "ReplicatedServerData")
 local LiveServerData = require(serverFolder:WaitForChild "LiveServerData")
 local LocalServerInfo = require(serverFolder:WaitForChild "LocalServerInfo")
-local WorldNames = require(constantsFolder:WaitForChild "WorldNames")
+local WorldNames = require(configurationFolder:WaitForChild "WorldNames")
 local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
-local ServerTypeGroups = require(constantsFolder:WaitForChild "ServerTypeGroups")
+local ServerTypeGroups = require(configurationFolder:WaitForChild "ServerTypeGroups")
 local ClientTeleport = require(requestsFolder:WaitForChild("Teleportation"):WaitForChild "ClientTeleport")
 local WorldOrigin = require(serverFolder:WaitForChild "WorldOrigin")
 local Promise = require(replicatedFirstVendor:WaitForChild "Promise")
-local Table = require(utilityFolder:WaitForChild "Table")
 
 local Value = Fusion.Value
 local New = Fusion.New
 local Children = Fusion.Children
 local Computed = Fusion.Computed
 local OnEvent = Fusion.OnEvent
-local OnChange = Fusion.OnChange
 local Observer = Fusion.Observer
-local Tween = Fusion.Tween
-local Spring = Fusion.Spring
-local Hydrate = Fusion.Hydrate
 local peek = Fusion.peek
-local Cleanup = Fusion.Cleanup
 
 local component = function(props)
 	local open = Value(false)
@@ -58,7 +53,7 @@ local component = function(props)
 		enabled:set(true)
 	end)
 
-	local function button(buttonProps: table)
+	local function button(buttonProps)
 		return New "TextButton" {
 			Size = buttonProps.size or UDim2.fromOffset(50, 50),
 			LayoutOrder = buttonProps.layoutOrder or 1,
@@ -188,7 +183,7 @@ local component = function(props)
 		return button
 	end
 
-	local worldButtons = Computed(function(use)
+	local newWorldButtons = Computed(function(use)
 		local data = use(ReplicatedServerData.value)
 		local currentWorlds = ReplicatedServerData.withData.getWorlds(data)
 
@@ -203,10 +198,10 @@ local component = function(props)
 
 	local menu = Component "DefaultElementList" {
 		open = open,
-		elements = worldButtons,
+		elements = newWorldButtons,
 	}
 
-	local button = button {
+	local newButton = button {
 		onClick = function()
 			open:set(not peek(open))
 		end,
@@ -216,7 +211,7 @@ local component = function(props)
 		visible = enabled,
 	}
 
-	return menu, button
+	return menu, newButton
 end
 
 return component

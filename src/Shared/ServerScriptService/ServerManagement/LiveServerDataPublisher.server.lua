@@ -1,16 +1,18 @@
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
 local RunService = game:GetService "RunService"
 local Players = game:GetService "Players"
 
 local replicatedStorageShared = ReplicatedStorage.Shared
-local enumsFolder = replicatedStorageShared.Enums
+local replicatedFirstShared = ReplicatedFirst.Shared
+local enumsFolder = replicatedFirstShared.Enums
 local serverFolder = replicatedStorageShared.Server
-local constantsFolder = replicatedStorageShared.Constants
+local configurationFolder = replicatedFirstShared.Configuration
 
 local LiveServerData = require(serverFolder.LiveServerData)
 local LocalServerInfo = require(serverFolder.LocalServerInfo)
 local ServerGroupEnum = require(enumsFolder.ServerGroup)
-local ServerTypeGroups = require(constantsFolder.ServerTypeGroups)
+local ServerTypeGroups = require(configurationFolder.ServerTypeGroups)
 
 local serverIdentifier = LocalServerInfo.getServerIdentifier()
 

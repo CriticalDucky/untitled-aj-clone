@@ -7,36 +7,20 @@ local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
 local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
-local utilityFolder = replicatedStorageShared:WaitForChild "Utility"
+local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
 local componentsFolder = replicatedStorageShared:WaitForChild("Interface"):WaitForChild "Components"
 
 local sliderBase = require(componentsFolder:WaitForChild "SliderBase")
-local InterfaceConstants = require(replicatedStorageShared:WaitForChild("Constants"):WaitForChild "InterfaceConstants")
+local InterfaceConstants =
+	require(replicatedFirstShared:WaitForChild("Configuration"):WaitForChild "InterfaceConstants")
 
 -- Optional: Remove imports that you don't need
 local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
 local New = Fusion.New
-local Hydrate = Fusion.Hydrate
-local Ref = Fusion.Ref
 local Children = Fusion.Children
-local Cleanup = Fusion.Cleanup
-local Out = Fusion.Out
-local OnEvent = Fusion.OnEvent
-local OnChange = Fusion.OnChange
-local Attribute = Fusion.Attribute
-local AttributeChange = Fusion.AttributeChange
-local AttributeOut = Fusion.AttributeOut
 local Value = Fusion.Value
 local Computed = Fusion.Computed
-local ForPairs = Fusion.ForPairs
-local ForKeys = Fusion.ForKeys
-local ForValues = Fusion.ForValues
-local Observer = Fusion.Observer
-local Tween = Fusion.Tween
 local Spring = Fusion.Spring
-local peek = Fusion.peek
-local cleanup = Fusion.cleanup
-local doNothing = Fusion.doNothing
 
 type CanBeState<T> = Fusion.CanBeState<T>
 -- #endregion
@@ -57,6 +41,8 @@ export type Props = {
 
 	BackgroundColor: CanBeState<Color3>?, -- The color of the slider background; optional
 	SliderColor: CanBeState<Color3>?, -- The color of the slider; optional
+	PrimaryColor: CanBeState<Color3>?,
+	SecondaryColor: CanBeState<Color3>?,
 }
 
 --[[
@@ -70,13 +56,13 @@ local function Component(props: Props)
 	local draggingMode = Value()
 	local isDragging = Computed(function(use) return use(draggingMode) ~= nil end)
 
-    local springSpeed = InterfaceConstants.animation.bubbleButtonColorSpring.speed
+	local springSpeed = InterfaceConstants.animation.bubbleButtonColorSpring.speed
 	local springDamping = InterfaceConstants.animation.bubbleButtonColorSpring.damping
 
 	local isHovering = Computed(function(use) return use(isHoveringBackground) or use(isHoveringSlider) end)
-	local isHeldDown = Computed(function(use) -- For possible future use
-		return use(isHeldDownBackground) or use(isHeldDownSlider)
-	end)
+	-- local isHeldDown = Computed(function(use) -- For possible future use
+	-- 	return use(isHeldDownBackground) or use(isHeldDownSlider)
+	-- end)
 
 	local function brighten(color: Color3)
 		local h, s, v = color:ToHSV()
@@ -113,7 +99,7 @@ local function Component(props: Props)
 			end
 		end),
 		springSpeed,
-        springDamping
+		springDamping
 	)
 
 	local slider = sliderBase {

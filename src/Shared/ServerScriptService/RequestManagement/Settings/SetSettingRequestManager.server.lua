@@ -1,18 +1,18 @@
-local ReplicatedStorage = game:GetService "ReplicatedStorage"
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ServerStorage = game:GetService "ServerStorage"
 
 local serverStorageShared = ServerStorage.Shared
 local serverStorageVendor = ServerStorage.Vendor
-local replicatedStorageShared = ReplicatedStorage.Shared
+local replicatedFirstShared = ReplicatedFirst.Shared
+local serverStorageSharedUtility = serverStorageShared.Utility
+local enumsFolder = replicatedFirstShared.Enums
+local utilityFolder = replicatedFirstShared.Utility
 local dataFolder = serverStorageShared.Data
-local serverUtilityFolder = serverStorageShared.Utility
-local utilityFolder = replicatedStorageShared.Utility
-local enumsFolder = replicatedStorageShared.Enums
 
 local ReplicaService = require(serverStorageVendor.ReplicaService)
-local ReplicaResponse = require(serverUtilityFolder.ReplicaResponse)
+local ReplicaResponse = require(serverStorageSharedUtility.ReplicaResponse)
 local Param = require(utilityFolder.Param)
-local PlayerSettings = require(dataFolder.Settings.PlayerSettings)
+-- local PlayerSettings = require(dataFolder.Settings.PlayerSettings)
 local Table = require(utilityFolder.Table)
 local HomeLockType = require(enumsFolder.HomeLockType)
 local InventoryManager = require(dataFolder.Inventory.InventoryManager)
@@ -76,7 +76,7 @@ ReplicaResponse.listen(setSettingRequest, function(player, setting, value)
         return false, SetSettingResponseType.invalid
     end
 
-    PlayerSettings.setSetting(player, setting, value)
+    -- PlayerSettings.setSetting(player, setting, value)
 
     return true
 end)

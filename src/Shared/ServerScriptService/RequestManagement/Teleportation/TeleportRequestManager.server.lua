@@ -1,15 +1,17 @@
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
 local ServerStorage = game:GetService "ServerStorage"
 
 local replicatedStorageShared = ReplicatedStorage.Shared
+local replicatedFirstShared = ReplicatedFirst.Shared
 local serverFolder = replicatedStorageShared.Server
 local serverStorageShared = ServerStorage.Shared
 local serverStorageVendor = ServerStorage.Vendor
 local teleportationFolder = serverStorageShared.Teleportation
-local utilityFolder = replicatedStorageShared.Utility
-local enumsFolder = replicatedStorageShared.Enums
+local utilityFolder = replicatedFirstShared.Utility
+local enumsFolder = replicatedFirstShared.Enums
 local serverStorageSharedUtility = serverStorageShared.Utility
-local constantsFolder = replicatedStorageShared.Constants
+local configurationFolder = replicatedFirstShared.Configuration
 
 local ReplicaService = require(serverStorageVendor.ReplicaService)
 local Teleport = require(teleportationFolder.Teleport)
@@ -19,7 +21,7 @@ local ActiveParties = require(serverFolder.ActiveParties)
 local ReplicaResponse = require(serverStorageSharedUtility.ReplicaResponse)
 local Param = require(utilityFolder.Param)
 local ServerGroupEnum = require(enumsFolder.ServerGroup)
-local ServerTypeGroups = require(constantsFolder.ServerTypeGroups)
+local ServerTypeGroups = require(configurationFolder.ServerTypeGroups)
 
 local Types = require(utilityFolder.Types)
 
@@ -130,6 +132,8 @@ ReplicaResponse.listen(teleportRequest, function(player: Player, teleportRequest
         end
 	elseif teleportRequestType == TeleportRequestType.rejoin then
 		Teleport.rejoin(player, "An unknown error occured on the client. (err code C1)")
+
+        return false
 	else
 		warn "Invalid request: teleportRequestType is nil or invalid"
 

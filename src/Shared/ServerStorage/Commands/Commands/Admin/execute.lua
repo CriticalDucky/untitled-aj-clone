@@ -23,10 +23,10 @@ local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
 local loadstring = require(ReplicatedStorage:WaitForChild("Vendor"):WaitForChild "Loadstring")
 
-local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
-local replicatedStorageSharedCommands = replicatedStorageShared:WaitForChild "Commands"
+-- local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
+-- local replicatedStorageSharedCommands = replicatedStorageShared:WaitForChild "Commands"
 
-local ExecuteGlobals = require(replicatedStorageSharedCommands:WaitForChild("Utility"):WaitForChild "ExecuteGlobals")
+-- local ExecuteGlobals = require(replicatedStorageSharedCommands:WaitForChild("Utility"):WaitForChild "ExecuteGlobals")
 
 return {
 	Name = "execute",

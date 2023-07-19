@@ -1,8 +1,6 @@
 local ServerStorage = game:GetService("ServerStorage")
 
-local serverStorageShared = ServerStorage.Shared
 local serverStorageVendor = ServerStorage.Vendor
-local dataFolder = serverStorageShared.Data
 
 local ReplicaService = require(serverStorageVendor.ReplicaService)
 

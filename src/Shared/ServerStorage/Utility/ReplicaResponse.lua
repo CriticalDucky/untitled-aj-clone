@@ -1,6 +1,6 @@
-local ReplicatedStorage = game:GetService "ReplicatedStorage"
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
 
-local Types = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Utility"):WaitForChild "Types")
+local Types = require(ReplicatedFirst:WaitForChild("Shared"):WaitForChild("Utility"):WaitForChild "Types")
 
 type Promise = Types.Promise
 

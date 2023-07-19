@@ -1,15 +1,19 @@
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
 local ServerStorage = game:GetService "ServerStorage"
 
 local serverStorageShared = ServerStorage.Shared
 local serverStorageVendor = ServerStorage.Vendor
+local replicatedFirstShared = ReplicatedFirst.Shared
 local replicatedStorageShared = ReplicatedStorage.Shared
 local dataFolder = serverStorageShared.Data
 local inventoryFolder = dataFolder.Inventory
-local enumsFolder = replicatedStorageShared.Enums
+local enumsFolder = replicatedFirstShared.Enums
 local serverFolder = replicatedStorageShared.Server
-local utilityFolder = replicatedStorageShared.Utility
+local utilityFolder = replicatedFirstShared.Utility
 local serverStorageSharedUtility = serverStorageShared.Utility
+
+ServerStorage:WaitForChild("")
 
 local ReplicaService = require(serverStorageVendor.ReplicaService)
 local HomeManager = require(inventoryFolder.HomeManager)
@@ -32,7 +36,7 @@ local requestReplica = ReplicaService.NewReplica {
 local function getHomeOwner()
 	local serverIdentifier = LocalServerInfo.getServerIdentifier()
 
-	if serverIdentifier then return serverIdentifier.homeOwner end
+	return if serverIdentifier then serverIdentifier.homeOwner else nil
 end
 
 ReplicaResponse.listen(requestReplica, function(player: Player, placeItemRequestType: UserEnum, ...)
@@ -51,7 +55,7 @@ ReplicaResponse.listen(requestReplica, function(player: Player, placeItemRequest
 		return PlaceItemResponseType.invalid
 	end
 
-	if not PlayerDataManager.profileIsLoaded(player) then
+	if not PlayerDataManager.persistentDataIsLoaded(player) then
 		warn "PlaceItemRequest: Invalid player data"
 		return PlaceItemResponseType.invalid
 	end
@@ -88,9 +92,9 @@ ReplicaResponse.listen(requestReplica, function(player: Player, placeItemRequest
 			return PlaceItemResponseType.error
 		end
 
-		local success = HomeManager.removePlacedItem(itemId)
+		local removePlacedSuccess = HomeManager.removePlacedItem(itemId)
 
-		if not success then
+		if not removePlacedSuccess then
 			warn "PlaceItemRequest: Error removing item"
 			return PlaceItemResponseType.error
 		end

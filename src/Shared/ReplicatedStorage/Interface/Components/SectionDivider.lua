@@ -1,13 +1,10 @@
 --#region Imports
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
-local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
-local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
 local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
-local utilityFolder = replicatedStorageShared:WaitForChild "Utility"
-local componentsFolder = replicatedStorageShared:WaitForChild("Interface"):WaitForChild "Components"
+local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
 
-local InterfaceConstants = require(replicatedStorageShared:WaitForChild("Constants"):WaitForChild "InterfaceConstants")
+local InterfaceConstants = require(replicatedFirstShared:WaitForChild("Configuration"):WaitForChild "InterfaceConstants")
 
 -- Optional: Remove imports that you don't need
 local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")

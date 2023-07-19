@@ -1,15 +1,14 @@
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
-local ReplicatedStorage = game:GetService "ReplicatedStorage"
 local Players = game:GetService "Players"
 
-local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
 local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
-local utilityFolder = replicatedStorageShared:WaitForChild "Utility"
-local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
-local constantsFolder = replicatedStorageShared:WaitForChild "Constants"
+local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
+local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
+local enumsFolder = replicatedFirstShared:WaitForChild "Enums"
+local configurationFolder = replicatedFirstShared:WaitForChild "Configuration"
 
 local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
-local ServerTypeGroups = require(constantsFolder:WaitForChild "ServerTypeGroups")
+local ServerTypeGroups = require(configurationFolder:WaitForChild "ServerTypeGroups")
 
 if not ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
 	local Component = require(utilityFolder:WaitForChild "GetComponent")
@@ -18,16 +17,8 @@ if not ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
 	local player = Players.LocalPlayer
 	local playerGui = player:WaitForChild "PlayerGui"
 
-	local Value = Fusion.Value
 	local New = Fusion.New
 	local Children = Fusion.Children
-	local Computed = Fusion.Computed
-	local OnEvent = Fusion.OnEvent
-	local OnChange = Fusion.OnChange
-	local Observer = Fusion.Observer
-	local Tween = Fusion.Tween
-	local Spring = Fusion.Spring
-	local Hydrate = Fusion.Hydrate
 
 	local worldMenu, worldButton = Component "WorldMenu" {}
 	local map, mapButton = Component "MapMenu" {}

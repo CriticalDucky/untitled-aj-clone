@@ -5,12 +5,8 @@ local SELECT_INPUTS = {
 }
 
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
-local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
-local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
 local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
-local utilityFolder = replicatedStorageShared:WaitForChild "Utility"
-local componentsFolder = replicatedStorageShared:WaitForChild("Interface"):WaitForChild "Components"
 
 -- Optional: Remove imports that you don't need
 local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")

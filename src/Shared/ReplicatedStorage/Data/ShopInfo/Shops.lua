@@ -1,14 +1,12 @@
-local ReplicatedStorage = game:GetService "ReplicatedStorage"
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
 
-local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
-local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
-local utilityFolder = replicatedStorageShared:WaitForChild "Utility"
+local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
+local enumsFolder = replicatedFirstShared:WaitForChild "Enums"
+local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 
 local ShopTypeEnum = require(enumsFolder:WaitForChild "ShopType")
-local ItemCategory = require(enumsFolder:WaitForChild "ItemCategory")
-local AccessoryTypeEnum = require(enumsFolder:WaitForChild "AccessoryType")
 local FurnitureTypeEnum = require(enumsFolder:WaitForChild "FurnitureType")
-local HomeTypeEnum = require(enumsFolder:WaitForChild "HomeType")
+local InventoryCategory = require(enumsFolder:WaitForChild "InventoryCategory")
 local CurrencyType = require(enumsFolder:WaitForChild "CurrencyType")
 local Time = require(utilityFolder:WaitForChild "Time")
 
@@ -20,7 +18,7 @@ return {
 		name = "Test Shop",
 		items = {
 			{ -- Beach Ball
-				itemCategory = ItemCategory.furniture,
+				itemCategory = InventoryCategory.furniture,
 				item = FurnitureTypeEnum.beachBall,
 				price = {
 					type = CurrencyType.money,

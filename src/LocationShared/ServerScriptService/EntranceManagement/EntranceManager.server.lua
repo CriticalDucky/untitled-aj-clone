@@ -5,7 +5,7 @@ local serverStorageShared = ServerStorage.Shared
 local entranceDataFolder = ServerStorage.EntranceData
 local teleportation = serverStorageShared.Teleportation
 
-local Entrances = require(entranceDataFolder.Entrances)
+local Entrances = require(entranceDataFolder.Entrances :: ModuleScript)
 local Teleport = require(teleportation.Teleport)
 
 local playersTouched = {}

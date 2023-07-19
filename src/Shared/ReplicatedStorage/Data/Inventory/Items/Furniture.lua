@@ -1,9 +1,9 @@
-local ReplicatedStorage = game:GetService "ReplicatedStorage"
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
 
-local enumsFolder = ReplicatedStorage.Shared.Enums
+local enumsFolder = ReplicatedFirst.Shared.Enums
 
 local FurnitureType = require(enumsFolder.FurnitureType)
-local Model = require(ReplicatedStorage.Shared.Utility.Model)
+local Model = require(ReplicatedFirst.Shared.Utility.Model)
 local ModelType = require(enumsFolder.ModelType)
 
 local function model(name)

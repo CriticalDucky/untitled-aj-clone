@@ -58,7 +58,7 @@
     "recommendations": [
       "johnnymorganz.stylua",
       "evaera.vscode-rojo",
-      "nightrains.robloxlsp"
+      "johnnymorganz.luau-lsp"
     ]
   },
   "tasks": {

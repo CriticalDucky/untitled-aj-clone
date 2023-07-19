@@ -1,10 +1,5 @@
-local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local RunService = game:GetService("RunService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
-
-local replicatedStorageShared = ReplicatedStorage:WaitForChild("Shared")
-local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()

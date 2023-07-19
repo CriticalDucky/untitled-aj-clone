@@ -1,3 +1,4 @@
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
 local ServerStorage = game:GetService "ServerStorage"
 
@@ -6,8 +7,9 @@ local dataFolder = serverStorageShared.Data
 local shoppingFolder = dataFolder.Shopping
 local inventoryFolder = dataFolder.Inventory
 local replicatedStorageShared = ReplicatedStorage.Shared
+local replicatedFirstShared = ReplicatedFirst.Shared
 local replicatedStorageSharedData = replicatedStorageShared.Data
-local enumsFolder = replicatedStorageShared.Enums
+local enumsFolder = replicatedFirstShared.Enums
 local replicatedShoppingFolder = replicatedStorageSharedData.ShopInfo
 
 local ActiveShops = require(shoppingFolder.ActiveShops)
@@ -33,7 +35,7 @@ function ShopManager.canPlayerBuyItem(player, shopEnum, itemIndex)
 	local shopItem = shopInfoTable.items[itemIndex]
 	local itemInfo = Items[shopItem.itemCategory][shopItem.item]
 
-	local playerData = PlayerDataManager.viewProfileAsync(player.UserId)
+	local playerData = PlayerDataManager.viewPersistentData(player.UserId)
 
 	if not playerData then
 		warn "Player data not found"

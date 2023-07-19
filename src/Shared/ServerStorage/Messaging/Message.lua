@@ -21,6 +21,8 @@ function Message.publish(topic, message)
             return true
         end
     end
+
+    return
 end
 
 function Message.subscribe(topic, callback)
@@ -28,7 +30,7 @@ function Message.subscribe(topic, callback)
         return pcall(function()
             return MessagingService:SubscribeAsync(topic, function(message)
                 callback({
-                    Data = if message.Data then HttpService:JSONDecode(message.Data or "") else message.Data, 
+                    Data = if message.Data then HttpService:JSONDecode(message.Data or "") else message.Data,
                     Sent = message.Sent
                 })
             end)
@@ -44,6 +46,8 @@ function Message.subscribe(topic, callback)
     end
 
     warn("Failed to subscribe to topic: " .. topic)
+
+    return
 end
 
 return Message

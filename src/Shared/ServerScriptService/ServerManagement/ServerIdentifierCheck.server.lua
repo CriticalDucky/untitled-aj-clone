@@ -1,17 +1,18 @@
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
 local ServerStorage = game:GetService "ServerStorage"
 
 local replicatedStorageShared = ReplicatedStorage.Shared
+local replicatedFirstShared = ReplicatedFirst.Shared
 local serverStorageShared = ServerStorage.Shared
 local teleportationFolder = serverStorageShared.Teleportation
 local serverFolder = replicatedStorageShared.Server
-local enumsFolder = replicatedStorageShared.Enums
-local constantsFolder = replicatedStorageShared.Constants
+local enumsFolder = replicatedFirstShared.Enums
+local configurationFolder = replicatedFirstShared.Configuration
 
-local ServerData = require(serverStorageShared.ServerManagement.ServerData)
 local Teleport = require(teleportationFolder.Teleport)
 local ServerGroupEnum = require(enumsFolder.ServerGroup)
-local ServerTypeGroups = require(constantsFolder.ServerTypeGroups)
+local ServerTypeGroups = require(configurationFolder.ServerTypeGroups)
 local LocalServerInfo = require(serverFolder:WaitForChild "LocalServerInfo")
 
 if not ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then

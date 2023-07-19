@@ -106,18 +106,19 @@ local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
 local replicatedFirstVendor = ReplicatedFirst.Vendor
 local replicatedStorageShared = ReplicatedStorage.Shared
-local enumsFolder = replicatedStorageShared.Enums
-local utilityFolder = replicatedStorageShared.Utility
-local constantsFolder = replicatedStorageShared.Constants
+local replicatedFirstShared = ReplicatedFirst.Shared
+local enumsFolder = replicatedFirstShared.Enums
+local utilityFolder = replicatedFirstShared.Utility
+local configurationFolder = replicatedFirstShared.Configuration
 
 local ServerTypeEnum = require(enumsFolder.ServerType)
-local PlaceConstants = require(constantsFolder.PlaceConstants)
+local PlaceConstants = require(configurationFolder.PlaceConstants)
 local Table = require(utilityFolder.Table)
 local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
-local ServerTypeGroups = require(constantsFolder:WaitForChild "ServerTypeGroups")
-local Minigames = require(constantsFolder:WaitForChild "MinigameConstants")
-local Parties = require(constantsFolder:WaitForChild "PartyConstants")
-local Locations = require(constantsFolder:WaitForChild "LocationConstants")
+local ServerTypeGroups = require(configurationFolder:WaitForChild "ServerTypeGroups")
+local Minigames = require(configurationFolder:WaitForChild "MinigameConstants")
+local Parties = require(configurationFolder:WaitForChild "PartyConstants")
+local Locations = require(configurationFolder:WaitForChild "LocationConstants")
 local Signal = require(replicatedFirstVendor.Signal.Signal)
 local Types = require(utilityFolder.Types)
 
@@ -145,7 +146,6 @@ if RunService:IsServer() then
 	local serverStorageShared = ServerStorage.Shared
 	local serverStorageVendor = ServerStorage.Vendor
 	local messagingFolder = serverStorageShared.Messaging
-	local dataFolder = serverStorageShared.Data
 
 	local Message = require(messagingFolder.Message)
 	local ReplicaService = require(serverStorageVendor.ReplicaService)
@@ -244,12 +244,12 @@ if RunService:IsServer() then
 		* `serverInfo` is a table that contains the server information (e.g. players)
 		* `indexInfo` is a table that contains the index information (e.g. worldIndex, locationEnum, etc.)
 	]]
-	function LiveServerData.publish(serverIdentifier: ServerIdentifier, serverInfo: table)
+	function LiveServerData.publish(serverIdentifier: ServerIdentifier, serverInfo)
 		assert(serverIdentifier, "serverIdentifier is nil")
 		assert(serverIdentifier.serverType, "serverIdentifier.serverType is nil")
 
 		lastBroadcast = time()
-		
+
 		Message.publish(BROADCAST_CHANNEL, {
 			serverInfo = serverInfo,
 			serverIdentifier = serverIdentifier,
@@ -268,8 +268,8 @@ if RunService:IsServer() then
 		-- Runs every time a message is received from any server broadcasting in BROADCAST_CHANNEL
 
 		-- Recieved from LiveServerData.publish from another server:
-		local message = message.Data :: {
-			serverInfo: table,
+		message = message.Data :: {
+			serverInfo: any,
 			serverIdentifier: ServerIdentifier,
 		}
 
@@ -406,7 +406,7 @@ end
 	```
 ]]
 function withData.get(
-	data: table, -- Retrieved from LiveServerData.value on the client, or simply dataValue table on the server.
+	data: any, -- Retrieved from LiveServerData.value on the client, or simply dataValue table on the server.
 	serverIdentifier: ServerIdentifier | UserEnum -- ServerIdentifier or serverType
 ): nil | {} | { players: { [number]: number }, [any]: any }
 	local serverType = if typeof(serverIdentifier) == "table" then serverIdentifier.serverType else serverIdentifier
@@ -421,18 +421,21 @@ function withData.get(
 		local worldTable = serverTypeData[serverIdentifier.worldIndex]
 
 		if worldTable then return worldTable[serverIdentifier.locationEnum] end
+		return
 	elseif serverType == ServerTypeEnum.home then
 		return serverTypeData[serverIdentifier.homeOwner]
 	elseif serverType == ServerTypeEnum.party then
 		local partyTable = serverTypeData[serverIdentifier.partyType]
 
 		if partyTable then return partyTable[serverIdentifier.partyIndex] end
+		return
 	elseif serverType == ServerTypeEnum.minigame then
 		local minigameTable = serverTypeData[serverIdentifier.minigameType]
 
 		if minigameTable then
 			return minigameTable[serverIdentifier.minigameIndex or serverIdentifier.privateServerId]
 		end
+		return
 	else
 		error "LiveServerData: Called with invalid server type"
 	end
@@ -529,7 +532,7 @@ end
 		worldIndex = 1,
 	})
 	```
-	
+
 	This will return the population info for the whole world:
 	```lua
 	{
@@ -550,7 +553,7 @@ end
 	This is how you could check if a server is full:
 	```lua
 	local populationInfo = withData.getPopulationInfo(serverIdentifier)
-	
+
 	if populationInfo.max_emptySlots == 0 then -- Will error if the specified server is not live
 		-- Server is full
 	end
@@ -568,7 +571,7 @@ end
 	end)
 	```
 ]]
-function withData.getPopulationInfo(data: table, serverIdentifier: ServerIdentifier)
+function withData.getPopulationInfo(data: any, serverIdentifier: ServerIdentifier)
 	local serverType = serverIdentifier.serverType
 
 	if ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation, serverType) then
@@ -591,16 +594,16 @@ function withData.getPopulationInfo(data: table, serverIdentifier: ServerIdentif
 
 				local priorityPopulation = 0 -- The population of locations where players can spawn
 
-				for locationEnum, _ in pairs(worldTable) do
-					local populationInfo = withData.getLocationPopulationInfo(data, worldIndex, locationEnum)
+				for worldLocationEnum, _ in pairs(worldTable) do
+					local populationInfo = withData.getLocationPopulationInfo(data, worldIndex, worldLocationEnum)
 
 					if populationInfo then
 						local population = populationInfo.population
 
 						worldPopulationInfo.population += population
-						worldPopulationInfo.locations[locationEnum] = populationInfo
+						worldPopulationInfo.locations[worldLocationEnum] = populationInfo
 
-						if table.find(Locations.priority, locationEnum) then
+						if table.find(Locations.priority, worldLocationEnum) then
 							priorityPopulation += population
 						end
 					end
@@ -693,6 +696,8 @@ function withData.getPopulationInfo(data: table, serverIdentifier: ServerIdentif
 			max_emptySlots = math.max(serverFillInfo.max - population, 0),
 		}
 	end
+
+	return
 end
 
 --[[
@@ -719,7 +724,7 @@ end
 		worldIndex = 1,
 	})
 	```
-	
+
 	This will return the population info for the whole world:
 	```lua
 	{
@@ -740,7 +745,7 @@ end
 	This is how you could check if a server is full:
 	```lua
 	local populationInfo = LiveServerData.getPopulationInfo(serverIdentifier)
-	
+
 	if populationInfo.max_emptySlots == 0 then -- Will error if the specified server is not live
 		-- Server is full
 	end
@@ -773,7 +778,7 @@ end
 	end)
 	```
 ]]
-function withData.getLocationPopulationInfo(data: table, worldIndex: number, locationEnum)
+function withData.getLocationPopulationInfo(data: any, worldIndex: number, locationEnum)
 	return LiveServerData.withData.getPopulationInfo(data, {
 		serverType = ServerTypeEnum.location,
 		worldIndex = worldIndex,
@@ -1004,6 +1009,8 @@ function withData.getPartyServers(data, partyType)
 	local partyData = LiveServerData.withData.get(data, ServerTypeEnum.party)
 
 	if partyData then return partyData[partyType] end
+
+	return
 end
 
 --[[
@@ -1018,6 +1025,8 @@ function LiveServerData.getPartyServers(partyType)
 	local partyData = LiveServerData.get(ServerTypeEnum.party)
 
 	if partyData then return partyData[partyType] end
+
+	return
 end
 
 --[[
@@ -1087,6 +1096,8 @@ function withData.getMinigameServers(data, minigameType)
 	local minigameData = LiveServerData.withData.get(data, ServerTypeEnum.minigame)
 
 	if minigameData then return minigameData[minigameType] end
+
+	return
 end
 
 --[[
@@ -1101,6 +1112,8 @@ function LiveServerData.getMinigameServers(minigameType)
 	local minigameData = LiveServerData.get(ServerTypeEnum.minigame)
 
 	if minigameData then return minigameData[minigameType] end
+
+	return
 end
 
 --withData for LiveServerData.isLocationFull:
@@ -1270,7 +1283,7 @@ end
 	end)
 	```
 ]]
-function withData.isMinigameFull(data, minigameType, minigameIndex: number | string, numPlayersToAdd: number)
+function withData.isMinigameFull(data, minigameType, minigameIndex: number | string, numPlayersToAdd: number?)
 	numPlayersToAdd = numPlayersToAdd or 0
 
 	local minigamePopulationInfo = LiveServerData.withData.getMinigamePopulationInfo(data, minigameType, minigameIndex)
@@ -1288,7 +1301,7 @@ end
 
 	Do not use this in computeds. Use LiveServerData.withData.isMinigameFull instead.
 ]]
-function LiveServerData.isMinigameFull(minigameType, minigameIndex: number | string, numPlayersToAdd: number)
+function LiveServerData.isMinigameFull(minigameType, minigameIndex: number | string, numPlayersToAdd: number?)
 	LiveServerData.initialWait()
 
 	return withData.isMinigameFull(peek(dataValue), minigameType, minigameIndex, numPlayersToAdd)

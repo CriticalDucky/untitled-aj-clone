@@ -8,32 +8,31 @@ local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
+local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
 local replicationFolder = replicatedStorageShared:WaitForChild "Replication"
 local requestsFolder = replicatedStorageShared:WaitForChild "Requests"
 local serverFolder = replicatedStorageShared:WaitForChild "Server"
-local utilityFolder = replicatedStorageShared:WaitForChild "Utility"
-local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
-local dataFolder = replicatedStorageShared:WaitForChild "Data"
-local constantsFolder = replicatedStorageShared:WaitForChild "Constants"
+local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
+local enumsFolder = replicatedFirstShared:WaitForChild "Enums"
+local configurationFolder = replicatedFirstShared:WaitForChild "Configuration"
 
-local ServerTypeGroups = require(constantsFolder.ServerTypeGroups)
+local ServerTypeGroups = require(configurationFolder.ServerTypeGroups)
 local ServerGroupEnum = require(enumsFolder.ServerGroup)
 local ReplicaCollection = require(replicationFolder:WaitForChild "ReplicaCollection")
 local ReplicaRequest = require(requestsFolder:WaitForChild "ReplicaRequest")
 local ReplicatedServerData = require(serverFolder:WaitForChild "ReplicatedServerData")
 local LiveServerData = require(serverFolder:WaitForChild "LiveServerData")
-local ClientPlayerSettings = require(dataFolder:WaitForChild("Settings"):WaitForChild "ClientPlayerSettings")
 local Table = require(utilityFolder:WaitForChild "Table")
 local TeleportRequestType = require(enumsFolder:WaitForChild "TeleportRequestType")
 local TeleportResponseType = require(enumsFolder:WaitForChild "TeleportResponseType")
-local Locations = require(constantsFolder:WaitForChild "LocationConstants")
+local Locations = require(configurationFolder:WaitForChild "LocationConstants")
 local FriendLocations = require(serverFolder:WaitForChild "FriendLocations")
 local WorldOrigin = require(serverFolder:WaitForChild "WorldOrigin")
 local ActiveParties = require(serverFolder:WaitForChild "ActiveParties")
 local Types = require(utilityFolder:WaitForChild "Types")
 local LocalServerInfo = require(serverFolder:WaitForChild "LocalServerInfo")
-local HomeLockType = require(enumsFolder:WaitForChild "HomeLockType")
-local Friends = require(utilityFolder:WaitForChild "Friends")
+-- local HomeLockType = require(enumsFolder:WaitForChild "HomeLockType")
+-- local Friends = require(utilityFolder:WaitForChild "Friends")
 
 type ServerIdentifier = Types.ServerIdentifier
 type UserEnum = Types.UserEnum
@@ -124,15 +123,15 @@ function Authorize.toLocation(locationEnum: UserEnum)
 	end
 
 	if LiveServerData.isLocationFull(localWorldIndex, locationEnum, 1) then
-		local setting = ClientPlayerSettings.getSetting("findOpenWorld", nil) -- nil means use local player, true means wait for setting to load
+		-- local setting =
 
-		if setting then
-			return true
-		else
-			warn("ClientTeleport.toLocation() called with full location: " .. tostring(locationEnum))
+		-- if setting then
+		-- 	return true
+		-- else
+		-- 	warn("ClientTeleport.toLocation() called with full location: " .. tostring(locationEnum))
 
-			return false, TeleportResponseType.full
-		end
+		-- 	return false, TeleportResponseType.full
+		-- end
 	end
 
 	return true
@@ -245,38 +244,38 @@ end
 	Authorization allows for knowing whether a teleport is allowed without actually performing the teleport.
 ]]
 function Authorize.toHome(homeOwnerUserId: number)
-	if ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome) then
-		local serverIdentifier = LocalServerInfo.getServerIdentifier()
+	-- if ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome) then
+	-- 	local serverIdentifier = LocalServerInfo.getServerIdentifier()
 
-		if serverIdentifier.homeOwner == homeOwnerUserId then
-			warn("ClientTeleport.toHome() called with current homeOwnerUserId: " .. tostring(homeOwnerUserId))
+	-- 	if serverIdentifier.homeOwner == homeOwnerUserId then
+	-- 		warn("ClientTeleport.toHome() called with current homeOwnerUserId: " .. tostring(homeOwnerUserId))
 
-			return false, TeleportResponseType.alreadyInPlace
-		end
-	end
+	-- 		return false, TeleportResponseType.alreadyInPlace
+	-- 	end
+	-- end
 
-	if homeOwnerUserId == player.UserId then return true end -- If we're trying to teleport to our own home, we don't need to check if it's full
+	-- if homeOwnerUserId == player.UserId then return true end -- If we're trying to teleport to our own home, we don't need to check if it's full
 
-	if LiveServerData.isHomeFull(homeOwnerUserId, 1) then
-		warn("ClientTeleport.toHome() called with full home: " .. tostring(homeOwnerUserId))
+	-- if LiveServerData.isHomeFull(homeOwnerUserId, 1) then
+	-- 	warn("ClientTeleport.toHome() called with full home: " .. tostring(homeOwnerUserId))
 
-		return false, TeleportResponseType.full
-	end
+	-- 	return false, TeleportResponseType.full
+	-- end
 
-	local isFriend = Friends.are(player.UserId, homeOwnerUserId)
-	local homeLockType = ClientPlayerSettings.getSetting("homeLock", homeOwnerUserId)
+	-- local isFriend = Friends.are(player.UserId, homeOwnerUserId)
+	-- local homeLockType = ClientPlayerSettings.getSetting("homeLock", homeOwnerUserId)
 
-	local friendsOnlyButNotFriend = homeLockType == HomeLockType.friendsOnly and not isFriend
-	local lockedToEveryone = homeLockType == HomeLockType.locked
+	-- local friendsOnlyButNotFriend = homeLockType == HomeLockType.friendsOnly and not isFriend
+	-- local lockedToEveryone = homeLockType == HomeLockType.locked
 
-	if friendsOnlyButNotFriend or lockedToEveryone then
-		warn("ClientTeleport.toHome() called with locked home: " .. tostring(homeOwnerUserId))
-		warn(friendsOnlyButNotFriend, lockedToEveryone) -- For debugging when I inevitably run into this
+	-- if friendsOnlyButNotFriend or lockedToEveryone then
+	-- 	warn("ClientTeleport.toHome() called with locked home: " .. tostring(homeOwnerUserId))
+	-- 	warn(friendsOnlyButNotFriend, lockedToEveryone) -- For debugging when I inevitably run into this
 
-		return false, TeleportResponseType.locked
-	end
+	-- 	return false, TeleportResponseType.locked
+	-- end
 
-	return true
+	-- return true
 end
 
 --[[

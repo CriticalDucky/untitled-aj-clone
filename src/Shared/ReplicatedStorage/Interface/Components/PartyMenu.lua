@@ -7,20 +7,20 @@ local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
 local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
-local utilityFolder = replicatedStorageShared:WaitForChild "Utility"
-local serverFolder = replicatedStorageShared:WaitForChild "Server"
+local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
+local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 local componentsFolder = replicatedStorageShared:WaitForChild("Interface"):WaitForChild "Components"
-local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
+local enumsFolder = replicatedFirstShared:WaitForChild "Enums"
 local serverFolder = replicatedStorageShared:WaitForChild "Server"
 local requestsFolder = replicatedStorageShared:WaitForChild "Requests"
 local teleportationFolder = requestsFolder:WaitForChild "Teleportation"
-local constantsFolder = replicatedStorageShared:WaitForChild "Constants"
+local configurationFolder = replicatedFirstShared:WaitForChild "Configuration"
 
-local InterfaceConstants = require(constantsFolder:WaitForChild "InterfaceConstants")
-local ServerTypeGroups = require(constantsFolder:WaitForChild "ServerTypeGroups")
+local InterfaceConstants = require(configurationFolder:WaitForChild "InterfaceConstants")
+local ServerTypeGroups = require(configurationFolder:WaitForChild "ServerTypeGroups")
 local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
 local ActiveParties = require(serverFolder:WaitForChild "ActiveParties")
-local PartyConstants = require(constantsFolder:WaitForChild "PartyConstants")
+local PartyConstants = require(configurationFolder:WaitForChild "PartyConstants")
 local ClientTeleport = require(teleportationFolder:WaitForChild "ClientTeleport")
 local LocalServerInfo = require(serverFolder:WaitForChild "LocalServerInfo")
 local Types = require(utilityFolder:WaitForChild "Types")
@@ -32,27 +32,9 @@ local roundCornerMask = require(componentsFolder:WaitForChild "RoundCornerMask")
 -- Optional: Remove imports that you don't need
 local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
 local New = Fusion.New
-local Hydrate = Fusion.Hydrate
-local Ref = Fusion.Ref
 local Children = Fusion.Children
-local Cleanup = Fusion.Cleanup
-local Out = Fusion.Out
-local OnEvent = Fusion.OnEvent
-local OnChange = Fusion.OnChange
-local Attribute = Fusion.Attribute
-local AttributeChange = Fusion.AttributeChange
-local AttributeOut = Fusion.AttributeOut
-local Value = Fusion.Value
 local Computed = Fusion.Computed
-local ForPairs = Fusion.ForPairs
-local ForKeys = Fusion.ForKeys
-local ForValues = Fusion.ForValues
-local Observer = Fusion.Observer
-local Tween = Fusion.Tween
-local Spring = Fusion.Spring
 local peek = Fusion.peek
-local cleanup = Fusion.cleanup
-local doNothing = Fusion.doNothing
 
 ---@diagnostic disable-next-line: undefined-type
 type CanBeState<T> = Fusion.CanBeState<T>
@@ -306,20 +288,20 @@ local function Component(props: Props)
 						ScrollBarImageColor3 = Color3.new(0, 0, 0),
 						ScrollBarImageTransparency = 0.9,
 						VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar,
-		
+
 						[Children] = {
 							New "UIListLayout" {
 								SortOrder = Enum.SortOrder.LayoutOrder,
 								Padding = UDim.new(0, 4),
 							},
-		
+
 							New "UIPadding" {
 								PaddingLeft = UDim.new(0, 0),
 								PaddingRight = UDim.new(0, 4),
 								PaddingTop = UDim.new(0, 0),
 								PaddingBottom = UDim.new(0, 0),
 							},
-		
+
 							upcomingPellets,
 						}
 					},
@@ -331,7 +313,7 @@ local function Component(props: Props)
 					}
 				}
 			}
-			
+
 		},
 	}
 

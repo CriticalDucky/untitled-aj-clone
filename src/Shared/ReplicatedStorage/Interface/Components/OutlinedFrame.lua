@@ -4,22 +4,17 @@ local DEFUALT_PADDING = 20
 local DEFUALT_OUTLINE_COLOR = Color3.fromRGB(0, 0, 0)
 
 --#region Imports
-local PolicyService = game:GetService "PolicyService"
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
-local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
-local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
 local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
-local utilityFolder = replicatedStorageShared:WaitForChild "Utility"
-local componentsFolder = replicatedStorageShared:WaitForChild("Interface"):WaitForChild "Components"
-local constantsFolder = replicatedStorageShared:WaitForChild "Constants"
+local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
+local configurationFolder = replicatedFirstShared:WaitForChild "Configuration"
 
-local InterfaceConstants = require(constantsFolder:WaitForChild "InterfaceConstants")
+local InterfaceConstants = require(configurationFolder:WaitForChild "InterfaceConstants")
 
 local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
 local New = Fusion.New
 local Children = Fusion.Children
-local Value = Fusion.Value
 
 ---@diagnostic disable-next-line: undefined-type wtf
 type CanBeState<T> = Fusion.CanBeState<T>
@@ -65,9 +60,9 @@ local function Component(props: Props)
 	local outerRoundness = props.OuterRoundness or ROUNDNESS
 	local innerRoundness = outerRoundness - MARGIN
 
-	local peripheralPx = props.PeripheralPx or Value(Vector2.new(0, 0))
-	local innerSizePx = Value(Vector2.new(0, 0)) -- Just the size of the inner frame.
-	local totalSizePx = Value(Vector2.new(0, 0)) -- The total size of the frame, including the peripheral area.
+	-- local peripheralPx = props.PeripheralPx or Value(Vector2.new(0, 0))
+	-- local innerSizePx = Value(Vector2.new(0, 0)) -- Just the size of the inner frame.
+	-- local totalSizePx = Value(Vector2.new(0, 0)) -- The total size of the frame, including the peripheral area.
 
 	local defaultMenuColor = InterfaceConstants.colors.menuBackground
 

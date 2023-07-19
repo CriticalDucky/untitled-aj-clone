@@ -4,16 +4,9 @@ local replicatedFirstVendor = ReplicatedFirst:WaitForChild("Vendor")
 
 local Fusion = require(replicatedFirstVendor:WaitForChild("Fusion"))
 
-local Value = Fusion.Value
 local New = Fusion.New
 local Children = Fusion.Children
-local Computed = Fusion.Computed
 local OnEvent = Fusion.OnEvent
-local OnChange = Fusion.OnChange
-local Observer = Fusion.Observer
-local Tween = Fusion.Tween
-local Spring = Fusion.Spring
-local Hydrate = Fusion.Hydrate
 
 local component = function(props)
 	local state = props.value

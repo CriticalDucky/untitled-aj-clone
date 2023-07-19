@@ -6,52 +6,18 @@ local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
 local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
 local componentsFolder = replicatedStorageShared:WaitForChild("Interface"):WaitForChild "Components"
 
-local InterfaceConstants = require(replicatedStorageShared:WaitForChild("Constants"):WaitForChild "InterfaceConstants")
-
---Optional: Remove imports that you don't need
 local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
 local New = Fusion.New
-local Hydrate = Fusion.Hydrate
-local Ref = Fusion.Ref
 local Children = Fusion.Children
-local Out = Fusion.Out
-local OnEvent = Fusion.OnEvent
-local OnChange = Fusion.OnChange
-local Attribute = Fusion.Attribute
-local AttributeChange = Fusion.AttributeChange
-local AttributeOut = Fusion.AttributeOut
 local Value = Fusion.Value
 local Computed = Fusion.Computed
-local ForPairs = Fusion.ForPairs
-local ForKeys = Fusion.ForKeys
-local ForValues = Fusion.ForValues
 local Observer = Fusion.Observer
-local Tween = Fusion.Tween
-local Spring = Fusion.Spring
 local peek = Fusion.peek
-local cleanup = Fusion.cleanup
-local doNothing = Fusion.doNothing
 
 --#endregion
 
-local outlinedFrame = require(componentsFolder:WaitForChild "OutlinedFrame")
-local bubbleButton = require(componentsFolder:WaitForChild "BubbleButton")
-local bannerButton = require(componentsFolder:WaitForChild "BannerButton")
-local floatingIconButton = require(componentsFolder:WaitForChild "FloatingIconButton")
-local sliderBase = require(componentsFolder:WaitForChild "SliderBase")
 local playerGui = game:GetService("Players").LocalPlayer:WaitForChild "PlayerGui"
-local bubbleSlider = require(componentsFolder:WaitForChild "BubbleSlider")
-local bubbleToggle = require(componentsFolder:WaitForChild "BubbleToggle")
-local outlinedMenu = require(componentsFolder:WaitForChild "OutlinedMenu")
-local settingsMenu = require(componentsFolder:WaitForChild "SettingsMenu")
 local partyMenu = require(componentsFolder:WaitForChild "PartyMenu")
-
-local disabled = Value(false)
-
-local progressAlpha = Value(0.5)
-local state = Value(false)
-
-local sliderFunction = function(value) progressAlpha:set(value) end
 
 local a = Value(1)
 local b = Value(2)

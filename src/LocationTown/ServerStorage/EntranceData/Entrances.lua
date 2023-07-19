@@ -1,7 +1,7 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ReplicatedFirst = game:GetService("ReplicatedFirst")
 
-local replicatedStorageShared = ReplicatedStorage:WaitForChild("Shared")
-local enumsFolder = replicatedStorageShared:WaitForChild("Enums")
+local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
+local enumsFolder = replicatedFirstShared:WaitForChild("Enums")
 local map = workspace:WaitForChild("Map")
 local entrances = map:WaitForChild("Entrances")
 local mainEntrance = entrances:WaitForChild("MainEntrance")
@@ -14,7 +14,7 @@ local function getComponents(name)
 	return {
 		entrance = entranceGroup:WaitForChild("Entrance"),
 		exit = entranceGroup:WaitForChild("Exit"),
-	}   
+	}
 end
 
 local entranceGroupTable = {

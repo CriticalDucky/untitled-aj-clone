@@ -1,9 +1,9 @@
-local ReplicatedStorage = game:GetService "ReplicatedStorage"
+local ReplicatedFirst = game:GetService("ReplicatedFirst")
 
-local enumsFolder = ReplicatedStorage.Shared.Enums
+local enumsFolder = ReplicatedFirst.Shared.Enums
 
-local homeTypeEnum = require(enumsFolder.HomeType)
-local Model = require(ReplicatedStorage.Shared.Utility.Model)
+local homeTypeEnum = require(enumsFolder.ItemHomeType)
+local Model = require(ReplicatedFirst.Shared.Utility.Model)
 local ModelType = require(enumsFolder.ModelType)
 
 local function model(name)
@@ -11,8 +11,8 @@ local function model(name)
 end
 
 return {
-	[homeTypeEnum.defaultHome] = {
-		name = "Default Home",
-		model = model "DefaultHome",
+	[homeTypeEnum.devHome] = {
+		name = "Developer Home",
+		model = model "DevHome",
 	},
 }

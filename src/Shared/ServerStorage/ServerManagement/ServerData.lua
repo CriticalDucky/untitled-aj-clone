@@ -88,6 +88,7 @@ local MINIGAMES_KEY = "minigames"
 local CACHE_COOLDOWN = 30
 
 --#region Imports
+
 local DataStoreService = game:GetService "DataStoreService"
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local RunService = game:GetService "RunService"
@@ -97,18 +98,19 @@ local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
 local replicatedStorageShared = ReplicatedStorage.Shared
 local replicatedFirstVendor = ReplicatedFirst.Vendor
+local replicatedFirstShared = ReplicatedFirst.Shared
 local serverStorageShared = ServerStorage.Shared
 local serverStorageVendor = ServerStorage.Vendor
-local ConstantsFolder = replicatedStorageShared.Constants
+local configurationFolder = replicatedFirstShared.Configuration
 local serverUtilityFolder = serverStorageShared.Utility
-local utilityFolder = replicatedStorageShared.Utility
+local utilityFolder = replicatedFirstShared.Utility
 local dataFolder = serverStorageShared.Data
-local enumsFolder = replicatedStorageShared.Enums
+local enumsFolder = replicatedFirstShared.Enums
 local serverFolder = replicatedStorageShared.Server
 
-local Locations = require(ConstantsFolder.LocationConstants)
-local Parties = require(ConstantsFolder.PartyConstants)
-local Minigames = require(ConstantsFolder.MinigameConstants)
+local Locations = require(configurationFolder.LocationConstants)
+local Parties = require(configurationFolder.PartyConstants)
+local Minigames = require(configurationFolder.MinigameConstants)
 local DataStore = require(serverUtilityFolder.DataStore)
 local MinigameServerType = require(enumsFolder.MinigameServerType)
 local LiveServerData = require(serverFolder.LiveServerData)
@@ -121,8 +123,9 @@ local Types = require(utilityFolder.Types)
 local ServerTypeEnum = require(enumsFolder.ServerType)
 
 type Promise = Types.Promise
-type PlayerData = Types.PlayerData
 type UserEnum = Types.UserEnum
+type PlayerPersistentData = Types.PlayerPersistentData
+
 --#endregion
 
 local serverDataStore = DataStoreService:GetDataStore(SERVERS_DATASTORE)
@@ -273,12 +276,10 @@ function ServerData.get(key: string)
 end
 
 -- Returns the retriaval success and data for the worlds key.
-function ServerData.getWorlds(): (boolean, table)
-	return ServerData.get(WORLDS_KEY)
-end
+function ServerData.getWorlds(): (boolean, typeof(cachedData)) return ServerData.get(WORLDS_KEY) end
 
 -- Returns the retriaval success and data for the parties key.
-function ServerData.getParties(partyType: UserEnum?)
+function ServerData.getParties(partyType: UserEnum?): (boolean, typeof(cachedData[""]))
 	local success, result = ServerData.get(PARTIES_KEY)
 
 	if success then
@@ -313,7 +314,7 @@ function ServerData.getWorld(worldIndex: number)
 end
 
 -- Returns the retriaval success and data for the given `partyType` and `partyIndex`. Can return nil if the party doesn't exist.
-function ServerData.getParty(partyType: UserEnum, partyIndex: number): (boolean, table)
+function ServerData.getParty(partyType: UserEnum, partyIndex: number): (boolean, typeof(cachedData[""]))
 	assert(type(partyIndex) == "number", "Party index must be a number. Received " .. typeof(partyIndex))
 
 	local success, data = ServerData.getParties(partyType)
@@ -352,21 +353,13 @@ function ServerData.getLocation(worldIndex: number, locationEnum: UserEnum)
 end
 
 -- Returns the retriaval success and cachedData. This can be used to make sure all data is retrieved before using it.
-function ServerData.getAll(): (boolean, table)
+function ServerData.getAll(): (boolean, typeof(cachedData[""]))
 	return Promise.all({
-		Promise.try(function()
-			assert(ServerData.getWorlds())
-		end),
-		Promise.try(function()
-			assert(ServerData.getParties())
-		end),
-		Promise.try(function()
-			assert(ServerData.getMinigames())
-		end),
+		Promise.try(function() assert(ServerData.getWorlds()) end),
+		Promise.try(function() assert(ServerData.getParties()) end),
+		Promise.try(function() assert(ServerData.getMinigames()) end),
 	})
-		:andThen(function()
-			return cachedData
-		end)
+		:andThen(function() return cachedData end)
 		:await() -- return the success and cachedData.
 end
 
@@ -462,9 +455,12 @@ function ServerData.addParty(partyType: UserEnum)
 end
 
 -- Attempts to add a minigame server, returning a success value and a result that is either the minigame index or an error message.
-function ServerData.addMinigame(minigameType: UserEnum)
+function ServerData.addMinigame(minigameType: string)
 	assert(minigameType, "Minigame type is nil")
-	assert(Minigames[minigameType].minigameServerType == MinigameServerType.public, "Minigame must be public in order to add it to the server data.")
+	assert(
+		Minigames[minigameType].minigameServerType == MinigameServerType.public,
+		"Minigame must be public in order to add it to the server data."
+	)
 
 	local function try()
 		return Promise.try(function()
@@ -514,10 +510,10 @@ end
 	Returns a success value and an error message if the request failed.
 ]]
 function ServerData.stampHomeServer(owner: Player)
-	assert(PlayerDataManager.profileIsLoaded(owner), "Player profile is not loaded")
-	
-	local homeServerInfo = PlayerDataManager.viewProfileAsync(owner.UserId).playerInfo.homeServerInfo
-	local privateServerId = homeServerInfo.privateServerId
+	assert(PlayerDataManager.persistentDataIsLoaded(owner), "Player profile is not loaded")
+
+	local homeServerInfo = (PlayerDataManager.viewPersistentData(owner) :: PlayerPersistentData).home.server
+	local privateServerId = homeServerInfo.id
 
 	assert(privateServerId, "Player does not have a home server")
 
@@ -541,7 +537,7 @@ function ServerData.stampHomeServer(owner: Player)
 			This may seem redundant, but it saves us from having to make a separate request to the datastore.
 			(this is stored in the player's profile)
 		]]
-		PlayerDataManager.setValueProfile(owner, { "playerInfo", "homeInfoStamped" }, true)
+		PlayerDataManager.setValuePersistent(owner, { "playerInfo", "homeInfoStamped" }, true)
 	else
 		warn("Failed to stamp home server: ", response)
 	end
@@ -575,7 +571,7 @@ end
 	WARNING: This will not get the serverIdentifier for all servers, only those that need to use ServerData to identify themselves.
 	For example, routing servers and independent minigame servers cannot use ServerData to identify themselves.
 ]]
-function ServerData.getServerIdentifier(privateServerId: string, onlySearchCache: boolean)
+function ServerData.getServerIdentifier(privateServerId: string?, onlySearchCache: boolean?)
 	privateServerId = privateServerId or game.PrivateServerId
 
 	local success, result = ServerData.getAll()
@@ -615,11 +611,11 @@ function ServerData.getServerIdentifier(privateServerId: string, onlySearchCache
 
 	if info or onlySearchCache then return true, info end
 
-	local success, serverInfo = ServerData.get(privateServerId)
+	local getSuccess, serverInfo = ServerData.get(privateServerId :: string)
 
-	if not success then warn("Failed to get server info: ", success, serverInfo) end
+	if not getSuccess then warn("Failed to get server info: ", getSuccess, serverInfo) end
 
-	if success and serverInfo and Table.hasAnything(serverInfo) then
+	if getSuccess and serverInfo and Table.hasAnything(serverInfo) then
 		return true, serverInfo
 	else
 		return false
@@ -673,7 +669,7 @@ end
 
 	Returns a success value and a result that is either the world index (if it exists) or an error message.
 ]]
-function ServerData.findAvailableWorld(forcedLocation: { UserEnum }, worldsExcluded: { number }): (boolean, number)
+function ServerData.findAvailableWorld(forcedLocation: UserEnum?, worldsExcluded: { number }?): (boolean, number)
 	local success, worlds = ServerData.getWorlds()
 
 	if not success then
@@ -685,12 +681,12 @@ function ServerData.findAvailableWorld(forcedLocation: { UserEnum }, worldsExclu
 	do
 		local rarities = {}
 
-		for worldIndex, world in ipairs(worlds) do
-			local worldPopulationInfo = LiveServerData.getWorldPopulationInfo(worldIndex)
+		for currentWorldIndex, world in ipairs(worlds) do
+			local worldPopulationInfo = LiveServerData.getWorldPopulationInfo(currentWorldIndex)
 
 			local worldIsSuitable = true
 
-			if worldsExcluded and table.find(worldsExcluded, worldIndex) then worldIsSuitable = false end
+			if worldsExcluded and table.find(worldsExcluded, currentWorldIndex) then worldIsSuitable = false end
 
 			if worldIsSuitable and worldPopulationInfo then
 				for locationEnum, _ in pairs(world.locations) do
@@ -706,15 +702,15 @@ function ServerData.findAvailableWorld(forcedLocation: { UserEnum }, worldsExclu
 					end
 				end
 
-				local success = ServerData.findAvailableLocation(worldIndex)
+				local findSuccess = ServerData.findAvailableLocation(currentWorldIndex)
 
-				if not success then worldIsSuitable = false end
+				if not findSuccess then worldIsSuitable = false end
 
 				if worldPopulationInfo.recommended_emptySlots == 0 then worldIsSuitable = false end
 			end
 
 			if not worldIsSuitable then
-				print("ServerData.findAvailableWorld: World " .. worldIndex .. " is not suitable")
+				print("ServerData.findAvailableWorld: World " .. currentWorldIndex .. " is not suitable")
 				continue
 			end
 
@@ -731,7 +727,7 @@ function ServerData.findAvailableWorld(forcedLocation: { UserEnum }, worldsExclu
 
 			-- print("ServerData.findAvailableWorld: World " .. worldIndex .. " has a chance of " .. chance)
 
-			rarities[worldIndex] = chance
+			rarities[currentWorldIndex] = chance
 		end
 
 		worldIndex = Math.weightedChance(rarities)
@@ -769,8 +765,8 @@ function ServerData.findAvailableParty(partyType: UserEnum)
 	do
 		local rarities = {}
 
-		for partyIndex, _ in ipairs(parties) do
-			local partyPopulationInfo = LiveServerData.getPartyPopulationInfo(partyType, partyIndex)
+		for currentPartyIndex, _ in ipairs(parties) do
+			local partyPopulationInfo = LiveServerData.getPartyPopulationInfo(partyType, currentPartyIndex)
 
 			local partyIsSuitable = true
 
@@ -779,7 +775,7 @@ function ServerData.findAvailableParty(partyType: UserEnum)
 			end
 
 			if not partyIsSuitable then
-				print("ServerData.findAvailableParty: Party " .. partyIndex .. " is not suitable")
+				print("ServerData.findAvailableParty: Party " .. currentPartyIndex .. " is not suitable")
 				continue
 			end
 
@@ -794,9 +790,9 @@ function ServerData.findAvailableParty(partyType: UserEnum)
 				end
 			end
 
-			print("ServerData.findAvailableParty: Party " .. partyIndex .. " has a chance of " .. chance)
+			print("ServerData.findAvailableParty: Party " .. currentPartyIndex .. " has a chance of " .. chance)
 
-			rarities[partyIndex] = chance
+			rarities[currentPartyIndex] = chance
 		end
 
 		partyIndex = Math.weightedChance(rarities)
@@ -818,7 +814,7 @@ end
 
 	Returns a success value and a result that is either the minigame index (if it exists) or an error message.
 ]]
-function ServerData.findAvailableMinigame(minigameType: UserEnum)
+function ServerData.findAvailableMinigame(minigameType: string)
 	assert(minigameType, "Minigame type must be provided")
 	assert(Minigames[minigameType].minigameServerType)
 
@@ -833,8 +829,8 @@ function ServerData.findAvailableMinigame(minigameType: UserEnum)
 	do
 		local rarities = {}
 
-		for minigameIndex, _ in ipairs(minigames) do
-			local minigamePopulationInfo = LiveServerData.getMinigamePopulationInfo(minigameType, minigameIndex)
+		for currentMinigameIndex, _ in ipairs(minigames) do
+			local minigamePopulationInfo = LiveServerData.getMinigamePopulationInfo(minigameType, currentMinigameIndex)
 
 			local minigameIsSuitable = true
 
@@ -843,7 +839,7 @@ function ServerData.findAvailableMinigame(minigameType: UserEnum)
 			end
 
 			if not minigameIsSuitable then
-				print("ServerData.findAvailableMinigame: Minigame " .. minigameIndex .. " is not suitable")
+				print("ServerData.findAvailableMinigame: Minigame " .. currentMinigameIndex .. " is not suitable")
 				continue
 			end
 
@@ -858,9 +854,9 @@ function ServerData.findAvailableMinigame(minigameType: UserEnum)
 				end
 			end
 
-			print("ServerData.findAvailableMinigame: Minigame " .. minigameIndex .. " has a chance of " .. chance)
+			print("ServerData.findAvailableMinigame: Minigame " .. currentMinigameIndex .. " has a chance of " .. chance)
 
-			rarities[minigameIndex] = chance
+			rarities[currentMinigameIndex] = chance
 		end
 
 		minigameIndex = Math.weightedChance(rarities)
@@ -928,7 +924,7 @@ function ServerData.reconcileWorlds()
 	local additions = {}
 	local newLocations = {}
 
-	local _, worlds = ServerData.getWorlds():await()
+	local _, worlds = ServerData.getWorlds()
 
 	for _ = 1, #worlds do
 		for locationEnum, _ in pairs(Locations.info) do

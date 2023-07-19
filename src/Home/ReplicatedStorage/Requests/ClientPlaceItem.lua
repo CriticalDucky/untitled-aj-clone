@@ -3,18 +3,19 @@
 	Will deem invalid requests that are not made by the home owner.
 ]]
 
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
+local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
 local requestsFolder = replicatedStorageShared:WaitForChild "Requests"
 local replicationFolder = replicatedStorageShared:WaitForChild "Replication"
-local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
-local utilityFolder = replicatedStorageShared:WaitForChild "Utility"
+local enumsFolder = replicatedFirstShared:WaitForChild "Enums"
+local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 
 local ReplicaRequest = require(requestsFolder:WaitForChild "ReplicaRequest")
 local ReplicaCollection = require(replicationFolder:WaitForChild "ReplicaCollection")
 local PlaceItemRequestType = require(enumsFolder:WaitForChild "PlaceItemRequestType")
-local Table = require(utilityFolder:WaitForChild "Table")
 local Types = require(utilityFolder:WaitForChild "Types")
 
 type UserEnum = Types.UserEnum

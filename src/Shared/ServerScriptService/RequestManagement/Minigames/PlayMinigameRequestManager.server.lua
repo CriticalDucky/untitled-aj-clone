@@ -1,20 +1,20 @@
-local ReplicatedStorage = game:GetService "ReplicatedStorage"
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ServerStorage = game:GetService "ServerStorage"
 
 local serverStorageShared = ServerStorage.Shared
 local serverStorageVendor = ServerStorage.Vendor
-local replicatedStorageShared = ReplicatedStorage.Shared
+local replicatedFirstShared = ReplicatedFirst.Shared
 local serverStorageSharedUtility = serverStorageShared.Utility
-local enumsFolder = replicatedStorageShared.Enums
-local utilityFolder = replicatedStorageShared.Utility
+local enumsFolder = replicatedFirstShared.Enums
+local utilityFolder = replicatedFirstShared.Utility
 local teleportationFolder = serverStorageShared.Teleportation
-local constantsFolder = replicatedStorageShared.Constants
+local configurationFolder = replicatedFirstShared.Configuration
 
 local ReplicaService = require(serverStorageVendor.ReplicaService)
-local Minigames = require(constantsFolder.MinigameConstants)
+local Minigames = require(configurationFolder.MinigameConstants)
 local ReplicaResponse = require(serverStorageSharedUtility.ReplicaResponse)
 local ServerGroupEnum = require(enumsFolder.ServerGroup)
-local ServerTypeGroups = require(constantsFolder.ServerTypeGroups)
+local ServerTypeGroups = require(configurationFolder.ServerTypeGroups)
 local PlayMinigameResponseType = require(enumsFolder.PlayMinigameResponseType)
 local MinigameType = require(enumsFolder.MinigameType)
 local Param = require(utilityFolder.Param)

@@ -27,6 +27,8 @@ local function routeToWorld(player)
 			onRouteFailure(player)
 		end)
 	end
+
+	return
 end
 
 local function playerAdded(player: Player)
@@ -59,6 +61,8 @@ local function playerAdded(player: Player)
 			end)
 		end
 	end
+
+	return
 end
 
 for _, player in pairs(Players:GetPlayers()) do

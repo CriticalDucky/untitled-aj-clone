@@ -4,35 +4,33 @@ local Players = game:GetService "Players"
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
 local ServerStorage = game:GetService "ServerStorage"
-local TeleportService = game:GetService "TeleportService"
+-- local TeleportService = game:GetService "TeleportService"
 
 local serverStorageShared = ServerStorage.Shared
-local replicatedFirstVendor = ReplicatedFirst.Vendor
+-- local replicatedFirstVendor = ReplicatedFirst.Vendor
+local replicatedFirstShared = ReplicatedFirst.Shared
 local dataServerStorage = serverStorageShared.Data
 local inventoryServerStorage = dataServerStorage.Inventory
 local replicatedStorageShared = ReplicatedStorage.Shared
-local dataReplicatedStorage = replicatedStorageShared.Data
-local inventoryReplicatedStorage = dataReplicatedStorage.Inventory
-local settingsServerStorage = dataServerStorage.Settings
-local enums = replicatedStorageShared.Enums
+-- local dataReplicatedStorage = replicatedStorageShared.Data
+-- local inventoryReplicatedStorage = dataReplicatedStorage.Inventory
+local enums = replicatedFirstShared.Enums
 local serverFolder = replicatedStorageShared.Server
-local utilityFolder = replicatedStorageShared.Utility
-local constantsFolder = replicatedStorageShared.Constants
+local utilityFolder = replicatedFirstShared.Utility
+local configurationFolder = replicatedFirstShared.Configuration
 
 local InventoryManager = require(inventoryServerStorage.InventoryManager)
 local PlayerDataManager = require(dataServerStorage.PlayerDataManager)
-local Items = require(inventoryReplicatedStorage.Items)
-local ItemCategory = require(enums.ItemCategory)
-local HomeType = require(enums.HomeType)
-local PlayerSettings = require(settingsServerStorage.PlayerSettings)
-local PlayerDataConstants = require(constantsFolder.PlayerDataConstants)
+-- local Items = require(inventoryReplicatedStorage.Items)
+local ItemCategory = require(enums.InventoryCategory)
+-- local HomeType = require(enums.ItemHomeType)
+local PlayerDataConfig = require(replicatedFirstShared.Configuration.PlayerDataConfig)
 local ServerGroupEnum = require(enums.ServerGroup)
-local ServerTypeGroups = require(constantsFolder.ServerTypeGroups)
-local Table = require(utilityFolder.Table)
+local ServerTypeGroups = require(configurationFolder.ServerTypeGroups)
 local SpacialQuery = require(utilityFolder.SpacialQuery)
 local Serialization = require(utilityFolder.Serialization)
-local ServerData = require(serverStorageShared.ServerManagement.ServerData)
-local Promise = require(replicatedFirstVendor.Promise)
+-- local ServerData = require(serverStorageShared.ServerManagement.ServerData)
+-- local Promise = require(replicatedFirstVendor.Promise)
 local Types = require(utilityFolder.Types)
 local LocalServerInfo = require(serverFolder.LocalServerInfo)
 
@@ -41,11 +39,9 @@ type UserEnum = Types.UserEnum
 type InventoryItem = Types.InventoryItem
 type PlacedItem = Types.PlacedItem
 type Promise = Types.Promise
-type PlayerData = Types.PlayerData
 type ServerIdentifier = Types.ServerIdentifier
 
 local isHomeServer = ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome)
-local initalLoad = false
 
 local placedItemsFolder
 if isHomeServer then
@@ -61,22 +57,24 @@ local function getLoadedItemFromId(itemId: string): Instance?
 	for _, placedItem in pairs(placedItemsFolder:GetChildren()) do
 		if placedItem:GetAttribute(LOADED_ITEM_ATTRIBUTE) == itemId then return placedItem end
 	end
+
+	return
 end
 
 --[[
 	Gets all loaded items in the game. This returns a table of item ids to instances.
 ]]
-local function getLoadedItems()
-	local loadedItems = {}
+-- local function getLoadedItems()
+-- 	local loadedItems = {}
 
-	for _, placedItem in pairs(placedItemsFolder:GetChildren()) do
-		local itemId = placedItem:GetAttribute(LOADED_ITEM_ATTRIBUTE)
+-- 	for _, placedItem in pairs(placedItemsFolder:GetChildren()) do
+-- 		local itemId = placedItem:GetAttribute(LOADED_ITEM_ATTRIBUTE)
 
-		if itemId then loadedItems[itemId] = placedItem end
-	end
+-- 		if itemId then loadedItems[itemId] = placedItem end
+-- 	end
 
-	return loadedItems
-end
+-- 	return loadedItems
+-- end
 
 --[[
 	Gets the home owner user id of the home. This returns a number or nil if the server is not a home server.
@@ -84,7 +82,7 @@ end
 local function getHomeOwner()
 	local serverIdentifier = LocalServerInfo.getServerIdentifier()
 
-	if serverIdentifier then return serverIdentifier.homeOwner end
+	return if serverIdentifier then serverIdentifier.homeOwner else nil
 end
 
 local HomeManager = {}
@@ -103,8 +101,8 @@ function HomeManager.getSelectedHomeIndex(userId: number?): (boolean, number?)
 	local success, itemId = HomeManager.getSelectedHomeId(userId)
 	if not success then return false end
 
-	local success, _, index = InventoryManager.getItemPathFromId(userId, itemId)
-	return success, index
+	local getItemPathSuccess, _, index = InventoryManager.getItemPathFromId(userId :: number, itemId)
+	return getItemPathSuccess, index
 end
 
 --[[
@@ -115,10 +113,10 @@ end
 
 	Returns a success boolean and the itemId of the home that the player has selected.
 ]]
-function HomeManager.getSelectedHomeId(userId: number?): (boolean, string?)
-	userId = userId or getHomeOwner()
+function HomeManager.getSelectedHomeId(userId: number?)--: (boolean, string?)
+	-- userId = userId or getHomeOwner()
 
-	return PlayerSettings.getSetting(userId, "selectedHome")
+	-- return PlayerSettings.getSetting(userId :: number, "selectedHome")
 end
 
 --[[
@@ -126,9 +124,9 @@ end
 	Does not return anything, but will throw an error if the player is not in this server.
 ]]
 function HomeManager.setSelectedHomeId(userId: number?, itemId: string)
-	userId = userId or getHomeOwner()
+	-- userId = userId or getHomeOwner()
 
-	PlayerSettings.setSetting(userId, "selectedHome", itemId)
+	-- PlayerSettings.setSetting(userId :: number, "selectedHome", itemId)
 end
 
 --[[
@@ -136,10 +134,10 @@ end
 
 	Returns a success boolean and the lock status of the player's home if successful.
 ]]
-function HomeManager.getLockStatus(userId: number?): (boolean, UserEnum?)
-	userId = userId or getHomeOwner()
+function HomeManager.getLockStatus(userId: number?)--: (boolean, UserEnum?)
+	-- userId = userId or getHomeOwner()
 
-	return PlayerSettings.getSetting(userId, "homeLockStatus")
+	-- return PlayerSettings.getSetting(userId :: number, "homeLockStatus")
 end
 
 --[[
@@ -147,9 +145,9 @@ end
 	Does not return anything, but will throw an error if the player is not in this server.
 ]]
 function HomeManager.setLockStatus(userId: number?, lockStatus: UserEnum)
-	userId = userId or getHomeOwner()
+	-- userId = userId or getHomeOwner()
 
-	PlayerSettings.setSetting(userId, "homeLockStatus", lockStatus)
+	-- PlayerSettings.setSetting(userId :: number, "homeLockStatus", lockStatus)
 end
 
 --[[
@@ -157,7 +155,7 @@ end
 	* If `slot` is an `itemId`, it will return the home with that id.
 	* If `slot` is an index, it will return the home at that index in the homes inventory category.
 	* If `slot` is `nil`, it will return the home that the player or home owner has selected.
-	
+
 	The player does not need to be in this server.
 
 	Returns a success boolean and the home if successful.
@@ -201,7 +199,7 @@ end
 	Gets the home server info of a player. The player does not need to be in this server.
 	If there was an error getting the player's data, this will return nil.
 
-	```lua
+	```luam
 	homeServerInfo = {
 		privateServerId = string,
 		serverCode = string,
@@ -211,7 +209,7 @@ end
 function HomeManager.getHomeServerInfo(userId: number?): HomeServerInfo
 	userId = userId or getHomeOwner()
 
-	local profile = PlayerDataManager.viewProfileAsync(userId)
+	local profile = PlayerDataManager.viewOfflinePersistentDataAsync(userId :: number)
 
 	return profile and profile.playerInfo.homeServerInfo
 end
@@ -225,7 +223,7 @@ end
 function HomeManager.isHomeIdentifierStamped(userId: number?): (boolean, boolean?)
 	userId = userId or getHomeOwner()
 
-	local profile = PlayerDataManager.viewProfileAsync(userId)
+	local profile = PlayerDataManager.viewOfflinePersistentDataAsync(userId :: number)
 
 	if profile then return true, profile.playerInfo.homeInfoStamped end
 
@@ -280,17 +278,19 @@ function HomeManager.getPlacedItemFromId(
 ): (boolean, PlacedItem?)
 	userId = userId or getHomeOwner()
 
-	local success, placedItems = HomeManager.getPlacedItems(userId, slot)
+	local success, placedItems = HomeManager.getPlacedItems(userId :: number, slot)
 
 	if not success then return false end
 
 	for _, placedItem in ipairs(placedItems) do
 		if placedItem.itemId == itemId then return true, placedItem end
 	end
+
+	return false
 end
 
 --[[
-	Returns a success boolean and a boolean indicating whether the given item is 
+	Returns a success boolean and a boolean indicating whether the given item is
 	placed in the player's active or specified home.
 
 	If no userId is specified, it will use the home owner of the server.
@@ -322,9 +322,11 @@ end
 ]]
 function HomeManager.isPlacedItemsFull(userId: number?, numItemsToAdd: number?, slot: string | number | nil)
 	userId = userId or getHomeOwner()
+	assert(userId)
 
-	local numItemsToAdd = numItemsToAdd or 0
-	local maxFurniturePlaced = PlayerDataConstants.maxFurniturePlaced
+	numItemsToAdd = numItemsToAdd or 0
+	assert(numItemsToAdd)
+	local maxFurniturePlaced = PlayerDataConfig.inventoryLimits.furniture
 
 	local success, placedItems = HomeManager.getPlacedItems(userId, slot)
 
@@ -360,9 +362,9 @@ function HomeManager.canPlaceItem(itemId: string, pivotCFrame: CFrame)
 		return false
 	end
 
-	local success, playerOwnsItem = InventoryManager.playerOwnsItem(homeOwner, itemId)
+	local playerOwnsSuccess, playerOwnsItem = InventoryManager.playerOwnsItem(homeOwner, itemId)
 
-	if not success then
+	if not playerOwnsSuccess then
 		warn "HomeManager.placeItem: No success when checking if player owns item"
 		return false
 	end
@@ -383,30 +385,30 @@ end
 	Can only be called on a home server.
 ]]
 function HomeManager.loadPlacedItem(placedItem: PlacedItem)
-	assert(isHomeServer, "HomeManager.loadPlacedItem: Can only be called on a home server.")
+	-- assert(isHomeServer, "HomeManager.loadPlacedItem: Can only be called on a home server.")
 
-	local homeOwner = getHomeOwner()
+	-- local homeOwner = getHomeOwner()
 
-	local itemId = placedItem.itemId
-	local pivotCFrame: CFrame = Serialization.deserialize(placedItem.pivotCFrame)
+	-- local itemId = placedItem.itemId
+	-- local pivotCFrame: CFrame = Serialization.deserialize(placedItem.pivotCFrame)
 
-	local success, item = InventoryManager.getItemFromId(homeOwner, placedItem.itemId)
+	-- local success, item = InventoryManager.getItemFromId(homeOwner, placedItem.itemId)
 
-	if not success then return false end
-	assert(item, "HomeManager.loadPlacedItem: item does not exist in inventory")
+	-- if not success then return false end
+	-- assert(item, "HomeManager.loadPlacedItem: item does not exist in inventory")
 
-	local info = Items.getFurnitureItem(item.itemEnum)
-	local object = getLoadedItemFromId(itemId)
+	-- local info = Items.getFurnitureItem(item.itemEnum)
+	-- local object = getLoadedItemFromId(itemId)
 
-	object = object or info.model:Clone()
+	-- object = object or info.model:Clone()
 
-	object:SetAttribute(LOADED_ITEM_ATTRIBUTE, itemId)
-	object:PivotTo(pivotCFrame)
-	object.Parent = placedItemsFolder
+	-- object:SetAttribute(LOADED_ITEM_ATTRIBUTE, itemId)
+	-- object:PivotTo(pivotCFrame)
+	-- object.Parent = placedItemsFolder
 
-	print("HomeManager.loadPlacedItem: loaded item", itemId)
+	-- print("HomeManager.loadPlacedItem: loaded item", itemId)
 
-	return true
+	-- return true
 end
 
 --[[
@@ -434,7 +436,10 @@ function HomeManager.addPlacedItem(itemId: string, pivotCFrame: CFrame)
 
 	local player = Players:GetPlayerByUserId(homeOwner)
 
-	assert(player and PlayerDataManager.profileIsLoaded(player), "HomeManager.addPlacedItem: No player data found.")
+	assert(
+		player and PlayerDataManager.persistentDataIsLoaded(player),
+		"HomeManager.addPlacedItem: No player data found."
+	)
 
 	local success, placedItem = HomeManager.getPlacedItemFromId(itemId, homeOwner)
 
@@ -443,16 +448,16 @@ function HomeManager.addPlacedItem(itemId: string, pivotCFrame: CFrame)
 		return false
 	end
 
-	local success, placedItems = HomeManager.getPlacedItems(homeOwner)
+	local getPlacedItemsSuccess, placedItems = HomeManager.getPlacedItems(homeOwner)
 
-	if not success then
+	if not getPlacedItemsSuccess then
 		warn "HomeManager.addPlacedItem: No success when getting placed items"
 		return false
 	end
 
-	local success, selectedHomeIndex = HomeManager.getSelectedHomeIndex(homeOwner)
+	local getIndexSuccess, selectedHomeIndex = HomeManager.getSelectedHomeIndex(homeOwner)
 
-	if not selectedHomeIndex or not success then
+	if not selectedHomeIndex or not getIndexSuccess then
 		warn "HomeManager.addPlacedItem: No success when getting selected home index"
 		return false
 	end
@@ -471,9 +476,9 @@ function HomeManager.addPlacedItem(itemId: string, pivotCFrame: CFrame)
 			return false
 		end
 
-		PlayerDataManager.arraySetProfile(player, path, placedItemIndex, placedItem)
+		PlayerDataManager.arraySetPersistent(player, path, placedItemIndex, placedItem)
 	else
-		PlayerDataManager.arrayInsertProfile(player, path, placedItem)
+		PlayerDataManager.arrayInsertPersistent(player, path, placedItem)
 	end
 
 	return HomeManager.loadPlacedItem(placedItem)
@@ -491,7 +496,7 @@ function HomeManager.removePlacedItem(itemId: string, userId: number?)
 
 	local player = Players:GetPlayerByUserId(userId)
 
-	assert(player and PlayerDataManager.profileIsLoaded(player), "Player data not found")
+	assert(player and PlayerDataManager.persistentDataIsLoaded(player), "Player data not found")
 
 	local success, placedItem = HomeManager.getPlacedItemFromId(itemId, userId)
 	if not success then
@@ -500,14 +505,14 @@ function HomeManager.removePlacedItem(itemId: string, userId: number?)
 	end
 	assert(placedItem, "Placed item not found")
 
-	local success, placedItems = HomeManager.getPlacedItems(userId)
-	if not success then
+	local getPlacedSuccess, placedItems = HomeManager.getPlacedItems(userId)
+	if not getPlacedSuccess then
 		warn "Placed items not found"
 		return false
 	end
 
-	local success, selectedHomeIndex = HomeManager.getSelectedHomeIndex(userId)
-	if not success or not selectedHomeIndex then
+	local selectedSuccess, selectedHomeIndex = HomeManager.getSelectedHomeIndex(userId)
+	if not selectedSuccess or not selectedHomeIndex then
 		warn "Selected home index not found"
 		return false
 	end
@@ -520,7 +525,7 @@ function HomeManager.removePlacedItem(itemId: string, userId: number?)
 
 	local path = { "inventory", "homes", selectedHomeIndex, "placedItems" }
 
-	PlayerDataManager.arrayRemoveProfile(player, path, placedItemIndex)
+	PlayerDataManager.arrayRemovePersistent(player, path, placedItemIndex)
 
 	if isHomeServer then HomeManager.unloadPlacedItem(placedItem) end
 
@@ -532,53 +537,53 @@ end
 	Returns a success boolean.
 ]]
 function HomeManager.loadItems()
-	assert(isHomeServer, "HomeManager.loadItems: Can only be called on a home server.")
+	-- assert(isHomeServer, "HomeManager.loadItems: Can only be called on a home server.")
 
-	local success, placedItems = HomeManager.getPlacedItems()
+	-- local success, placedItems = HomeManager.getPlacedItems()
 
-	if not success then
-		warn "HomeManager.loadItems: No success when getting placed items"
-		return false
-	end
+	-- if not success then
+	-- 	warn "HomeManager.loadItems: No success when getting placed items"
+	-- 	return false
+	-- end
 
-	local promises = {}
+	-- local promises = {}
 
-	for _, placedItem in pairs(placedItems) do
-		table.insert(
-			promises,
-			Promise.new(function(resolve, reject)
-				local success = HomeManager.loadPlacedItem(placedItem)
+	-- for _, placedItem in pairs(placedItems) do
+	-- 	table.insert(
+	-- 		promises,
+	-- 		Promise.new(function(resolve, reject)
+	-- 			local success = HomeManager.loadPlacedItem(placedItem)
 
-				if success then
-					resolve()
-				else
-					reject()
-				end
-			end)
-		)
-	end
+	-- 			if success then
+	-- 				resolve()
+	-- 			else
+	-- 				reject()
+	-- 			end
+	-- 		end)
+	-- 	)
+	-- end
 
-	return Promise.all(promises):await()
+	-- return Promise.all(promises):await()
 end
 
 --[[
 	Unloads all placed items found in a player's inventory from the workspace.
 ]]
 function HomeManager.unloadItems()
-	assert(isHomeServer, "HomeManager.unloadItems: Can only be called on a home server.")
+	-- assert(isHomeServer, "HomeManager.unloadItems: Can only be called on a home server.")
 
-	local success, placedItems = HomeManager.getPlacedItems()
+	-- local success, placedItems = HomeManager.getPlacedItems()
 
-	if not success then
-		warn "HomeManager.unloadItems: No success when getting placed items"
-		return false
-	end
+	-- if not success then
+	-- 	warn "HomeManager.unloadItems: No success when getting placed items"
+	-- 	return false
+	-- end
 
-	for _, placedItem in pairs(placedItems) do
-		HomeManager.unloadPlacedItem(placedItem)
-	end
+	-- for _, placedItem in pairs(placedItems) do
+	-- 	HomeManager.unloadPlacedItem(placedItem)
+	-- end
 
-	return true
+	-- return true
 end
 
 --[[
@@ -587,21 +592,21 @@ end
 	Returns a success boolean.
 ]]
 function HomeManager.loadHome()
-	assert(isHomeServer, "HomeManager.loadHome can only be called in a home server")
+	-- assert(isHomeServer, "HomeManager.loadHome can only be called in a home server")
 
-	local success, home = HomeManager.getHome()
+	-- local success, home = HomeManager.getHome()
 
-	if not success or not home then
-		warn "HomeManager.loadHome: No success when getting home"
-		return false
-	end
+	-- if not success or not home then
+	-- 	warn "HomeManager.loadHome: No success when getting home"
+	-- 	return false
+	-- end
 
-	local homeInfo = Items.getHomeItem(home.itemEnum)
-	local modelClone = homeInfo.model:Clone()
-	modelClone.Name = "RenderedHome"
-	modelClone.Parent = workspace
+	-- local homeInfo = Items.getHomeItem(home.itemEnum)
+	-- local modelClone = homeInfo.model:Clone()
+	-- modelClone.Name = "RenderedHome"
+	-- modelClone.Parent = workspace
 
-	return HomeManager.loadItems()
+	-- return HomeManager.loadItems()
 end
 
 --[[
@@ -617,144 +622,146 @@ function HomeManager.unloadHome()
 end
 
 local function loadProfile(player: Player)
-	LocalServerInfo.getServerIdentifier() -- Make sure server identifier is get
+	-- LocalServerInfo.getServerIdentifier() -- Make sure server identifier is get
 
-	local function onError() -- If initialization failed for a player
-		warn "HomeManager: Initialization failed for player."
-	end
+	-- local function onError() -- If initialization failed for a player
+	-- 	warn "HomeManager: Initialization failed for player."
+	-- end
 
-	local userId = player.UserId
-	local homes = InventoryManager.getHomes(userId)
+	-- local userId = player.UserId
+	-- local homes = InventoryManager.getHomes(userId)
 
-	if #homes == 0 then
-		InventoryManager.newItemInInventory(ItemCategory.home, HomeType.defaultHome, player, {
-			permanent = true, -- We don't want users to be able to delete their default home
-		})
-	end
+	-- if #homes == 0 then
+	-- 	InventoryManager.newItemInInventory(ItemCategory.home, HomeType.devHome, player, {
+	-- 		permanent = true, -- We don't want users to be able to delete their default home
+	-- 	})
+	-- end
 
-	homes = InventoryManager.getHomes(userId) -- Refresh homes variable
+	-- homes = InventoryManager.getHomes(userId) -- Refresh homes variable
 
-	local success, selectedHomeId = HomeManager.getSelectedHomeId(userId)
+	-- local success, selectedHomeId = HomeManager.getSelectedHomeId(userId)
 
-	if not success then
-		warn "HomeManager: Failed to get selected home id"
+	-- if not success then
+	-- 	warn "HomeManager: Failed to get selected home id"
 
-		onError()
-		return
-	end
+	-- 	onError()
+	-- 	return
+	-- end
 
-	if not selectedHomeId or not select(2, HomeManager.getHome(userId, selectedHomeId)) then
-		HomeManager.setSelectedHomeId(userId, homes[1].id)
-	end
+	-- if not selectedHomeId or not select(2, HomeManager.getHome(userId, selectedHomeId)) then
+	-- 	HomeManager.setSelectedHomeId(userId, homes[1].id)
+	-- end
 
-	local homeServerInfo = HomeManager.getHomeServerInfo(userId)
+	-- local homeServerInfo = HomeManager.getHomeServerInfo(userId)
 
-	if not success then
-		warn "HomeManager: Failed to get home server info"
+	-- if not success then
+	-- 	warn "HomeManager: Failed to get home server info"
 
-		onError()
-		return
-	end
+	-- 	onError()
+	-- 	return
+	-- end
 
-	if not (homeServerInfo and homeServerInfo.privateServerId and homeServerInfo.serverCode) then
-		local function getReservedServer()
-			return Promise.try(function()
-				local code, privateServerId = TeleportService:ReserveServer(PlayerDataConstants.homePlaceId)
+	-- if not (homeServerInfo and homeServerInfo.privateServerId and homeServerInfo.serverCode) then
+	-- 	local function getReservedServer()
+	-- 		return Promise.try(function()
+	-- 			local code, privateServerId = TeleportService:ReserveServer(PlayerDataConfig.homePlaceId)
 
-				if code and privateServerId then
-					return code, privateServerId
-				else
-					return Promise.reject()
-				end
-			end)
-		end
+	-- 			if code and privateServerId then
+	-- 				return code, privateServerId
+	-- 			else
+	-- 				return Promise.reject()
+	-- 			end
+	-- 		end)
+	-- 	end
 
-		local success = Promise.retry(getReservedServer, 5)
-			:andThen(function(code, privateServerId)
-				PlayerDataManager.setValueProfile(player, { "playerInfo", "homeServerInfo" }, {
-					serverCode = code,
-					privateServerId = privateServerId,
-				})
-			end)
-			:await()
+	-- 	local success = Promise.retry(getReservedServer, 5)
+	-- 		:andThen(
+	-- 			function(code, privateServerId)
+	-- 				PlayerDataManager.setValuePersistent(player, { "playerInfo", "homeServerInfo" }, {
+	-- 					serverCode = code,
+	-- 					privateServerId = privateServerId,
+	-- 				})
+	-- 			end
+	-- 		)
+	-- 		:await()
 
-		if not success then
-			warn "HomeManager: Failed to get reserved server"
+	-- 	if not success then
+	-- 		warn "HomeManager: Failed to get reserved server"
 
-			onError()
-			return
-		end
-	end
+	-- 		onError()
+	-- 		return
+	-- 	end
+	-- end
 
-	local success, isStamped = HomeManager.isHomeIdentifierStamped(userId)
+	-- local success, isStamped = HomeManager.isHomeIdentifierStamped(userId)
 
-	if not success then
-		warn "HomeManager: Failed to get home info stamped"
+	-- if not success then
+	-- 	warn "HomeManager: Failed to get home info stamped"
 
-		onError()
-		return
-	end
+	-- 	onError()
+	-- 	return
+	-- end
 
-	if not isStamped then
-		print "Stamping home server..."
+	-- if not isStamped then
+	-- 	print "Stamping home server..."
 
-		local success, response = ServerData.stampHomeServer(player)
+	-- 	local success, response = ServerData.stampHomeServer(player)
 
-		if not success then
-			warn("HomeManager: Failed to stamp home server: ", response)
+	-- 	if not success then
+	-- 		warn("HomeManager: Failed to stamp home server: ", response)
 
-			onError()
-			return
-		else
-			print "Successfully stamped home server!"
-		end
-	end
+	-- 		onError()
+	-- 		return
+	-- 	else
+	-- 		print "Successfully stamped home server!"
+	-- 	end
+	-- end
 
-	local success, placedItems = HomeManager.getPlacedItems(userId)
+	-- local success, placedItems = HomeManager.getPlacedItems(userId)
 
-	if success then
-		for _, placedItem in pairs(placedItems) do
-			local success, doesOwn = InventoryManager.playerOwnsItem(userId, placedItem.itemId)
+	-- if success then
+	-- 	for _, placedItem in pairs(placedItems) do
+	-- 		local success, doesOwn = InventoryManager.playerOwnsItem(userId, placedItem.itemId)
 
-			if not success then
-				warn "HomeManager: Failed to check if player owns item"
+	-- 		if not success then
+	-- 			warn "HomeManager: Failed to check if player owns item"
 
-				onError()
-				return
-			end
+	-- 			onError()
+	-- 			return
+	-- 		end
 
-			if not doesOwn then
-				HomeManager.removePlacedItem(placedItem.itemId, userId) -- We don't really care if this fails
-			end
-		end
-	else
-		warn "HomeManager: Failed to get placed items"
+	-- 		if not doesOwn then
+	-- 			HomeManager.removePlacedItem(placedItem.itemId, userId) -- We don't really care if this fails
+	-- 		end
+	-- 	end
+	-- else
+	-- 	warn "HomeManager: Failed to get placed items"
 
-		onError()
-		return
-	end
+	-- 	onError()
+	-- 	return
+	-- end
 
-	if isHomeServer and getHomeOwner() == userId then
-		for itemId in getLoadedItems() do
-			local success, doesOwn = InventoryManager.playerOwnsItem(userId, itemId)
+	-- if isHomeServer and getHomeOwner() == userId then
+	-- 	for itemId in getLoadedItems() do
+	-- 		local success, doesOwn = InventoryManager.playerOwnsItem(userId, itemId)
 
-			if not success then
-				warn "HomeManager: Failed to check if player owns item"
+	-- 		if not success then
+	-- 			warn "HomeManager: Failed to check if player owns item"
 
-				onError()
-				return
-			end
+	-- 			onError()
+	-- 			return
+	-- 		end
 
-			if not doesOwn then HomeManager.unloadPlacedItem(select(2, HomeManager.getPlacedItemFromId(itemId))) end
-		end
-	end
+	-- 		if not doesOwn then HomeManager.unloadPlacedItem(select(2, HomeManager.getPlacedItemFromId(itemId))) end
+	-- 	end
+	-- end
 end
 
-for _, player in PlayerDataManager.getPlayersWithLoadedProfiles() do
+for _, player in PlayerDataManager.getPlayersWithLoadedPersistentData() do
 	loadProfile(player)
 end
 
-PlayerDataManager.profileLoaded:Connect(loadProfile)
+PlayerDataManager.persistentDataLoaded:Connect(loadProfile)
 
 InventoryManager.itemRemovedFromInventory:Connect(
 	function(player: Player, itemCategory: UserEnum, _, item: InventoryItem)
@@ -774,7 +781,7 @@ InventoryManager.itemRemovedFromInventory:Connect(
 					return
 				end
 
-				HomeManager.setSelectedHomeId(player, homes[1].id)
+				HomeManager.setSelectedHomeId(player.UserId, homes[1].id)
 			end
 		elseif itemCategory == ItemCategory.furniture then
 			local success, isPlaced = HomeManager.isItemPlaced(item.id, player.UserId)

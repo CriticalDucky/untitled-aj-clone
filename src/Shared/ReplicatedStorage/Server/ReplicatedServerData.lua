@@ -106,8 +106,9 @@ local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
 local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
+local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
 local replicationFolder = replicatedStorageShared:WaitForChild "Replication"
-local utilityFolder = replicatedStorageShared:WaitForChild "Utility"
+local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 
 local ReplicaCollection = require(replicationFolder:WaitForChild "ReplicaCollection")
 local Promise = require(replicatedFirstVendor:WaitForChild "Promise")
@@ -238,7 +239,7 @@ end
 
 --[[
 	Returns a table with the currently replicated server data.
-	
+
 	If you're using this in a computed value, consider using ReplicatedServerData.withData instead.
 	(see the documentation at the top of the script)
 
@@ -250,7 +251,7 @@ end
 
 --[[
 	Returns the worlds table from the currently replicated server data.
-	
+
 	If you're using this in a computed value, consider using ReplicatedServerData.withData instead.
 	(see the documentation at the top of the script)
 
@@ -262,7 +263,7 @@ end
 
 --[[
 	Returns the parties table from the currently replicated server data.
-	
+
 	If you're using this in a computed value, consider using ReplicatedServerData.withData instead.
 	(see the documentation at the top of the script)
 
@@ -274,7 +275,7 @@ end
 
 --[[
 	Returns the minigames table from the currently replicated server data.
-	
+
 	If you're using this in a computed value, consider using ReplicatedServerData.withData instead.
 	(see the documentation at the top of the script)
 
@@ -286,7 +287,7 @@ end
 
 --[[
 	Returns the world with the specified index from the currently replicated server data.
-	
+
 	If you're using this in a computed value, consider using ReplicatedServerData.withData instead.
 	(see the documentation at the top of the script)
 
@@ -298,7 +299,7 @@ end
 
 --[[
 	Returns whether the specified world has the specified location.
-	
+
 	If you're using this in a computed value, consider using ReplicatedServerData.withData instead.
 	(see the documentation at the top of the script)
 

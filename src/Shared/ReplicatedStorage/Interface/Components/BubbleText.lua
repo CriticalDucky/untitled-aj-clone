@@ -1,14 +1,11 @@
 --#region Imports
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
-local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
-local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
 local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
-local utilityFolder = replicatedStorageShared:WaitForChild "Utility"
-local componentsFolder = replicatedStorageShared:WaitForChild("Interface"):WaitForChild "Components"
-local constantsFolder = replicatedStorageShared:WaitForChild "Constants"
+local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
+local configurationFolder = replicatedFirstShared:WaitForChild "Configuration"
 
-local InterfaceConstants = require(constantsFolder:WaitForChild "InterfaceConstants")
+local InterfaceConstants = require(configurationFolder:WaitForChild "InterfaceConstants")
 
 local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
 local New = Fusion.New

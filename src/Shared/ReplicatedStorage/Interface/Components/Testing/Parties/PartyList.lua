@@ -3,21 +3,21 @@ local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
 local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
 local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
-local utilityFolder = replicatedStorageShared:WaitForChild "Utility"
+local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
+local configurationFolder = replicatedFirstShared:WaitForChild "Configuration"
+local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
 local serverFolder = replicatedStorageShared:WaitForChild "Server"
-local enumsFolder = replicatedStorageShared:WaitForChild "Enums"
+local enumsFolder = replicatedFirstShared:WaitForChild "Enums"
 local requestsFolder = replicatedStorageShared:WaitForChild "Requests"
 local teleportationFolder = requestsFolder:WaitForChild "Teleportation"
-local constantsFolder = replicatedStorageShared:WaitForChild "Constants"
 
 local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
 local ServerGroupEnum = require(enumsFolder:WaitForChild "ServerGroup")
-local ServerTypeGroups = require(constantsFolder:WaitForChild "ServerTypeGroups")
+local ServerTypeGroups = require(configurationFolder:WaitForChild "ServerTypeGroups")
 local ClientTeleport = require(teleportationFolder:WaitForChild "ClientTeleport")
 local LocalServerInfo = require(serverFolder:WaitForChild "LocalServerInfo")
 local ActiveParties = require(serverFolder:WaitForChild "ActiveParties")
-local Parties = require(constantsFolder:WaitForChild "PartyConstants")
-local Table = require(utilityFolder:WaitForChild "Table")
+local Parties = require(configurationFolder:WaitForChild "PartyConstants")
 local Component = require(utilityFolder:WaitForChild "GetComponent")
 local Types = require(utilityFolder:WaitForChild "Types")
 
@@ -26,11 +26,6 @@ local New = Fusion.New
 local Children = Fusion.Children
 local Computed = Fusion.Computed
 local OnEvent = Fusion.OnEvent
-local OnChange = Fusion.OnChange
-local Observer = Fusion.Observer
-local Tween = Fusion.Tween
-local Spring = Fusion.Spring
-local Hydrate = Fusion.Hydrate
 local peek = Fusion.peek
 
 type ServerIdentifier = Types.ServerIdentifier
@@ -55,7 +50,7 @@ local component = function(props)
 		return list
 	end)
 
-	local function button(buttonProps: table)
+	local function button(buttonProps)
 		return New "TextButton" {
 			Size = buttonProps.size or UDim2.fromOffset(50, 50),
 			LayoutOrder = buttonProps.layoutOrder or 1,
@@ -113,7 +108,7 @@ local component = function(props)
 
 					if activeParty.time:isInRange() then
 						local success, response = ClientTeleport.toParty(activeParty.partyType)
-						
+
 						if not success then
 							warn("Failed to teleport to party", response)
 
@@ -158,9 +153,9 @@ local component = function(props)
 								return minutes .. addS(minutes, " minute")
 							else
 								local hours = math.floor(minutes / 60)
-								local minutes = minutes % 60
+								local newMinutes = minutes % 60
 
-								return hours .. addS(hours, " hr") .. " " .. minutes .. addS(minutes, " min")
+								return hours .. addS(hours, " hr") .. " " .. newMinutes .. addS(newMinutes, " min")
 							end
 						end
 					end),
@@ -194,7 +189,7 @@ local component = function(props)
 		elements = partyButtons,
 	}
 
-	local button = button {
+	local newButton = button {
 		onClick = function()
 			open:set(not peek(open))
 		end,
@@ -202,7 +197,7 @@ local component = function(props)
 		layoutOrder = props.layoutOrder or 5,
 	}
 
-	return menu, button
+	return menu, newButton
 end
 
 return component

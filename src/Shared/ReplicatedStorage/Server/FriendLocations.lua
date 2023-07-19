@@ -5,17 +5,15 @@
     See FriendLocations.get for more information.
 ]]
 
-local ReplicatedStorage = game:GetService "ReplicatedStorage"
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
 
-local replicatedStorageShared = ReplicatedStorage:WaitForChild "Shared"
-local dataFolder = replicatedStorageShared:WaitForChild "Data"
-local utilityFolder = replicatedStorageShared:WaitForChild "Utility"
+local replicatedFirstShared = ReplicatedFirst:WaitForChild "Shared"
 
-local ReplicatedPlayerData = require(dataFolder:WaitForChild "ReplicatedPlayerData")
+local utilityFolder = replicatedFirstShared:WaitForChild "Utility"
+
 local Types = require(utilityFolder:WaitForChild "Types")
-local Table = require(utilityFolder:WaitForChild "Table")
 
-type ProfileData = Types.ProfileData
+-- type ProfileData = Types.ProfileData
 type ServerIdentifier = Types.ServerIdentifier
 
 local FriendLocations = {}
@@ -32,10 +30,10 @@ local FriendLocations = {}
     }
     ```
 ]]
-function FriendLocations.get(wait: boolean?): { [number]: ServerIdentifier }
-    local data: ProfileData = ReplicatedPlayerData.get(nil, wait)
+function FriendLocations.get(wait: boolean?)--: { [number]: ServerIdentifier }
+    -- local data: ProfileData = ReplicatedPlayerData.get(nil, wait)
 
-    return Table.deepToNumberKeys(Table.safeIndex(data, "friendLocations", "locations") or {})
+    -- return Table.deepToNumberKeys(Table.safeIndex(data, "friendLocations", "locations") or {})
 end
 
 return FriendLocations
