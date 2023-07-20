@@ -15,7 +15,7 @@ export type Furniture = {
 
 type Use = Fusion.Use
 
-export type InventoryCategory = { InventoryItem }
+export type ItemCategory = { InventoryItem }
 
 export type UserEnum = string | number
 

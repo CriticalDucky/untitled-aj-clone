@@ -1,8 +1,8 @@
 --[[
 	Represents the type of an accessory.
 ]]
-local ItemAccessoryType = {
+local ItemTypeAccessory = {
 	devAccessory = 1,
 }
 
-return ItemAccessoryType
+return ItemTypeAccessory

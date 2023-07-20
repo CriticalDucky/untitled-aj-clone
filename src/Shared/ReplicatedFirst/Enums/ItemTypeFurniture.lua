@@ -1,8 +1,8 @@
 --[[
 	Represents the type of furniture.
 ]]
-local ItemFurnitureType = {
+local ItemTypeFurniture = {
 	devFurniture = 1,
 }
 
-return ItemFurnitureType
+return ItemTypeFurniture

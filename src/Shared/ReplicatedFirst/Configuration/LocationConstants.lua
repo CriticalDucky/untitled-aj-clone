@@ -2,12 +2,12 @@ local ReplicatedFirst = game:GetService("ReplicatedFirst")
 
 local replicatedFirstShared = ReplicatedFirst:WaitForChild("Shared")
 
-local LocationTypeEnum = require(replicatedFirstShared:WaitForChild("Enums"):WaitForChild("LocationType"))
+local Enums = require(replicatedFirstShared:WaitForChild("Enums"))
 local PlaceConstants = require(replicatedFirstShared:WaitForChild("Configuration"):WaitForChild("PlaceConstants"))
 
 local Locations = {
     info = {
-        [LocationTypeEnum.town] = {
+        [Enums.LocationType.town] = {
             name = "Town",
             placeId = 10189748812,
             populationInfo = { -- Example; optional
@@ -17,15 +17,15 @@ local Locations = {
             cantJoinPlayer = false
         },
 
-        [LocationTypeEnum.forest] = {
+        [Enums.LocationType.forest] = {
             name = "Forest",
             placeId = 10212920968,
         },
     },
 
     priority = {
-        LocationTypeEnum.town,
-        LocationTypeEnum.forest,
+        Enums.LocationType.town,
+        Enums.LocationType.forest,
     },
 }
 

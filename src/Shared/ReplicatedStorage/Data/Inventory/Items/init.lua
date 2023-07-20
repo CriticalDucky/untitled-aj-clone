@@ -2,7 +2,7 @@ local ReplicatedFirst = game:GetService("ReplicatedFirst")
 
 local Types = require(ReplicatedFirst.Shared.Utility.Types)
 
-type InventoryCategory = Types.InventoryCategory
+type ItemCategory = Types.ItemCategory
 type InventoryItem = Types.InventoryItem
 
 local Items = {

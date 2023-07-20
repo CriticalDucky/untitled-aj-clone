@@ -1,8 +1,8 @@
 --[[
 	Represents the type of a home.
 ]]
-local ItemHomeType = {
+local ItemTypeHome = {
 	devHome = 1,
 }
 
-return ItemHomeType
+return ItemTypeHome

@@ -48,10 +48,10 @@ local Signal = require(replicatedFirstVendor.Signal.Signal)
 local PlayerDataConfig = require(replicatedFirstShared.Configuration.PlayerDataConfig)
 local Id = require(utilityFolder.Id)
 local Types = require(utilityFolder.Types)
-local ItemCategory = require(enumsFolder.InventoryCategory)
+local ItemCategory = require(enumsFolder.ItemCategory)
 
 type InventoryItem = Types.InventoryItem
-type InventoryCategory = Types.InventoryCategory
+type ItemCategory = Types.ItemCategory
 type UserEnum = Types.UserEnum
 
 local function addPropsToItem(item: InventoryItem)
@@ -222,7 +222,7 @@ end
 
 	Can return nil in the rare case retrieving the player's profile data fails.
 ]]
-function InventoryManager.getInventoryCategory(userId: number, itemCategory: UserEnum): InventoryCategory?
+function InventoryManager.getInventoryCategory(userId: number, itemCategory: UserEnum): ItemCategory?
 	local inventory = InventoryManager.getInventory(userId)
 
 	return inventory and inventory[itemCategory]
@@ -233,7 +233,7 @@ end
 
 	Can return nil in the rare case retrieving the player's profile data fails.
 ]]
-function InventoryManager.getAccessories(userId: number): InventoryCategory?
+function InventoryManager.getAccessories(userId: number): ItemCategory?
 	return InventoryManager.getInventoryCategory(userId, ItemCategory.accessory)
 end
 
@@ -242,7 +242,7 @@ end
 
 	Can return nil in the rare case retrieving the player's profile data fails.
 ]]
-function InventoryManager.getFurniture(userId: number): InventoryCategory?
+function InventoryManager.getFurniture(userId: number): ItemCategory?
 	return InventoryManager.getInventoryCategory(userId, ItemCategory.furniture)
 end
 
@@ -251,7 +251,7 @@ end
 
 	Can return nil in the rare case retrieving the player's profile data fails.
 ]]
-function InventoryManager.getHomes(userId: number): InventoryCategory?
+function InventoryManager.getHomes(userId: number): ItemCategory?
 	return InventoryManager.getInventoryCategory(userId, ItemCategory.home)
 end
 
