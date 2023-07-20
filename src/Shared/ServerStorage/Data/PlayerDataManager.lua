@@ -17,12 +17,11 @@ local PlayerDataConfig = require(ReplicatedFirst.Shared.Configuration.PlayerData
 local Table = require(ReplicatedFirst.Shared.Utility.Table)
 local Types = require(ReplicatedFirst.Shared.Utility.Types)
 
-type ProfileStore = typeof(ProfileService.GetProfileStore())
-type Profile = typeof(ProfileService.GetProfileStore():LoadProfileAsync())
 type DataTreeDictionary = Types.DataTreeDictionary
 type DataTreeValue = Types.DataTreeValue
 type PlayerPersistentData = Types.PlayerPersistentData
 type PlayerPersistentDataPublic = Types.PlayerPersistentDataPublic
+type Profile = Types.Profile
 
 --#endregion
 
@@ -74,6 +73,16 @@ end
 
 --#endregion
 
+--#region Persistent Data Update Events
+
+--[[
+	Mapping from user IDs to the update signal for that user's data. The signal is fired whenever the profile is
+	retrieved or updated; essentially whenever the public data replica is updated.
+]]
+local persistentDataUpdatedSignals: { BindableEvent? } = {}
+
+--#endregion
+
 --#region Active Profiles
 
 local profileLoadedEvent = Instance.new "BindableEvent"
@@ -82,13 +91,13 @@ local profileUnloadedEvent = Instance.new "BindableEvent"
 
 local privatePlayerDataReplicas = {}
 
-local profiles = {}
+local profiles: { [Player]: Profile? } = {}
 
 --[[
 	Loads the player's data and replicates it to the client.
 ]]
 local function loadPlayerProfileAsync(player: Player)
-	local profile = ProfileStore:LoadProfileAsync(`Player_{player.UserId}`, "ForceLoad")
+	local profile: Profile = ProfileStore:LoadProfileAsync(`Player_{player.UserId}`, "ForceLoad")
 
 	if not profile then
 		warn(`Failed to load profile for {player.Name} (User ID {player.UserId})`)
@@ -109,7 +118,6 @@ local function loadPlayerProfileAsync(player: Player)
 	profile:Reconcile()
 
 	-- Manage release of profile
-
 	profile:ListenToRelease(function()
 		-- TODO: Reroute player. Ideally this should reroute to the previous place they were if it's open, and simply
 		-- reroute them otherwise.
@@ -148,6 +156,12 @@ local function loadPlayerProfileAsync(player: Player)
 	-- Set up public data replica for player
 
 	publicPlayerDataReplica:SetValue({ player.UserId }, filterProfileForPublic(profile.Data))
+
+	-- Fire update signal for player, if it exists
+
+	local updateSignal = persistentDataUpdatedSignals[player.UserId]
+
+	if updateSignal then updateSignal:Fire(profile.Data) end
 
 	-- Fire profile loaded event
 
@@ -213,6 +227,10 @@ local function viewOfflineProfileAsync(playerId: number): Profile?
 		publicPlayerDataReplica:SetValue({ playerId }, false)
 	elseif profile and not profiles[player] then
 		publicPlayerDataReplica:SetValue({ playerId }, filterProfileForPublic(profile.Data))
+
+		local updateSignal = persistentDataUpdatedSignals[playerId]
+
+		if updateSignal then updateSignal:Fire(profile.Data) end
 	end
 
 	return profile
@@ -222,34 +240,82 @@ end
 
 --#region Profile Subscriptions
 
-type SubscriptionInfo = {
-	numberOfSubscribers: number,
-	thread: thread,
-}
+-- Map of user IDs (of players who are subscribed to) to the subscription info.
+local subscriptionInfos: { { numberOfSubscribers: number, thread: thread }? } = {}
+
+local function decrementSubscription(userId: number)
+	local subscriptionInfo = subscriptionInfos[userId]
+
+	if not subscriptionInfo then return end
+
+	subscriptionInfo.numberOfSubscribers -= 1
+
+	if subscriptionInfo.numberOfSubscribers ~= 0 then return end
+
+	task.cancel(subscriptionInfo.thread)
+	subscriptionInfos[userId] = nil
+end
+
+local function incrementSubscription(userId: number)
+	local subscriptionInfo = subscriptionInfos[userId]
+
+	if subscriptionInfo then
+		subscriptionInfo.numberOfSubscribers += 1
+		return
+	end
+
+	subscriptionInfo = {
+		numberOfSubscribers = 1,
+		thread = task.spawn(function()
+			while true do
+				-- Wait for the next interval. The player must be offline and the profile old enough.
+
+				while true do
+					local profileInfo = profileArchive[userId]
+					local playerSubscribedTo = Players:GetPlayerByUserId(userId)
+
+					if profileInfo and time() - profileInfo.lastUpdated < OFFLINE_PROFILE_RETRIEVAL_INTERVAL then
+						task.wait(OFFLINE_PROFILE_RETRIEVAL_INTERVAL - (time() - profileInfo.lastUpdated))
+					elseif playerSubscribedTo and profiles[playerSubscribedTo] then
+						task.wait()
+					else
+						break
+					end
+				end
+
+				-- Update the profile.
+
+				viewOfflineProfileAsync(userId)
+			end
+		end),
+	}
+	subscriptionInfos[userId] = subscriptionInfo
+end
+
+--#region Players
 
 -- Map of players to the user ID of the player whose profile they are subscribed to.
-local subscriptions = {}
-
--- Map of user IDs (of players who are subscribed to) to the subscription info.
-local subscriptionInfos: { [number]: SubscriptionInfo } = {}
+local subscriptions: { [Player]: number? } = {}
 
 local function unsubscribePlayer(player: Player)
 	local subscription = subscriptions[player]
 
 	if not subscription then return end
 
-	local subscriptionInfo = subscriptionInfos[subscription]
-
 	subscriptions[player] = nil
-	subscriptionInfo.numberOfSubscribers -= 1
 
-	if subscriptionInfo.numberOfSubscribers ~= 0 then return end
-
-	task.cancel(subscriptionInfo.thread)
-	subscriptionInfos[subscription] = nil
+	decrementSubscription(subscription)
 end
 
 Players.PlayerRemoving:Connect(unsubscribePlayer)
+
+--#endregion
+
+--#region Server
+
+local serverSubscriptions: { true? } = {}
+
+--#endregion
 
 --#endregion
 
@@ -340,6 +406,10 @@ function PlayerDataManager.arrayInsertPersistent(player: Player, path: { string 
 	privatePlayerDataReplicas[player]:ArrayInsert(path, value)
 
 	publicPlayerDataReplica:SetValue({ player.UserId }, filterProfileForPublic(profile.Data))
+
+	local updateSignal = persistentDataUpdatedSignals[player.UserId]
+
+	if updateSignal then updateSignal:Fire(profile.Data) end
 end
 
 --[[
@@ -380,6 +450,10 @@ function PlayerDataManager.arrayRemovePersistent(player: Player, path: { string 
 	privatePlayerDataReplicas[player]:ArrayRemove(path, index)
 
 	publicPlayerDataReplica:SetValue({ player.UserId }, filterProfileForPublic(profile.Data))
+
+	local updateSignal = persistentDataUpdatedSignals[player.UserId]
+
+	if updateSignal then updateSignal:Fire(profile.Data) end
 end
 
 --[[
@@ -420,6 +494,10 @@ function PlayerDataManager.arraySetPersistent(player: Player, path: { string }, 
 	privatePlayerDataReplicas[player]:ArraySet(path, index, value)
 
 	publicPlayerDataReplica:SetValue({ player.UserId }, filterProfileForPublic(profile.Data))
+
+	local updateSignal = persistentDataUpdatedSignals[player.UserId]
+
+	if updateSignal then updateSignal:Fire(profile.Data) end
 end
 
 --[[
@@ -440,6 +518,24 @@ function PlayerDataManager.arraySetTemp(player: Player, path: { string }, index:
 	privateTempDataReplica:ArraySet(path, index, value)
 
 	publicPlayerTempDataReplica:SetValue({ player.UserId }, filterTempDataForPublic(privateTempDataReplica.Data))
+end
+
+--[[
+	Gets an event that fires when the given player's persistent data is updated.
+
+	---
+
+	@param userId The user ID of the player whose persistent data to get the update signal for.
+]]
+function PlayerDataManager.getPersistentDataUpdatedSignal(userId: number): RBXScriptSignal
+	local updateSignal = persistentDataUpdatedSignals[userId]
+
+	if not updateSignal then
+		updateSignal = Instance.new "BindableEvent"
+		persistentDataUpdatedSignals[userId] = updateSignal
+	end
+
+	return (updateSignal :: BindableEvent).Event
 end
 
 --[[
@@ -502,6 +598,10 @@ function PlayerDataManager.setValuePersistent(player: Player, path: { string }, 
 	privatePlayerDataReplicas[player]:SetValue(path, value)
 
 	publicPlayerDataReplica:SetValue({ player.UserId }, filterProfileForPublic(profile.Data))
+
+	local updateSignal = persistentDataUpdatedSignals[player.UserId]
+
+	if updateSignal then updateSignal:Fire(profile.Data) end
 end
 
 --[[
@@ -542,6 +642,10 @@ function PlayerDataManager.setValuesPersistent(player: Player, path: { string },
 	privatePlayerDataReplicas[player]:SetValues(path, values)
 
 	publicPlayerDataReplica:SetValue({ player.UserId }, filterProfileForPublic(profile.Data))
+
+	local updateSignal = persistentDataUpdatedSignals[player.UserId]
+
+	if updateSignal then updateSignal:Fire(profile.Data) end
 end
 
 --[[
@@ -577,6 +681,11 @@ end
 
 	It is recommended that the player be unsubscribed when they no longer need to view the persistent data to reduce
 	unnecessary requests.
+
+	---
+
+	@param player The player to subscribe.
+	@param dataUserId The user ID of the player whose persistent data to subscribe to.
 ]]
 function PlayerDataManager.subscribePlayerToPersistentData(player: Player, dataUserId: number?)
 	if subscriptions[player] == dataUserId then return end
@@ -587,39 +696,45 @@ function PlayerDataManager.subscribePlayerToPersistentData(player: Player, dataU
 
 	subscriptions[player] = dataUserId
 
-	local subscriptionInfo = subscriptionInfos[dataUserId]
+	incrementSubscription(dataUserId)
+end
 
-	if subscriptionInfo then
-		subscriptionInfo.numberOfSubscribers += 1
-		return
-	end
+--[[
+	Subscribes the server to a player's persistent data. Doing so means that the persistent data of the given player
+	will be routinely retrieved.
 
-	subscriptionInfo = {
-		numberOfSubscribers = 1,
-		thread = task.spawn(function()
-			while true do
-				-- Wait for the next interval. The player must be offline and the profile old enough.
+	---
 
-				while true do
-					local profileInfo = profileArchive[dataUserId]
-					local playerSubscribedTo = Players:GetPlayerByUserId(dataUserId)
+	The server can subscribe to any number of players' persistent data at a time.
 
-					if profileInfo and time() - profileInfo.lastUpdated < OFFLINE_PROFILE_RETRIEVAL_INTERVAL then
-						task.wait(OFFLINE_PROFILE_RETRIEVAL_INTERVAL - (time() - profileInfo.lastUpdated))
-					elseif playerSubscribedTo and profiles[playerSubscribedTo] then
-						task.wait()
-					else
-						break
-					end
-				end
+	It is recommended that the server be unsubscribed when it no longer needs to view the persistent data to reduce
+	unnecessary requests.
 
-				-- Update the profile.
+	---
 
-				viewOfflineProfileAsync(dataUserId)
-			end
-		end),
-	}
-	subscriptionInfos[dataUserId] = subscriptionInfo
+	@param userId The user ID of the player whose persistent data to subscribe to.
+]]
+function PlayerDataManager.subscribeServerToPersistentData(userId: number)
+	if serverSubscriptions[userId] then return end
+
+	serverSubscriptions[userId] = true
+
+	incrementSubscription(userId)
+end
+
+--[[
+	Unsubscribes the given player from any persistent data they're currently subscribed to.
+
+	---
+
+	@param userId The user ID of the player whose persistent data to unsubscribe from.
+]]
+function PlayerDataManager.unsubscribeServerFromPersistentData(userId: number)
+	if not serverSubscriptions[userId] then return end
+
+	serverSubscriptions[userId] = nil
+
+	decrementSubscription(userId)
 end
 
 --[[
