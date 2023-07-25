@@ -1,11 +1,12 @@
 --!strict
 
-local OFFLINE_PROFILE_RETRIEVAL_INTERVAL = 5
+local OFFLINE_PROFILE_RETRIEVAL_INTERVAL = 12
 
 --#region Imports
 
 local Players = game:GetService "Players"
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
+local ReplicatedStorage = game:GetService "ReplicatedStorage"
 local ServerStorage = game:GetService "ServerStorage"
 
 local serverStorageVendor = ServerStorage.Vendor
@@ -13,7 +14,8 @@ local serverStorageVendor = ServerStorage.Vendor
 local ProfileService = require(serverStorageVendor.ProfileService)
 local ReplicaService = require(serverStorageVendor.ReplicaService)
 
-local PlayerDataConfig = require(ReplicatedFirst.Shared.Configuration.PlayerDataConfig)
+local ReplicatedStorageConfiguration = require(ReplicatedStorage.Shared.Configuration)
+local PlayerDataInfo = ReplicatedStorageConfiguration.PlayerDataInfo
 local Table = require(ReplicatedFirst.Shared.Utility.Table)
 local Types = require(ReplicatedFirst.Shared.Utility.Types)
 
@@ -27,7 +29,7 @@ type Profile = Types.Profile
 
 --#region Profile Setup
 
-local ProfileStore = ProfileService.GetProfileStore("PlayerData", PlayerDataConfig.persistentDataTemplate)
+local ProfileStore = ProfileService.GetProfileStore("PlayerData", PlayerDataInfo.persistentDataTemplate)
 
 local publicPlayerDataReplica = ReplicaService.NewReplica {
 	ClassToken = ReplicaService.NewClassToken "PublicPlayerData",
@@ -97,7 +99,7 @@ local profiles: { [Player]: Profile? } = {}
 	Loads the player's data and replicates it to the client.
 ]]
 local function loadPlayerProfileAsync(player: Player)
-	local profile: Profile = ProfileStore:LoadProfileAsync(`Player_{player.UserId}`, "ForceLoad")
+	local profile: Profile = ProfileStore:LoadProfileAsync(`Player{player.UserId}`, "ForceLoad")
 
 	if not profile then
 		warn(`Failed to load profile for {player.Name} (User ID {player.UserId})`)
@@ -216,7 +218,7 @@ local function viewOfflineProfileAsync(playerId: number): Profile?
 	end
 
 	loadingOfflineProfiles[playerId] = true
-	local profile = ProfileStore:ViewProfileAsync(`Player_{playerId}`) :: Profile
+	local profile = ProfileStore:ViewProfileAsync(`Player{playerId}`) :: Profile
 	loadingOfflineProfiles[playerId] = nil
 
 	loadProfileIntoArchive(playerId, profile)
@@ -340,7 +342,7 @@ local function filterTempDataForPublic(data: {})
 end
 
 local function loadPlayerTempData(player: Player)
-	local initialTempData = Table.deepCopy(PlayerDataConfig.tempDataTemplate)
+	local initialTempData = Table.deepCopy(PlayerDataInfo.tempDataTemplate)
 
 	local privatePlayerTempData = ReplicaService.NewReplica {
 		ClassToken = ReplicaService.NewClassToken(`PrivatePlayerTempData{player.UserId}__${math.floor(time() * 10)}`),
@@ -527,15 +529,11 @@ end
 
 	@param userId The user ID of the player whose persistent data to get the update signal for.
 ]]
-function PlayerDataManager.getPersistentDataUpdatedSignal(userId: number): RBXScriptSignal
-	local updateSignal = persistentDataUpdatedSignals[userId]
+function PlayerDataManager.getPersistentDataUpdatedSignal(userId: number): RBXScriptSignal<PlayerPersistentData>
+	local updateSignal = persistentDataUpdatedSignals[userId] or Instance.new "BindableEvent"
+	persistentDataUpdatedSignals[userId] = updateSignal
 
-	if not updateSignal then
-		updateSignal = Instance.new "BindableEvent"
-		persistentDataUpdatedSignals[userId] = updateSignal
-	end
-
-	return (updateSignal :: BindableEvent).Event
+	return updateSignal.Event
 end
 
 --[[

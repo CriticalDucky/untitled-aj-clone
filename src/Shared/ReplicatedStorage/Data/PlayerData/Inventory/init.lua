@@ -1,16 +1,16 @@
-local Accessories = require(script.Accessories)
-local Furniture = require(script.Furniture)
-local Homes = require(script.Homes)
+local AccessoryItems = require(script.AccessoryItems)
+local FurnitureItems = require(script.FurnitureItems)
+local HomeItems = require(script.HomeItems)
 
 --[[
     A submodule of `PlayerData` that handles the player's inventory.
 ]]
 local Inventory = {}
 
-Inventory.accessories = Accessories
+Inventory.AccessoryItems = AccessoryItems
 
-Inventory.furniture = Furniture
+Inventory.FurnitureItems = FurnitureItems
 
-Inventory.homes = Homes
+Inventory.HomeItems = HomeItems
 
 return Inventory

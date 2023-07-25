@@ -50,4 +50,6 @@ Enums.TeleportRequestType = require(script:WaitForChild "TeleportRequestType")
 
 Enums.TeleportResponseType = require(script:WaitForChild "TeleportResponseType")
 
+Enums.TeleportToHomeResult = require(script:WaitForChild "TeleportToHomeResult")
+
 return Enums

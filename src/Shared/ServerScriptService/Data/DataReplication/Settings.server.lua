@@ -15,7 +15,7 @@ type PlayerPersistentData = Types.PlayerPersistentData
 
 --#endregion
 
-DataReplication.registerActionAsync("SetSettingFindOpenWorld", function(player: Player, value: boolean)
+DataReplication.registerActionAsync("SetSettingFindOpenWorld", function(player: Player, value)
 	if typeof(value) ~= "boolean" then
 		DataReplication.replicateAsync(
 			"SetSettingFindOpenWorld",
@@ -29,7 +29,7 @@ DataReplication.registerActionAsync("SetSettingFindOpenWorld", function(player: 
 	PlayerDataManager.setValuePersistent(player, { "settings", "findOpenWorld" }, value)
 end)
 
-DataReplication.registerActionAsync("SetSettingHomeLock", function(player: Player, value: number)
+DataReplication.registerActionAsync("SetSettingHomeLock", function(player: Player, value)
 	local validValue = false
 
 	for _, enumValue in pairs(HomeLockType) do
@@ -49,10 +49,12 @@ DataReplication.registerActionAsync("SetSettingHomeLock", function(player: Playe
 		return
 	end
 
+	assert(typeof(value) == "number")
+
 	PlayerDataManager.setValuePersistent(player, { "settings", "homeLock" }, value)
 end)
 
-DataReplication.registerActionAsync("SetSettingMusicVolume", function(player: Player, value: number)
+DataReplication.registerActionAsync("SetSettingMusicVolume", function(player: Player, value)
 	if typeof(value) ~= "number" or value ~= value or value ~= math.clamp(value, 0, 1) then
 		DataReplication.replicateAsync(
 			"SetSettingMusicVolume",
@@ -66,7 +68,7 @@ DataReplication.registerActionAsync("SetSettingMusicVolume", function(player: Pl
 	PlayerDataManager.setValuePersistent(player, { "settings", "musicVolume" }, value)
 end)
 
-DataReplication.registerActionAsync("SetSettingSFXVolume", function(player: Player, value: number)
+DataReplication.registerActionAsync("SetSettingSFXVolume", function(player: Player, value)
 	if typeof(value) ~= "number" or value ~= value or value ~= math.clamp(value, 0, 1) then
 		DataReplication.replicateAsync(
 			"SetSettingSFXVolume",

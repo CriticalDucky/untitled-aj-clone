@@ -11,6 +11,9 @@ local Fusion = require(ReplicatedFirst:WaitForChild("Vendor"):WaitForChild "Fusi
 
 local ReplicaCollection =
 	require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Replication"):WaitForChild "ReplicaCollection")
+local Types = require(ReplicatedFirst:WaitForChild("Shared"):WaitForChild("Utility"):WaitForChild "Types")
+
+type PlayerPersistentData = Types.PlayerPersistentData
 
 local Value = Fusion.Value
 
@@ -20,7 +23,8 @@ local player = Players.LocalPlayer
 
 --#region Private Player Data
 
-local privatePlayerData = ReplicaCollection.waitForReplica(`PrivatePlayerData{player.UserId}`).Data
+local privatePlayerData =
+	ReplicaCollection.waitForReplica(`PrivatePlayerData{player.UserId}`).Data :: PlayerPersistentData
 
 --#endregion
 

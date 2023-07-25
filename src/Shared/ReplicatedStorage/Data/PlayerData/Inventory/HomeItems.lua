@@ -21,12 +21,12 @@ local DataReplication = require(replicatedStorageSharedData:WaitForChild "DataRe
 
 local Types = require(ReplicatedFirst:WaitForChild("Shared"):WaitForChild("Utility"):WaitForChild "Types")
 
-type Home = Types.Home
+type Home = Types.ItemHome
 
 --#endregion
 
 --[[
-	A submodule of `PlayerData` that handles the player's homes.
+	A submodule of `PlayerData` that handles the player's homes inventory.
 ]]
 local Homes = {}
 

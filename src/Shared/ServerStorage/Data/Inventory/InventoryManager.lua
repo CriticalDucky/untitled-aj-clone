@@ -41,11 +41,12 @@ local replicatedStorageData = replicatedStorageShared.Data
 local replicatedStorageInventory = replicatedStorageData.Inventory
 local enumsFolder = replicatedFirstShared.Enums
 
+local Configuration = require(replicatedFirstShared.Configuration)
 local PlayerDataManager = require(dataFolder.PlayerDataManager)
 local Items = require(replicatedStorageInventory.Items)
 local Table = require(utilityFolder.Table)
 local Signal = require(replicatedFirstVendor.Signal.Signal)
-local PlayerDataConfig = require(replicatedFirstShared.Configuration.PlayerDataConfig)
+local PlayerDataInfo = Configuration.PlayerDataInfo
 local Id = require(utilityFolder.Id)
 local Types = require(utilityFolder.Types)
 local ItemCategory = require(enumsFolder.ItemCategory)
@@ -423,7 +424,7 @@ function InventoryManager.isInventoryFull(
 	if not inventoryCategory then return false, nil end
 
 	local numItems = #inventoryCategory
-	local limit = PlayerDataConfig.inventoryLimits[itemCategory]
+	local limit = PlayerDataInfo.inventoryLimits[itemCategory]
 
 	if numItems == limit then return true, true end
 

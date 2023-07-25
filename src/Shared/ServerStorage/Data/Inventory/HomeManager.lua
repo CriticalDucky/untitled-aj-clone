@@ -17,16 +17,16 @@ local replicatedStorageShared = ReplicatedStorage.Shared
 local enums = replicatedFirstShared.Enums
 local serverFolder = replicatedStorageShared.Server
 local utilityFolder = replicatedFirstShared.Utility
-local configurationFolder = replicatedFirstShared.Configuration
 
+local Configuration = require(replicatedFirstShared.Configuration)
 local InventoryManager = require(inventoryServerStorage.InventoryManager)
 local PlayerDataManager = require(dataServerStorage.PlayerDataManager)
 -- local Items = require(inventoryReplicatedStorage.Items)
 local ItemCategory = require(enums.ItemCategory)
 -- local HomeType = require(enums.ItemTypeHome)
-local PlayerDataConfig = require(replicatedFirstShared.Configuration.PlayerDataConfig)
+local PlayerDataInfo = Configuration.PlayerDataInfo
 local ServerGroupEnum = require(enums.ServerGroup)
-local ServerTypeGroups = require(configurationFolder.ServerTypeGroups)
+local ServerTypeGroups = Configuration.ServerTypeGroups
 local SpacialQuery = require(utilityFolder.SpacialQuery)
 local Serialization = require(utilityFolder.Serialization)
 -- local ServerData = require(serverStorageShared.ServerManagement.ServerData)
@@ -326,7 +326,7 @@ function HomeManager.isPlacedItemsFull(userId: number?, numItemsToAdd: number?, 
 
 	numItemsToAdd = numItemsToAdd or 0
 	assert(numItemsToAdd)
-	local maxFurniturePlaced = PlayerDataConfig.inventoryLimits.furniture
+	local maxFurniturePlaced = PlayerDataInfo.inventoryLimits.furniture
 
 	local success, placedItems = HomeManager.getPlacedItems(userId, slot)
 

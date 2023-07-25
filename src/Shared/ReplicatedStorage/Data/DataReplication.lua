@@ -1,5 +1,6 @@
 --#region Imports
 
+local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local RunService = game:GetService "RunService"
 local ServerStorage = game:GetService "ServerStorage"
 
@@ -8,6 +9,9 @@ local isServer = RunService:IsServer()
 local PlayerDataManager = if isServer
 	then require(ServerStorage:WaitForChild("Shared"):WaitForChild("Data"):WaitForChild "PlayerDataManager")
 	else nil
+local Types = require(ReplicatedFirst:WaitForChild("Shared"):WaitForChild("Utility"):WaitForChild("Types"))
+
+type DataTreeValue = Types.DataTreeValue
 
 --#endregion
 
@@ -37,7 +41,7 @@ local StateReplication = {}
 	The given action must be registered for it to replicate. If it is not, this function will yield until it is. See
 	`StateReplication.registerActionAsync` for more information.
 ]]
-function StateReplication.replicateAsync(action: string, data: any, player: Player?)
+function StateReplication.replicateAsync(action: string, data: DataTreeValue, player: Player?)
 	if isServer and not player then
 		warn "Player parameter is missing, so no actions will be replicated."
 		return
@@ -98,7 +102,7 @@ end
 	On the server, you can assume that the player's persistent data is loaded when the handler is called. (This is
 	because the inverse should never happen; and if it somehow does, the handler will automatically be ignored.)
 ]]
-function StateReplication.registerActionAsync(name: string, handler: ((Player, any) -> () | (any) -> ())?)
+function StateReplication.registerActionAsync(name: string, handler: ((Player, unknown) -> () | (any) -> ())?)
 	if stateReplicationEvents[name] then
 		warn(`Action '{name}' is already registered. You cannot reregister an action.`)
 		return
@@ -115,7 +119,7 @@ function StateReplication.registerActionAsync(name: string, handler: ((Player, a
 			replicationEvent.OnServerEvent:Connect(function(player, ...)
 				if not PlayerDataManager.persistentDataIsLoaded(player) then return end
 
-				(handler :: (Player, any) -> ())(player, ...)
+				(handler :: (Player, unknown) -> ())(player, ...)
 			end)
 		end
 	else

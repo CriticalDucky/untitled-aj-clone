@@ -1,3 +1,5 @@
+--!strict
+
 --#region Imports
 
 -- Services

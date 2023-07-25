@@ -11,7 +11,7 @@ local function model(name)
 end
 
 return {
-	[homeTypeEnum.devHome] = {
+	[homeTypeEnum.developerHome] = {
 		name = "Developer Home",
 		model = model "DevHome",
 	},

@@ -1,6 +1,7 @@
 --#region Imports
 
 local Currency = require(script.Currency)
+local Homes = require(script.Homes)
 local Inventory = require(script.Inventory)
 local PublicPlayerData = require(script.PublicPlayerData)
 local Settings = require(script.Settings)
@@ -12,12 +13,14 @@ local Settings = require(script.Settings)
 ]]
 local PlayerState = {}
 
-PlayerState.currency = Currency
+PlayerState.Currency = Currency
 
-PlayerState.inventory = Inventory
+PlayerState.Homes = Homes
 
-PlayerState.publicPlayerData = PublicPlayerData
+PlayerState.Inventory = Inventory
 
-PlayerState.settings = Settings
+PlayerState.PublicPlayerData = PublicPlayerData
+
+PlayerState.Settings = Settings
 
 return PlayerState

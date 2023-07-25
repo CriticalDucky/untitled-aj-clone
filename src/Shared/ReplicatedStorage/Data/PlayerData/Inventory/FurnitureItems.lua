@@ -20,7 +20,7 @@ local Types = require(ReplicatedFirst:WaitForChild("Shared"):WaitForChild("Utili
 
 -- Types
 
-type Furniture = Types.Furniture
+type Furniture = Types.ItemFurniture
 
 --#endregion
 

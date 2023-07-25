@@ -1,3 +1,5 @@
+--!strict
+
 --#region Imports
 
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
@@ -10,5 +12,8 @@ local PlayerDataManager = require(ServerStorage.Shared.Data.PlayerDataManager)
 
 DataReplication.registerActionAsync(
 	"SubscribeToPersistentData",
-	function(player, userId) PlayerDataManager.subscribePlayerToPersistentData(player, userId) end
+	function(player, userId)
+		if typeof(userId) ~= "number" or userId ~= userId then return end
+
+		PlayerDataManager.subscribePlayerToPersistentData(player, userId) end
 )

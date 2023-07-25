@@ -7,20 +7,25 @@ local Types = require(ReplicatedFirst.Shared.Utility.Types)
 
 type PlayerPersistentData = Types.PlayerPersistentData
 
-type PlayerDataConfig = {
-	persistentDataTemplate: PlayerPersistentData,
-	tempDataTemplate: {},
+type PlayerDataInfo = {
 	inventoryLimits: {
 		accessories: number,
 		furniture: number,
 		homes: number,
 	},
+	persistentDataTemplate: PlayerPersistentData,
+	tempDataTemplate: {},
 }
 
 --[[
 	Configuration for player data.
 ]]
-local PlayerDataConfig: PlayerDataConfig = {
+local PlayerDataInfo: PlayerDataInfo = {
+	inventoryLimits = {
+		accessories = 500,
+		furniture = 500,
+		homes = 200,
+	},
 	persistentDataTemplate = {
 		currency = {
 			money = 0,
@@ -44,11 +49,6 @@ local PlayerDataConfig: PlayerDataConfig = {
 		},
 	},
 	tempDataTemplate = {},
-	inventoryLimits = {
-		accessories = 500,
-		furniture = 500,
-		homes = 200,
-	},
 }
 
-return PlayerDataConfig
+return PlayerDataInfo

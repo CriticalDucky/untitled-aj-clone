@@ -1,3 +1,5 @@
+--!strict
+
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
 
 local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
@@ -5,11 +7,11 @@ local replicatedFirstVendor = ReplicatedFirst:WaitForChild "Vendor"
 local Promise = require(replicatedFirstVendor:WaitForChild "Promise")
 local Fusion = require(replicatedFirstVendor:WaitForChild "Fusion")
 
-export type Accessory = {
+export type ItemAccessory = {
 	type: number,
 }
 
-export type Furniture = {
+export type ItemFurniture = {
 	type: number,
 }
 
@@ -21,13 +23,17 @@ export type UserEnum = string | number
 
 export type Profile = {
 	Data: PlayerPersistentData,
+	Release: (Profile) -> (),
+	AddUserId: (Profile, number) -> (),
+	Reconcile: (Profile) -> (),
+	ListenToRelease: (Profile, () -> ()) -> (),
 }
 
-export type DataTreeArray = { DataTreeValue }
+export type DataTreeArray = { DataTreeValue? }
 
-export type DataTreeDictionary = { [string]: DataTreeValue }
+export type DataTreeDictionary = { [string]: DataTreeValue? }
 
-export type DataTreeValue = number | string | boolean | DataTreeArray | DataTreeDictionary
+export type DataTreeValue = number | string | boolean | nil | DataTreeArray | DataTreeDictionary
 
 export type PlayerPersistentData = {
 	currency: {
@@ -36,14 +42,14 @@ export type PlayerPersistentData = {
 	home: {
 		selected: string?,
 		server: {
-			id: string?,
-			code: string?,
+			accessCode: string?,
+			privateServerId: string?,
 		},
 	},
 	inventory: {
-		accessories: { [string]: Accessory },
-		furniture: { [string]: Furniture },
-		homes: { [string]: Home },
+		accessories: { [string]: ItemAccessory? },
+		furniture: { [string]: ItemFurniture? },
+		homes: { [string]: ItemHome? },
 	},
 	settings: {
 		findOpenWorld: boolean,
@@ -55,9 +61,9 @@ export type PlayerPersistentData = {
 
 export type PlayerPersistentDataPublic = {
 	inventory: {
-		accessories: { [string]: Accessory },
-		furniture: { [string]: Furniture },
-		homes: { [string]: Home },
+		accessories: { [string]: ItemAccessory? },
+		furniture: { [string]: ItemFurniture? },
+		homes: { [string]: ItemHome? },
 	},
 	settings: {
 		homeLock: number,
@@ -90,7 +96,7 @@ export type PartyUnit = {
 	time: TimeRange,
 }
 
-export type Home = {
+export type ItemHome = {
 	type: number,
 }
 
@@ -113,6 +119,10 @@ export type PlacedItem = {
 }
 
 export type Promise = typeof(Promise.new(function() end))
+
+export type ServerDataHome = {
+	homeOwner: number,
+}
 
 export type ServerIdentifier = {
 	serverType: UserEnum,

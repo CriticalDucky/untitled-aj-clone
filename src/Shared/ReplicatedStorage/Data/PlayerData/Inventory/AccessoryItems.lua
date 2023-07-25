@@ -20,7 +20,7 @@ local Types = require(ReplicatedFirst:WaitForChild("Shared"):WaitForChild("Utili
 
 -- Types
 
-type Accessory = Types.Accessory
+type Accessory = Types.ItemAccessory
 
 --#endregion
 
