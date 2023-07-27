@@ -41,10 +41,7 @@ export type PlayerPersistentData = {
 	},
 	home: {
 		selected: string?,
-		server: {
-			accessCode: string?,
-			privateServerId: string?,
-		},
+		server: ServerIdentifier?,
 	},
 	inventory: {
 		accessories: { [string]: ItemAccessory? },
@@ -120,21 +117,32 @@ export type PlacedItem = {
 
 export type Promise = typeof(Promise.new(function() end))
 
-export type ServerDataHome = {
+export type ServerDictionaryDataHome = {
 	homeOwner: number,
 }
 
+-- export type ServerIdentifier = {
+-- 	serverType: UserEnum,
+-- 	jobId: string?,
+-- 	worldIndex: number?,
+-- 	locationEnum: UserEnum?,
+-- 	homeOwner: number?,
+-- 	partyType: UserEnum?,
+-- 	partyIndex: number?,
+-- 	minigameType: UserEnum?,
+-- 	minigameIndex: number?,
+-- 	privateServerId: string?,
+-- }
+
 export type ServerIdentifier = {
-	serverType: UserEnum,
-	jobId: string?,
-	worldIndex: number?,
-	locationEnum: UserEnum?,
-	homeOwner: number?,
-	partyType: UserEnum?,
-	partyIndex: number?,
-	minigameType: UserEnum?,
-	minigameIndex: number?,
-	privateServerId: string?,
+	accessCode: string,
+	privateServerId: string,
+}
+
+export type UniverseServerCatalog = {
+	worlds: { { [string]: ServerIdentifier } }, -- worlds -> worldIndex -> locationType -> ServerData
+	parties: { [string]: { ServerIdentifier } }, -- parties -> partyType -> serverIndex -> ServerData
+	minigames: { [string]: { ServerIdentifier } }, -- minigames -> minigameType -> serverIndex -> ServerData
 }
 
 return nil

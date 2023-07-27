@@ -20,7 +20,7 @@ local PlaceIDs = ServerStorageConfiguration.PlaceIDs
 local Types = require(ReplicatedFirst.Shared.Utility.Types)
 
 type ItemHome = Types.ItemHome
-type ServerDataHome = Types.ServerDataHome
+type ServerDataHome = Types.ServerDictionaryDataHome
 
 local serverDictionary = DataStoreService:GetDataStore "ServerDictionary"
 
@@ -76,6 +76,7 @@ local function initializePersistentData(player: Player)
 
 		if registerServerSuccess and PlayerDataManager.persistentDataIsLoaded(player) then
 			PlayerDataManager.setValuePersistent(player, { "home", "server", "accessCode" }, newAccessCode)
+			PlayerDataManager.setValuePersistent(player, { "home", "server", "privateServerId" }, newServerId)
 		else
 			warn(`Failed to register a home server for {player}!`)
 		end

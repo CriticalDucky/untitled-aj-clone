@@ -15,7 +15,7 @@ local PlaceIds = ServerStorageConfiguration.PlaceIDs
 local Types = require(ReplicatedFirst.Shared.Utility.Types)
 
 type PlayerPersistentData = Types.PlayerPersistentData
-type ServerDataHome = Types.ServerDataHome
+type ServerDataHome = Types.ServerDictionaryDataHome
 
 --#endregion
 
@@ -66,9 +66,11 @@ function UniverseNavigation.teleportToHomeAsync(target: Player, destination: num
 
 	-- Retrieve the access code.
 
-	local accessCode = destinationData.home.server.accessCode
+	local homeServerInfo = destinationData.home.server
 
-	if not accessCode then return TeleportToHomeResult.homeNotFound end
+	if not homeServerInfo then return TeleportToHomeResult.homeNotFound end
+
+	local accessCode = homeServerInfo.accessCode
 
 	-- Teleport the player to the home.
 
