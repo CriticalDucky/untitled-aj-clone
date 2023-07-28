@@ -16,6 +16,8 @@ local Types = require(ReplicatedFirst.Shared.Utility.Types)
 
 type WorldData = Types.WorldData
 
+local catalogInfo = DataStoreService:GetDataStore "CatalogInfo"
+
 local minigameCatalog = DataStoreService:GetDataStore "MinigameCatalog"
 local partyCatalog = DataStoreService:GetDataStore "PartyCatalog"
 local worldCatalog = DataStoreService:GetDataStore "WorldCatalog"
@@ -41,9 +43,29 @@ function UniverseControlPanel.addLocation(locationName: string, placeId: number)
 
 	operationLock = true
 
-	print(("Adding location '%s'…"):format(locationName))
+	print(("Adding location '%s' with place ID %d…"):format(locationName, placeId))
 
-	local getCountSuccess, worldCount = SafeDataStore.safeGetAsync(worldCatalog, "Count")
+	local getLocationListSuccess, locationList = SafeDataStore.safeGetAsync(catalogInfo, "WorldLocationList")
+
+	if not getLocationListSuccess then
+		warn "Failed to retrieve the world location list."
+		operationLock = false
+		return
+	end
+
+	print "Retrieved the world location list."
+
+	locationList = locationList or {}
+
+	if locationList[locationName] then
+		warn "The location already exists."
+		operationLock = false
+		return
+	end
+
+	task.wait(DATASTORE_MODIFY_COOLDOWN)
+
+	local getCountSuccess, worldCount = SafeDataStore.safeGetAsync(catalogInfo, "WorldCount")
 
 	if not getCountSuccess then
 		warn "Failed to retrieve the world count."
@@ -51,13 +73,9 @@ function UniverseControlPanel.addLocation(locationName: string, placeId: number)
 		return
 	end
 
-	if not worldCount or worldCount == 0 then
-		warn "Worlds must be created before locations can be added."
-		operationLock = false
-		return
-	end
+	worldCount = worldCount or 0
 
-	print "Retrieved world count."
+	print "Retrieved the world count."
 
 	for i = 1, worldCount do
 		local worldData
@@ -72,18 +90,13 @@ function UniverseControlPanel.addLocation(locationName: string, placeId: number)
 
 		print(("Retrieved world %d data."):format(i))
 
-		if worldData[locationName] then
-			warn(("Location '%s' already exists in world %d."):format(locationName, i))
-			continue
-		end
-
 		local accessCode, privateServerId
 
 		repeat
 			local reserveSuccess, newAccessCode, newPrivateServerId = SafeTeleport.safeReserveServerAsync(placeId)
 
 			if i == 1 and not reserveSuccess then
-				warn "The given place ID may not be valid."
+				warn "Failed to reserve the first server. The given place ID may not be valid."
 				operationLock = false
 				return
 			end
@@ -117,9 +130,42 @@ function UniverseControlPanel.addLocation(locationName: string, placeId: number)
 		print(("Added location '%s' to world %d."):format(locationName, i))
 	end
 
+	locationList[locationName] = {
+		placeId = placeId,
+	}
+
+	task.wait(DATASTORE_MODIFY_COOLDOWN)
+
+	repeat
+		local setSuccess = SafeDataStore.safeSetAsync(catalogInfo, "WorldLocationList", locationList)
+	until setSuccess
+
+	print(("Added location '%s' to the world location list."):format(locationName))
+
 	print(("Location '%s' has been added to all worlds."):format(locationName))
 
 	operationLock = false
+end
+
+function UniverseControlPanel.addMinigame(name: string, placeId: number)
+	assert(not operationLock, "An operation is already in progress.")
+	assert(typeof(name) == "string", "The minigame name must be a string.")
+	assert(typeof(placeId) == "number" and placeId == placeId, "The place ID must be a valid number.")
+	assert(placeId == math.floor(placeId), "The place ID must be an integer.")
+
+	operationLock = true
+
+	print(("Adding minigame '%s' with place ID %d…"):format(name, placeId))
+
+	local getServerCountSuccess, serverCount = SafeDataStore.safeGetAsync(catalogInfo, "MinigameServerCount")
+
+	if not getServerCountSuccess then
+		warn "Failed to retrieve the minigame server count."
+		operationLock = false
+		return
+	end
+
+
 end
 
 function UniverseControlPanel.printWorld(world: number)
@@ -158,7 +204,7 @@ function UniverseControlPanel.printWorldCount()
 
 	print "Retrieving the world count…"
 
-	local getCountSuccess, count = SafeDataStore.safeGetAsync(worldCatalog, "Count")
+	local getCountSuccess, count = SafeDataStore.safeGetAsync(catalogInfo, "WorldCount")
 
 	if not getCountSuccess then
 		warn "Failed to retrieve the world count."
@@ -185,7 +231,27 @@ function UniverseControlPanel.removeLocation(locationName: string)
 
 	print(("Removing location '%s'…"):format(locationName))
 
-	local getCountSuccess, worldCount = SafeDataStore.safeGetAsync(worldCatalog, "Count")
+	local getLocationListSuccess, locationList = SafeDataStore.safeGetAsync(catalogInfo, "WorldLocationList")
+
+	if not getLocationListSuccess then
+		warn "Failed to retrieve the world location list."
+		operationLock = false
+		return
+	end
+
+	print "Retrieved the world location list."
+
+	locationList = locationList or {}
+
+	if not locationList[locationName] then
+		warn "The location does not exist."
+		operationLock = false
+		return
+	end
+
+	task.wait(DATASTORE_MODIFY_COOLDOWN)
+
+	local getCountSuccess, worldCount = SafeDataStore.safeGetAsync(catalogInfo, "WorldCount")
 
 	if not getCountSuccess then
 		warn "Failed to retrieve the world count."
@@ -195,11 +261,15 @@ function UniverseControlPanel.removeLocation(locationName: string)
 
 	print "Retrieved world count."
 
-	if not worldCount or worldCount == 0 then
-		warn "Worlds must be created before locations can be removed."
-		operationLock = false
-		return
-	end
+	worldCount = worldCount or 0
+
+	locationList[locationName] = nil
+
+	repeat
+		local setSuccess = SafeDataStore.safeSetAsync(catalogInfo, "WorldLocationList", locationList)
+	until setSuccess
+
+	print(("Removed location '%s' from the world location list."):format(locationName))
 
 	for i = 1, worldCount do
 		local worldData
@@ -213,21 +283,6 @@ function UniverseControlPanel.removeLocation(locationName: string)
 		until getSuccess
 
 		print(("Retrieved world %d data."):format(i))
-
-		if not worldData[locationName] then
-			warn(("Location '%s' does not exist in world %d."):format(locationName, i))
-			continue
-		end
-
-		local privateServerId = worldData[locationName].privateServerId
-
-		task.wait(DATASTORE_MODIFY_COOLDOWN)
-
-		repeat
-			local removeSuccess = SafeDataStore.safeRemoveAsync(serverDictionary, privateServerId)
-		until removeSuccess
-
-		print(("Removed server dictionary entry for location '%s' in world %d."):format(locationName, i))
 
 		worldData[locationName] = nil
 
@@ -256,7 +311,7 @@ function UniverseControlPanel.setWorldCount(count: number, force: true?)
 
 	print(("Setting the world count to %d…"):format(count))
 
-	local getCountSuccess, currentCount = SafeDataStore.safeGetAsync(worldCatalog, "Count")
+	local getCountSuccess, currentCount = SafeDataStore.safeGetAsync(catalogInfo, "WorldCount")
 
 	if not getCountSuccess then
 		warn "Failed to retrieve the current world count."
@@ -278,7 +333,7 @@ function UniverseControlPanel.setWorldCount(count: number, force: true?)
 		task.wait(DATASTORE_MODIFY_COOLDOWN)
 
 		repeat
-			local setSuccess = SafeDataStore.safeSetAsync(worldCatalog, "Count", count)
+			local setSuccess = SafeDataStore.safeSetAsync(catalogInfo, "WorldCount", count)
 		until setSuccess
 
 		print(("Updated the world counter to %d."):format(count))
@@ -376,7 +431,7 @@ function UniverseControlPanel.setWorldCount(count: number, force: true?)
 		task.wait(DATASTORE_MODIFY_COOLDOWN)
 
 		repeat
-			local setSuccess = SafeDataStore.safeSetAsync(worldCatalog, "Count", count)
+			local setSuccess = SafeDataStore.safeSetAsync(catalogInfo, "WorldCount", count)
 		until setSuccess
 
 		print(("Updated the world counter to %d."):format(count))
