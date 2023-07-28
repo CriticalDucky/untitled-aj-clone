@@ -13,7 +13,7 @@ local HomeModels = require(ServerStorage.Models.HomeModels)
 local PlayerDataManager = require(ServerStorage.Shared.Data.PlayerDataManager)
 local Types = require(ReplicatedFirst.Shared.Utility.Types)
 
-type ServerDataHome = Types.ServerDataHome
+type ServerDataHome = Types.ServerDictionaryDataHome
 
 local serverDictionary = DataStoreService:GetDataStore "ServerDictionary"
 

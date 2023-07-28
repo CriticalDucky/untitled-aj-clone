@@ -17,38 +17,38 @@ local ServerTypeGroups = require(configurationFolder.ServerTypeGroups)
 local serverIdentifier = LocalServerInfo.getServerIdentifier()
 
 local runServiceConnection = RunService.Heartbeat:Connect(function()
-    if LiveServerData.canPublish() then
-        local serverInfo
+    -- if LiveServerData.canPublish() then
+    --     local serverInfo
 
-        local function getUserIds()
-            local userIds = {}
+    --     local function getUserIds()
+    --         local userIds = {}
 
-            for _, player in pairs(Players:GetPlayers()) do
-                table.insert(userIds, player.UserId)
-            end
+    --         for _, player in pairs(Players:GetPlayers()) do
+    --             table.insert(userIds, player.UserId)
+    --         end
 
-            return userIds
-        end
+    --         return userIds
+    --     end
 
-        serverInfo = {}
+    --     serverInfo = {}
 
-        --Optional custom server info
+    --     --Optional custom server info
 
-        if ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
-        elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
-        elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome) then
-        elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isParty) then
-        elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isMinigame) then
-        end
+    --     if ServerTypeGroups.serverInGroup(ServerGroupEnum.isRouting) then
+    --     elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isLocation) then
+    --     elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isHome) then
+    --     elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isParty) then
+    --     elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isMinigame) then
+    --     end
 
-        serverInfo.players = getUserIds()
+    --     serverInfo.players = getUserIds()
 
-        if not serverIdentifier then
-            return
-        end
+    --     if not serverIdentifier then
+    --         return
+    --     end
 
-        LiveServerData.publish(serverIdentifier, serverInfo)
-    end
+    --     LiveServerData.publish(serverIdentifier, serverInfo)
+    -- end
 end)
 
 game:BindToClose(function()

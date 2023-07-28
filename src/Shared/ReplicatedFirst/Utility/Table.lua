@@ -1,6 +1,64 @@
-local Table = {}
+--!strict
 
-_G.Table = Table -- NOT for use in production code, only for debugging purposes
+local function tableToString(t: { [any]: any }, indent: number?, initialIndent: number?): string
+	local textElements: { string } = {}
+
+	table.insert(textElements, "{")
+
+	for k, v in pairs(t) do
+		if indent then
+			table.insert(textElements, "\n")
+			table.insert(textElements, (" "):rep(indent):rep((initialIndent or 0) + 1))
+		else
+			table.insert(textElements, " ")
+		end
+
+		if typeof(k) == "string" then
+			table.insert(textElements, k)
+		elseif typeof(k) == "number" then
+			table.insert(textElements, ("[%s]"):format(tostring(k)))
+		elseif typeof(k) == "table" then
+			table.insert(textElements, "[table]")
+		elseif typeof(k) == "Instance" then
+			table.insert(textElements, ("[%s: %s]"):format(k.Name, k.ClassName))
+		else
+			table.insert(textElements, ("[%s: %s]"):format(tostring(k), typeof(k)))
+		end
+
+		table.insert(textElements, " = ")
+
+		if typeof(v) == "string" then
+			table.insert(textElements, ("%q"):format(v))
+		elseif typeof(v) == "number" then
+			table.insert(textElements, tostring(v))
+		elseif typeof(v) == "table" then
+			table.insert(textElements, tableToString(v, indent, if indent then (initialIndent or 0) + 1 else nil))
+		elseif typeof(v) == "Instance" then
+			table.insert(textElements, ("%s: %s"):format(v.Name, v.ClassName))
+		else
+			table.insert(textElements, ("%s: %s"):format(tostring(v), typeof(v)))
+		end
+
+		table.insert(textElements, ",")
+	end
+
+	if #textElements > 1 and not indent then
+		table.remove(textElements)
+	end
+
+	if #textElements > 1 and indent then
+		table.insert(textElements, "\n")
+		table.insert(textElements, (" "):rep(indent):rep(initialIndent or 0))
+	else
+		table.insert(textElements, " ")
+	end
+
+	table.insert(textElements, "}")
+
+	return table.concat(textElements)
+end
+
+local Table = {}
 
 function Table.dictLen(dict) -- returns the length of a dictionary (table with no sequential keys)
 	local count = 0
@@ -25,11 +83,6 @@ function Table.deepCopy<T>(t: { T } | T) -- returns a deep copy of a table
 
 	return t
 end
-
---[[
-	Makes a deep copy of the provided table and deep freezes it.
-]]
-function Table.deepSnapshot<T>(t: T): T return Table.deepFreeze(Table.deepCopy(t)) end
 
 function Table.copy(t) -- returns a shallow copy of a table
 	assert(type(t) == "table", "Table.copy: t must be a table")
@@ -76,40 +129,44 @@ function Table.findMin(t) -- returns the key and value of the minimum value in a
 	return k, v
 end
 
-function Table.print(t, note, printTypes) -- takes a table and prints it to the console recursively with an optional note and printTypes flag
-	local MAX_PRINTS = 300
-	local prints = 0
-
-	local function printTable(t, indent)
-		if prints >= MAX_PRINTS then return end
-
-		for k, v in pairs(t) do
-			local baseString = (printTypes and " (%s)" or "")
-			local keyType = baseString:format(typeof(k))
-			local valueType = baseString:format(typeof(v))
-
-			if type(v) == "table" then
-				print(indent .. tostring(k) .. keyType .. ":")
-
-				prints += 1
-
-				printTable(v, indent .. "    ")
-			else
-				print(indent .. tostring(k) .. keyType .. " : " .. tostring(v) .. valueType)
-
-				prints += 1
-			end
-		end
-	end
-
-	print("Printing", note or tostring(t))
-
-	if type(t) == "table" then
-		printTable(t, "")
-	else
-		print(t)
-	end
+function Table.toString(table: { [any]: any }, indent: number?)
+	return tableToString(table, indent)
 end
+
+-- function Table.print(t, note, printTypes) -- takes a table and prints it to the console recursively with an optional note and printTypes flag
+-- 	local MAX_PRINTS = 300
+-- 	local prints = 0
+
+-- 	local function printTable(t, indent)
+-- 		if prints >= MAX_PRINTS then return end
+
+-- 		for k, v in pairs(t) do
+-- 			local baseString = (printTypes and " (%s)" or "")
+-- 			local keyType = baseString:format(typeof(k))
+-- 			local valueType = baseString:format(typeof(v))
+
+-- 			if type(v) == "table" then
+-- 				print(indent .. tostring(k) .. keyType .. ":")
+
+-- 				prints += 1
+
+-- 				printTable(v, indent .. "    ")
+-- 			else
+-- 				print(indent .. tostring(k) .. keyType .. " : " .. tostring(v) .. valueType)
+
+-- 				prints += 1
+-- 			end
+-- 		end
+-- 	end
+
+-- 	print("Printing", note or tostring(t))
+
+-- 	if type(t) == "table" then
+-- 		printTable(t, "")
+-- 	else
+-- 		print(t)
+-- 	end
+-- end
 
 function Table.merge(...) -- merges multiple tables into one, later tables overwrite earlier tables
 	local merged = {}

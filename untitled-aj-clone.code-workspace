@@ -56,16 +56,17 @@
   },
   "extensions": {
     "recommendations": [
-      "johnnymorganz.stylua",
       "evaera.vscode-rojo",
-      "johnnymorganz.luau-lsp"
+      "hexcede.roblox-vanilla-icons",
+      "johnnymorganz.luau-lsp",
+      "johnnymorganz.stylua"
     ]
   },
   "tasks": {
     "version": "2.0.0",
     "tasks": [
       {
-        "label": "build and publish to testing game",
+        "label": "project: build",
         "type": "shell",
         "command": "remodel run build.lua",
         "problemMatcher": [],
@@ -75,7 +76,16 @@
         }
       },
       {
-        "label": "build and publish to production game",
+        "label": "project: build + publish (testing)",
+        "type": "shell",
+        "command": "remodel run build.lua testing",
+        "problemMatcher": [],
+        "group": {
+          "kind": "build"
+        }
+      },
+      {
+        "label": "project: build + publish (production)",
         "type": "shell",
         "command": "remodel run build.lua production",
         "problemMatcher": [],

@@ -187,13 +187,14 @@ for projectId, project in pairs(projectsToBuild) do
 end
 
 print "\n==================================================\n"
-print(
-	("Finished building%s all projects at %s."):format(mode ~= "build" and " and publishing" or "", os.date "%I:%M %p")
-)
 
 if mode ~= "build" then
 	if failures == 0 then
-		print(("All projects published to the %s game successfully."):format(testingMode and "testing" or "production"))
+		print(("All projects published to the %s game successfully."):format(mode))
+		print(
+			("Finished building%s all projects at %s."):format(mode ~= "build" and " and publishing" or "",
+				os.date "%I:%M %p")
+		)
 	elseif failures == numProjects then
 		print(
 			(
@@ -213,28 +214,6 @@ if mode ~= "build" then
 		sleep(3)
 
 		goto buildAndPublish
-		-- print(
-		-- 	("%d project%s failed to publish to the %s game. Would you like to retry? (y/n)"):format(
-		-- 		failures,
-		-- 		failures == 1 and "" or "s",
-		-- 		mode
-		-- 	)
-		-- )
-
-		-- while true do
-		-- 	io.write "> "
-		-- 	local input = io.read()
-
-		-- 	if input:lower() == "y" or input:lower() == "yes" then
-		-- 		goto buildAndPublish
-		-- 		break
-		-- 	elseif input:lower() == "n" or input:lower() == "no" then
-		-- 		print "Aborting."
-		-- 		break
-		-- 	else
-		-- 		print "Invalid input."
-		-- 	end
-		-- end
 	end
 end
 

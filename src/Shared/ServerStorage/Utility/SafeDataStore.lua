@@ -23,6 +23,15 @@ function DataStore.safeIncrementAsync(dataStore: GlobalDataStore, key, delta, us
 end
 
 --[[
+	Calls `DataStore:ListKeysAsync()` without erroring. If it errors, it will automatically retry.
+]]
+function DataStore.safeListKeysAsync(dataStore: DataStore, prefix, pageSize, cursor, excludeDeleted)
+	return SafeRetry(function()
+		return dataStore:ListKeysAsync(prefix, pageSize, cursor, excludeDeleted)
+	end)
+end
+
+--[[
 	Calls `DataStore:RemoveAsync()` without erroring. If it errors, it will automatically retry.
 ]]
 function DataStore.safeRemoveAsync(dataStore: GlobalDataStore, key)
