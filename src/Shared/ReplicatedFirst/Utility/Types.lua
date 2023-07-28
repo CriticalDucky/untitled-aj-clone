@@ -141,9 +141,9 @@ export type ServerIdentifier = {
 }
 
 export type UniverseServerCatalog = {
-	worlds: { { [string]: ServerIdentifier } }, -- worlds -> worldIndex -> locationType -> ServerData
-	parties: { [string]: { ServerIdentifier } }, -- parties -> partyType -> serverIndex -> ServerData
-	minigames: { [string]: { ServerIdentifier } }, -- minigames -> minigameType -> serverIndex -> ServerData
+	worlds: { { [string]: ServerIdentifier } }, -- worlds -> worldIndex -> locationType -> ServerIdentifier
+	parties: { [string]: { ServerIdentifier } }, -- parties -> partyType -> serverIndex -> ServerIdentifier
+	minigames: { [string]: { ServerIdentifier } }, -- minigames -> minigameType -> serverIndex -> ServerIdentifier
 }
 
 export type WorldData = { [string]: ServerIdentifier }
