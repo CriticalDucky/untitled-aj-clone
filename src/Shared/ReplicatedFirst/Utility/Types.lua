@@ -136,14 +136,7 @@ export type ServerDictionaryDataHome = {
 
 export type ServerIdentifier = {
 	accessCode: string,
-	placeId: number,
 	privateServerId: string,
-}
-
-export type UniverseServerCatalog = {
-	worlds: { { [string]: ServerIdentifier } }, -- worlds -> worldIndex -> locationType -> ServerIdentifier
-	parties: { [string]: { ServerIdentifier } }, -- parties -> partyType -> serverIndex -> ServerIdentifier
-	minigames: { [string]: { ServerIdentifier } }, -- minigames -> minigameType -> serverIndex -> ServerIdentifier
 }
 
 export type WorldData = { [string]: ServerIdentifier }
