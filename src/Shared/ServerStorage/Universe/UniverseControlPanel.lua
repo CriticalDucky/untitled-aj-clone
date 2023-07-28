@@ -22,6 +22,8 @@ local worldCatalog = DataStoreService:GetDataStore "WorldCatalog"
 
 local serverDictionary = DataStoreService:GetDataStore "ServerDictionary"
 
+local operationLock = false
+
 --[[
 	Provides functions for managing the universe server catalog.
 
@@ -32,9 +34,12 @@ local serverDictionary = DataStoreService:GetDataStore "ServerDictionary"
 local UniverseControlPanel = {}
 
 function UniverseControlPanel.addLocation(locationName: string, placeId: number)
+	assert(not operationLock, "An operation is already in progress.")
 	assert(typeof(locationName) == "string", "The location name must be a string.")
 	assert(typeof(placeId) == "number" and placeId == placeId, "The place ID must be a valid number.")
 	assert(placeId == math.floor(placeId), "The place ID must be an integer.")
+
+	operationLock = true
 
 	print(("Adding location '%s'…"):format(locationName))
 
@@ -42,11 +47,13 @@ function UniverseControlPanel.addLocation(locationName: string, placeId: number)
 
 	if not getCountSuccess then
 		warn "Failed to retrieve the world count."
+		operationLock = false
 		return
 	end
 
 	if not worldCount or worldCount == 0 then
 		warn "Worlds must be created before locations can be added."
+		operationLock = false
 		return
 	end
 
@@ -66,7 +73,7 @@ function UniverseControlPanel.addLocation(locationName: string, placeId: number)
 		print(("Retrieved world %d data."):format(i))
 
 		if worldData[locationName] then
-			warn "This location already exists."
+			warn(("Location '%s' already exists in world %d."):format(locationName, i))
 			continue
 		end
 
@@ -77,6 +84,7 @@ function UniverseControlPanel.addLocation(locationName: string, placeId: number)
 
 			if i == 1 and not reserveSuccess then
 				warn "The given place ID may not be valid."
+				operationLock = false
 				return
 			end
 
@@ -110,12 +118,17 @@ function UniverseControlPanel.addLocation(locationName: string, placeId: number)
 	end
 
 	print(("Location '%s' has been added to all worlds."):format(locationName))
+
+	operationLock = false
 end
 
 function UniverseControlPanel.printWorld(world: number)
+	assert(not operationLock, "An operation is already in progress.")
 	assert(typeof(world) == "number" and world == world, "The world must be a valid number.")
 	assert(world == math.floor(world), "The world must be an integer.")
 	assert(world > 0, "The world must be positive.")
+
+	operationLock = true
 
 	print(("Printing world %d…"):format(world))
 
@@ -123,37 +136,52 @@ function UniverseControlPanel.printWorld(world: number)
 
 	if not getSuccess then
 		warn "Failed to retrieve the world data."
+		operationLock = false
 		return
 	end
 
 	if not worldData then
 		warn "This world does not exist."
+		operationLock = false
 		return
 	end
 
 	print(("World %d: %s"):format(world, Table.toString(worldData, 4)))
+
+	operationLock = false
 end
 
 function UniverseControlPanel.printWorldCount()
+	assert(not operationLock, "An operation is already in progress.")
+
+	operationLock = true
+
 	print "Retrieving the world count…"
 
 	local getCountSuccess, count = SafeDataStore.safeGetAsync(worldCatalog, "Count")
 
 	if not getCountSuccess then
 		warn "Failed to retrieve the world count."
+		operationLock = false
 		return
 	end
 
 	if not getCountSuccess then
 		print "Failed to retrieve the world count."
+		operationLock = false
 		return
 	end
 
 	print(("There are %d worlds."):format(count or 0))
+
+	operationLock = false
 end
 
 function UniverseControlPanel.removeLocation(locationName: string)
+	assert(not operationLock, "An operation is already in progress.")
 	assert(typeof(locationName) == "string", "The location name must be a string.")
+
+	operationLock = true
 
 	print(("Removing location '%s'…"):format(locationName))
 
@@ -161,6 +189,7 @@ function UniverseControlPanel.removeLocation(locationName: string)
 
 	if not getCountSuccess then
 		warn "Failed to retrieve the world count."
+		operationLock = false
 		return
 	end
 
@@ -168,6 +197,7 @@ function UniverseControlPanel.removeLocation(locationName: string)
 
 	if not worldCount or worldCount == 0 then
 		warn "Worlds must be created before locations can be removed."
+		operationLock = false
 		return
 	end
 
@@ -211,13 +241,18 @@ function UniverseControlPanel.removeLocation(locationName: string)
 	end
 
 	print(("Location '%s' has been removed from all worlds."):format(locationName))
+
+	operationLock = false
 end
 
 function UniverseControlPanel.setWorldCount(count: number, force: true?)
+	assert(not operationLock, "An operation is already in progress.")
 	assert(typeof(count) == "number" and count == count, "The world count must be a valid number.")
 	assert(count == math.floor(count), "The world count must be an integer.")
 	assert(count >= 0, "The world count must be non-negative.")
 	assert(force == nil or force == true, "The force flag must be true or nil.")
+
+	operationLock = true
 
 	print(("Setting the world count to %d…"):format(count))
 
@@ -225,6 +260,7 @@ function UniverseControlPanel.setWorldCount(count: number, force: true?)
 
 	if not getCountSuccess then
 		warn "Failed to retrieve the current world count."
+		operationLock = false
 		return
 	end
 
@@ -232,6 +268,7 @@ function UniverseControlPanel.setWorldCount(count: number, force: true?)
 
 	if currentCount > count and not force then
 		warn "Cannot reduce the world count without the force flag."
+		operationLock = false
 		return
 	end
 
@@ -288,6 +325,7 @@ function UniverseControlPanel.setWorldCount(count: number, force: true?)
 
 		if not getSuccess then
 			warn "Failed to retrieve world 1 as a location template."
+			operationLock = false
 			return
 		end
 
@@ -345,6 +383,8 @@ function UniverseControlPanel.setWorldCount(count: number, force: true?)
 
 		print(("The world count has been increased to %d."):format(count))
 	end
+
+	operationLock = false
 end
 
 return UniverseControlPanel
