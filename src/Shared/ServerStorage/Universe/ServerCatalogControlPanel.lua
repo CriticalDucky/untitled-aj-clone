@@ -159,6 +159,25 @@ function ServerCatalogControlPanel.addMinigame(name: string, placeId: number)
 
 	print "Retrieved the minigame server count."
 
+	if minigameServerCount == 0 then
+		print "The minigame server count is 0, so a dummy server will be reserved to verify the place ID."
+
+		local reserveSuccess = SafeTeleport.safeReserveServerAsync(placeId)
+
+		if not reserveSuccess then
+			warn(
+				(
+					"Failed to reserve a dummy private server for minigame '%s'. (The given place ID may not be valid,"
+					.. " or this may have been run in Studio.)"
+				):format(name)
+			)
+			setOperationLockAsync(false)
+			return
+		end
+
+		print(("Successfully reserved a dummy private server for minigame '%s'."):format(name))
+	end
+
 	local newMinigame = {}
 
 	for i = 1, minigameServerCount do
@@ -212,6 +231,117 @@ function ServerCatalogControlPanel.addMinigame(name: string, placeId: number)
 	setOperationLockAsync(false)
 end
 
+function ServerCatalogControlPanel.addParty(name: string, placeId: number)
+	if typeof(name) ~= "string" then
+		warn "The party name must be a string."
+		return
+	elseif typeof(placeId) ~= "number" or placeId ~= placeId or placeId ~= math.floor(placeId) or placeId < 0 then
+		warn "The place ID must be a non-negative integer."
+		return
+	end
+
+	if not setOperationLockAsync(true) then return end
+
+	print(("Adding party '%s' with place ID %d…"):format(name, placeId))
+
+	local partyList = ServerCatalog.getPartyListAsync()
+
+	if not partyList then
+		warn "Failed to retrieve the party list."
+		setOperationLockAsync(false)
+		return
+	end
+
+	print "Retrieved the party list."
+
+	if partyList[name] then
+		print(("Party '%s' already exists."):format(name))
+		setOperationLockAsync(false)
+		return
+	end
+
+	local partyServerCount = ServerCatalog.getPartyServerCountAsync()
+
+	if not partyServerCount then
+		warn "Failed to retrieve the party server count."
+		setOperationLockAsync(false)
+		return
+	end
+
+	print "Retrieved the party server count."
+
+	if partyServerCount == 0 then
+		print "The party server count is 0, so a dummy server will be reserved to verify the place ID."
+
+		local reserveSuccess = SafeTeleport.safeReserveServerAsync(placeId)
+
+		if not reserveSuccess then
+			warn(
+				(
+					"Failed to reserve a dummy private server for party '%s'. (The given place ID may not be valid, or"
+					.. " this may have been run in Studio.)"
+				):format(name)
+			)
+			setOperationLockAsync(false)
+			return
+		end
+
+		print(("Successfully reserved a dummy private server for party '%s'."):format(name))
+	end
+
+	local newParty = {}
+
+	for i = 1, partyServerCount do
+		local reserveSuccess, accessCode, privateServerId = SafeTeleport.safeReserveServerAsync(placeId)
+
+		if not reserveSuccess then
+			warn(
+				(
+					"Failed to reserve private server %d for party '%s'. (The given place ID may not be valid, or this"
+					.. " may have been run in Studio.)"
+				):format(i, name)
+			)
+			setOperationLockAsync(false)
+			return
+		end
+
+		print(("Reserved private server %d for party '%s'."):format(i, name))
+
+		newParty[i] = {
+			accessCode = accessCode,
+			privateServerId = privateServerId,
+		}
+	end
+
+	local setPartySuccess = slowSetAsync(partyCatalog, name, newParty)
+
+	if not setPartySuccess then
+		warn(("Failed to add party '%s' to the party catalog."):format(name))
+		setOperationLockAsync(false)
+		return
+	end
+
+	print(("Added party '%s' to the party catalog."):format(name))
+
+	partyList[name] = {
+		placeId = placeId,
+	}
+
+	local setPartyListSuccess = SafeDataStore.safeSetAsync(catalogInfo, "PartyList", partyList)
+
+	if not setPartyListSuccess then
+		warn(("Failed to add party '%s' to the party list."):format(name))
+		setOperationLockAsync(false)
+		return
+	end
+
+	print(("Added party '%s' to the party list."):format(name))
+
+	print(("Party '%s' has been successfully added."):format(name))
+
+	setOperationLockAsync(false)
+end
+
 function ServerCatalogControlPanel.addWorldLocation(name: string, placeId: number)
 	if typeof(name) ~= "string" then
 		warn "The location name must be a string."
@@ -250,6 +380,25 @@ function ServerCatalogControlPanel.addWorldLocation(name: string, placeId: numbe
 	end
 
 	print "Retrieved the world count."
+
+	if worldCount == 0 then
+		print "The world count is 0, so a dummy server will be reserved to verify the place ID."
+
+		local reserveSuccess = SafeTeleport.safeReserveServerAsync(placeId)
+
+		if not reserveSuccess then
+			warn(
+				(
+					"Failed to reserve a dummy private server for location '%s'. (The given place ID may not be valid,"
+					.. " or this may have been run in Studio.)"
+				):format(name)
+			)
+			setOperationLockAsync(false)
+			return
+		end
+
+		print(("Successfully reserved a dummy private server for location '%s'."):format(name))
+	end
 
 	-- Add the location to all worlds
 
@@ -383,6 +532,50 @@ function ServerCatalogControlPanel.printMinigameServerCount()
 	print(("There are %d servers for each minigame."):format(minigameServerCount))
 end
 
+function ServerCatalogControlPanel.printParty(party: string)
+	if typeof(party) ~= "string" then
+		warn "The party name must be a string."
+		return
+	end
+
+	print(("Printing party '%s'…"):format(party))
+
+	local partyData = ServerCatalog.getPartyAsync(party)
+
+	if not partyData then
+		warn(("Failed to retrieve party '%s' data. (This party may not exist.)"):format(party))
+		return
+	end
+
+	print(("Party '%s': %s"):format(party, Table.toString(partyData, 4)))
+end
+
+function ServerCatalogControlPanel.printPartyList()
+	print "Retrieving the party list…"
+
+	local partyList = ServerCatalog.getPartyListAsync()
+
+	if not partyList then
+		warn "Failed to retrieve the party list."
+		return
+	end
+
+	print(("Party list: %s"):format(Table.toString(partyList, 4)))
+end
+
+function ServerCatalogControlPanel.printPartyServerCount()
+	print "Retrieving the party server count…"
+
+	local partyServerCount = ServerCatalog.getPartyServerCountAsync()
+
+	if not partyServerCount then
+		warn "Failed to retrieve the party server count."
+		return
+	end
+
+	print(("There are %d servers for each party."):format(partyServerCount))
+end
+
 function ServerCatalogControlPanel.printWorld(world: number)
 	if typeof(world) ~= "number" or world ~= world or world ~= math.floor(world) or world < 1 then
 		warn "The world must be a positive integer."
@@ -466,6 +659,49 @@ function ServerCatalogControlPanel.removeMinigame(minigameName: string)
 	print(("Removed minigame '%s' from the minigame list."):format(minigameName))
 
 	print(("Minigame '%s' has been successfully removed."):format(minigameName))
+
+	setOperationLockAsync(false)
+end
+
+function ServerCatalogControlPanel.removeParty(partyName: string)
+	if typeof(partyName) ~= "string" then
+		warn "The party name must be a string."
+		return
+	end
+
+	if not setOperationLockAsync(true) then return end
+
+	print(("Removing party '%s'…"):format(partyName))
+
+	local partyList = ServerCatalog.getPartyListAsync()
+
+	if not partyList then
+		warn "Failed to retrieve the party list."
+		setOperationLockAsync(false)
+		return
+	end
+
+	print "Retrieved the party list."
+
+	if not partyList[partyName] then
+		print(("Party '%s' already does not exist."):format(partyName))
+		setOperationLockAsync(false)
+		return
+	end
+
+	partyList[partyName] = nil
+
+	local removePartySuccess = SafeDataStore.safeSetAsync(catalogInfo, "PartyList", partyList)
+
+	if not removePartySuccess then
+		warn(("Failed to remove party '%s' from the party list."):format(partyName))
+		setOperationLockAsync(false)
+		return
+	end
+
+	print(("Removed party '%s' from the party list."):format(partyName))
+
+	print(("Party '%s' has been successfully removed."):format(partyName))
 
 	setOperationLockAsync(false)
 end
@@ -620,6 +856,118 @@ function ServerCatalogControlPanel.setMinigameServerCount(count: number, force: 
 		print(("Updated the minigame server count to %d."):format(count))
 
 		print(("The minigame server count has been successfully increased to %d."):format(count))
+	end
+
+	setOperationLockAsync(false)
+end
+
+function ServerCatalogControlPanel.setPartyServerCount(count: number, force: true?)
+	if typeof(count) ~= "number" or count ~= count or count ~= math.floor(count) or count < 0 then
+		warn "The server count must be a non-negative integer."
+		return
+	elseif force ~= nil and force ~= true then
+		warn "The force flag must be true or nil."
+		return
+	end
+
+	if not setOperationLockAsync(true) then return end
+
+	print(("Setting the party server count to %d…"):format(count))
+
+	local currentPartyServerCount = ServerCatalog.getPartyServerCountAsync()
+
+	if not currentPartyServerCount then
+		warn "Failed to retrieve the party server count."
+		setOperationLockAsync(false)
+		return
+	end
+
+	if currentPartyServerCount > count and not force then
+		warn "Cannot reduce the party server count without the force flag."
+		setOperationLockAsync(false)
+		return
+	end
+
+	if currentPartyServerCount == count then
+		print(("The party server count is already %d."):format(count))
+	elseif currentPartyServerCount > count then
+		local setPartyServerCountSuccess = SafeDataStore.safeSetAsync(catalogInfo, "PartyServerCount", count)
+
+		if not setPartyServerCountSuccess then
+			warn(("Failed to update the party server count to %d."):format(count))
+			setOperationLockAsync(false)
+			return
+		end
+
+		print(("Updated the party server count to %d."):format(count))
+
+		print(("The party server count has been successfully reduced to %d."):format(count))
+	else
+		local partyList = ServerCatalog.getPartyListAsync()
+
+		if not partyList then
+			warn "Failed to retrieve the party list."
+			setOperationLockAsync(false)
+			return
+		end
+
+		print "Retrieved the party list."
+
+		for partyName, partyInfo in pairs(partyList) do
+			local partyPlaceId = partyInfo.placeId
+
+			local getPartySuccess, partyData: CatalogPartyData = slowGetAsync(partyCatalog, partyName)
+
+			if not getPartySuccess then
+				warn(("Failed to retrieve party '%s' data."):format(partyName))
+				setOperationLockAsync(false)
+				return
+			end
+
+			for i = currentPartyServerCount + 1, count do
+				local reserveSuccess, accessCode, privateServerId = SafeTeleport.safeReserveServerAsync(partyPlaceId)
+
+				if not reserveSuccess then
+					warn(
+						(
+							"Failed to reserve a private server for party '%s' in server %d. (This may have been run in"
+							.. " Studio.)"
+						):format(partyName, i)
+					)
+					setOperationLockAsync(false)
+					return
+				end
+
+				print(("Reserved a private server for party '%s' in server %d."):format(partyName, i))
+
+				partyData[i] = {
+					accessCode = accessCode,
+					privateServerId = privateServerId,
+				}
+			end
+
+			local setPartySuccess = slowSetAsync(partyCatalog, partyName, partyData)
+
+			if not setPartySuccess then
+				warn(("Failed to add party '%s' to the party catalog."):format(partyName))
+				setOperationLockAsync(false)
+				return
+			end
+
+			print(("Added party '%s' to the party catalog."):format(partyName))
+		end
+
+		local setPartyServerCountSuccess = SafeDataStore.safeSetAsync(catalogInfo, "PartyServerCount", count)
+
+		if not setPartyServerCountSuccess then
+			warn(("Failed to update the party server count to %d."):format(count))
+			setOperationLockAsync(false)
+			return
+		end
+
+		print(("Updated the party server count to %d."):format(count))
+
+		print(("The party server count has been successfully increased to %d."):format(count))
 	end
 
 	setOperationLockAsync(false)
