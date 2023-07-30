@@ -8,11 +8,11 @@ local ServerStorage = game:GetService "ServerStorage"
 assert(not RunService:IsStudio(), "This module cannot be used in Studio.")
 
 local SafeDataStore = require(ServerStorage.Shared.Utility.SafeDataStore)
-local SafeTeleport = require(ServerStorage.Shared.Utility.SafeTeleport)
-local Table = require(ReplicatedFirst.Shared.Utility.Table)
 local Types = require(ReplicatedFirst.Shared.Utility.Types)
 
-type WorldData = Types.WorldData
+type CatalogMinigameData = Types.CatalogMinigameData
+type CatalogPartyData = Types.CatalogPartyData
+type CatalogWorldData = Types.CatalogWorldData
 
 local catalogInfo = DataStoreService:GetDataStore "CatalogInfo"
 
@@ -20,63 +20,194 @@ local minigameCatalog = DataStoreService:GetDataStore "MinigameCatalog"
 local partyCatalog = DataStoreService:GetDataStore "PartyCatalog"
 local worldCatalog = DataStoreService:GetDataStore "WorldCatalog"
 
-local serverDictionary = DataStoreService:GetDataStore "ServerDictionary"
-
 --[[
-    Provides getter functions for the server catalog.
+    Provides access to the server catalog.
 ]]
 local ServerCatalog = {}
 
-function ServerCatalog.getWorldAsync(world: number): WorldData?
-    if typeof(world) ~= "number" or world ~= world or world ~= math.floor(world) or world < 1 then
-        warn "The world must be a positive integer."
-        return
-    end
+--[[
+	Returns minigame data for the given minigame.
 
-    local getWorldCountSuccess, worldCount = SafeDataStore.safeGetAsync(catalogInfo, "WorldCount")
+	---
 
-    if not getWorldCountSuccess then
-        warn "Failed to retrieve the world count."
-        return
-    end
+	@param minigame The minigame to get data for.
+	@return The minigame data, or `nil` if the minigame does not exist or an error occurred.
+]]
+function ServerCatalog.getMinigameAsync(minigame: string): CatalogMinigameData?
+	local minigameList = ServerCatalog.getMinigameListAsync()
 
-    if world > worldCount then
-        warn(("World %d does not exist."):format(world))
-        return
-    end
+	if not minigameList or not minigameList[minigame] then return end
 
-    local getLocationListSuccess, locationList = SafeDataStore.safeGetAsync(catalogInfo, "WorldLocationList")
+	local serverCount = ServerCatalog.getMinigameServerCountAsync()
 
-    if not getLocationListSuccess then
-        warn "Failed to retrieve the world location list."
-        return
-    end
+	if not serverCount then return end
 
-    local getWorldDataSuccess, rawWorldData = SafeDataStore.safeGetAsync(worldCatalog, tostring(world))
+	local success, rawMinigameData: CatalogMinigameData = SafeDataStore.safeGetAsync(minigameCatalog, minigame)
 
-    if not getWorldDataSuccess then
-        warn(("Failed to retrieve world data for world %d."):format(world))
-        return
-    end
+	if not success then return end
 
-    local worldData = {}
+    local minigameData = {}
 
-    for locationName in pairs(locationList) do
-        worldData[locationName] = rawWorldData[locationName]
-    end
+	for i = 1, serverCount do
+		minigameData[i] = rawMinigameData[i]
+	end
 
-    return worldData
+	return minigameData
 end
 
+--[[
+    Returns the set of all minigames that exist, including their place IDs.
+
+    ---
+
+    @return The set of all minigames that exist, including their place IDs, or `nil` if an error occurred.
+]]
+function ServerCatalog.getMinigameListAsync(): { [string]: { placeId: number } }?
+	local success, minigameList = SafeDataStore.safeGetAsync(catalogInfo, "MinigameList")
+
+	if not success then return end
+
+	return minigameList or {}
+end
+
+--[[
+    Returns the number of servers that exist for each minigame.
+
+    ---
+
+    @return The number of servers that exist for each minigame, or `nil` if an error occurred.
+]]
+function ServerCatalog.getMinigameServerCountAsync(): number?
+	local success, minigameServerCount = SafeDataStore.safeGetAsync(catalogInfo, "MinigameServerCount")
+
+	if not success then return end
+
+	return minigameServerCount or 0
+end
+
+--[[
+	Returns party data for the given party.
+
+	---
+
+	@param party The party to get data for.
+	@return The party data, or `nil` if the party does not exist or an error occurred.
+]]
+function ServerCatalog.getPartyAsync(party: string): CatalogPartyData?
+	local partyList = ServerCatalog.getPartyListAsync()
+
+	if not partyList or not partyList[party] then return end
+
+	local serverCount = ServerCatalog.getPartyServerCountAsync()
+
+	if not serverCount then return end
+
+	local success, rawPartyData: CatalogPartyData = SafeDataStore.safeGetAsync(partyCatalog, party)
+
+	if not success then return end
+
+	local partyData = {}
+
+	for i = 1, serverCount do
+		partyData[i] = rawPartyData[i]
+	end
+
+	return partyData
+end
+
+--[[
+	Returns the set of all parties that exist, including their place IDs.
+
+	---
+
+	@return The set of all parties that exist, including their place IDs, or `nil` if an error occurred.
+]]
+function ServerCatalog.getPartyListAsync(): { [string]: { placeId: number } }?
+	local success, partyList = SafeDataStore.safeGetAsync(catalogInfo, "PartyList")
+
+	if not success then return end
+
+	return partyList or {}
+end
+
+--[[
+	Returns the number of servers that exist for each party.
+
+	---
+
+	@return The number of servers that exist for each party, or `nil` if an error occurred.
+]]
+function ServerCatalog.getPartyServerCountAsync(): number?
+	local success, partyServerCount = SafeDataStore.safeGetAsync(catalogInfo, "PartyServerCount")
+
+	if not success then return end
+
+	return partyServerCount or 0
+end
+
+--[[
+    Returns world data for the given world.
+
+    ---
+
+    @param world The world to get data for.
+    @return The world data, or `nil` if the world does not exist or an error occurred.
+]]
+function ServerCatalog.getWorldAsync(world: number): CatalogWorldData?
+	assert(
+		typeof(world) == "number" and world == world and world == math.floor(world) and world >= 1,
+		"The world must be a positive integer."
+	)
+
+	local worldCount = ServerCatalog.getWorldCountAsync()
+
+	if not worldCount or world > worldCount then return end
+
+	local locationList = ServerCatalog.getWorldLocationListAsync()
+
+	if not locationList then return end
+
+	local success, rawWorldData: CatalogWorldData = SafeDataStore.safeGetAsync(worldCatalog, tostring(world))
+
+	if not success then return end
+
+	local worldData = {}
+
+	for locationName in pairs(locationList) do
+		worldData[locationName] = rawWorldData[locationName]
+	end
+
+	return worldData
+end
+
+--[[
+    Returns the number of worlds that exist.
+
+    ---
+
+    @return The number of worlds that exist, or `nil` if an error occurred.
+]]
 function ServerCatalog.getWorldCountAsync(): number?
-    local getWorldCountSuccess, worldCount = SafeDataStore.safeGetAsync(catalogInfo, "WorldCount")
+	local success, worldCount = SafeDataStore.safeGetAsync(catalogInfo, "WorldCount")
 
-    if not getWorldCountSuccess then
-        warn "Failed to retrieve the world count."
-        return
-    end
+	if not success then return end
 
-    return worldCount or 0
+	return worldCount or 0
+end
+
+--[[
+    Returns the set of all locations that exist, including their place IDs.
+
+    ---
+
+    @return The set of all locations that exist, including their place IDs, or `nil` if an error occurred.
+]]
+function ServerCatalog.getWorldLocationListAsync(): { [string]: { placeId: number } }?
+	local success, locationList = SafeDataStore.safeGetAsync(catalogInfo, "WorldLocationList")
+
+	if not success then return end
+
+	return locationList or {}
 end
 
 return ServerCatalog

@@ -29,9 +29,9 @@ export type Profile = {
 	ListenToRelease: (Profile, () -> ()) -> (),
 }
 
-export type DataTreeArray = { DataTreeValue? }
+export type DataTreeArray = { DataTreeValue }
 
-export type DataTreeDictionary = { [string]: DataTreeValue? }
+export type DataTreeDictionary = { [string]: DataTreeValue }
 
 export type DataTreeValue = number | string | boolean | nil | DataTreeArray | DataTreeDictionary
 
@@ -139,6 +139,10 @@ export type ServerIdentifier = {
 	privateServerId: string,
 }
 
-export type WorldData = { [string]: ServerIdentifier }
+export type CatalogMinigameData = { ServerIdentifier }
+
+export type CatalogPartyData = { ServerIdentifier }
+
+export type CatalogWorldData = { [string]: ServerIdentifier }
 
 return nil

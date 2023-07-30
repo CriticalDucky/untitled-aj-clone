@@ -31,9 +31,7 @@ local PlayerDataInfo: PlayerDataInfo = {
 			money = 0,
 		},
 
-		home = {
-			server = {},
-		},
+		home = {},
 
 		inventory = {
 			accessories = {},

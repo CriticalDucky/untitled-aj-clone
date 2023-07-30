@@ -20,7 +20,9 @@ local ServerCatalog = require(ServerStorage.Shared.Universe.ServerCatalog)
 local Table = require(ReplicatedFirst.Shared.Utility.Table)
 local Types = require(ReplicatedFirst.Shared.Utility.Types)
 
-type WorldData = Types.WorldData
+type CatalogMinigameData = Types.CatalogMinigameData
+type CatalogPartyData = Types.CatalogPartyData
+type CatalogWorldData = Types.CatalogWorldData
 
 local catalogInfo = DataStoreService:GetDataStore "CatalogInfo"
 
@@ -30,12 +32,84 @@ local worldCatalog = DataStoreService:GetDataStore "WorldCatalog"
 
 local serverDictionary = DataStoreService:GetDataStore "ServerDictionary"
 
---[[
-	Used by setter functions to prevent multiple operations from being run at once.
+--#region Safer DataStore Functions
 
-	TODO: Move to data store? In which case: also make a "force lock release" function.
+-- Slower functions for longer update procedures that need to be rate limited.
+
+-- These only need to be used in for loops.
+
+local lastRead
+local lastWrite
+
+local function slowGetAsync(dataStore, key)
+	local now = os.time()
+
+	if lastRead and now - lastRead < DATASTORE_OPERATION_COOLDOWN then
+		task.wait(DATASTORE_OPERATION_COOLDOWN - (now - lastRead))
+	end
+
+	lastRead = os.time()
+
+	return SafeDataStore.safeGetAsync(dataStore, key)
+end
+
+local function slowSetAsync(dataStore, key, value, userIds, options)
+	local now = os.time()
+
+	if lastWrite and now - lastWrite < DATASTORE_OPERATION_COOLDOWN then
+		task.wait(DATASTORE_OPERATION_COOLDOWN - (now - lastWrite))
+	end
+
+	lastWrite = os.time()
+
+	return SafeDataStore.safeSetAsync(dataStore, key, value, userIds, options)
+end
+
+--#endregion
+
+--#region Operation Lock
+
+local localOperationLock = false
+
+--[[
+	Locks the catalog for operations.
+
+	---
+
+	@param lock The lock state to set.
+	@return Whether the operation was successful.
 ]]
-local operationLock = false
+local function setOperationLockAsync(lock: boolean): boolean
+	if lock then
+		local success = false
+
+		local updateSuccess = SafeDataStore.safeUpdateAsync(catalogInfo, "OperationLock", function(oldValue)
+			if oldValue then return end
+
+			localOperationLock = true
+			success = true
+			return true
+		end)
+
+		if not updateSuccess then
+			warn "An error occurred while adding the operation lock."
+		elseif not success then
+			warn "An operation is already in progress."
+		end
+
+		return success
+	else
+		local success = SafeDataStore.safeRemoveAsync(catalogInfo, "OperationLock")
+
+		if not success then warn "An error occurred while removing the operation lock." end
+
+		localOperationLock = false
+
+		return success
+	end
+end
+
+--#endregion
 
 --[[
 	Provides functions for managing the universe server catalog.
@@ -44,43 +118,134 @@ local operationLock = false
 
 	⚠️ **FOR MANUAL DEVELOPER USE ONLY** ⚠️
 ]]
-local UniverseControlPanel = {}
+local ServerCatalogControlPanel = {}
 
-function UniverseControlPanel.addLocation(locationName: string, placeId: number)
-	assert(not operationLock, "An operation is already in progress.")
-	assert(typeof(locationName) == "string", "The location name must be a string.")
-	assert(typeof(placeId) == "number" and placeId == placeId, "The place ID must be a valid number.")
-	assert(placeId == math.floor(placeId), "The place ID must be an integer.")
+function ServerCatalogControlPanel.addMinigame(name: string, placeId: number)
+	if typeof(name) ~= "string" then
+		warn "The minigame name must be a string."
+		return
+	elseif typeof(placeId) ~= "number" or placeId ~= placeId or placeId ~= math.floor(placeId) or placeId < 0 then
+		warn "The place ID must be a non-negative integer."
+		return
+	end
 
-	operationLock = true
+	if not setOperationLockAsync(true) then return end
 
-	print(("Adding location '%s' with place ID %d…"):format(locationName, placeId))
+	print(("Adding minigame '%s' with place ID %d…"):format(name, placeId))
 
-	local getLocationListSuccess, locationList = SafeDataStore.safeGetAsync(catalogInfo, "WorldLocationList")
+	local minigameList = ServerCatalog.getMinigameListAsync()
 
-	if not getLocationListSuccess then
+	if not minigameList then
+		warn "Failed to retrieve the minigame list."
+		setOperationLockAsync(false)
+		return
+	end
+
+	print "Retrieved the minigame list."
+
+	if minigameList[name] then
+		print(("Minigame '%s' already exists."):format(name))
+		setOperationLockAsync(false)
+		return
+	end
+
+	local minigameServerCount = ServerCatalog.getMinigameServerCountAsync()
+
+	if not minigameServerCount then
+		warn "Failed to retrieve the minigame server count."
+		setOperationLockAsync(false)
+		return
+	end
+
+	print "Retrieved the minigame server count."
+
+	local newMinigame = {}
+
+	for i = 1, minigameServerCount do
+		local reserveSuccess, accessCode, privateServerId = SafeTeleport.safeReserveServerAsync(placeId)
+
+		if not reserveSuccess then
+			warn(
+				(
+					"Failed to reserve private server %d for minigame '%s'. (The given place ID may not be valid, or"
+					.. " this may have been run in Studio.)"
+				):format(i, name)
+			)
+			setOperationLockAsync(false)
+			return
+		end
+
+		print(("Reserved private server %d for minigame '%s'."):format(i, name))
+
+		newMinigame[i] = {
+			accessCode = accessCode,
+			privateServerId = privateServerId,
+		}
+	end
+
+	local setMinigameSuccess = slowSetAsync(minigameCatalog, name, newMinigame)
+
+	if not setMinigameSuccess then
+		warn(("Failed to add minigame '%s' to the minigame catalog."):format(name))
+		setOperationLockAsync(false)
+		return
+	end
+
+	print(("Added minigame '%s' to the minigame catalog."):format(name))
+
+	minigameList[name] = {
+		placeId = placeId,
+	}
+
+	local setMinigameListSuccess = SafeDataStore.safeSetAsync(catalogInfo, "MinigameList", minigameList)
+
+	if not setMinigameListSuccess then
+		warn(("Failed to add minigame '%s' to the minigame list."):format(name))
+		setOperationLockAsync(false)
+		return
+	end
+
+	print(("Added minigame '%s' to the minigame list."):format(name))
+
+	print(("Minigame '%s' has been successfully added."):format(name))
+
+	setOperationLockAsync(false)
+end
+
+function ServerCatalogControlPanel.addWorldLocation(name: string, placeId: number)
+	if typeof(name) ~= "string" then
+		warn "The location name must be a string."
+		return
+	elseif typeof(placeId) ~= "number" or placeId ~= placeId or placeId ~= math.floor(placeId) or placeId < 0 then
+		warn "The place ID must be a non-negative integer."
+		return
+	end
+
+	if not setOperationLockAsync(true) then return end
+
+	print(("Adding location '%s' with place ID %d…"):format(name, placeId))
+
+	local locationList = ServerCatalog.getWorldLocationListAsync()
+
+	if not locationList then
 		warn "Failed to retrieve the world location list."
-		operationLock = false
+		setOperationLockAsync(false)
 		return
 	end
 
 	print "Retrieved the world location list."
 
-	locationList = locationList or {}
-
-	if locationList[locationName] then
-		warn "The location already exists."
-		operationLock = false
+	if locationList[name] then
+		print(("Location '%s' already exists."):format(name))
+		setOperationLockAsync(false)
 		return
 	end
-
-	task.wait(DATASTORE_OPERATION_COOLDOWN)
 
 	local worldCount = ServerCatalog.getWorldCountAsync()
 
 	if not worldCount then
 		warn "Failed to retrieve the world count."
-		operationLock = false
+		setOperationLockAsync(false)
 		return
 	end
 
@@ -89,13 +254,11 @@ function UniverseControlPanel.addLocation(locationName: string, placeId: number)
 	-- Add the location to all worlds
 
 	for i = 1, worldCount do
-		if i == 1 then task.wait(DATASTORE_OPERATION_COOLDOWN) end
-
-		local getWorldSuccess, worldData: WorldData = SafeDataStore.safeGetAsync(worldCatalog, tostring(i))
+		local getWorldSuccess, worldData: CatalogWorldData = slowGetAsync(worldCatalog, tostring(i))
 
 		if not getWorldSuccess then
 			warn(("Failed to retrieve world %d data."):format(i))
-			operationLock = false
+			setOperationLockAsync(false)
 			return
 		end
 
@@ -105,82 +268,140 @@ function UniverseControlPanel.addLocation(locationName: string, placeId: number)
 
 		if not reserveSuccess then
 			warn(
-				"Failed to reserve a private server. (The given place ID may not be valid, or this may have been run "
-					.. "in Studio.)"
+				(
+					"Failed to reserve private server for location '%s' in world %d. (The given place ID may not be"
+					.. " valid, or this may have been run in Studio.)"
+				):format(name, i)
 			)
-			operationLock = false
+			setOperationLockAsync(false)
 			return
 		end
 
-		print(("Reserved a private server for location '%s' in world %d."):format(locationName, i))
+		print(("Reserved a private server for location '%s' in world %d."):format(name, i))
 
-		if i ~= 1 then task.wait(DATASTORE_OPERATION_COOLDOWN) end
-
-		local setDictionarySuccess = SafeDataStore.safeSetAsync(serverDictionary, privateServerId, { world = i })
+		local setDictionarySuccess = slowSetAsync(serverDictionary, privateServerId, { world = i })
 
 		if not setDictionarySuccess then
-			warn(("Failed to add server dictionary entry for location '%s' in world %d."):format(locationName, i))
-			operationLock = false
+			warn(("Failed to add server dictionary entry for location '%s' in world %d."):format(name, i))
+			setOperationLockAsync(false)
 			return
 		end
 
-		print(("Added server dictionary entry for location '%s' in world %d."):format(locationName, i))
+		print(("Added server dictionary entry for location '%s' in world %d."):format(name, i))
 
-		worldData[locationName] = {
+		worldData[name] = {
 			accessCode = accessCode,
 			privateServerId = privateServerId,
 		}
 
-		task.wait(DATASTORE_OPERATION_COOLDOWN)
-
-		local setWorldSuccess = SafeDataStore.safeSetAsync(worldCatalog, tostring(i), worldData)
+		local setWorldSuccess = slowSetAsync(worldCatalog, tostring(i), worldData)
 
 		if not setWorldSuccess then
-			warn(("Failed to update world %d data."):format(i))
-			operationLock = false
+			warn(("Failed to add location '%s' to world %d."):format(name, i))
+			setOperationLockAsync(false)
 			return
 		end
 
-		print(("Added location '%s' to world %d."):format(locationName, i))
+		print(("Added location '%s' to world %d."):format(name, i))
 	end
 
 	-- Register the location
 
-	locationList[locationName] = {
+	locationList[name] = {
 		placeId = placeId,
 	}
 
-	task.wait(DATASTORE_OPERATION_COOLDOWN)
+	local setLocationListSuccess = SafeDataStore.safeSetAsync(catalogInfo, "WorldLocationList", locationList)
 
-	repeat
-		local setSuccess = SafeDataStore.safeSetAsync(catalogInfo, "WorldLocationList", locationList)
-	until setSuccess
+	if not setLocationListSuccess then
+		warn "Failed to update the world location list."
+		setOperationLockAsync(false)
+		return
+	end
 
-	print(("Added location '%s' to the world location list."):format(locationName))
+	print(("Added location '%s' to the world location list."):format(name))
 
-	print(("Location '%s' has been successfully added."):format(locationName))
+	print(("Location '%s' has been successfully added."):format(name))
 
-	operationLock = false
+	setOperationLockAsync(false)
 end
 
-function UniverseControlPanel.printWorld(world: number)
-	assert(typeof(world) == "number" and world == world, "The world must be a valid number.")
-	assert(world == math.floor(world), "The world must be an integer.")
-	assert(world > 0, "The world must be positive.")
+function ServerCatalogControlPanel.forceReleaseOperationLock()
+	print "Releasing the operation lock…"
+
+	if localOperationLock then
+		warn "Cannot force the operation lock to release because the operation lock is currently held locally."
+		return
+	end
+
+	if not setOperationLockAsync(false) then return end
+
+	print "The operation lock has been successfully removed."
+end
+
+function ServerCatalogControlPanel.printMinigame(minigame: string)
+	if typeof(minigame) ~= "string" then
+		warn "The minigame name must be a string."
+		return
+	end
+
+	print(("Printing minigame '%s'…"):format(minigame))
+
+	local minigameData = ServerCatalog.getMinigameAsync(minigame)
+
+	if not minigameData then
+		warn(("Failed to retrieve minigame '%s' data. (This minigame may not exist.)"):format(minigame))
+		return
+	end
+
+	print(("Minigame '%s': %s"):format(minigame, Table.toString(minigameData, 4)))
+end
+
+function ServerCatalogControlPanel.printMinigameList()
+	print "Retrieving the minigame list…"
+
+	local minigameList = ServerCatalog.getMinigameListAsync()
+
+	if not minigameList then
+		warn "Failed to retrieve the minigame list."
+		return
+	end
+
+	print(("Minigame list: %s"):format(Table.toString(minigameList, 4)))
+end
+
+function ServerCatalogControlPanel.printMinigameServerCount()
+	print "Retrieving the minigame server count…"
+
+	local minigameServerCount = ServerCatalog.getMinigameServerCountAsync()
+
+	if not minigameServerCount then
+		warn "Failed to retrieve the minigame server count."
+		return
+	end
+
+	print(("There are %d servers for each minigame."):format(minigameServerCount))
+end
+
+function ServerCatalogControlPanel.printWorld(world: number)
+	if typeof(world) ~= "number" or world ~= world or world ~= math.floor(world) or world < 1 then
+		warn "The world must be a positive integer."
+		return
+	end
 
 	print(("Printing world %d…"):format(world))
 
 	local worldData = ServerCatalog.getWorldAsync(world)
 
 	if not worldData then
-		warn(("Failed to retrieve world data for world %d."):format(world))
+		warn(("Failed to retrieve world data for world %d. (This world may not exist.)"):format(world))
 		return
 	end
 
 	print(("World %d: %s"):format(world, Table.toString(worldData, 4)))
 end
 
-function UniverseControlPanel.printWorldCount()
+function ServerCatalogControlPanel.printWorldCount()
 	print "Retrieving the world count…"
 
 	local worldCount = ServerCatalog.getWorldCountAsync()
@@ -193,29 +414,85 @@ function UniverseControlPanel.printWorldCount()
 	print(("There are %d worlds."):format(worldCount))
 end
 
-function UniverseControlPanel.removeLocation(locationName: string)
-	assert(not operationLock, "An operation is already in progress.")
-	assert(typeof(locationName) == "string", "The location name must be a string.")
+function ServerCatalogControlPanel.printWorldLocationList()
+	print "Retrieving the world location list…"
 
-	operationLock = true
+	local locationList = ServerCatalog.getWorldLocationListAsync()
+
+	if not locationList then
+		warn "Failed to retrieve the world location list."
+		return
+	end
+
+	print(("World location list: %s"):format(Table.toString(locationList, 4)))
+end
+
+function ServerCatalogControlPanel.removeMinigame(minigameName: string)
+	if typeof(minigameName) ~= "string" then
+		warn "The minigame name must be a string."
+		return
+	end
+
+	if not setOperationLockAsync(true) then return end
+
+	print(("Removing minigame '%s'…"):format(minigameName))
+
+	local minigameList = ServerCatalog.getMinigameListAsync()
+
+	if not minigameList then
+		warn "Failed to retrieve the minigame list."
+		setOperationLockAsync(false)
+		return
+	end
+
+	print "Retrieved the minigame list."
+
+	if not minigameList[minigameName] then
+		print(("Minigame '%s' already does not exist."):format(minigameName))
+		setOperationLockAsync(false)
+		return
+	end
+
+	minigameList[minigameName] = nil
+
+	local removeMinigameSuccess = SafeDataStore.safeSetAsync(catalogInfo, "MinigameList", minigameList)
+
+	if not removeMinigameSuccess then
+		warn(("Failed to remove minigame '%s' from the minigame list."):format(minigameName))
+		setOperationLockAsync(false)
+		return
+	end
+
+	print(("Removed minigame '%s' from the minigame list."):format(minigameName))
+
+	print(("Minigame '%s' has been successfully removed."):format(minigameName))
+
+	setOperationLockAsync(false)
+end
+
+function ServerCatalogControlPanel.removeWorldLocation(locationName: string)
+	if typeof(locationName) ~= "string" then
+		warn "The location name must be a string."
+		return
+	end
+
+	if not setOperationLockAsync(true) then return end
 
 	print(("Removing location '%s'…"):format(locationName))
 
-	local getLocationListSuccess, locationList = SafeDataStore.safeGetAsync(catalogInfo, "WorldLocationList")
+	local locationList = ServerCatalog.getWorldLocationListAsync()
 
-	if not getLocationListSuccess then
+	if not locationList then
 		warn "Failed to retrieve the world location list."
-		operationLock = false
+		setOperationLockAsync(false)
 		return
 	end
 
 	print "Retrieved the world location list."
 
-	locationList = locationList or {}
-
 	if not locationList[locationName] then
-		warn "This location does not exist."
-		operationLock = false
+		print(("Location '%s' already does not exist."):format(locationName))
+		setOperationLockAsync(false)
 		return
 	end
 
@@ -224,8 +501,8 @@ function UniverseControlPanel.removeLocation(locationName: string)
 	local removeLocationSuccess = SafeDataStore.safeSetAsync(catalogInfo, "WorldLocationList", locationList)
 
 	if not removeLocationSuccess then
-		warn "Failed to remove the location from the world location list."
-		operationLock = false
+		warn(("Failed to remove location '%s' from the world location list."):format(locationName))
+		setOperationLockAsync(false)
 		return
 	end
 
@@ -233,17 +510,131 @@ function UniverseControlPanel.removeLocation(locationName: string)
 
 	print(("Location '%s' has been successfully removed."):format(locationName))
 
-	operationLock = false
+	setOperationLockAsync(false)
 end
 
-function UniverseControlPanel.setWorldCount(count: number, force: true?)
-	assert(not operationLock, "An operation is already in progress.")
-	assert(typeof(count) == "number" and count == count, "The world count must be a valid number.")
-	assert(count == math.floor(count), "The world count must be an integer.")
-	assert(count >= 0, "The world count must be non-negative.")
-	assert(force == nil or force == true, "The force flag must be true or nil.")
+function ServerCatalogControlPanel.setMinigameServerCount(count: number, force: true?)
+	if typeof(count) ~= "number" or count ~= count or count ~= math.floor(count) or count < 0 then
+		warn "The server count must be a non-negative integer."
+		return
+	elseif force ~= nil and force ~= true then
+		warn "The force flag must be true or nil."
+		return
+	end
 
-	operationLock = true
+	if not setOperationLockAsync(true) then return end
+
+	print(("Setting the minigame server count to %d…"):format(count))
+
+	local currentMinigameServerCount = ServerCatalog.getMinigameServerCountAsync()
+
+	if not currentMinigameServerCount then
+		warn "Failed to retrieve the minigame server count."
+		setOperationLockAsync(false)
+		return
+	end
+
+	if currentMinigameServerCount > count and not force then
+		warn "Cannot reduce the minigame server count without the force flag."
+		setOperationLockAsync(false)
+		return
+	end
+
+	if currentMinigameServerCount == count then
+		print(("The minigame server count is already %d."):format(count))
+	elseif currentMinigameServerCount > count then
+		local setMinigameServerCountSuccess = SafeDataStore.safeSetAsync(catalogInfo, "MinigameServerCount", count)
+
+		if not setMinigameServerCountSuccess then
+			warn(("Failed to update the minigame server count to %d."):format(count))
+			setOperationLockAsync(false)
+			return
+		end
+
+		print(("Updated the minigame server count to %d."):format(count))
+
+		print(("The minigame server count has been successfully reduced to %d."):format(count))
+	else
+		local minigameList = ServerCatalog.getMinigameListAsync()
+
+		if not minigameList then
+			warn "Failed to retrieve the minigame list."
+			setOperationLockAsync(false)
+			return
+		end
+
+		print "Retrieved the minigame list."
+
+		for minigameName, minigameInfo in pairs(minigameList) do
+			local minigamePlaceId = minigameInfo.placeId
+
+			local getMinigameSuccess, minigameData: CatalogMinigameData = slowGetAsync(minigameCatalog, minigameName)
+
+			if not getMinigameSuccess then
+				warn(("Failed to retrieve minigame '%s' data."):format(minigameName))
+				setOperationLockAsync(false)
+				return
+			end
+
+			for i = currentMinigameServerCount + 1, count do
+				local reserveSuccess, accessCode, privateServerId = SafeTeleport.safeReserveServerAsync(minigamePlaceId)
+
+				if not reserveSuccess then
+					warn(
+						(
+							"Failed to reserve a private server for minigame '%s' in server %d. (This may have been run"
+							.. " in Studio.)"
+						):format(minigameName, i)
+					)
+					setOperationLockAsync(false)
+					return
+				end
+
+				print(("Reserved a private server for minigame '%s' in server %d."):format(minigameName, i))
+
+				minigameData[i] = {
+					accessCode = accessCode,
+					privateServerId = privateServerId,
+				}
+			end
+
+			local setMinigameSuccess = slowSetAsync(minigameCatalog, minigameName, minigameData)
+
+			if not setMinigameSuccess then
+				warn(("Failed to add minigame '%s' to the minigame catalog."):format(minigameName))
+				setOperationLockAsync(false)
+				return
+			end
+
+			print(("Added minigame '%s' to the minigame catalog."):format(minigameName))
+		end
+
+		local setMinigameServerCountSuccess = SafeDataStore.safeSetAsync(catalogInfo, "MinigameServerCount", count)
+
+		if not setMinigameServerCountSuccess then
+			warn(("Failed to update the minigame server count to %d."):format(count))
+			setOperationLockAsync(false)
+			return
+		end
+
+		print(("Updated the minigame server count to %d."):format(count))
+
+		print(("The minigame server count has been successfully increased to %d."):format(count))
+	end
+
+	setOperationLockAsync(false)
+end
+
+function ServerCatalogControlPanel.setWorldCount(count: number, force: true?)
+	if typeof(count) ~= "number" or count ~= count or count ~= math.floor(count) or count < 0 then
+		warn "The world count must be a non-negative integer."
+		return
+	elseif force ~= nil and force ~= true then
+		warn "The force flag must be true or nil."
+		return
+	end
+
+	if not setOperationLockAsync(true) then return end
 
 	print(("Setting the world count to %d…"):format(count))
 
@@ -251,13 +642,13 @@ function UniverseControlPanel.setWorldCount(count: number, force: true?)
 
 	if not currentWorldCount then
 		warn "Failed to retrieve the world count."
-		operationLock = false
+		setOperationLockAsync(false)
 		return
 	end
 
 	if currentWorldCount > count and not force then
 		warn "Cannot reduce the world count without the force flag."
-		operationLock = false
+		setOperationLockAsync(false)
 		return
 	end
 
@@ -267,28 +658,24 @@ function UniverseControlPanel.setWorldCount(count: number, force: true?)
 		local setWorldCountSuccess = SafeDataStore.safeSetAsync(catalogInfo, "WorldCount", count)
 
 		if not setWorldCountSuccess then
-			warn "Failed to update the world count."
-			operationLock = false
+			warn(("Failed to update the world count to %d."):format(count))
+			setOperationLockAsync(false)
 			return
 		end
 
-		print(("Updated the world counter to %d."):format(count))
+		print(("Updated the world count to %d."):format(count))
 
 		print(("The world count has been successfully reduced to %d."):format(count))
 	else
-		task.wait(DATASTORE_OPERATION_COOLDOWN)
+		local locationList = ServerCatalog.getWorldLocationListAsync()
 
-		local getLocationsSuccess, locationList = SafeDataStore.safeGetAsync(catalogInfo, "WorldLocationList")
-
-		if not getLocationsSuccess then
+		if not locationList then
 			warn "Failed to retrieve the world location list."
-			operationLock = false
+			setOperationLockAsync(false)
 			return
 		end
 
 		print "Retrieved the world location list."
-
-		locationList = locationList or {}
 
 		for i = currentWorldCount + 1, count do
 			local newWorld = {}
@@ -299,24 +686,25 @@ function UniverseControlPanel.setWorldCount(count: number, force: true?)
 				local reserveSuccess, accessCode, privateServerId = SafeTeleport.safeReserveServerAsync(locationPlaceId)
 
 				if not reserveSuccess then
-					warn "Failed to reserve a private server. (This may have been run in Studio.)"
-					operationLock = false
+					warn(
+						(
+							"Failed to reserve a private server for location '%s' in world %d. (This may have been run"
+							.. " in Studio.)"
+						):format(locationName, i)
+					)
+					setOperationLockAsync(false)
 					return
 				end
 
 				print(("Reserved a private server for location '%s' in world %d."):format(locationName, i))
 
-				if i ~= currentWorldCount + 1 then task.wait(DATASTORE_OPERATION_COOLDOWN) end
-
-				local setDictionarySuccess = SafeDataStore.safeSetAsync(serverDictionary, privateServerId, {
-					world = i,
-				})
+				local setDictionarySuccess = slowSetAsync(serverDictionary, privateServerId, { world = i })
 
 				if not setDictionarySuccess then
 					warn(
 						("Failed to add server dictionary entry for location '%s' in world %d."):format(locationName, i)
 					)
-					operationLock = false
+					setOperationLockAsync(false)
 					return
 				end
 
@@ -328,26 +716,22 @@ function UniverseControlPanel.setWorldCount(count: number, force: true?)
 				}
 			end
 
-			task.wait(DATASTORE_OPERATION_COOLDOWN)
-
-			local setWorldSuccess = SafeDataStore.safeSetAsync(worldCatalog, tostring(i), newWorld)
+			local setWorldSuccess = slowSetAsync(worldCatalog, tostring(i), newWorld)
 
 			if not setWorldSuccess then
-				warn(("Failed to create world %d."):format(i))
-				operationLock = false
+				warn(("Failed to add world %d to the world catalog."):format(i))
+				setOperationLockAsync(false)
 				return
 			end
 
-			print(("Created world %d."):format(i))
+			print(("Added world %d to the world catalog."):format(i))
 		end
-
-		task.wait(DATASTORE_OPERATION_COOLDOWN)
 
 		local setWorldCountSuccess = SafeDataStore.safeSetAsync(catalogInfo, "WorldCount", count)
 
 		if not setWorldCountSuccess then
-			warn "Failed to update the world count."
-			operationLock = false
+			warn(("Failed to update the world count to %d."):format(count))
+			setOperationLockAsync(false)
 			return
 		end
 
@@ -356,7 +740,7 @@ function UniverseControlPanel.setWorldCount(count: number, force: true?)
 		print(("The world count has been successfully increased to %d."):format(count))
 	end
 
-	operationLock = false
+	setOperationLockAsync(false)
 end
 
-return UniverseControlPanel
+return ServerCatalogControlPanel

@@ -70,7 +70,7 @@ function Table.dictLen(dict) -- returns the length of a dictionary (table with n
 	return count
 end
 
-function Table.deepCopy<T>(t: { T } | T) -- returns a deep copy of a table
+function Table.deepCopy<T>(t: T): T -- returns a deep copy of a table
 	if type(t) == "table" then
 		local copy = {}
 
@@ -78,7 +78,7 @@ function Table.deepCopy<T>(t: { T } | T) -- returns a deep copy of a table
 			copy[k] = Table.deepCopy(v)
 		end
 
-		return copy
+		return (copy :: any) :: T
 	end
 
 	return t
