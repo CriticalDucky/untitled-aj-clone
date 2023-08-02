@@ -14,8 +14,8 @@ local ServerStorage = game:GetService "ServerStorage"
 
 assert(not RunService:IsStudio(), "This module cannot be used in Studio.")
 
-local SafeDataStore = require(ServerStorage.Shared.Utility.SafeDataStore)
-local SafeTeleport = require(ServerStorage.Shared.Utility.SafeTeleport)
+local DataStoreUtility = require(ServerStorage.Shared.Utility.DataStoreUtility)
+local TeleportUtility = require(ServerStorage.Shared.Utility.TeleportUtility)
 local ServerCatalog = require(ServerStorage.Shared.Universe.ServerCatalog)
 local Table = require(ReplicatedFirst.Shared.Utility.Table)
 local Types = require(ReplicatedFirst.Shared.Utility.Types)
@@ -50,7 +50,7 @@ local function slowGetAsync(dataStore, key)
 
 	lastRead = os.time()
 
-	return SafeDataStore.safeGetAsync(dataStore, key)
+	return DataStoreUtility.safeGetAsync(dataStore, key)
 end
 
 local function slowSetAsync(dataStore, key, value, userIds, options)
@@ -62,7 +62,7 @@ local function slowSetAsync(dataStore, key, value, userIds, options)
 
 	lastWrite = os.time()
 
-	return SafeDataStore.safeSetAsync(dataStore, key, value, userIds, options)
+	return DataStoreUtility.safeSetAsync(dataStore, key, value, userIds, options)
 end
 
 --#endregion
@@ -83,7 +83,7 @@ local function setOperationLockAsync(lock: boolean): boolean
 	if lock then
 		local success = false
 
-		local updateSuccess = SafeDataStore.safeUpdateAsync(catalogInfo, "OperationLock", function(oldValue)
+		local updateSuccess = DataStoreUtility.safeUpdateAsync(catalogInfo, "OperationLock", function(oldValue)
 			if oldValue then return end
 
 			localOperationLock = true
@@ -99,7 +99,7 @@ local function setOperationLockAsync(lock: boolean): boolean
 
 		return success
 	else
-		local success = SafeDataStore.safeRemoveAsync(catalogInfo, "OperationLock")
+		local success = DataStoreUtility.safeRemoveAsync(catalogInfo, "OperationLock")
 
 		if not success then warn "An error occurred while removing the operation lock." end
 
@@ -162,7 +162,7 @@ function ServerCatalogControlPanel.addMinigame(name: string, placeId: number)
 	if minigameServerCount == 0 then
 		print "The minigame server count is 0, so a dummy server will be reserved to verify the place ID."
 
-		local reserveSuccess = SafeTeleport.safeReserveServerAsync(placeId)
+		local reserveSuccess = TeleportUtility.safeReserveServerAsync(placeId)
 
 		if not reserveSuccess then
 			warn(
@@ -181,7 +181,7 @@ function ServerCatalogControlPanel.addMinigame(name: string, placeId: number)
 	local newMinigame = {}
 
 	for i = 1, minigameServerCount do
-		local reserveSuccess, accessCode, privateServerId = SafeTeleport.safeReserveServerAsync(placeId)
+		local reserveSuccess, accessCode, privateServerId = TeleportUtility.safeReserveServerAsync(placeId)
 
 		if not reserveSuccess then
 			warn(
@@ -216,7 +216,7 @@ function ServerCatalogControlPanel.addMinigame(name: string, placeId: number)
 		placeId = placeId,
 	}
 
-	local setMinigameListSuccess = SafeDataStore.safeSetAsync(catalogInfo, "MinigameList", minigameList)
+	local setMinigameListSuccess = DataStoreUtility.safeSetAsync(catalogInfo, "MinigameList", minigameList)
 
 	if not setMinigameListSuccess then
 		warn(("Failed to add minigame '%s' to the minigame list."):format(name))
@@ -273,7 +273,7 @@ function ServerCatalogControlPanel.addParty(name: string, placeId: number)
 	if partyServerCount == 0 then
 		print "The party server count is 0, so a dummy server will be reserved to verify the place ID."
 
-		local reserveSuccess = SafeTeleport.safeReserveServerAsync(placeId)
+		local reserveSuccess = TeleportUtility.safeReserveServerAsync(placeId)
 
 		if not reserveSuccess then
 			warn(
@@ -292,7 +292,7 @@ function ServerCatalogControlPanel.addParty(name: string, placeId: number)
 	local newParty = {}
 
 	for i = 1, partyServerCount do
-		local reserveSuccess, accessCode, privateServerId = SafeTeleport.safeReserveServerAsync(placeId)
+		local reserveSuccess, accessCode, privateServerId = TeleportUtility.safeReserveServerAsync(placeId)
 
 		if not reserveSuccess then
 			warn(
@@ -327,7 +327,7 @@ function ServerCatalogControlPanel.addParty(name: string, placeId: number)
 		placeId = placeId,
 	}
 
-	local setPartyListSuccess = SafeDataStore.safeSetAsync(catalogInfo, "PartyList", partyList)
+	local setPartyListSuccess = DataStoreUtility.safeSetAsync(catalogInfo, "PartyList", partyList)
 
 	if not setPartyListSuccess then
 		warn(("Failed to add party '%s' to the party list."):format(name))
@@ -384,7 +384,7 @@ function ServerCatalogControlPanel.addWorldLocation(name: string, placeId: numbe
 	if worldCount == 0 then
 		print "The world count is 0, so a dummy server will be reserved to verify the place ID."
 
-		local reserveSuccess = SafeTeleport.safeReserveServerAsync(placeId)
+		local reserveSuccess = TeleportUtility.safeReserveServerAsync(placeId)
 
 		if not reserveSuccess then
 			warn(
@@ -413,7 +413,7 @@ function ServerCatalogControlPanel.addWorldLocation(name: string, placeId: numbe
 
 		print(("Retrieved world %d data."):format(i))
 
-		local reserveSuccess, accessCode, privateServerId = SafeTeleport.safeReserveServerAsync(placeId)
+		local reserveSuccess, accessCode, privateServerId = TeleportUtility.safeReserveServerAsync(placeId)
 
 		if not reserveSuccess then
 			warn(
@@ -460,7 +460,7 @@ function ServerCatalogControlPanel.addWorldLocation(name: string, placeId: numbe
 		placeId = placeId,
 	}
 
-	local setLocationListSuccess = SafeDataStore.safeSetAsync(catalogInfo, "WorldLocationList", locationList)
+	local setLocationListSuccess = DataStoreUtility.safeSetAsync(catalogInfo, "WorldLocationList", locationList)
 
 	if not setLocationListSuccess then
 		warn "Failed to update the world location list."
@@ -648,7 +648,7 @@ function ServerCatalogControlPanel.removeMinigame(minigameName: string)
 
 	minigameList[minigameName] = nil
 
-	local removeMinigameSuccess = SafeDataStore.safeSetAsync(catalogInfo, "MinigameList", minigameList)
+	local removeMinigameSuccess = DataStoreUtility.safeSetAsync(catalogInfo, "MinigameList", minigameList)
 
 	if not removeMinigameSuccess then
 		warn(("Failed to remove minigame '%s' from the minigame list."):format(minigameName))
@@ -691,7 +691,7 @@ function ServerCatalogControlPanel.removeParty(partyName: string)
 
 	partyList[partyName] = nil
 
-	local removePartySuccess = SafeDataStore.safeSetAsync(catalogInfo, "PartyList", partyList)
+	local removePartySuccess = DataStoreUtility.safeSetAsync(catalogInfo, "PartyList", partyList)
 
 	if not removePartySuccess then
 		warn(("Failed to remove party '%s' from the party list."):format(partyName))
@@ -734,7 +734,7 @@ function ServerCatalogControlPanel.removeWorldLocation(locationName: string)
 
 	locationList[locationName] = nil
 
-	local removeLocationSuccess = SafeDataStore.safeSetAsync(catalogInfo, "WorldLocationList", locationList)
+	local removeLocationSuccess = DataStoreUtility.safeSetAsync(catalogInfo, "WorldLocationList", locationList)
 
 	if not removeLocationSuccess then
 		warn(("Failed to remove location '%s' from the world location list."):format(locationName))
@@ -779,7 +779,7 @@ function ServerCatalogControlPanel.setMinigameServerCount(count: number, force: 
 	if currentMinigameServerCount == count then
 		print(("The minigame server count is already %d."):format(count))
 	elseif currentMinigameServerCount > count then
-		local setMinigameServerCountSuccess = SafeDataStore.safeSetAsync(catalogInfo, "MinigameServerCount", count)
+		local setMinigameServerCountSuccess = DataStoreUtility.safeSetAsync(catalogInfo, "MinigameServerCount", count)
 
 		if not setMinigameServerCountSuccess then
 			warn(("Failed to update the minigame server count to %d."):format(count))
@@ -813,7 +813,7 @@ function ServerCatalogControlPanel.setMinigameServerCount(count: number, force: 
 			end
 
 			for i = currentMinigameServerCount + 1, count do
-				local reserveSuccess, accessCode, privateServerId = SafeTeleport.safeReserveServerAsync(minigamePlaceId)
+				local reserveSuccess, accessCode, privateServerId = TeleportUtility.safeReserveServerAsync(minigamePlaceId)
 
 				if not reserveSuccess then
 					warn(
@@ -845,7 +845,7 @@ function ServerCatalogControlPanel.setMinigameServerCount(count: number, force: 
 			print(("Added minigame '%s' to the minigame catalog."):format(minigameName))
 		end
 
-		local setMinigameServerCountSuccess = SafeDataStore.safeSetAsync(catalogInfo, "MinigameServerCount", count)
+		local setMinigameServerCountSuccess = DataStoreUtility.safeSetAsync(catalogInfo, "MinigameServerCount", count)
 
 		if not setMinigameServerCountSuccess then
 			warn(("Failed to update the minigame server count to %d."):format(count))
@@ -891,7 +891,7 @@ function ServerCatalogControlPanel.setPartyServerCount(count: number, force: tru
 	if currentPartyServerCount == count then
 		print(("The party server count is already %d."):format(count))
 	elseif currentPartyServerCount > count then
-		local setPartyServerCountSuccess = SafeDataStore.safeSetAsync(catalogInfo, "PartyServerCount", count)
+		local setPartyServerCountSuccess = DataStoreUtility.safeSetAsync(catalogInfo, "PartyServerCount", count)
 
 		if not setPartyServerCountSuccess then
 			warn(("Failed to update the party server count to %d."):format(count))
@@ -925,7 +925,7 @@ function ServerCatalogControlPanel.setPartyServerCount(count: number, force: tru
 			end
 
 			for i = currentPartyServerCount + 1, count do
-				local reserveSuccess, accessCode, privateServerId = SafeTeleport.safeReserveServerAsync(partyPlaceId)
+				local reserveSuccess, accessCode, privateServerId = TeleportUtility.safeReserveServerAsync(partyPlaceId)
 
 				if not reserveSuccess then
 					warn(
@@ -957,7 +957,7 @@ function ServerCatalogControlPanel.setPartyServerCount(count: number, force: tru
 			print(("Added party '%s' to the party catalog."):format(partyName))
 		end
 
-		local setPartyServerCountSuccess = SafeDataStore.safeSetAsync(catalogInfo, "PartyServerCount", count)
+		local setPartyServerCountSuccess = DataStoreUtility.safeSetAsync(catalogInfo, "PartyServerCount", count)
 
 		if not setPartyServerCountSuccess then
 			warn(("Failed to update the party server count to %d."):format(count))
@@ -1003,7 +1003,7 @@ function ServerCatalogControlPanel.setWorldCount(count: number, force: true?)
 	if currentWorldCount == count then
 		print(("The world count is already %d."):format(count))
 	elseif currentWorldCount > count then
-		local setWorldCountSuccess = SafeDataStore.safeSetAsync(catalogInfo, "WorldCount", count)
+		local setWorldCountSuccess = DataStoreUtility.safeSetAsync(catalogInfo, "WorldCount", count)
 
 		if not setWorldCountSuccess then
 			warn(("Failed to update the world count to %d."):format(count))
@@ -1031,7 +1031,7 @@ function ServerCatalogControlPanel.setWorldCount(count: number, force: true?)
 			for locationName, locationInfo in pairs(locationList) do
 				local locationPlaceId = locationInfo.placeId
 
-				local reserveSuccess, accessCode, privateServerId = SafeTeleport.safeReserveServerAsync(locationPlaceId)
+				local reserveSuccess, accessCode, privateServerId = TeleportUtility.safeReserveServerAsync(locationPlaceId)
 
 				if not reserveSuccess then
 					warn(
@@ -1075,7 +1075,7 @@ function ServerCatalogControlPanel.setWorldCount(count: number, force: true?)
 			print(("Added world %d to the world catalog."):format(i))
 		end
 
-		local setWorldCountSuccess = SafeDataStore.safeSetAsync(catalogInfo, "WorldCount", count)
+		local setWorldCountSuccess = DataStoreUtility.safeSetAsync(catalogInfo, "WorldCount", count)
 
 		if not setWorldCountSuccess then
 			warn(("Failed to update the world count to %d."):format(count))

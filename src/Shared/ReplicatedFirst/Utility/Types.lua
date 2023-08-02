@@ -134,15 +134,21 @@ export type ServerDictionaryDataHome = {
 -- 	privateServerId: string?,
 -- }
 
-export type ServerIdentifier = {
-	accessCode: string,
-	privateServerId: string,
-}
-
 export type CatalogMinigameData = { ServerIdentifier }
 
 export type CatalogPartyData = { ServerIdentifier }
 
 export type CatalogWorldData = { [string]: ServerIdentifier }
+
+export type ServerIdentifier = {
+	accessCode: string,
+	privateServerId: string,
+}
+
+export type ServerInfoLocation = {
+	world: number,
+}
+
+export type CatalogWorldLocationList = { [string]: { placeId: number } }
 
 return nil

@@ -9,7 +9,7 @@ local Enums = require(ReplicatedFirst.Shared.Enums)
 local HomeLockType = Enums.HomeLockType
 local TeleportToHomeResult = Enums.TeleportToHomeResult
 local PlayerDataManager = require(ServerStorage.Shared.Data.PlayerDataManager)
-local SafeTeleport = require(ServerStorage.Shared.Utility.SafeTeleport)
+local TeleportUtility = require(ServerStorage.Shared.Utility.TeleportUtility)
 local ServerStorageConfiguration = require(ServerStorage.Shared.Configuration)
 local PlaceIds = ServerStorageConfiguration.PlaceIDs
 local Types = require(ReplicatedFirst.Shared.Utility.Types)
@@ -79,7 +79,7 @@ function UniverseNavigation.teleportToHomeAsync(target: Player, destination: num
 
 	-- TODO: Teleport with world data.
 
-	local success = SafeTeleport.safeTeleportAsync(PlaceIds.home, { target }, teleportOptions)
+	local success = TeleportUtility.safeTeleportAsync(PlaceIds.home, { target }, teleportOptions)
 
 	return if success then TeleportToHomeResult.success else TeleportToHomeResult.teleportFailed
 end

@@ -7,7 +7,7 @@ local ServerStorage = game:GetService "ServerStorage"
 
 assert(not RunService:IsStudio(), "This module cannot be used in Studio.")
 
-local SafeDataStore = require(ServerStorage.Shared.Utility.SafeDataStore)
+local DataStoreUtility = require(ServerStorage.Shared.Utility.DataStoreUtility)
 local Types = require(ReplicatedFirst.Shared.Utility.Types)
 
 type CatalogMinigameData = Types.CatalogMinigameData
@@ -42,11 +42,11 @@ function ServerCatalog.getMinigameAsync(minigame: string): CatalogMinigameData?
 
 	if not serverCount then return end
 
-	local success, rawMinigameData: CatalogMinigameData = SafeDataStore.safeGetAsync(minigameCatalog, minigame)
+	local success, rawMinigameData: CatalogMinigameData = DataStoreUtility.safeGetAsync(minigameCatalog, minigame)
 
 	if not success then return end
 
-    local minigameData = {}
+	local minigameData = {}
 
 	for i = 1, serverCount do
 		minigameData[i] = rawMinigameData[i]
@@ -63,7 +63,7 @@ end
     @return The set of all minigames that exist, including their place IDs, or `nil` if an error occurred.
 ]]
 function ServerCatalog.getMinigameListAsync(): { [string]: { placeId: number } }?
-	local success, minigameList = SafeDataStore.safeGetAsync(catalogInfo, "MinigameList")
+	local success, minigameList = DataStoreUtility.safeGetAsync(catalogInfo, "MinigameList")
 
 	if not success then return end
 
@@ -78,7 +78,7 @@ end
     @return The number of servers that exist for each minigame, or `nil` if an error occurred.
 ]]
 function ServerCatalog.getMinigameServerCountAsync(): number?
-	local success, minigameServerCount = SafeDataStore.safeGetAsync(catalogInfo, "MinigameServerCount")
+	local success, minigameServerCount = DataStoreUtility.safeGetAsync(catalogInfo, "MinigameServerCount")
 
 	if not success then return end
 
@@ -102,7 +102,7 @@ function ServerCatalog.getPartyAsync(party: string): CatalogPartyData?
 
 	if not serverCount then return end
 
-	local success, rawPartyData: CatalogPartyData = SafeDataStore.safeGetAsync(partyCatalog, party)
+	local success, rawPartyData: CatalogPartyData = DataStoreUtility.safeGetAsync(partyCatalog, party)
 
 	if not success then return end
 
@@ -123,7 +123,7 @@ end
 	@return The set of all parties that exist, including their place IDs, or `nil` if an error occurred.
 ]]
 function ServerCatalog.getPartyListAsync(): { [string]: { placeId: number } }?
-	local success, partyList = SafeDataStore.safeGetAsync(catalogInfo, "PartyList")
+	local success, partyList = DataStoreUtility.safeGetAsync(catalogInfo, "PartyList")
 
 	if not success then return end
 
@@ -138,7 +138,7 @@ end
 	@return The number of servers that exist for each party, or `nil` if an error occurred.
 ]]
 function ServerCatalog.getPartyServerCountAsync(): number?
-	local success, partyServerCount = SafeDataStore.safeGetAsync(catalogInfo, "PartyServerCount")
+	local success, partyServerCount = DataStoreUtility.safeGetAsync(catalogInfo, "PartyServerCount")
 
 	if not success then return end
 
@@ -167,7 +167,7 @@ function ServerCatalog.getWorldAsync(world: number): CatalogWorldData?
 
 	if not locationList then return end
 
-	local success, rawWorldData: CatalogWorldData = SafeDataStore.safeGetAsync(worldCatalog, tostring(world))
+	local success, rawWorldData: CatalogWorldData = DataStoreUtility.safeGetAsync(worldCatalog, tostring(world))
 
 	if not success then return end
 
@@ -188,7 +188,7 @@ end
     @return The number of worlds that exist, or `nil` if an error occurred.
 ]]
 function ServerCatalog.getWorldCountAsync(): number?
-	local success, worldCount = SafeDataStore.safeGetAsync(catalogInfo, "WorldCount")
+	local success, worldCount = DataStoreUtility.safeGetAsync(catalogInfo, "WorldCount")
 
 	if not success then return end
 
@@ -203,7 +203,7 @@ end
     @return The set of all locations that exist, including their place IDs, or `nil` if an error occurred.
 ]]
 function ServerCatalog.getWorldLocationListAsync(): { [string]: { placeId: number } }?
-	local success, locationList = SafeDataStore.safeGetAsync(catalogInfo, "WorldLocationList")
+	local success, locationList = DataStoreUtility.safeGetAsync(catalogInfo, "WorldLocationList")
 
 	if not success then return end
 

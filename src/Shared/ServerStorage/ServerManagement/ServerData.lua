@@ -81,7 +81,7 @@ export type ServerIdentifier = {
 
 --]]
 
-local SERVERS_DATASTORE = "Servers"
+-- local SERVERS_DATASTORE = "Servers"
 local WORLDS_KEY = "worlds"
 local PARTIES_KEY = "parties"
 local MINIGAMES_KEY = "minigames"
@@ -89,35 +89,35 @@ local CACHE_COOLDOWN = 30
 
 --#region Imports
 
-local DataStoreService = game:GetService "DataStoreService"
+-- local DataStoreService = game:GetService "DataStoreService"
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local RunService = game:GetService "RunService"
 local TeleportService = game:GetService "TeleportService"
-local ServerStorage = game:GetService "ServerStorage"
+-- local ServerStorage = game:GetService "ServerStorage"
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
 
 local replicatedStorageShared = ReplicatedStorage.Shared
 local replicatedFirstVendor = ReplicatedFirst.Vendor
 local replicatedFirstShared = ReplicatedFirst.Shared
-local serverStorageShared = ServerStorage.Shared
-local serverStorageVendor = ServerStorage.Vendor
+-- local serverStorageShared = ServerStorage.Shared
+-- local serverStorageVendor = ServerStorage.Vendor
 local configurationFolder = replicatedFirstShared.Configuration
-local serverUtilityFolder = serverStorageShared.Utility
+-- local serverUtilityFolder = serverStorageShared.Utility
 local utilityFolder = replicatedFirstShared.Utility
-local dataFolder = serverStorageShared.Data
+-- local dataFolder = serverStorageShared.Data
 local enumsFolder = replicatedFirstShared.Enums
 local serverFolder = replicatedStorageShared.Server
 
 local Locations = require(configurationFolder.LocationConstants)
 local Parties = require(configurationFolder.PartyConstants)
 local Minigames = require(configurationFolder.MinigameConstants)
-local DataStore = require(serverUtilityFolder.DataStore)
+-- local DataStore = require(serverUtilityFolder.DataStore)
 local MinigameServerType = require(enumsFolder.MinigameServerType)
 local LiveServerData = require(serverFolder.LiveServerData)
 local Math = require(utilityFolder.Math)
 local Table = require(utilityFolder.Table)
-local ReplicaService = require(serverStorageVendor.ReplicaService)
-local PlayerDataManager = require(dataFolder.PlayerDataManager)
+-- local ReplicaService = require(serverStorageVendor.ReplicaService)
+-- local PlayerDataManager = require(dataFolder.PlayerDataManager)
 local Promise = require(replicatedFirstVendor.Promise)
 local Types = require(utilityFolder.Types)
 local ServerTypeEnum = require(enumsFolder.ServerType)
@@ -128,7 +128,7 @@ type PlayerPersistentData = Types.PlayerPersistentData
 
 --#endregion
 
-local serverDataStore = DataStoreService:GetDataStore(SERVERS_DATASTORE)
+-- local serverDataStore = DataStoreService:GetDataStore(SERVERS_DATASTORE)
 
 local cachedData = {
 	[WORLDS_KEY] = {
@@ -177,63 +177,63 @@ local constantKeys = {
 }
 
 local retrievedKeys = {} -- Determines if the datastore has been retrieved for a given key.
-local isRetrieving = {} -- Used to prevent multiple requests to the datastore at once.
+-- local isRetrieving = {} -- Used to prevent multiple requests to the datastore at once.
 local lastDatastoreRequest = {} -- Used to determine when to update the datastore.
 
 local ServerData = {}
 
-local replica = ReplicaService.NewReplica { -- Create a new replica for the cached server data for the client.
-	ClassToken = ReplicaService.NewClassToken "ServerData",
-	Data = Table.deepCopy(cachedData),
-	Replication = "All",
-}
+-- local replica = ReplicaService.NewReplica { -- Create a new replica for the cached server data for the client.
+-- 	ClassToken = ReplicaService.NewClassToken "ServerData",
+-- 	Data = Table.deepCopy(cachedData),
+-- 	Replication = "All",
+-- }
 
 -- Attempts to update the data at the given key using the given transform function.
 -- Returns the success of the update and the error if it failed.
 local function updateDataStore(key: string, transformFunction: (any) -> any)
-	local success, err = DataStore.safeUpdate(serverDataStore, key, transformFunction)
+	-- local success, err = DataStore.safeUpdate(serverDataStore, key, transformFunction)
 
-	if success then
-		transformFunction(cachedData[key])
-		replica:SetValue({ key }, Table.copy(cachedData[key]))
-	else
-		warn("Failed to update datastore for key: ", key)
-	end
+	-- if success then
+	-- 	transformFunction(cachedData[key])
+	-- 	replica:SetValue({ key }, Table.copy(cachedData[key]))
+	-- else
+	-- 	warn("Failed to update datastore for key: ", key)
+	-- end
 
-	return success, err
+	-- return success, err
 end
 
 -- Retrieves and the server data for the given key.
 -- Returns with the success of the request and the data.
 local function getKeyData(key: string)
-	assert(key, "Key must be provided to retrieve datastore")
-	assert(type(key) == "string", "Key must be a string. Received " .. typeof(key))
+	-- assert(key, "Key must be provided to retrieve datastore")
+	-- assert(type(key) == "string", "Key must be a string. Received " .. typeof(key))
 
-	if isRetrieving[key] then -- If the datastore is currently being retrieved, wait for it to finish.
-		repeat
-			task.wait()
-		until not isRetrieving[key]
+	-- if isRetrieving[key] then -- If the datastore is currently being retrieved, wait for it to finish.
+	-- 	repeat
+	-- 		task.wait()
+	-- 	until not isRetrieving[key]
 
-		return true, cachedData[key]
-	end
+	-- 	return true, cachedData[key]
+	-- end
 
-	lastDatastoreRequest[key] = time() -- Update the last time the datastore was requested.
-	isRetrieving[key] = true -- Set the key to retrieving. This prevents multiple requests to the datastore at once.
+	-- lastDatastoreRequest[key] = time() -- Update the last time the datastore was requested.
+	-- isRetrieving[key] = true -- Set the key to retrieving. This prevents multiple requests to the datastore at once.
 
-	local success, result = DataStore.safeGet(serverDataStore, key)
+	-- local success, result = DataStore.safeGet(serverDataStore, key)
 
-	if success then
-		cachedData[key] = result or {}
+	-- if success then
+	-- 	cachedData[key] = result or {}
 
-		if result then replica:SetValue({ key }, Table.copy(cachedData[key])) end
-	else
-		warn("Failed to retrieve datastore for key: ", key)
-	end
+	-- 	if result then replica:SetValue({ key }, Table.copy(cachedData[key])) end
+	-- else
+	-- 	warn("Failed to retrieve datastore for key: ", key)
+	-- end
 
-	isRetrieving[key] = false
-	retrievedKeys[key] = success
+	-- isRetrieving[key] = false
+	-- retrievedKeys[key] = success
 
-	return success, cachedData[key]
+	-- return success, cachedData[key]
 end
 
 --[[
@@ -510,39 +510,39 @@ end
 	Returns a success value and an error message if the request failed.
 ]]
 function ServerData.stampHomeServer(owner: Player)
-	assert(PlayerDataManager.persistentDataIsLoaded(owner), "Player profile is not loaded")
+	-- assert(PlayerDataManager.persistentDataIsLoaded(owner), "Player profile is not loaded")
 
-	local homeServerInfo = (PlayerDataManager.viewPersistentData(owner) :: PlayerPersistentData).home.server
-	local privateServerId = homeServerInfo.id
+	-- local homeServerInfo = (PlayerDataManager.viewPersistentData(owner) :: PlayerPersistentData).home.server
+	-- local privateServerId = homeServerInfo.id
 
-	assert(privateServerId, "Player does not have a home server")
+	-- assert(privateServerId, "Player does not have a home server")
 
-	print("Stamping home server: ", privateServerId)
+	-- print("Stamping home server: ", privateServerId)
 
-	local success, response = DataStore.safeSet(serverDataStore, privateServerId, {
-		serverType = ServerTypeEnum.home,
-		homeOwner = owner.UserId, -- Stamp the home server with the owner's UserId.
-	})
+	-- local success, response = DataStore.safeSet(serverDataStore, privateServerId, {
+	-- 	serverType = ServerTypeEnum.home,
+	-- 	homeOwner = owner.UserId, -- Stamp the home server with the owner's UserId.
+	-- })
 
-	if success then
-		cachedData[privateServerId] = { -- Update the cache.
-			serverType = ServerTypeEnum.home,
-			homeOwner = owner.UserId,
-		}
+	-- if success then
+	-- 	cachedData[privateServerId] = { -- Update the cache.
+	-- 		serverType = ServerTypeEnum.home,
+	-- 		homeOwner = owner.UserId,
+	-- 	}
 
-		--[[
-			We don't want to stamp the home server again if the player leaves and rejoins the minigame.
-			We also don't want to stamp the home server if the player is already stamped.
+	-- 	--[[
+	-- 		We don't want to stamp the home server again if the player leaves and rejoins the minigame.
+	-- 		We also don't want to stamp the home server if the player is already stamped.
 
-			This may seem redundant, but it saves us from having to make a separate request to the datastore.
-			(this is stored in the player's profile)
-		]]
-		PlayerDataManager.setValuePersistent(owner, { "playerInfo", "homeInfoStamped" }, true)
-	else
-		warn("Failed to stamp home server: ", response)
-	end
+	-- 		This may seem redundant, but it saves us from having to make a separate request to the datastore.
+	-- 		(this is stored in the player's profile)
+	-- 	]]
+	-- 	PlayerDataManager.setValuePersistent(owner, { "playerInfo", "homeInfoStamped" }, true)
+	-- else
+	-- 	warn("Failed to stamp home server: ", response)
+	-- end
 
-	return success, response
+	-- return success, response
 end
 
 --[[
@@ -669,79 +669,79 @@ end
 
 	Returns a success value and a result that is either the world index (if it exists) or an error message.
 ]]
-function ServerData.findAvailableWorld(forcedLocation: UserEnum?, worldsExcluded: { number }?): (boolean, number)
-	local success, worlds = ServerData.getWorlds()
+function ServerData.findAvailableWorld(forcedLocation: UserEnum?, worldsExcluded: { number }?)--: (boolean, number)
+	-- local success, worlds = ServerData.getWorlds()
 
-	if not success then
-		warn("Failed to get worlds: ", worlds)
-		return success, worlds
-	end
+	-- if not success then
+	-- 	warn("Failed to get worlds: ", worlds)
+	-- 	return success, worlds
+	-- end
 
-	local worldIndex
-	do
-		local rarities = {}
+	-- local worldIndex
+	-- do
+	-- 	local rarities = {}
 
-		for currentWorldIndex, world in ipairs(worlds) do
-			local worldPopulationInfo = LiveServerData.getWorldPopulationInfo(currentWorldIndex)
+	-- 	for currentWorldIndex, world in ipairs(worlds) do
+	-- 		local worldPopulationInfo = LiveServerData.getWorldPopulationInfo(currentWorldIndex)
 
-			local worldIsSuitable = true
+	-- 		local worldIsSuitable = true
 
-			if worldsExcluded and table.find(worldsExcluded, currentWorldIndex) then worldIsSuitable = false end
+	-- 		if worldsExcluded and table.find(worldsExcluded, currentWorldIndex) then worldIsSuitable = false end
 
-			if worldIsSuitable and worldPopulationInfo then
-				for locationEnum, _ in pairs(world.locations) do
-					local locationPopulationInfo = worldPopulationInfo.locations[locationEnum]
+	-- 		if worldIsSuitable and worldPopulationInfo then
+	-- 			for locationEnum, _ in pairs(world.locations) do
+	-- 				local locationPopulationInfo = worldPopulationInfo.locations[locationEnum]
 
-					if
-						locationPopulationInfo
-						and (forcedLocation == locationEnum)
-						and (locationPopulationInfo.max_emptySlots == 0)
-					then
-						worldIsSuitable = false
-						break
-					end
-				end
+	-- 				if
+	-- 					locationPopulationInfo
+	-- 					and (forcedLocation == locationEnum)
+	-- 					and (locationPopulationInfo.max_emptySlots == 0)
+	-- 				then
+	-- 					worldIsSuitable = false
+	-- 					break
+	-- 				end
+	-- 			end
 
-				local findSuccess = ServerData.findAvailableLocation(currentWorldIndex)
+	-- 			local findSuccess = ServerData.findAvailableLocation(currentWorldIndex)
 
-				if not findSuccess then worldIsSuitable = false end
+	-- 			if not findSuccess then worldIsSuitable = false end
 
-				if worldPopulationInfo.recommended_emptySlots == 0 then worldIsSuitable = false end
-			end
+	-- 			if worldPopulationInfo.recommended_emptySlots == 0 then worldIsSuitable = false end
+	-- 		end
 
-			if not worldIsSuitable then
-				print("ServerData.findAvailableWorld: World " .. currentWorldIndex .. " is not suitable")
-				continue
-			end
+	-- 		if not worldIsSuitable then
+	-- 			print("ServerData.findAvailableWorld: World " .. currentWorldIndex .. " is not suitable")
+	-- 			continue
+	-- 		end
 
-			local population = worldPopulationInfo and worldPopulationInfo.population or 0
+	-- 		local population = worldPopulationInfo and worldPopulationInfo.population or 0
 
-			local chance
-			do
-				if population == 0 then
-					chance = 0.001 -- Very low chance of empty worlds being chosen so players don't get stuck in empty worlds
-				else
-					chance = population
-				end
-			end
+	-- 		local chance
+	-- 		do
+	-- 			if population == 0 then
+	-- 				chance = 0.001 -- Very low chance of empty worlds being chosen so players don't get stuck in empty worlds
+	-- 			else
+	-- 				chance = population
+	-- 			end
+	-- 		end
 
-			-- print("ServerData.findAvailableWorld: World " .. worldIndex .. " has a chance of " .. chance)
+	-- 		-- print("ServerData.findAvailableWorld: World " .. worldIndex .. " has a chance of " .. chance)
 
-			rarities[currentWorldIndex] = chance
-		end
+	-- 		rarities[currentWorldIndex] = chance
+	-- 	end
 
-		worldIndex = Math.weightedChance(rarities)
-	end
+	-- 	worldIndex = Math.weightedChance(rarities)
+	-- end
 
-	if worldIndex == nil then
-		print "No suitable world found, creating new world"
+	-- if worldIndex == nil then
+	-- 	print "No suitable world found, creating new world"
 
-		Table.print(worlds, "worlds")
+	-- 	Table.print(worlds, "worlds")
 
-		return ServerData.addWorld()
-	end
+	-- 	return ServerData.addWorld()
+	-- end
 
-	return true, worldIndex
+	-- return true, worldIndex
 end
 
 --[[
