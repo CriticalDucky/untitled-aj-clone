@@ -4,7 +4,7 @@ local DataStoreService = game:GetService "DataStoreService"
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ServerStorage = game:GetService "ServerStorage"
 
-local SafeDataStore = require(ServerStorage.Shared.Utility.SafeDataStore)
+local DataStoreUtility = require(ServerStorage.Shared.Utility.DataStoreUtility)
 local Types = require(ReplicatedFirst.Shared.Utility.Types)
 
 local catalogInfo = DataStoreService:GetDataStore "CatalogInfo"
@@ -16,7 +16,7 @@ local privateServerId = game.PrivateServerId
 --#region Location
 
 local getLocationListSuccess, locationList: Types.CatalogWorldLocationList? =
-	SafeDataStore.safeGetAsync(catalogInfo, "WorldLocationList")
+	DataStoreUtility.safeGetAsync(catalogInfo, "WorldLocationList")
 
 if not getLocationListSuccess or not locationList then
 	-- TODO: Soft kick players.
@@ -42,7 +42,7 @@ end
 --#region World
 
 local getServerInfoSuccess, serverInfo: Types.ServerInfoLocation? =
-	SafeDataStore.safeGetAsync(serverDictionary, privateServerId)
+	DataStoreUtility.safeGetAsync(serverDictionary, privateServerId)
 
 if not getServerInfoSuccess or not serverInfo then
 	-- TODO: Soft kick players.
