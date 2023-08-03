@@ -24,7 +24,7 @@ local PlayerDataManager = require(dataServerStorage.PlayerDataManager)
 -- local Items = require(inventoryReplicatedStorage.Items)
 local ItemCategory = require(enums.ItemCategory)
 -- local HomeType = require(enums.ItemTypeHome)
-local PlayerDataInfo = Configuration.PlayerDataInfo
+-- local PlayerDataInfo = Configuration.PlayerDataInfo
 local ServerGroupEnum = require(enums.ServerGroup)
 local ServerTypeGroups = Configuration.ServerTypeGroups
 local SpacialQuery = require(utilityFolder.SpacialQuery)
@@ -321,22 +321,22 @@ end
 	* If `slot` is `nil`, it will use the home that the player or home owner has selected.
 ]]
 function HomeManager.isPlacedItemsFull(userId: number?, numItemsToAdd: number?, slot: string | number | nil)
-	userId = userId or getHomeOwner()
-	assert(userId)
+	-- userId = userId or getHomeOwner()
+	-- assert(userId)
 
-	numItemsToAdd = numItemsToAdd or 0
-	assert(numItemsToAdd)
-	local maxFurniturePlaced = PlayerDataInfo.inventoryLimits.furniture
+	-- numItemsToAdd = numItemsToAdd or 0
+	-- assert(numItemsToAdd)
+	-- local maxFurniturePlaced = PlayerDataInfo.inventoryLimits.furniture
 
-	local success, placedItems = HomeManager.getPlacedItems(userId, slot)
+	-- local success, placedItems = HomeManager.getPlacedItems(userId, slot)
 
-	if not success then return false end
+	-- if not success then return false end
 
-	if #placedItems + numItemsToAdd > maxFurniturePlaced or #placedItems == maxFurniturePlaced then
-		return true, true
-	end
+	-- if #placedItems + numItemsToAdd > maxFurniturePlaced or #placedItems == maxFurniturePlaced then
+	-- 	return true, true
+	-- end
 
-	return true, false
+	-- return true, false
 end
 
 --[[

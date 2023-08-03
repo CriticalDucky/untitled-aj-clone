@@ -13,14 +13,14 @@ local PlayerData = require(ReplicatedStorage.Shared.Data.PlayerData)
 local HomeItems = PlayerData.Inventory.HomeItems
 local Homes = PlayerData.Homes
 local PlayerDataManager = require(ServerStorage.Shared.Data.PlayerDataManager)
-local SafeDataStore = require(ServerStorage.Shared.Utility.SafeDataStore)
-local SafeTeleport = require(ServerStorage.Shared.Utility.SafeTeleport)
+local DataStoreUtility = require(ServerStorage.Shared.Utility.DataStoreUtility)
+local TeleportUtility = require(ServerStorage.Shared.Utility.TeleportUtility)
 local ServerStorageConfiguration = require(ServerStorage.Shared.Configuration)
 local PlaceIDs = ServerStorageConfiguration.PlaceIDs
 local Types = require(ReplicatedFirst.Shared.Utility.Types)
 
 type ItemHome = Types.ItemHome
-type ServerDataHome = Types.ServerDictionaryDataHome
+type ServerDataHome = Types.ServerInfoHome
 
 local serverDictionary = DataStoreService:GetDataStore "ServerDictionary"
 
@@ -66,22 +66,27 @@ local function initializePersistentData(player: Player)
 
 	-- Reserve a home server if none is reserved.
 
-	local reserveSuccess, newAccessCode, newServerId = SafeTeleport.safeReserveServerAsync(PlaceIDs.home)
+	if not data.home.server then
+		local reserveSuccess, newAccessCode, newServerId = TeleportUtility.safeReserveServerAsync(PlaceIDs.home)
 
-	if reserveSuccess then
-		local serverData: ServerDataHome = { homeOwner = player.UserId }
+		if reserveSuccess then
+			local serverData: ServerDataHome = {
+				homeOwner = player.UserId,
+				type = "home",
+			}
 
-		local registerServerSuccess =
-			SafeDataStore.safeSetAsync(serverDictionary, newServerId, serverData, { player.UserId })
+			local registerServerSuccess =
+				DataStoreUtility.safeSetAsync(serverDictionary, newServerId, serverData, { player.UserId })
 
-		if registerServerSuccess and PlayerDataManager.persistentDataIsLoaded(player) then
-			PlayerDataManager.setValuePersistent(player, { "home", "server", "accessCode" }, newAccessCode)
-			PlayerDataManager.setValuePersistent(player, { "home", "server", "privateServerId" }, newServerId)
+			if registerServerSuccess and PlayerDataManager.persistentDataIsLoaded(player) then
+				PlayerDataManager.setValuePersistent(player, { "home", "server", "accessCode" }, newAccessCode)
+				PlayerDataManager.setValuePersistent(player, { "home", "server", "privateServerId" }, newServerId)
+			else
+				warn(`Failed to register a home server for {player}!`)
+			end
 		else
-			warn(`Failed to register a home server for {player}!`)
+			warn(`Failed to reserve a home server for {player}!`)
 		end
-	else
-		warn(`Failed to reserve a home server for {player}!`)
 	end
 end
 

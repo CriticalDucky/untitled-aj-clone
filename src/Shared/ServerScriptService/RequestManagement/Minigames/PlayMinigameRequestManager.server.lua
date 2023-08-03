@@ -7,7 +7,7 @@ local replicatedFirstShared = ReplicatedFirst.Shared
 local serverStorageSharedUtility = serverStorageShared.Utility
 local enumsFolder = replicatedFirstShared.Enums
 local utilityFolder = replicatedFirstShared.Utility
-local teleportationFolder = serverStorageShared.Teleportation
+-- local teleportationFolder = serverStorageShared.Teleportation
 local configurationFolder = replicatedFirstShared.Configuration
 
 local ReplicaService = require(serverStorageVendor.ReplicaService)
@@ -16,9 +16,9 @@ local ReplicaResponse = require(serverStorageSharedUtility.ReplicaResponse)
 local ServerGroupEnum = require(enumsFolder.ServerGroup)
 local ServerTypeGroups = require(configurationFolder.ServerTypeGroups)
 local PlayMinigameResponseType = require(enumsFolder.PlayMinigameResponseType)
-local MinigameType = require(enumsFolder.MinigameType)
+-- local MinigameType = require(enumsFolder.MinigameType)
 local Param = require(utilityFolder.Param)
-local Teleport = require(teleportationFolder.Teleport)
+-- local Teleport = require(teleportationFolder.Teleport)
 
 local playMinigameRequest = ReplicaService.NewReplica {
 	ClassToken = ReplicaService.NewClassToken "PlayMinigameRequest",
@@ -33,13 +33,13 @@ local playMinigameRequest = ReplicaService.NewReplica {
     Each function should return a success boolean and a PlayMinigameResponseType if the request failed.
 ]]
 local onRequested: {[string]: (Player, ...any) -> (boolean, typeof(PlayMinigameResponseType))} = {
-    [MinigameType.fishing] = function(player)
-        return Teleport.toMinigame(player, MinigameType.fishing)
-    end,
+    -- [MinigameType.fishing] = function(player)
+    --     return Teleport.toMinigame(player, MinigameType.fishing)
+    -- end,
 
-    [MinigameType.gatherer] = function(player)
-        return Teleport.toMinigame(player, MinigameType.gatherer)
-    end,
+    -- [MinigameType.gatherer] = function(player)
+    --     return Teleport.toMinigame(player, MinigameType.gatherer)
+    -- end,
 }
 
 ReplicaResponse.listen(playMinigameRequest, function(player, minigameType, ...)

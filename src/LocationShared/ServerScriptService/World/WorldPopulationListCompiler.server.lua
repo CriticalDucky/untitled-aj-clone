@@ -8,11 +8,13 @@ local REPORT_INTERVAL = 10
 local MemoryStoreService = game:GetService "MemoryStoreService"
 local ServerStorage = game:GetService "ServerStorage"
 
-local LocationInfo = require(ServerStorage.LocationShared.World.LocationInfo)
+local ServerInfo = require(ServerStorage.Shared.Universe.ServerInfo)
 local MemoryStoreUtility = require(ServerStorage.Shared.Utility.MemoryStoreUtility)
 
-local location = LocationInfo.location
-local world = LocationInfo.world
+assert(ServerInfo.type == "location")
+
+local location = ServerInfo.location
+local world = ServerInfo.world
 
 -- Only compile the world population list on the main location server of the first world.
 if location ~= "town" or world ~= 1 then return end
@@ -36,7 +38,7 @@ repeat
 			local currentWorldString = worldPopulation.key:match "%d+"
 
 			if not currentWorldString then
-				warn("Failed to get world number from world population key: " .. worldPopulation.key)
+				warn(`Failed to get world number from world population key '{worldPopulation.key}'`)
 				continue
 			end
 

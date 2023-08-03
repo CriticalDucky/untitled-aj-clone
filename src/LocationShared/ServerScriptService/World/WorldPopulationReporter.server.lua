@@ -8,11 +8,13 @@ local REPORT_INTERVAL = 10
 local MemoryStoreService = game:GetService "MemoryStoreService"
 local ServerStorage = game:GetService "ServerStorage"
 
-local LocationInfo = require(ServerStorage.LocationShared.World.LocationInfo)
+local ServerInfo = require(ServerStorage.Shared.Universe.ServerInfo)
 local MemoryStoreUtility = require(ServerStorage.Shared.Utility.MemoryStoreUtility)
 
-local location = LocationInfo.location
-local world = LocationInfo.world
+assert(ServerInfo.type == "location")
+
+local location = ServerInfo.location
+local world = ServerInfo.world
 
 -- Only report the world's population if this is the main location server.
 if location ~= "town" then return end

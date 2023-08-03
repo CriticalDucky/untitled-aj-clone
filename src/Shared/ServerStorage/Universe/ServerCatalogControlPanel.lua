@@ -1,5 +1,7 @@
 --!strict
 
+local DANGEROUS_OPERATION_CONFIRM_TIME = 5
+
 --[[
 	This time must be waited between each get/set DataStore operation.
 
@@ -129,7 +131,7 @@ function ServerCatalogControlPanel.addWorldLocation(name: string, placeId: numbe
 
 	if not setOperationLockAsync(true) then return end
 
-	print(("Adding location '%s' with place ID %d…"):format(name, placeId))
+	print(`Adding location '{name}' with place ID {placeId}…`)
 
 	local locationList = ServerCatalog.getWorldLocationListAsync()
 
@@ -142,7 +144,7 @@ function ServerCatalogControlPanel.addWorldLocation(name: string, placeId: numbe
 	print "Retrieved the world location list."
 
 	if locationList[name] then
-		print(("Location '%s' already exists."):format(name))
+		print(`Location '{name}' already exists.`)
 		setOperationLockAsync(false)
 		return
 	end
@@ -158,76 +160,76 @@ function ServerCatalogControlPanel.addWorldLocation(name: string, placeId: numbe
 	print "Retrieved the world count."
 
 	if worldCount == 0 then
-		print "The world count is 0, so a dummy server will be reserved to verify the place ID."
+		print "The world count is 0, so a dummy server will be reserved to verify that this location is reservable."
 
 		local reserveSuccess = TeleportUtility.safeReserveServerAsync(placeId)
 
 		if not reserveSuccess then
 			warn(
-				(
-					"Failed to reserve a dummy private server for location '%s'. (The given place ID may not be valid,"
-					.. " or this may have been run in Studio.)"
-				):format(name)
+				`Failed to reserve a dummy private server for location '{name}'.`
+					.. " (The given place ID may not be valid, or this may have been run in Studio.)"
 			)
 			setOperationLockAsync(false)
 			return
 		end
 
-		print(("Successfully reserved a dummy private server for location '%s'."):format(name))
+		print(`Successfully reserved a dummy private server for location '{name}'.`)
 	end
 
 	-- Add the location to all worlds
 
-	for i = 1, worldCount do
-		local getWorldSuccess, worldData: CatalogWorldData = slowGetAsync(worldCatalog, tostring(i))
+	for world = 1, worldCount do
+		local getWorldSuccess, worldData: CatalogWorldData = slowGetAsync(worldCatalog, `World{world}`)
 
 		if not getWorldSuccess then
-			warn(("Failed to retrieve world %d data."):format(i))
+			warn(`Failed to retrieve world {world} data.`)
 			setOperationLockAsync(false)
 			return
 		end
 
-		print(("Retrieved world %d data."):format(i))
+		print(`Retrieved world {world} data.`)
 
 		local reserveSuccess, accessCode, privateServerId = TeleportUtility.safeReserveServerAsync(placeId)
 
 		if not reserveSuccess then
 			warn(
-				(
-					"Failed to reserve private server for location '%s' in world %d. (The given place ID may not be"
-					.. " valid, or this may have been run in Studio.)"
-				):format(name, i)
+				`Failed to reserve private server for location '{name}' in world {world}.`
+					.. " (The given place ID may not be valid, or this may have been run in Studio.)"
 			)
 			setOperationLockAsync(false)
 			return
 		end
 
-		print(("Reserved a private server for location '%s' in world %d."):format(name, i))
+		print(`Reserved a private server for location '{name}' in world {world}.`)
 
-		local setDictionarySuccess = slowSetAsync(serverDictionary, privateServerId, { world = i })
+		local setDictionarySuccess = slowSetAsync(serverDictionary, privateServerId, {
+			location = name,
+			type = "location",
+			world = world,
+		})
 
 		if not setDictionarySuccess then
-			warn(("Failed to add server dictionary entry for location '%s' in world %d."):format(name, i))
+			warn(`Failed to add server dictionary entry for location '{name}' in world {world}.`)
 			setOperationLockAsync(false)
 			return
 		end
 
-		print(("Added server dictionary entry for location '%s' in world %d."):format(name, i))
+		print(`Added server dictionary entry for location '{name}' in world {world}.`)
 
 		worldData[name] = {
 			accessCode = accessCode,
 			privateServerId = privateServerId,
 		}
 
-		local setWorldSuccess = slowSetAsync(worldCatalog, tostring(i), worldData)
+		local setWorldSuccess = slowSetAsync(worldCatalog, `World{world}`, worldData)
 
 		if not setWorldSuccess then
-			warn(("Failed to add location '%s' to world %d."):format(name, i))
+			warn(`Failed to add location '{name}' to world {world}.`)
 			setOperationLockAsync(false)
 			return
 		end
 
-		print(("Added location '%s' to world %d."):format(name, i))
+		print(`Added location '{name}' to world {world}.`)
 	end
 
 	-- Register the location
@@ -244,15 +246,36 @@ function ServerCatalogControlPanel.addWorldLocation(name: string, placeId: numbe
 		return
 	end
 
-	print(("Added location '%s' to the world location list."):format(name))
+	print(`Added location '{name}' to the world location list.`)
 
-	print(("Location '%s' has been successfully added."):format(name))
+	print(`Location '{name}' has been successfully added.`)
 
 	setOperationLockAsync(false)
 end
 
+local lastReleaseAttempt: number?
+
 function ServerCatalogControlPanel.forceReleaseOperationLock()
 	print "Releasing the operation lock…"
+
+	if not lastReleaseAttempt or time() - lastReleaseAttempt > DANGEROUS_OPERATION_CONFIRM_TIME then
+		warn "--- WARNING ---"
+		warn "This operation is dangerous and should only be performed if the operation lock is stuck."
+		warn(
+			"Releasing the operation lock while an operation is in progress will allow you to perform another"
+				.. " operation while the first operation is still in progress, potentially causing data corruption."
+		)
+		warn(
+			"Think twice before continuing. If you choose to do so, rerun this command within"
+				.. ` {DANGEROUS_OPERATION_CONFIRM_TIME} seconds of this call.`
+		)
+
+		lastReleaseAttempt = time()
+
+		return
+	end
+
+	lastReleaseAttempt = nil
 
 	if localOperationLock then
 		warn "Cannot force the operation lock to release because the operation lock is currently held locally."
@@ -270,16 +293,16 @@ function ServerCatalogControlPanel.printWorld(world: number)
 		return
 	end
 
-	print(("Printing world %d…"):format(world))
+	print(`Printing world {world}…`)
 
 	local worldData = ServerCatalog.getWorldAsync(world)
 
 	if not worldData then
-		warn(("Failed to retrieve world data for world %d. (This world may not exist.)"):format(world))
+		warn(`Failed to retrieve world data for world {world}. (This world may not exist.)`)
 		return
 	end
 
-	print(("World %d: %s"):format(world, Table.toString(worldData, 4)))
+	print(`World {world}: {Table.toString(worldData, 4)}`)
 end
 
 function ServerCatalogControlPanel.printWorldCount()
@@ -292,7 +315,7 @@ function ServerCatalogControlPanel.printWorldCount()
 		return
 	end
 
-	print(("There are %d worlds."):format(worldCount))
+	print(`There are {worldCount} worlds.`)
 end
 
 function ServerCatalogControlPanel.printWorldLocationList()
@@ -305,8 +328,10 @@ function ServerCatalogControlPanel.printWorldLocationList()
 		return
 	end
 
-	print(("World location list: %s"):format(Table.toString(locationList, 4)))
+	print(`World location list: {Table.toString(locationList, 4)}`)
 end
+
+local lastRemoveLocationAttempt: number?
 
 function ServerCatalogControlPanel.removeWorldLocation(locationName: string)
 	if typeof(locationName) ~= "string" then
@@ -314,9 +339,28 @@ function ServerCatalogControlPanel.removeWorldLocation(locationName: string)
 		return
 	end
 
+	if not lastRemoveLocationAttempt or time() - lastRemoveLocationAttempt > DANGEROUS_OPERATION_CONFIRM_TIME then
+		warn "--- WARNING ---"
+		warn(
+			"This operation is dangerous and should only be performed if you are sure this location is no longer in"
+				.. " use."
+		)
+		warn "Removing a location that is still in use will likely cause issues ingame."
+		warn(
+			"Think twice before continuing. If you choose to do so, rerun this command within"
+				.. ` {DANGEROUS_OPERATION_CONFIRM_TIME} seconds of this call.`
+		)
+
+		lastRemoveLocationAttempt = time()
+
+		return
+	end
+
+	lastRemoveLocationAttempt = nil
+
 	if not setOperationLockAsync(true) then return end
 
-	print(("Removing location '%s'…"):format(locationName))
+	print(`Removing location '{locationName}'…`)
 
 	local locationList = ServerCatalog.getWorldLocationListAsync()
 
@@ -329,7 +373,7 @@ function ServerCatalogControlPanel.removeWorldLocation(locationName: string)
 	print "Retrieved the world location list."
 
 	if not locationList[locationName] then
-		print(("Location '%s' already does not exist."):format(locationName))
+		print(`Location '{locationName}' already does not exist.`)
 		setOperationLockAsync(false)
 		return
 	end
@@ -339,30 +383,29 @@ function ServerCatalogControlPanel.removeWorldLocation(locationName: string)
 	local removeLocationSuccess = DataStoreUtility.safeSetAsync(catalogInfo, "WorldLocationList", locationList)
 
 	if not removeLocationSuccess then
-		warn(("Failed to remove location '%s' from the world location list."):format(locationName))
+		warn(`Failed to remove location '{locationName}' from the world location list.`)
 		setOperationLockAsync(false)
 		return
 	end
 
-	print(("Removed location '%s' from the world location list."):format(locationName))
+	print(`Removed location '{locationName}' from the world location list.`)
 
-	print(("Location '%s' has been successfully removed."):format(locationName))
+	print(`Location '{locationName}' has been successfully removed.`)
 
 	setOperationLockAsync(false)
 end
 
-function ServerCatalogControlPanel.setWorldCount(count: number, force: true?)
+local lastRemoveWorldAttempt: number?
+
+function ServerCatalogControlPanel.setWorldCount(count: number)
 	if typeof(count) ~= "number" or count ~= count or count ~= math.floor(count) or count < 0 then
 		warn "The world count must be a non-negative integer."
-		return
-	elseif force ~= nil and force ~= true then
-		warn "The force flag must be true or nil."
 		return
 	end
 
 	if not setOperationLockAsync(true) then return end
 
-	print(("Setting the world count to %d…"):format(count))
+	print(`Setting the world count to {count}…`)
 
 	local currentWorldCount = ServerCatalog.getWorldCountAsync()
 
@@ -372,26 +415,43 @@ function ServerCatalogControlPanel.setWorldCount(count: number, force: true?)
 		return
 	end
 
-	if currentWorldCount > count and not force then
-		warn "Cannot reduce the world count without the force flag."
+	if
+		currentWorldCount > count
+		and (not lastRemoveWorldAttempt or time() - lastRemoveWorldAttempt > DANGEROUS_OPERATION_CONFIRM_TIME)
+	then
+		warn "--- WARNING ---"
+		warn(
+			"This operation is dangerous and should only be performed if you are sure if the affect world(s) is/are no"
+				.. " longer in use."
+		)
+		warn "Removing a world that is still in use will likely cause issues ingame."
+		warn(
+			"Think twice before continuing. If you choose to do so, rerun this command within"
+				.. ` {DANGEROUS_OPERATION_CONFIRM_TIME} seconds of this call.`
+		)
+
+		lastRemoveWorldAttempt = time()
+
 		setOperationLockAsync(false)
 		return
 	end
 
+	lastRemoveWorldAttempt = nil
+
 	if currentWorldCount == count then
-		print(("The world count is already %d."):format(count))
+		print(`The world count is already {count}.`)
 	elseif currentWorldCount > count then
 		local setWorldCountSuccess = DataStoreUtility.safeSetAsync(catalogInfo, "WorldCount", count)
 
 		if not setWorldCountSuccess then
-			warn(("Failed to update the world count to %d."):format(count))
+			warn(`Failed to update the world count to {count}.`)
 			setOperationLockAsync(false)
 			return
 		end
 
-		print(("Updated the world count to %d."):format(count))
+		print(`Updated the world count to {count}.`)
 
-		print(("The world count has been successfully reduced to %d."):format(count))
+		print(`The world count has been successfully reduced to {count}.`)
 	else
 		local locationList = ServerCatalog.getWorldLocationListAsync()
 
@@ -403,7 +463,7 @@ function ServerCatalogControlPanel.setWorldCount(count: number, force: true?)
 
 		print "Retrieved the world location list."
 
-		for i = currentWorldCount + 1, count do
+		for world = currentWorldCount + 1, count do
 			local newWorld = {}
 
 			for locationName, locationInfo in pairs(locationList) do
@@ -414,28 +474,28 @@ function ServerCatalogControlPanel.setWorldCount(count: number, force: true?)
 
 				if not reserveSuccess then
 					warn(
-						(
-							"Failed to reserve a private server for location '%s' in world %d. (This may have been run"
-							.. " in Studio.)"
-						):format(locationName, i)
+						`Failed to reserve a private server for location '{locationName}' in world {world}.`
+							.. " (This may have been run in Studio)."
 					)
 					setOperationLockAsync(false)
 					return
 				end
 
-				print(("Reserved a private server for location '%s' in world %d."):format(locationName, i))
+				print(`Reserved a private server for location '{locationName}' in world {world}.`)
 
-				local setDictionarySuccess = slowSetAsync(serverDictionary, privateServerId, { world = i })
+				local setDictionarySuccess = slowSetAsync(serverDictionary, privateServerId, {
+					location = locationName,
+					type = "location",
+					world = world,
+				})
 
 				if not setDictionarySuccess then
-					warn(
-						("Failed to add server dictionary entry for location '%s' in world %d."):format(locationName, i)
-					)
+					warn(`Failed to add server dictionary entry for location '{locationName}' in world {world}.`)
 					setOperationLockAsync(false)
 					return
 				end
 
-				print(("Added server dictionary entry for location '%s' in world %d."):format(locationName, i))
+				print(`Added server dictionary entry for location '{locationName}' in world {world}.`)
 
 				newWorld[locationName] = {
 					accessCode = accessCode,
@@ -443,28 +503,28 @@ function ServerCatalogControlPanel.setWorldCount(count: number, force: true?)
 				}
 			end
 
-			local setWorldSuccess = slowSetAsync(worldCatalog, tostring(i), newWorld)
+			local setWorldSuccess = slowSetAsync(worldCatalog, `World{world}`, newWorld)
 
 			if not setWorldSuccess then
-				warn(("Failed to add world %d to the world catalog."):format(i))
+				warn(`Failed to add world {world} to the world catalog.`)
 				setOperationLockAsync(false)
 				return
 			end
 
-			print(("Added world %d to the world catalog."):format(i))
+			print(`Added world {world} to the world catalog.`)
 		end
 
 		local setWorldCountSuccess = DataStoreUtility.safeSetAsync(catalogInfo, "WorldCount", count)
 
 		if not setWorldCountSuccess then
-			warn(("Failed to update the world count to %d."):format(count))
+			warn(`Failed to update the world count to {count}.`)
 			setOperationLockAsync(false)
 			return
 		end
 
-		print(("Updated the world count to %d."):format(count))
+		print(`Updated the world count to {count}.`)
 
-		print(("The world count has been successfully increased to %d."):format(count))
+		print(`The world count has been successfully increased to {count}.`)
 	end
 
 	setOperationLockAsync(false)

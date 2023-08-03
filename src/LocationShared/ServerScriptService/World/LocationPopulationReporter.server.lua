@@ -13,11 +13,13 @@ local Players = game:GetService "Players"
 local RunService = game:GetService "RunService"
 local ServerStorage = game:GetService "ServerStorage"
 
-local LocationInfo = require(ServerStorage.LocationShared.World.LocationInfo)
+local ServerInfo = require(ServerStorage.Shared.Universe.ServerInfo)
 local MemoryStoreUtility = require(ServerStorage.Shared.Utility.MemoryStoreUtility)
 
-local location = LocationInfo.location
-local world = LocationInfo.world
+assert(ServerInfo.type == "location")
+
+local location = ServerInfo.location
+local world = ServerInfo.world
 
 local worldLocationPopulations = MemoryStoreService:GetSortedMap(`World{world}LocationPopulations`)
 

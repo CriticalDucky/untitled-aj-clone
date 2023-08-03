@@ -15,7 +15,7 @@ local PlaceIds = ServerStorageConfiguration.PlaceIDs
 local Types = require(ReplicatedFirst.Shared.Utility.Types)
 
 type PlayerPersistentData = Types.PlayerPersistentData
-type ServerDataHome = Types.ServerDictionaryDataHome
+type ServerDataHome = Types.ServerInfoHome
 
 --#endregion
 

@@ -41,12 +41,12 @@ local replicatedStorageData = replicatedStorageShared.Data
 local replicatedStorageInventory = replicatedStorageData.Inventory
 local enumsFolder = replicatedFirstShared.Enums
 
-local Configuration = require(replicatedFirstShared.Configuration)
+-- local Configuration = require(replicatedFirstShared.Configuration)
 local PlayerDataManager = require(dataFolder.PlayerDataManager)
 local Items = require(replicatedStorageInventory.Items)
 local Table = require(utilityFolder.Table)
 local Signal = require(replicatedFirstVendor.Signal.Signal)
-local PlayerDataInfo = Configuration.PlayerDataInfo
+-- local PlayerDataInfo = Configuration.PlayerDataInfo
 local Id = require(utilityFolder.Id)
 local Types = require(utilityFolder.Types)
 local ItemCategory = require(enumsFolder.ItemCategory)
@@ -415,22 +415,22 @@ function InventoryManager.isInventoryFull(
 	itemCategory: UserEnum,
 	numItemsToAdd: number?
 )
-	assert(userId and itemCategory, "InventoryManager.isInventoryFull: Invalid arguments")
+	-- assert(userId and itemCategory, "InventoryManager.isInventoryFull: Invalid arguments")
 
-	numItemsToAdd = numItemsToAdd or 0
+	-- numItemsToAdd = numItemsToAdd or 0
 
-	local inventoryCategory = InventoryManager.getInventoryCategory(userId, itemCategory)
+	-- local inventoryCategory = InventoryManager.getInventoryCategory(userId, itemCategory)
 
-	if not inventoryCategory then return false, nil end
+	-- if not inventoryCategory then return false, nil end
 
-	local numItems = #inventoryCategory
-	local limit = PlayerDataInfo.inventoryLimits[itemCategory]
+	-- local numItems = #inventoryCategory
+	-- local limit = PlayerDataInfo.inventoryLimits[itemCategory]
 
-	if numItems == limit then return true, true end
+	-- if numItems == limit then return true, true end
 
-	if numItems + numItemsToAdd > limit then return true, true end
+	-- if numItems + numItemsToAdd > limit then return true, true end
 
-	return true, false
+	-- return true, false
 end
 
 --[[

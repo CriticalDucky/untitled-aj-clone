@@ -117,10 +117,6 @@ export type PlacedItem = {
 
 export type Promise = typeof(Promise.new(function() end))
 
-export type ServerDictionaryDataHome = {
-	homeOwner: number,
-}
-
 -- export type ServerIdentifier = {
 -- 	serverType: UserEnum,
 -- 	jobId: string?,
@@ -145,7 +141,16 @@ export type ServerIdentifier = {
 	privateServerId: string,
 }
 
+export type ServerInfo = ServerInfoHome | ServerInfoLocation | nil
+
+export type ServerInfoHome = {
+	homeOwner: number,
+	type: "home",
+}
+
 export type ServerInfoLocation = {
+	location: string,
+	type: "location",
 	world: number,
 }
 
