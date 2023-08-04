@@ -5,6 +5,7 @@ local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ServerStorage = game:GetService "ServerStorage"
 
 local DataStoreUtility = require(ServerStorage.Shared.Utility.DataStoreUtility)
+local ServerDirectives = require(ServerStorage.Shared.Utility.ServerDirectives)
 local Types = require(ReplicatedFirst.Shared.Utility.Types)
 
 type ServerInfo = Types.ServerInfo
@@ -17,9 +18,7 @@ local privateServerId = game.PrivateServerId
 
 local getServerInfoSuccess, serverInfo: ServerInfo? = DataStoreUtility.safeGetAsync(serverDictionary, privateServerId)
 
-if not getServerInfoSuccess or not serverInfo then
-	-- TODO: Soft kick players.
-end
+if not getServerInfoSuccess or not serverInfo then ServerDirectives.shutDownServer "Failed to get server info." end
 
 assert(getServerInfoSuccess and serverInfo)
 

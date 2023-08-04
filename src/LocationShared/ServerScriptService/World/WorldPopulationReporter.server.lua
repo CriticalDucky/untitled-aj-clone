@@ -20,24 +20,26 @@ local world = ServerInfo.world
 if location ~= "town" then return end
 
 local worldLocationPopulations = MemoryStoreService:GetSortedMap(`World{world}LocationPopulations`)
-local worldPopulations = MemoryStoreService:GetSortedMap("WorldPopulations")
+local worldPopulations = MemoryStoreService:GetSortedMap "WorldPopulations"
+
+local lastBeganReporting
 
 repeat
-	task.spawn(function()
-		local getAllPopulationsSuccess, locationPopulations =
-			MemoryStoreUtility.safeSortedMapGetAllAsync(worldLocationPopulations, Enum.SortDirection.Ascending)
+	lastBeganReporting = time()
 
-		if not getAllPopulationsSuccess then
-			warn "Failed to get all location populations."
-			return
-		end
+	local getAllPopulationsSuccess, locationPopulations =
+		MemoryStoreUtility.safeSortedMapGetAllAsync(worldLocationPopulations, Enum.SortDirection.Ascending)
 
-		local worldPopulation = 0
+	if not getAllPopulationsSuccess then
+		warn "Failed to get all location populations."
+		return
+	end
 
-		for _, population in pairs(locationPopulations) do
-			worldPopulation += population.value
-		end
+	local worldPopulation = 0
 
-		MemoryStoreUtility.safeSortedMapSetAsync(worldPopulations, `World{world}`, worldPopulation, REPORT_INTERVAL + 5)
-	end)
-until not task.wait(REPORT_INTERVAL)
+	for _, population in pairs(locationPopulations) do
+		worldPopulation += population.value
+	end
+
+	MemoryStoreUtility.safeSortedMapSetAsync(worldPopulations, `World{world}`, worldPopulation, REPORT_INTERVAL + 5)
+until not task.wait(REPORT_INTERVAL - time() + lastBeganReporting)

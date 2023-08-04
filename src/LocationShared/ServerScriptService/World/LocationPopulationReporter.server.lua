@@ -30,27 +30,20 @@ local function reportPopulation()
 
 	local population = #Players:GetPlayers()
 
-	task.spawn(
-		function()
-			MemoryStoreUtility.safeSortedMapSetAsync(
-				worldLocationPopulations,
-				location,
-				population,
-				REREPORT_INTERVAL + 5
-			)
-		end
-	)
+	MemoryStoreUtility.safeSortedMapSetAsync(worldLocationPopulations, location, population, REREPORT_INTERVAL + 5)
 end
 
-RunService.Heartbeat:Connect(function()
-    if not lastReportedTime or time() - lastReportedTime > REREPORT_INTERVAL then
-        reportPopulation()
-    end
+local heartbeatConnection = RunService.Heartbeat:Connect(function()
+	if not lastReportedTime or time() - lastReportedTime > REREPORT_INTERVAL then reportPopulation() end
 end)
 
-Players.PlayerAdded:Connect(reportPopulation)
-Players.PlayerRemoving:Connect(reportPopulation)
+local playerAddedConnection = Players.PlayerAdded:Connect(reportPopulation)
+local playerRemovingConnection = Players.PlayerRemoving:Connect(reportPopulation)
 
 game:BindToClose(function()
-    MemoryStoreUtility.safeSortedMapRemoveAsync(worldLocationPopulations, location)
+	heartbeatConnection:Disconnect()
+	playerAddedConnection:Disconnect()
+	playerRemovingConnection:Disconnect()
+
+	MemoryStoreUtility.safeSortedMapRemoveAsync(worldLocationPopulations, location)
 end)

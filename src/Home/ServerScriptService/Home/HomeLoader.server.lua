@@ -7,26 +7,23 @@ local Players = game:GetService "Players"
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ServerStorage = game:GetService "ServerStorage"
 
-local SafeDataStore = require(ServerStorage.Shared.Utility.SafeDataStore)
+local DataStoreUtility = require(ServerStorage.Shared.Utility.DataStoreUtility)
 local HomeInfo = require(ServerStorage.Configuration.HomeInfo)
 local HomeModels = require(ServerStorage.Models.HomeModels)
 local PlayerDataManager = require(ServerStorage.Shared.Data.PlayerDataManager)
+local ServerDirectives = require(ServerStorage.Shared.Utility.ServerDirectives)
 local Types = require(ReplicatedFirst.Shared.Utility.Types)
 
-type ServerDataHome = Types.ServerDictionaryDataHome
+type ServerInfoHome = Types.ServerInfoHome
 
 local serverDictionary = DataStoreService:GetDataStore "ServerDictionary"
 
 local privateServerId = game.PrivateServerId
 
-local getServerDataSuccess, serverData: ServerDataHome? = SafeDataStore.safeGetAsync(serverDictionary, privateServerId)
+local getServerDataSuccess, serverData: ServerInfoHome? =
+	DataStoreUtility.safeGetAsync(serverDictionary, privateServerId)
 
-if not getServerDataSuccess or not serverData then
-	-- TODO: Boot server. This should soft kick all current and future players to their previous location if accessible,
-	-- and send them to a routing server otherwise.
-
-	return
-end
+if not getServerDataSuccess or not serverData then ServerDirectives.shutDownServer "Failed to retrieve server data." end
 
 assert(serverData)
 

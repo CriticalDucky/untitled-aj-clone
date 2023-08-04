@@ -22,36 +22,38 @@ if location ~= "town" or world ~= 1 then return end
 local worldPopulationList = MemoryStoreService:GetSortedMap "WorldPopulationList"
 local worldPopulations = MemoryStoreService:GetSortedMap "WorldPopulations"
 
+local lastBeganReporting
+
 repeat
-	task.spawn(function()
-		local getAllPopulationsSuccess, worldPopulations =
-			MemoryStoreUtility.safeSortedMapGetAllAsync(worldPopulations, Enum.SortDirection.Ascending)
+	lastBeganReporting = time()
 
-		if not getAllPopulationsSuccess then
-			warn "Failed to get all world populations."
-			return
+	local getAllPopulationsSuccess, worldPopulationsCollection =
+		MemoryStoreUtility.safeSortedMapGetAllAsync(worldPopulations, Enum.SortDirection.Ascending)
+
+	if not getAllPopulationsSuccess then
+		warn "Failed to get all world populations."
+		return
+	end
+
+	local newWorldPopulationList = {}
+
+	for _, worldPopulation in pairs(worldPopulationsCollection) do
+		local currentWorldString = worldPopulation.key:match "%d+"
+
+		if not currentWorldString then
+			warn(`Failed to get world number from world population key '{worldPopulation.key}'`)
+			continue
 		end
 
-		local newWorldPopulationList = {}
+		local currentWorld = tonumber(currentWorldString)
 
-		for _, worldPopulation in pairs(worldPopulations) do
-			local currentWorldString = worldPopulation.key:match "%d+"
+		newWorldPopulationList[currentWorld] = worldPopulation.value
+	end
 
-			if not currentWorldString then
-				warn(`Failed to get world number from world population key '{worldPopulation.key}'`)
-				continue
-			end
-
-			local currentWorld = tonumber(currentWorldString)
-
-			newWorldPopulationList[currentWorld] = worldPopulation.value
-		end
-
-		MemoryStoreUtility.safeSortedMapSetAsync(
-			worldPopulationList,
-			"WorldPopulationList",
-			newWorldPopulationList,
-			REPORT_INTERVAL + 5
-		)
-	end)
-until not task.wait(REPORT_INTERVAL)
+	MemoryStoreUtility.safeSortedMapSetAsync(
+		worldPopulationList,
+		"WorldPopulationList",
+		newWorldPopulationList,
+		REPORT_INTERVAL + 5
+	)
+until not task.wait(REPORT_INTERVAL - time() + lastBeganReporting)

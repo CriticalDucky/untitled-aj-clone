@@ -16,6 +16,7 @@ local ReplicaService = require(serverStorageVendor.ReplicaService)
 
 local ReplicatedStorageConfiguration = require(ReplicatedStorage.Shared.Configuration)
 local PlayerDataInfo = ReplicatedStorageConfiguration.PlayerDataInfo
+local ServerDirectives = require(ServerStorage.Shared.Utility.ServerDirectives)
 local Table = require(ReplicatedFirst.Shared.Utility.Table)
 local Types = require(ReplicatedFirst.Shared.Utility.Types)
 
@@ -104,10 +105,7 @@ local function loadPlayerProfileAsync(player: Player)
 	if not profile then
 		warn(`Failed to load profile for {player.Name} (User ID {player.UserId})`)
 
-		-- TODO: Reroute player. Ideally this should reroute to the previous place they were if it's open, and simply
-		-- reroute them otherwise.
-
-		player:Kick "Failed to load your data."
+		ServerDirectives.kickPlayer(player, "Failed to load your data.")
 
 		return
 	end
@@ -120,11 +118,9 @@ local function loadPlayerProfileAsync(player: Player)
 	profile:Reconcile()
 
 	-- Manage release of profile
-	profile:ListenToRelease(function()
-		-- TODO: Reroute player. Ideally this should reroute to the previous place they were if it's open, and simply
-		-- reroute them otherwise.
 
-		player:Kick "You have joined another server."
+	profile:ListenToRelease(function()
+		ServerDirectives.kickPlayer(player, "Your data has been unloaded.")
 
 		loadProfileIntoArchive(player.UserId, profile)
 
