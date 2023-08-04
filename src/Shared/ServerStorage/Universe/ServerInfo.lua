@@ -20,7 +20,7 @@ local getServerInfoSuccess, serverInfo: ServerInfo? = DataStoreUtility.safeGetAs
 
 if not getServerInfoSuccess or not serverInfo then ServerDirectives.shutDownServer "Failed to get server info." end
 
-assert(getServerInfoSuccess and serverInfo)
+assert(getServerInfoSuccess)
 
 --#endregion
 

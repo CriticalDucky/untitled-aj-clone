@@ -16,8 +16,6 @@ type CatalogWorldData = Types.CatalogWorldData
 
 local catalogInfo = DataStoreService:GetDataStore "CatalogInfo"
 
-local minigameCatalog = DataStoreService:GetDataStore "MinigameCatalog"
-local partyCatalog = DataStoreService:GetDataStore "PartyCatalog"
 local worldCatalog = DataStoreService:GetDataStore "WorldCatalog"
 
 --[[

@@ -11,7 +11,7 @@ local ServerStorage = game:GetService "ServerStorage"
 local ServerInfo = require(ServerStorage.Shared.Universe.ServerInfo)
 local MemoryStoreUtility = require(ServerStorage.Shared.Utility.MemoryStoreUtility)
 
-assert(ServerInfo.type == "location")
+assert(ServerInfo and ServerInfo.type == "location")
 
 local location = ServerInfo.location
 local world = ServerInfo.world

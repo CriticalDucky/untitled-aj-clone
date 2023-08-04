@@ -117,19 +117,6 @@ export type PlacedItem = {
 
 export type Promise = typeof(Promise.new(function() end))
 
--- export type ServerIdentifier = {
--- 	serverType: UserEnum,
--- 	jobId: string?,
--- 	worldIndex: number?,
--- 	locationEnum: UserEnum?,
--- 	homeOwner: number?,
--- 	partyType: UserEnum?,
--- 	partyIndex: number?,
--- 	minigameType: UserEnum?,
--- 	minigameIndex: number?,
--- 	privateServerId: string?,
--- }
-
 export type CatalogMinigameData = { ServerIdentifier }
 
 export type CatalogPartyData = { ServerIdentifier }

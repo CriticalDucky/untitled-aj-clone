@@ -11,10 +11,7 @@ local DATASTORE_OPERATION_COOLDOWN = 1
 
 local DataStoreService = game:GetService "DataStoreService"
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
-local RunService = game:GetService "RunService"
 local ServerStorage = game:GetService "ServerStorage"
-
-assert(not RunService:IsStudio(), "This module cannot be used in Studio.")
 
 local DataStoreUtility = require(ServerStorage.Shared.Utility.DataStoreUtility)
 local TeleportUtility = require(ServerStorage.Shared.Utility.TeleportUtility)
@@ -258,12 +255,17 @@ local lastReleaseAttempt: number?
 function ServerCatalogControlPanel.forceReleaseOperationLock()
 	print "Releasing the operation lock…"
 
+	if localOperationLock then
+		warn "Cannot force the operation lock to release because the operation lock is currently held locally."
+		return
+	end
+
 	if not lastReleaseAttempt or time() - lastReleaseAttempt > DANGEROUS_OPERATION_CONFIRM_TIME then
 		warn "--- WARNING ---"
 		warn "This operation is dangerous and should only be performed if the operation lock is stuck."
 		warn(
-			"Releasing the operation lock while an operation is in progress will allow you to perform another"
-				.. " operation while the first operation is still in progress, potentially causing data corruption."
+			"Releasing the operation lock while an operation is in progress will allow you to perform another operation"
+				.. " simultaneously, potentially causing data corruption."
 		)
 		warn(
 			"Think twice before continuing. If you choose to do so, rerun this command within"
@@ -276,11 +278,6 @@ function ServerCatalogControlPanel.forceReleaseOperationLock()
 	end
 
 	lastReleaseAttempt = nil
-
-	if localOperationLock then
-		warn "Cannot force the operation lock to release because the operation lock is currently held locally."
-		return
-	end
 
 	if not setOperationLockAsync(false) then return end
 
