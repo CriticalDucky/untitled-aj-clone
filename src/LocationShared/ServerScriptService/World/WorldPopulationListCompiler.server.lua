@@ -11,7 +11,7 @@ local ServerStorage = game:GetService "ServerStorage"
 local ServerInfo = require(ServerStorage.Shared.Universe.ServerInfo)
 local MemoryStoreUtility = require(ServerStorage.Shared.Utility.MemoryStoreUtility)
 
-assert(ServerInfo.type == "location")
+assert(ServerInfo and ServerInfo.type == "location")
 
 local location = ServerInfo.location
 local world = ServerInfo.world
@@ -19,7 +19,7 @@ local world = ServerInfo.world
 -- Only compile the world population list on the main location server of the first world.
 if location ~= "town" or world ~= 1 then return end
 
-local worldPopulationList = MemoryStoreService:GetSortedMap "WorldPopulationList"
+local catalogInfo = MemoryStoreService:GetSortedMap "CatalogInfo"
 local worldPopulations = MemoryStoreService:GetSortedMap "WorldPopulations"
 
 local lastBeganReporting
@@ -35,7 +35,7 @@ repeat
 		return
 	end
 
-	local newWorldPopulationList = {}
+	local worldPopulationList = {}
 
 	for _, worldPopulation in pairs(worldPopulationsCollection) do
 		local currentWorldString = worldPopulation.key:match "%d+"
@@ -47,13 +47,13 @@ repeat
 
 		local currentWorld = tonumber(currentWorldString)
 
-		newWorldPopulationList[currentWorld] = worldPopulation.value
+		worldPopulationList[currentWorld] = worldPopulation.value
 	end
 
 	MemoryStoreUtility.safeSortedMapSetAsync(
-		worldPopulationList,
+		catalogInfo,
 		"WorldPopulationList",
-		newWorldPopulationList,
+		worldPopulationList,
 		REPORT_INTERVAL + 5
 	)
 until not task.wait(REPORT_INTERVAL - time() + lastBeganReporting)
