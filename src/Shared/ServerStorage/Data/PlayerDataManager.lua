@@ -1,6 +1,7 @@
 --!strict
 
-local OFFLINE_PROFILE_RETRIEVAL_INTERVAL = 12
+local PROFILE_ARCHIVE_CACHE_LIFETIME = 60
+local PROFILE_ARCHIVE_GARBAGE_COLLECTION_INTERVAL = 60
 
 --#region Imports
 
@@ -61,28 +62,25 @@ local profileArchive = {}
 
 	For each player, the archive contains both the profile and the time the profile was updated. Loading a profile into
 	the archive updates the time.
-
-	The profile can be ommitted, in which case the update time is updated, but the profile in the archive does not
-	change.
 ]]
 local function loadProfileIntoArchive(playerId: number, profile: Profile?)
-	local profileInfo = profileArchive[playerId] or {}
-	profileArchive[playerId] = profileInfo
+	local profileInfo = {}
 
 	profileInfo.lastUpdated = time()
+	profileInfo.profile = profile
 
-	if profile then profileInfo.profile = profile end
+	profileArchive[playerId] = profileInfo
 end
 
---#endregion
+-- Garbage Collection
 
---#region Persistent Data Update Events
-
---[[
-	Mapping from user IDs to the update signal for that user's data. The signal is fired whenever the profile is
-	retrieved or updated; essentially whenever the public data replica is updated.
-]]
-local persistentDataUpdatedSignals: { BindableEvent? } = {}
+task.spawn(function()
+	while task.wait(PROFILE_ARCHIVE_GARBAGE_COLLECTION_INTERVAL) do
+		for playerId, profileInfo in pairs(profileArchive) do
+			if time() - profileInfo.lastUpdated > PROFILE_ARCHIVE_CACHE_LIFETIME then profileArchive[playerId] = nil end
+		end
+	end
+end)
 
 --#endregion
 
@@ -155,12 +153,6 @@ local function loadPlayerProfileAsync(player: Player)
 
 	publicPlayerDataReplica:SetValue({ player.UserId }, filterProfileForPublic(profile.Data))
 
-	-- Fire update signal for player, if it exists
-
-	local updateSignal = persistentDataUpdatedSignals[player.UserId]
-
-	if updateSignal then updateSignal:Fire(profile.Data) end
-
 	-- Fire profile loaded event
 
 	profileLoadedEvent:Fire(player, profile)
@@ -199,11 +191,11 @@ local function viewOfflineProfileAsync(playerId: number): Profile?
 
 	local profileInfo = profileArchive[playerId]
 
-	if profileInfo and time() - profileInfo.lastUpdated < OFFLINE_PROFILE_RETRIEVAL_INTERVAL then
+	if profileInfo and time() - profileInfo.lastUpdated < PROFILE_ARCHIVE_CACHE_LIFETIME then
 		return profileInfo.profile
 	end
 
-	-- Otherwise, retrieve the profile or wait for another retrieval to finish
+	-- If the profile is already being retrieved, wait for it to finish
 
 	if loadingOfflineProfiles[playerId] then
 		repeat
@@ -213,23 +205,18 @@ local function viewOfflineProfileAsync(playerId: number): Profile?
 		return profileArchive[playerId].profile
 	end
 
-	loadingOfflineProfiles[playerId] = true
-	local profile = ProfileStore:ViewProfileAsync(`Player{playerId}`) :: Profile
-	loadingOfflineProfiles[playerId] = nil
+	-- Retrieve the profile
 
-	loadProfileIntoArchive(playerId, profile)
+	loadingOfflineProfiles[playerId] = true
+	local profile = ProfileStore:ViewProfileAsync(`Player{playerId}`) :: Profile?
+	loadingOfflineProfiles[playerId] = nil
 
 	player = Players:GetPlayerByUserId(playerId)
 
-	if not profile and not profileArchive[playerId].profile then
-		publicPlayerDataReplica:SetValue({ playerId }, false)
-	elseif profile and not profiles[player] then
-		publicPlayerDataReplica:SetValue({ playerId }, filterProfileForPublic(profile.Data))
+	if player and profiles[player] then return profiles[player] end
 
-		local updateSignal = persistentDataUpdatedSignals[playerId]
-
-		if updateSignal then updateSignal:Fire(profile.Data) end
-	end
+	loadProfileIntoArchive(playerId, profile)
+	publicPlayerDataReplica:SetValue({ playerId }, if profile then filterProfileForPublic(profile.Data) else false)
 
 	return profile
 end
@@ -272,8 +259,8 @@ local function incrementSubscription(userId: number)
 					local profileInfo = profileArchive[userId]
 					local playerSubscribedTo = Players:GetPlayerByUserId(userId)
 
-					if profileInfo and time() - profileInfo.lastUpdated < OFFLINE_PROFILE_RETRIEVAL_INTERVAL then
-						task.wait(OFFLINE_PROFILE_RETRIEVAL_INTERVAL - (time() - profileInfo.lastUpdated))
+					if profileInfo and time() - profileInfo.lastUpdated < PROFILE_ARCHIVE_CACHE_LIFETIME then
+						task.wait(PROFILE_ARCHIVE_CACHE_LIFETIME - (time() - profileInfo.lastUpdated))
 					elseif playerSubscribedTo and profiles[playerSubscribedTo] then
 						task.wait()
 					else
@@ -404,10 +391,6 @@ function PlayerDataManager.arrayInsertPersistent(player: Player, path: { string 
 	privatePlayerDataReplicas[player]:ArrayInsert(path, value)
 
 	publicPlayerDataReplica:SetValue({ player.UserId }, filterProfileForPublic(profile.Data))
-
-	local updateSignal = persistentDataUpdatedSignals[player.UserId]
-
-	if updateSignal then updateSignal:Fire(profile.Data) end
 end
 
 --[[
@@ -448,10 +431,6 @@ function PlayerDataManager.arrayRemovePersistent(player: Player, path: { string 
 	privatePlayerDataReplicas[player]:ArrayRemove(path, index)
 
 	publicPlayerDataReplica:SetValue({ player.UserId }, filterProfileForPublic(profile.Data))
-
-	local updateSignal = persistentDataUpdatedSignals[player.UserId]
-
-	if updateSignal then updateSignal:Fire(profile.Data) end
 end
 
 --[[
@@ -492,10 +471,6 @@ function PlayerDataManager.arraySetPersistent(player: Player, path: { string }, 
 	privatePlayerDataReplicas[player]:ArraySet(path, index, value)
 
 	publicPlayerDataReplica:SetValue({ player.UserId }, filterProfileForPublic(profile.Data))
-
-	local updateSignal = persistentDataUpdatedSignals[player.UserId]
-
-	if updateSignal then updateSignal:Fire(profile.Data) end
 end
 
 --[[
@@ -516,20 +491,6 @@ function PlayerDataManager.arraySetTemp(player: Player, path: { string }, index:
 	privateTempDataReplica:ArraySet(path, index, value)
 
 	publicPlayerTempDataReplica:SetValue({ player.UserId }, filterTempDataForPublic(privateTempDataReplica.Data))
-end
-
---[[
-	Gets an event that fires when the given player's persistent data is updated.
-
-	---
-
-	@param userId The user ID of the player whose persistent data to get the update signal for.
-]]
-function PlayerDataManager.getPersistentDataUpdatedSignal(userId: number): RBXScriptSignal<PlayerPersistentData>
-	local updateSignal = persistentDataUpdatedSignals[userId] or Instance.new "BindableEvent"
-	persistentDataUpdatedSignals[userId] = updateSignal
-
-	return updateSignal.Event
 end
 
 --[[
@@ -592,10 +553,6 @@ function PlayerDataManager.setValuePersistent(player: Player, path: { string }, 
 	privatePlayerDataReplicas[player]:SetValue(path, value)
 
 	publicPlayerDataReplica:SetValue({ player.UserId }, filterProfileForPublic(profile.Data))
-
-	local updateSignal = persistentDataUpdatedSignals[player.UserId]
-
-	if updateSignal then updateSignal:Fire(profile.Data) end
 end
 
 --[[
@@ -636,10 +593,6 @@ function PlayerDataManager.setValuesPersistent(player: Player, path: { string },
 	privatePlayerDataReplicas[player]:SetValues(path, values)
 
 	publicPlayerDataReplica:SetValue({ player.UserId }, filterProfileForPublic(profile.Data))
-
-	local updateSignal = persistentDataUpdatedSignals[player.UserId]
-
-	if updateSignal then updateSignal:Fire(profile.Data) end
 end
 
 --[[

@@ -52,6 +52,9 @@
       "**/sourcemap.json": true
     },
     "luau-lsp.diagnostics.workspace": true,
+    "search.exclude": {
+      "vendor": true
+    },
     "luau-lsp.ignoreGlobs": ["**/_Index/**", "vendor/**", "build.lua"]
   },
   "extensions": {

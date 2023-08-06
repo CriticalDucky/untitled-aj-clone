@@ -1,26 +1,16 @@
---#region Imports
-
-local Currency = require(script.Currency)
-local Homes = require(script.Homes)
-local Inventory = require(script.Inventory)
-local PublicPlayerData = require(script.PublicPlayerData)
-local Settings = require(script.Settings)
-
---#endregion
-
 --[[
     Manages the player's state.
 ]]
 local PlayerState = {}
 
-PlayerState.Currency = Currency
+PlayerState.Currency = require(script.Currency)
 
-PlayerState.Homes = Homes
+PlayerState.Homes = require(script.Homes)
 
-PlayerState.Inventory = Inventory
+PlayerState.Inventory = require(script.Inventory)
 
-PlayerState.PublicPlayerData = PublicPlayerData
+PlayerState.PublicPlayerData = require(script.PublicPlayerData)
 
-PlayerState.Settings = Settings
+PlayerState.Settings = require(script.Settings)
 
 return PlayerState
