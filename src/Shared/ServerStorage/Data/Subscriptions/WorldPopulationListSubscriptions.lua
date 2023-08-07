@@ -38,18 +38,18 @@ Players.PlayerRemoving:Connect(unsubscribe)
 
 --#endregion
 
-local WorldPopulationListSubscription = {}
+local WorldPopulationListSubscriptions = {}
 
-function WorldPopulationListSubscription.subscribe(player: Player)
+function WorldPopulationListSubscriptions.subscribe(player: Player)
 	if not player:IsDescendantOf(game) then return end
 
 	subscribe(player)
 end
 
-function WorldPopulationListSubscription.unsubscribe(player: Player)
+function WorldPopulationListSubscriptions.unsubscribe(player: Player)
 	if not player:IsDescendantOf(game) then return end
 
 	unsubscribe(player)
 end
 
-return WorldPopulationListSubscription
+return WorldPopulationListSubscriptions
