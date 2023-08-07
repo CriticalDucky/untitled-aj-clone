@@ -21,7 +21,7 @@ local ServerGroupEnum = require(enumsFolder.ServerGroup)
 local ReplicaCollection = require(replicationFolder:WaitForChild "ReplicaCollection")
 local ReplicaRequest = require(requestsFolder:WaitForChild "ReplicaRequest")
 local ReplicatedServerData = require(serverFolder:WaitForChild "ReplicatedServerData")
-local LiveServerData = require(serverFolder:WaitForChild "LiveServerData")
+-- local LiveServerData = require(serverFolder:WaitForChild "LiveServerData")
 local Table = require(utilityFolder:WaitForChild "Table")
 local TeleportRequestType = require(enumsFolder:WaitForChild "TeleportRequestType")
 local TeleportResponseType = require(enumsFolder:WaitForChild "TeleportResponseType")
@@ -59,7 +59,7 @@ local function requestTeleport(teleportRequestType, ...)
 
 	local response = ReplicaRequest.new(TeleportRequest, teleportRequestType, unpack(vararg))
 
-	Table.print(response, "request() response:", true)
+	-- Table.print(response, "request() response:", true)
 	return unpack(response)
 end
 
@@ -75,15 +75,15 @@ end
 	Authorization allows for knowing whether a teleport is allowed without actually performing the teleport.
 ]]
 function Authorize.toWorld(worldIndex: number)
-	local isWorldFull = LiveServerData.isWorldFull(worldIndex, 1)
+	-- local isWorldFull = LiveServerData.isWorldFull(worldIndex, 1)
 
-	if isWorldFull then
-		warn("ClientTeleport.toWorld() called with full world: " .. tostring(worldIndex))
+	-- if isWorldFull then
+	-- 	warn("ClientTeleport.toWorld() called with full world: " .. tostring(worldIndex))
 
-		return false, TeleportResponseType.full
-	else
-		return true
-	end
+	-- 	return false, TeleportResponseType.full
+	-- else
+	-- 	return true
+	-- end
 end
 
 --[[
@@ -122,17 +122,17 @@ function Authorize.toLocation(locationEnum: UserEnum)
 		return false, TeleportResponseType.invalid -- The replicated server data might not have replicated yet, so we can't be sure
 	end
 
-	if LiveServerData.isLocationFull(localWorldIndex, locationEnum, 1) then
-		-- local setting =
+	-- if LiveServerData.isLocationFull(localWorldIndex, locationEnum, 1) then
+	-- 	-- local setting =
 
-		-- if setting then
-		-- 	return true
-		-- else
-		-- 	warn("ClientTeleport.toLocation() called with full location: " .. tostring(locationEnum))
+	-- 	-- if setting then
+	-- 	-- 	return true
+	-- 	-- else
+	-- 	-- 	warn("ClientTeleport.toLocation() called with full location: " .. tostring(locationEnum))
 
-		-- 	return false, TeleportResponseType.full
-		-- end
-	end
+	-- 	-- 	return false, TeleportResponseType.full
+	-- 	-- end
+	-- end
 
 	return true
 end
@@ -161,11 +161,11 @@ function Authorize.toFriend(playerId: number)
 				return false, TeleportResponseType.invalid
 			end
 
-			if LiveServerData.isLocationFull(friendLocation.worldIndex, friendLocation.locationEnum, 1) then
-				warn("Authorize.toFriend() called with full location: " .. tostring(friendLocation.locationEnum))
+			-- if LiveServerData.isLocationFull(friendLocation.worldIndex, friendLocation.locationEnum, 1) then
+			-- 	warn("Authorize.toFriend() called with full location: " .. tostring(friendLocation.locationEnum))
 
-				return false, TeleportResponseType.full
-			end
+			-- 	return false, TeleportResponseType.full
+			-- end
 
 			if Locations.info[friendLocation.locationEnum].cantJoinPlayer then
 				warn(
@@ -176,11 +176,11 @@ function Authorize.toFriend(playerId: number)
 				return false, TeleportResponseType.invalid
 			end
 		elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isParty, serverType) then
-			if LiveServerData.isPartyFull(friendLocation.partyType, friendLocation.partyIndex, 1) then
-				warn("Authorize.toFriend() called with full party: " .. tostring(friendLocation.partyType))
+			-- if LiveServerData.isPartyFull(friendLocation.partyType, friendLocation.partyIndex, 1) then
+			-- 	warn("Authorize.toFriend() called with full party: " .. tostring(friendLocation.partyType))
 
-				return false, TeleportResponseType.full
-			end
+			-- 	return false, TeleportResponseType.full
+			-- end
 		elseif ServerTypeGroups.serverInGroup(ServerGroupEnum.isMinigame, serverType) then
 			if typeof(friendLocation.minigameIndex) == "string" or friendLocation.minigameIndex == nil then
 				warn "Authorize.toFriend(): friend is in an instance minigame server"
@@ -188,11 +188,11 @@ function Authorize.toFriend(playerId: number)
 				return false, TeleportResponseType.invalid
 			end
 
-			if LiveServerData.isMinigameFull(friendLocation.minigameType, friendLocation.minigameIndex) then
-				warn("ClientTeleport.toFriend() called with full minigame: " .. tostring(friendLocation.minigameType))
+			-- if LiveServerData.isMinigameFull(friendLocation.minigameType, friendLocation.minigameIndex) then
+			-- 	warn("ClientTeleport.toFriend() called with full minigame: " .. tostring(friendLocation.minigameType))
 
-				return false, TeleportResponseType.full
-			end
+			-- 	return false, TeleportResponseType.full
+			-- end
 		else
 			warn("ClientTeleport.toFriend() called with invalid serverType: " .. tostring(serverType))
 

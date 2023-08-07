@@ -9,9 +9,7 @@ local ServerStorage = game:GetService "ServerStorage"
 
 local Enums = require(ReplicatedFirst.Shared.Enums)
 local ItemTypeHome = Enums.ItemTypeHome
-local PlayerData = require(ReplicatedStorage.Shared.Data.PlayerData)
-local HomeItems = PlayerData.Inventory.HomeItems
-local Homes = PlayerData.Homes
+local PlayerDataOperations = require(ReplicatedStorage.Shared.Data.PlayerDataOperations)
 local PlayerDataManager = require(ServerStorage.Shared.Data.PlayerDataManager)
 local DataStoreUtility = require(ServerStorage.Shared.Utility.DataStoreUtility)
 local TeleportUtility = require(ServerStorage.Shared.Utility.TeleportUtility)
@@ -51,15 +49,15 @@ local function initializePersistentData(player: Player)
 			type = ItemTypeHome.developerHome,
 		}
 
-		HomeItems.addHome(newDefaultHome, player)
-		HomeItems.addHome(newDeveloperHome, player) -- TODO: Remove.
+		PlayerDataOperations.Inventory.HomeItems.addHome(newDefaultHome, player)
+		PlayerDataOperations.Inventory.HomeItems.addHome(newDeveloperHome, player) -- TODO: Remove.
 	end
 
 	-- Set selected home if none is selected.
 
 	if not data.home.selected then
 		for homeId in pairs(homes) do
-			Homes.setSelectedHome(homeId, player)
+			PlayerDataOperations.Homes.setSelectedHome(homeId, player)
 			break
 		end
 	end

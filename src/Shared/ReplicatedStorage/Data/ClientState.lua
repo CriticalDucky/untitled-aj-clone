@@ -5,7 +5,7 @@ local ReplicatedFirst = game:GetService "ReplicatedFirst"
 local ReplicatedStorage = game:GetService "ReplicatedStorage"
 local RunService = game:GetService "RunService"
 
-assert(RunService:IsClient(), "ClientState can only be required on the client")
+assert(RunService:IsClient(), "ClientState can only be required on the client.")
 
 local Fusion = require(ReplicatedFirst:WaitForChild("Vendor"):WaitForChild "Fusion")
 
@@ -48,6 +48,10 @@ publicPlayerData:ListenToRaw(function(action) publicPlayerDataState:set(publicPl
 local ClientState = {
 	currency = {
 		money = Value(privatePlayerData.currency.money),
+	},
+
+	external = {
+		worldPopulationList = Value(),
 	},
 
 	home = {
