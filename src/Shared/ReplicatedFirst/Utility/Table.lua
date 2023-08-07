@@ -105,7 +105,7 @@ function Table.hasValue(t, value) -- returns true if the table has the value
 	return false
 end
 
-function Table.findMax(t) -- returns the key and value of the maximum value in a table
+function Table.findMax<T>(t: {[T]: number}) -- returns the key and value of the maximum value in a table
 	local k, v
 
 	for key, value in pairs(t) do
@@ -117,7 +117,7 @@ function Table.findMax(t) -- returns the key and value of the maximum value in a
 	return k, v
 end
 
-function Table.findMin(t) -- returns the key and value of the minimum value in a table
+function Table.findMin<T>(t: {[T]: number}) -- returns the key and value of the minimum value in a table
 	local k, v
 
 	for key, value in pairs(t) do
@@ -220,12 +220,12 @@ function Table.recursiveIterate(t, callback)
 	recursiveIterate(t, {})
 end
 
-function Table.findFirstKey(t, callback) -- returns the first key that passes the callback
-	for k, v in pairs(t) do
-		if not callback or callback(k, v) then return k, v end
-	end
-	return
-end
+-- function Table.findFirstKey(t, callback) -- returns the first key that passes the callback
+-- 	for k, v in pairs(t) do
+-- 		if not callback or callback(k, v) then return k, v end
+-- 	end
+-- 	return
+-- end
 
 function Table.hasAnything(t) -- returns true if the table has anything in it
 	for _, _ in pairs(t) do
@@ -253,60 +253,60 @@ function Table.deepReconcile(template, t) -- reconciles t with template, adding 
 	deepReconcile(template, t)
 end
 
-function Table.safeIndex(t, ...) -- safely indexes a table using a path, returns nil if normally would error
-	local value = t
+-- function Table.safeIndex(t, ...) -- safely indexes a table using a path, returns nil if normally would error
+-- 	local value = t
 
-	for _, key in pairs { ... } do
-		if type(value) == "table" then
-			value = value[key]
-		else
-			return nil
-		end
-	end
+-- 	for _, key in pairs { ... } do
+-- 		if type(value) == "table" then
+-- 			value = value[key]
+-- 		else
+-- 			return nil
+-- 		end
+-- 	end
 
-	return value
-end
+-- 	return value
+-- end
 
-function Table.deepToNumber(t, copy) -- converts all values to numbers if possible
-	t = if copy then Table.deepCopy(t) else t
+-- function Table.deepToNumber(t, copy) -- converts all values to numbers if possible
+-- 	t = if copy then Table.deepCopy(t) else t
 
-	local function deepToNumber(t1)
-		for k, v in pairs(t1) do
-			if type(v) == "table" then
-				deepToNumber(v)
-			else
-				t1[k] = tonumber(v) or v
-			end
-		end
-	end
+-- 	local function deepToNumber(t1)
+-- 		for k, v in pairs(t1) do
+-- 			if type(v) == "table" then
+-- 				deepToNumber(v)
+-- 			else
+-- 				t1[k] = tonumber(v) or v
+-- 			end
+-- 		end
+-- 	end
 
-	deepToNumber(t)
+-- 	deepToNumber(t)
 
-	return t
-end
+-- 	return t
+-- end
 
-function Table.deepToNumberKeys(t, copy): { [any]: any } -- converts all string keys to numbers if possible
-	t = if copy then Table.deepCopy(t) else t
+-- function Table.deepToNumberKeys(t, copy): { [any]: any } -- converts all string keys to numbers if possible
+-- 	t = if copy then Table.deepCopy(t) else t
 
-	local function deepToNumberKeys(t1)
-		for k, v in pairs(Table.copy(t1)) do
-			if type(v) == "table" then deepToNumberKeys(v) end
+-- 	local function deepToNumberKeys(t1)
+-- 		for k, v in pairs(Table.copy(t1)) do
+-- 			if type(v) == "table" then deepToNumberKeys(v) end
 
-			if type(k) == "string" then
-				local numberKey = tonumber(k)
+-- 			if type(k) == "string" then
+-- 				local numberKey = tonumber(k)
 
-				if numberKey then
-					t1[numberKey] = v
-					t1[k] = nil
-				end
-			end
-		end
-	end
+-- 				if numberKey then
+-- 					t1[numberKey] = v
+-- 					t1[k] = nil
+-- 				end
+-- 			end
+-- 		end
+-- 	end
 
-	deepToNumberKeys(t)
+-- 	deepToNumberKeys(t)
 
-	return t
-end
+-- 	return t
+-- end
 
 function Table.selectWithKeys(t, keys) -- takes in an array of keys and returns a table with only those keys
 	local selected = {}

@@ -11,10 +11,6 @@ local ClientServerCommunication = require(replicatedStorageSharedData:WaitForChi
 
 --#endregion
 
-ClientServerCommunication.registerActionAsync("SubscribeToWorldPopulationList")
-
-ClientServerCommunication.registerActionAsync("UnsubscribeFromWorldPopulationList")
-
 ClientServerCommunication.registerActionAsync("UpdateWorldPopulationList", function(worldPopulationList)
     ClientState.external.worldPopulationList:set(worldPopulationList)
 end)

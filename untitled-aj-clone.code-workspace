@@ -55,7 +55,9 @@
     "search.exclude": {
       "vendor": true
     },
-    "luau-lsp.ignoreGlobs": ["**/_Index/**", "vendor/**", "build.lua"]
+    "luau-lsp.ignoreGlobs": ["**/_Index/**", "vendor/**", "build.lua"],
+    "luau-lsp.fflags.enableByDefault": true,
+    "luau-lsp.diagnostics.strictDatamodelTypes": true
   },
   "extensions": {
     "recommendations": [

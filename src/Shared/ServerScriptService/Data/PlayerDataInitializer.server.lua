@@ -13,8 +13,7 @@ local PlayerDataOperations = require(ReplicatedStorage.Shared.Data.PlayerDataOpe
 local PlayerDataManager = require(ServerStorage.Shared.Data.PlayerDataManager)
 local DataStoreUtility = require(ServerStorage.Shared.Utility.DataStoreUtility)
 local TeleportUtility = require(ServerStorage.Shared.Utility.TeleportUtility)
-local ServerStorageConfiguration = require(ServerStorage.Shared.Configuration)
-local PlaceIDs = ServerStorageConfiguration.PlaceIDs
+local PlaceIDs = require(ServerStorage.Shared.Configuration.PlaceIDs)
 local Types = require(ReplicatedFirst.Shared.Utility.Types)
 
 type ItemHome = Types.ItemHome

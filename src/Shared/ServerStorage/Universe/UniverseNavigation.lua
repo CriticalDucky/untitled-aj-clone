@@ -10,8 +10,7 @@ local HomeLockType = Enums.HomeLockType
 local TeleportToHomeResult = Enums.TeleportToHomeResult
 local PlayerDataManager = require(ServerStorage.Shared.Data.PlayerDataManager)
 local TeleportUtility = require(ServerStorage.Shared.Utility.TeleportUtility)
-local ServerStorageConfiguration = require(ServerStorage.Shared.Configuration)
-local PlaceIds = ServerStorageConfiguration.PlaceIDs
+local PlaceIds = require(ServerStorage.Shared.Configuration.PlaceIDs)
 local Types = require(ReplicatedFirst.Shared.Utility.Types)
 
 type PlayerPersistentData = Types.PlayerPersistentData

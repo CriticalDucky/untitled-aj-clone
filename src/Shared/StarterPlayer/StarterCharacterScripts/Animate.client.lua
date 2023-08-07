@@ -1,4 +1,8 @@
-script.Parent = game.Players.LocalPlayer.Character
+local character = game.Players.LocalPlayer.Character
+
+assert(character)
+
+script.Parent = character
 
 local Character = script.Parent
 local Humanoid = Character:WaitForChild("Humanoid")

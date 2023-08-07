@@ -66,13 +66,13 @@ function LocalServerInfo.getServerIdentifier()
 
 	if not (serverType == ServerTypeEnum.routing or serverType == ServerTypeEnum.minigame) then
 		if RunService:IsServer() then
-			local ServerStorage = game:GetService "ServerStorage"
+			-- local ServerStorage = game:GetService "ServerStorage"
 
-			local serverStorageShared = ServerStorage.Shared
+			-- local serverStorageShared = ServerStorage.Shared
 
-			local ServerData = require(serverStorageShared.ServerManagement.ServerData)
+			-- local ServerData = require(serverStorageShared.ServerManagement.ServerData)
 
-			serverIdentifier = select(2, ServerData.getServerIdentifier())
+			-- serverIdentifier = select(2, ServerData.getServerIdentifier())
 		else
 			local ReplicatedServerData = require(serverFolder:WaitForChild "ReplicatedServerData")
 
@@ -134,13 +134,13 @@ function LocalServerInfo.getServerIdentifier()
 
 				serverIdentifier = ReplicatedServerData.getServerIdentifier()
 			else
-				local ServerStorage = game:GetService "ServerStorage"
+				-- local ServerStorage = game:GetService "ServerStorage"
 
-				local serverStorageShared = ServerStorage.Shared
+				-- local serverStorageShared = ServerStorage.Shared
 
-				local ServerData = require(serverStorageShared.ServerManagement.ServerData)
+				-- local ServerData = require(serverStorageShared.ServerManagement.ServerData)
 
-				serverIdentifier = select(2, ServerData.getServerIdentifier())
+				-- serverIdentifier = select(2, ServerData.getServerIdentifier())
 			end
 		end
 	end

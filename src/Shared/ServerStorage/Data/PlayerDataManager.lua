@@ -15,8 +15,7 @@ local serverStorageVendor = ServerStorage.Vendor
 local ProfileService = require(serverStorageVendor.ProfileService)
 local ReplicaService = require(serverStorageVendor.ReplicaService)
 
-local ReplicatedStorageConfiguration = require(ReplicatedStorage.Shared.Configuration)
-local PlayerDataInfo = ReplicatedStorageConfiguration.PlayerDataInfo
+local PlayerDataInfo = require(ReplicatedStorage.Shared.Configuration.PlayerDataInfo)
 local ServerDirectives = require(ServerStorage.Shared.Utility.ServerDirectives)
 local Table = require(ReplicatedFirst.Shared.Utility.Table)
 local Types = require(ReplicatedFirst.Shared.Utility.Types)

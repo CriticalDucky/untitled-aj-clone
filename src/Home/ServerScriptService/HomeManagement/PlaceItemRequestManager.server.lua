@@ -7,7 +7,7 @@ local serverStorageVendor = ServerStorage.Vendor
 local replicatedFirstShared = ReplicatedFirst.Shared
 local replicatedStorageShared = ReplicatedStorage.Shared
 local dataFolder = serverStorageShared.Data
-local inventoryFolder = dataFolder.Inventory
+-- local inventoryFolder = dataFolder.Inventory
 local enumsFolder = replicatedFirstShared.Enums
 local serverFolder = replicatedStorageShared.Server
 local utilityFolder = replicatedFirstShared.Utility
@@ -16,7 +16,7 @@ local serverStorageSharedUtility = serverStorageShared.Utility
 ServerStorage:WaitForChild("")
 
 local ReplicaService = require(serverStorageVendor.ReplicaService)
-local HomeManager = require(inventoryFolder.HomeManager)
+-- local HomeManager = require(inventoryFolder.HomeManager)
 local PlayerDataManager = require(dataFolder.PlayerDataManager)
 local PlaceItemResponseType = require(enumsFolder.PlaceItemResponseType)
 local PlaceItemRequestType = require(enumsFolder.PlaceItemRequestType)
@@ -68,12 +68,12 @@ ReplicaResponse.listen(requestReplica, function(player: Player, placeItemRequest
 			return PlaceItemResponseType.invalid
 		end
 
-		local success = HomeManager.addPlacedItem(itemId, pivotCFrame)
+		-- local success = HomeManager.addPlacedItem(itemId, pivotCFrame)
 
-		if not success then
-			warn "PlaceItemRequest: Error placing item"
-			return PlaceItemResponseType.error
-		end
+		-- if not success then
+		-- 	warn "PlaceItemRequest: Error placing item"
+		-- 	return PlaceItemResponseType.error
+		-- end
 	elseif placeItemRequestType == PlaceItemRequestType.remove then
 		local itemId = ...
 
@@ -82,22 +82,22 @@ ReplicaResponse.listen(requestReplica, function(player: Player, placeItemRequest
 			return PlaceItemResponseType.invalid
 		end
 
-		local success, isItemPlaced = HomeManager.isItemPlaced(itemId)
+		-- local success, isItemPlaced = HomeManager.isItemPlaced(itemId)
 
-		if not isItemPlaced then
-			warn "PlaceItemRequest: Item not placed"
-			return PlaceItemResponseType.invalid
-		elseif not success then
-			warn "PlaceItemRequest: Error checking if item is placed"
-			return PlaceItemResponseType.error
-		end
+		-- if not isItemPlaced then
+		-- 	warn "PlaceItemRequest: Item not placed"
+		-- 	return PlaceItemResponseType.invalid
+		-- elseif not success then
+		-- 	warn "PlaceItemRequest: Error checking if item is placed"
+		-- 	return PlaceItemResponseType.error
+		-- end
 
-		local removePlacedSuccess = HomeManager.removePlacedItem(itemId)
+		-- local removePlacedSuccess = HomeManager.removePlacedItem(itemId)
 
-		if not removePlacedSuccess then
-			warn "PlaceItemRequest: Error removing item"
-			return PlaceItemResponseType.error
-		end
+		-- if not removePlacedSuccess then
+		-- 	warn "PlaceItemRequest: Error removing item"
+		-- 	return PlaceItemResponseType.error
+		-- end
 	else
 		warn "PlaceItemRequest: Invalid place item request type"
 		return PlaceItemResponseType.invalid

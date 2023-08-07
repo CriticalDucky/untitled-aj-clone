@@ -47,14 +47,14 @@ local WorldOrigin = {}
 function WorldOrigin.get(player: number | Player | nil): number
 	local worldOrigin
 
-	local ServerData
+	-- local ServerData
 	do
 		if RunService:IsServer() then
-			local ServerStorage = game:GetService "ServerStorage"
+			-- local ServerStorage = game:GetService "ServerStorage"
 
-			local serverStorageShared = ServerStorage:WaitForChild "Shared"
+			-- local serverStorageShared = ServerStorage:WaitForChild "Shared"
 
-			ServerData = require(serverStorageShared.ServerManagement.ServerData)
+			-- ServerData = require(serverStorageShared.ServerManagement.ServerData)
 		end
 	end
 
@@ -75,17 +75,17 @@ function WorldOrigin.get(player: number | Player | nil): number
 			teleportData = (player :: Player):GetJoinData().TeleportData
 
 			if teleportData == nil or teleportData.worldOrigin == nil then
-				local success, worldIndex = ServerData.findAvailableWorld()
+				-- local success, worldIndex = ServerData.findAvailableWorld()
 
-				if success then worldOrigin = worldIndex end
+				-- if success then worldOrigin = worldIndex end
 			end
 		end
 
 		worldOrigin = if teleportData then teleportData.worldOrigin else worldOrigin
 	elseif RunService:IsServer() then
-		local success, worldIndex = ServerData.findAvailableWorld()
+		-- local success, worldIndex = ServerData.findAvailableWorld()
 
-		if success then worldOrigin = worldIndex end
+		-- if success then worldOrigin = worldIndex end
 	end
 
 	if not worldOrigin then -- Hackily guess a random world index (This is a stopgap that will rarely be used)
