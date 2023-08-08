@@ -87,7 +87,7 @@ local function removeItem(player: Player, itemCategory: string, itemIndex: numbe
 	local item = InventoryManager.getItemFromIndex(player.UserId, itemCategory, itemIndex)
 	assert(item, "removeItem: Item not found")
 
-	PlayerDataManager.arrayRemovePersistent(player, { "inventory", itemCategory }, itemIndex)
+	-- PlayerDataManager.arrayRemovePersistent(player, { "inventory", itemCategory }, itemIndex)
 	InventoryManager.itemRemovedFromInventory:Fire(player, itemCategory, itemIndex, item)
 end
 
@@ -109,7 +109,7 @@ local function addItem(player: Player, itemCategory: string, item: InventoryItem
 
 	InventoryManager.itemPlacingInInventory:Fire(player, itemCategory, item)
 
-	PlayerDataManager.arrayInsertPersistent(player, { "inventory", itemCategory }, item)
+	-- PlayerDataManager.arrayInsertPersistent(player, { "inventory", itemCategory }, item)
 end
 
 --[[

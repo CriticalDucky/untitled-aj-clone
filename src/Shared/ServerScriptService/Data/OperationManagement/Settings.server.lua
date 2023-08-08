@@ -16,20 +16,21 @@ type PlayerPersistentData = Types.PlayerPersistentData
 --#endregion
 
 ClientServerCommunication.registerActionAsync("SetSettingFindOpenWorld", function(player: Player, value)
-	if typeof(value) ~= "boolean" then
-		ClientServerCommunication.replicateAsync(
-			"SetSettingFindOpenWorld",
-			(PlayerDataManager.viewPersistentData(player) :: PlayerPersistentData).settings.findOpenWorld,
-			player
-		)
+	local data = PlayerDataManager.getPersistentData(player)
+	assert(data)
 
+	if typeof(value) ~= "boolean" then
+		ClientServerCommunication.replicateAsync("SetSettingFindOpenWorld", data.settings.findOpenWorld, player)
 		return
 	end
 
-	PlayerDataManager.setValuePersistent(player, { "settings", "findOpenWorld" }, value)
+	data.settings.findOpenWorld = value
 end)
 
 ClientServerCommunication.registerActionAsync("SetSettingHomeLock", function(player: Player, value)
+	local data = PlayerDataManager.getPersistentData(player)
+	assert(data)
+
 	local validValue = false
 
 	for _, enumValue in pairs(HomeLockType) do
@@ -40,44 +41,35 @@ ClientServerCommunication.registerActionAsync("SetSettingHomeLock", function(pla
 	end
 
 	if not validValue then
-		ClientServerCommunication.replicateAsync(
-			"SetSettingHomeLock",
-			(PlayerDataManager.viewPersistentData(player) :: PlayerPersistentData).settings.homeLock,
-			player
-		)
-
+		ClientServerCommunication.replicateAsync("SetSettingHomeLock", data.settings.homeLock, player)
 		return
 	end
 
 	assert(typeof(value) == "number")
 
-	PlayerDataManager.setValuePersistent(player, { "settings", "homeLock" }, value)
+	data.settings.homeLock = value
 end)
 
 ClientServerCommunication.registerActionAsync("SetSettingMusicVolume", function(player: Player, value)
-	if typeof(value) ~= "number" or value ~= value or value ~= math.clamp(value, 0, 1) then
-		ClientServerCommunication.replicateAsync(
-			"SetSettingMusicVolume",
-			(PlayerDataManager.viewPersistentData(player) :: PlayerPersistentData).settings.musicVolume,
-			player
-		)
+	local data = PlayerDataManager.getPersistentData(player)
+	assert(data)
 
+	if typeof(value) ~= "number" or value ~= value or value ~= math.clamp(value, 0, 1) then
+		ClientServerCommunication.replicateAsync("SetSettingMusicVolume", data.settings.musicVolume, player)
 		return
 	end
 
-	PlayerDataManager.setValuePersistent(player, { "settings", "musicVolume" }, value)
+	data.settings.musicVolume = value
 end)
 
 ClientServerCommunication.registerActionAsync("SetSettingSFXVolume", function(player: Player, value)
-	if typeof(value) ~= "number" or value ~= value or value ~= math.clamp(value, 0, 1) then
-		ClientServerCommunication.replicateAsync(
-			"SetSettingSFXVolume",
-			(PlayerDataManager.viewPersistentData(player) :: PlayerPersistentData).settings.sfxVolume,
-			player
-		)
+	local data = PlayerDataManager.getPersistentData(player)
+	assert(data)
 
+	if typeof(value) ~= "number" or value ~= value or value ~= math.clamp(value, 0, 1) then
+		ClientServerCommunication.replicateAsync("SetSettingSFXVolume", data.settings.sfxVolume, player)
 		return
 	end
 
-	PlayerDataManager.setValuePersistent(player, { "settings", "sfxVolume" }, value)
+	data.settings.sfxVolume = value
 end)

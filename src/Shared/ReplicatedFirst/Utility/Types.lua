@@ -67,6 +67,8 @@ export type PlayerPersistentDataPublic = {
 	},
 }
 
+export type PlayerTempData = {}
+
 export type TimeRange = {
 	introduction: number | { [any]: any },
 	closing: number | { [any]: any },

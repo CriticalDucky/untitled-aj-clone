@@ -23,12 +23,11 @@ local serverDictionary = DataStoreService:GetDataStore "ServerDictionary"
 
 --#endregion
 
-local function initializePersistentData(player: Player)
-	local data = PlayerDataManager.viewPersistentData(player)
+--#region Initializers
 
+local function initializeDefaultHomes(player: Player)
+	local data = PlayerDataManager.getPersistentData(player)
 	assert(data)
-
-	-- Initialize default home if none exists.
 
 	local homes = data.inventory.homes
 
@@ -39,52 +38,85 @@ local function initializePersistentData(player: Player)
 		break
 	end
 
-	if not hasHomes then
-		local newDefaultHome: ItemHome = {
-			type = ItemTypeHome.defaultHome,
-		}
+	if hasHomes then return end
 
-		local newDeveloperHome: ItemHome = {
-			type = ItemTypeHome.developerHome,
-		}
+	local newDefaultHome: ItemHome = {
+		type = ItemTypeHome.defaultHome,
+	}
 
-		PlayerDataOperations.Inventory.HomeItems.addHome(newDefaultHome, player)
-		PlayerDataOperations.Inventory.HomeItems.addHome(newDeveloperHome, player) -- TODO: Remove.
+	local newDeveloperHome: ItemHome = {
+		type = ItemTypeHome.developerHome,
+	}
+
+	PlayerDataOperations.Inventory.HomeItems.addHome(newDefaultHome, player)
+	PlayerDataOperations.Inventory.HomeItems.addHome(newDeveloperHome, player) -- TODO: Remove.
+end
+
+local function initializeSelectedHome(player: Player)
+	local data = PlayerDataManager.getPersistentData(player)
+	assert(data)
+
+	if data.home.selected then return end
+
+	for homeId in pairs(data.inventory.homes) do
+		PlayerDataOperations.Homes.setSelectedHome(homeId, player)
+		break
 	end
+end
+
+local function initializeHomeServer(player: Player)
+	local data = PlayerDataManager.getPersistentData(player)
+	assert(data)
+
+	if data.home.server then return end
+
+	local reserveSuccess, newAccessCode, newServerId = TeleportUtility.safeReserveServerAsync(PlaceIDs.home)
+
+	if not reserveSuccess then
+		warn(`Failed to reserve a home server for {player}!`)
+		return
+	end
+
+	local serverData: ServerDataHome = {
+		homeOwner = player.UserId,
+		type = "home",
+	}
+
+	local registerSuccess = DataStoreUtility.safeSetAsync(serverDictionary, newServerId, serverData, { player.UserId })
+
+	if not registerSuccess then
+		warn(`Failed to register a home server for {player}!`)
+		return
+	end
+
+	if not PlayerDataManager.persistentDataIsLoaded(player) then
+		warn(`{player}'s persistent data is no longer loaded, so the home server cannot be registered.`)
+		return
+	end
+
+	data.home.server = {
+		accessCode = newAccessCode,
+		privateServerId = newServerId,
+	}
+end
+
+--#endregion
+
+local function initializePersistentData(player: Player)
+	local data = PlayerDataManager.getPersistentData(player)
+	assert(data)
+
+	-- Initialize default home if none exists.
+
+	initializeDefaultHomes(player)
 
 	-- Set selected home if none is selected.
 
-	if not data.home.selected then
-		for homeId in pairs(homes) do
-			PlayerDataOperations.Homes.setSelectedHome(homeId, player)
-			break
-		end
-	end
+	initializeSelectedHome(player)
 
 	-- Reserve a home server if none is reserved.
 
-	if not data.home.server then
-		local reserveSuccess, newAccessCode, newServerId = TeleportUtility.safeReserveServerAsync(PlaceIDs.home)
-
-		if reserveSuccess then
-			local serverData: ServerDataHome = {
-				homeOwner = player.UserId,
-				type = "home",
-			}
-
-			local registerServerSuccess =
-				DataStoreUtility.safeSetAsync(serverDictionary, newServerId, serverData, { player.UserId })
-
-			if registerServerSuccess and PlayerDataManager.persistentDataIsLoaded(player) then
-				PlayerDataManager.setValuePersistent(player, { "home", "server", "accessCode" }, newAccessCode)
-				PlayerDataManager.setValuePersistent(player, { "home", "server", "privateServerId" }, newServerId)
-			else
-				warn(`Failed to register a home server for {player}!`)
-			end
-		else
-			warn(`Failed to reserve a home server for {player}!`)
-		end
-	end
+	initializeHomeServer(player)
 end
 
 for _, player in pairs(PlayerDataManager.getPlayersWithLoadedPersistentData()) do

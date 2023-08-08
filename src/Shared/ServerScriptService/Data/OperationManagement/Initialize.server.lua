@@ -8,4 +8,4 @@ local ClientServerCommunication = require(ReplicatedStorage.Shared.Data.ClientSe
 
 --#endregion
 
-ClientServerCommunication.registerActionAsync("SetMoney")
+ClientServerCommunication.registerActionAsync "InitializeClientState"

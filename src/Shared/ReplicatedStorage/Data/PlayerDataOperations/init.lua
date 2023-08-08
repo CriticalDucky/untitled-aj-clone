@@ -11,8 +11,6 @@ PlayerDataOperations.Homes = require(script:WaitForChild "Homes")
 
 PlayerDataOperations.Inventory = require(script:WaitForChild "Inventory")
 
-PlayerDataOperations.PublicPlayerData = require(script:WaitForChild "PublicPlayerData")
-
 PlayerDataOperations.Settings = require(script:WaitForChild "Settings")
 
 return PlayerDataOperations

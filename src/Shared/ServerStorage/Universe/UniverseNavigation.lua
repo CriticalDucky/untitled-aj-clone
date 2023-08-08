@@ -56,7 +56,7 @@ function UniverseNavigation.teleportToHomeAsync(target: Player, destination: num
 	else
 		-- Retrieve the owner's data.
 
-		local newDestinationData = PlayerDataManager.viewPersistentData(target)
+		local newDestinationData = PlayerDataManager.getPersistentData(target)
 
 		if not newDestinationData then return TeleportToHomeResult.ownerDataNotFound end
 

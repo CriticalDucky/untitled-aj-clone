@@ -32,7 +32,7 @@ function Homes.setSelectedHome(homeId: string, player: Player?)
 			return
 		end
 
-		local data = PlayerDataManager.viewPersistentData(player)
+		local data = PlayerDataManager.getPersistentData(player)
 		assert(data)
 
 		if data.home.selected == homeId then return end
@@ -42,7 +42,7 @@ function Homes.setSelectedHome(homeId: string, player: Player?)
 			return
 		end
 
-		PlayerDataManager.setValuePersistent(player, { "home", "selected" }, homeId)
+		data.home.selected = homeId
 		ClientServerCommunication.replicateAsync("SetSelectedHome", homeId, player)
 	else
 		assert(ClientState and Fusion and peek)
