@@ -125,24 +125,41 @@ export type CatalogPartyData = { ServerIdentifier }
 
 export type CatalogWorldData = { [string]: ServerIdentifier }
 
+export type CatalogWorldLocationList = { [string]: { placeId: number } }
+
+export type LocationType = "forest" | "town"
+
+export type MinigameType = "fishing" | "gatherer"
+
+export type PartyType = "beach"
+
 export type ServerIdentifier = {
 	accessCode: string,
 	privateServerId: string,
 }
 
-export type ServerInfo = ServerInfoHome | ServerInfoLocation | nil
-
 export type ServerInfoHome = {
 	homeOwner: number,
-	type: "home",
 }
 
 export type ServerInfoLocation = {
-	location: string,
-	type: "location",
 	world: number,
 }
 
-export type CatalogWorldLocationList = { [string]: { placeId: number } }
+--[[
+	The table returned from `Player:GetJoinData().TeleportData` if such data exists.
+
+	---
+
+	#### Fields
+	* `associatedWorld` The world the player is associated with. This represents the player's world if they are not in a
+	location.
+	* `locationFrom` The location the player is teleporting from. This determines the entry point the player will spawn
+	at when joining a location.
+]]
+export type TeleportData = {
+	associatedWorld: number?,
+	locationFrom: string?,
+}
 
 return nil

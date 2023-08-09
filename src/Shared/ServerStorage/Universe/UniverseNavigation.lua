@@ -11,10 +11,25 @@ local TeleportToHomeResult = Enums.TeleportToHomeResult
 local PlayerDataManager = require(ServerStorage.Shared.Data.PlayerDataManager)
 local TeleportUtility = require(ServerStorage.Shared.Utility.TeleportUtility)
 local PlaceIds = require(ServerStorage.Shared.Configuration.PlaceIDs)
+local ServerInfo = require(ServerStorage.Shared.Universe.ServerInfo)
 local Types = require(ReplicatedFirst.Shared.Utility.Types)
 
+type LocationType = Types.LocationType
 type PlayerPersistentData = Types.PlayerPersistentData
 type ServerDataHome = Types.ServerInfoHome
+type TeleportData = Types.TeleportData
+
+--#endregion
+
+--#region Utility
+
+local function getAssociatedWorld(player: Player): number?
+	if ServerInfo and ServerInfo.type == "location" then return ServerInfo.world end
+
+	local teleportData: TeleportData? = player:GetJoinData().TeleportData
+
+	return if teleportData then teleportData.associatedWorld else nil
+end
 
 --#endregion
 
@@ -30,7 +45,7 @@ local UniverseNavigation = {}
 
 	@param target The player to teleport.
 	@param destination The owner of the home to teleport to. If nil, the player will be teleported to their own home.
-	@return The result of the teleport.
+	@return The result of the teleport as a `TeleportToHomeResult` enum.
 ]]
 function UniverseNavigation.teleportToHomeAsync(target: Player, destination: number?)
 	local destinationData: PlayerPersistentData
@@ -73,14 +88,22 @@ function UniverseNavigation.teleportToHomeAsync(target: Player, destination: num
 
 	-- Teleport the player to the home.
 
+	local teleportData: TeleportData = {
+		associatedWorld = getAssociatedWorld(target),
+	}
+
 	local teleportOptions = Instance.new "TeleportOptions"
 	teleportOptions.ReservedServerAccessCode = accessCode
-
-	-- TODO: Teleport with world data.
+	teleportOptions:SetTeleportData(teleportData)
 
 	local success = TeleportUtility.safeTeleportAsync(PlaceIds.home, { target }, teleportOptions)
 
 	return if success then TeleportToHomeResult.success else TeleportToHomeResult.teleportFailed
 end
+
+function UniverseNavigation.teleportToLocationAsync(target: Player, location: LocationType, world: number?)
+	local placeId: number = PlaceIds.location[location]
+
+	
 
 return UniverseNavigation

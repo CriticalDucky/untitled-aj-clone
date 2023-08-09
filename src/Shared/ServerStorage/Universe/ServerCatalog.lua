@@ -24,10 +24,6 @@ local worldCatalog = DataStoreService:GetDataStore "WorldCatalog"
 local ServerCatalog = {}
 
 --[[
-    Returns world data for the given world.
-
-    ---
-
     @param world The world to get data for.
     @return The world data, or `nil` if the world does not exist or an error occurred.
 ]]
@@ -59,10 +55,6 @@ function ServerCatalog.getWorldAsync(world: number): CatalogWorldData?
 end
 
 --[[
-    Returns the number of worlds that exist.
-
-    ---
-
     @return The number of worlds that exist, or `nil` if an error occurred.
 ]]
 function ServerCatalog.getWorldCountAsync(): number?
@@ -74,10 +66,6 @@ function ServerCatalog.getWorldCountAsync(): number?
 end
 
 --[[
-    Returns the set of all locations that exist, including their place IDs.
-
-    ---
-
     @return The set of all locations that exist, including their place IDs, or `nil` if an error occurred.
 ]]
 function ServerCatalog.getWorldLocationListAsync(): { [string]: { placeId: number } }?

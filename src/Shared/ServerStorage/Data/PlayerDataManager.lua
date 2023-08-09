@@ -7,14 +7,13 @@ local PROFILE_ARCHIVE_GARBAGE_COLLECTION_INTERVAL = 60
 
 local Players = game:GetService "Players"
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
-local ReplicatedStorage = game:GetService "ReplicatedStorage"
 local ServerStorage = game:GetService "ServerStorage"
 
 local serverStorageVendor = ServerStorage.Vendor
 
 local ProfileService = require(serverStorageVendor.ProfileService)
 
-local PlayerDataInfo = require(ReplicatedStorage.Shared.Configuration.PlayerDataInfo)
+local PlayerDataTemplates = require(ServerStorage.Shared.Configuration.PlayerDataTemplates)
 local ServerDirectives = require(ServerStorage.Shared.Utility.ServerDirectives)
 local Table = require(ReplicatedFirst.Shared.Utility.Table)
 local Types = require(ReplicatedFirst.Shared.Utility.Types)
@@ -30,7 +29,7 @@ type Profile = Types.Profile
 
 --#region Profile Setup
 
-local ProfileStore = ProfileService.GetProfileStore("PlayerData", PlayerDataInfo.persistentDataTemplate)
+local ProfileStore = ProfileService.GetProfileStore("PlayerData", PlayerDataTemplates.persistentDataTemplate)
 
 --#endregion
 
@@ -198,7 +197,7 @@ local tempDataLoadedEvent = Instance.new "BindableEvent"
 local tempDataUnloadingEvent = Instance.new "BindableEvent"
 
 local function loadPlayerTempData(player: Player)
-	local initialTempData = Table.deepCopy(PlayerDataInfo.tempDataTemplate)
+	local initialTempData = Table.deepCopy(PlayerDataTemplates.tempDataTemplate)
 
 	tempDatas[player] = initialTempData
 
@@ -239,6 +238,15 @@ Players.PlayerRemoving:Connect(unloadPlayerTempData)
 local PlayerDataManager = {}
 
 --[[
+	Returns the player's persistent data, or `nil` if it is not loaded. The returned table may be modified.
+]]
+function PlayerDataManager.getPersistentData(player: Player): PlayerPersistentData?
+	local profile = profiles[player]
+
+	return if profile then profile.Data else nil
+end
+
+--[[
 	Returns an array of all players whose persistent data are loaded.
 ]]
 function PlayerDataManager.getPlayersWithLoadedPersistentData()
@@ -265,6 +273,11 @@ function PlayerDataManager.getPlayersWithLoadedTempData()
 end
 
 --[[
+	Returns the player's temporary data, or `nil` if it is not loaded. The returned table may be modified.
+]]
+function PlayerDataManager.getTempData(player: Player): PlayerTempData? return tempDatas[player] end
+
+--[[
 	Returns if the player's persistent data is loaded.
 ]]
 function PlayerDataManager.persistentDataIsLoaded(player: Player): boolean
@@ -288,22 +301,6 @@ function PlayerDataManager.viewOfflinePersistentDataAsync(playerId: number): Pla
 	local profile = viewOfflineProfileAsync(playerId)
 
 	return if profile then profile.Data else nil
-end
-
---[[
-	Returns the player's persistent data, or `nil` if it is not loaded. The returned table may be modified.
-]]
-function PlayerDataManager.getPersistentData(player: Player): PlayerPersistentData?
-	local profile = profiles[player]
-
-	return if profile then profile.Data else nil
-end
-
---[[
-	Returns the player's temporary data, or `nil` if it is not loaded. The returned table may be modified.
-]]
-function PlayerDataManager.getTempData(player: Player): PlayerTempData?
-	return tempDatas[player]
 end
 
 --[[

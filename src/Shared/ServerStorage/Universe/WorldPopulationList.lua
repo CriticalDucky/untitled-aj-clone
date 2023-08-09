@@ -12,11 +12,14 @@ local catalogInfo = MemoryStoreService:GetSortedMap "CatalogInfo"
 local isRetrieving = false
 local lastRetrieval
 
-local cachedWorldPopulationList: { number } = {}
+local cachedWorldPopulationList: { number }
 
+--[[
+	Provides a method for retrieving the world population list.
+]]
 local WorldPopulationList = {}
 
-function WorldPopulationList.get()
+function WorldPopulationList.get(): { number }?
 	-- If the world population list was retrieved within the cache duration, return the cached world population list.
 
 	if lastRetrieval and time() - lastRetrieval < CACHE_DURATION then return cachedWorldPopulationList end
@@ -35,15 +38,15 @@ function WorldPopulationList.get()
 
 	isRetrieving = true
 
-	local getWorldPopulationListSuccess, worldPopulationList: { number }? =
+	local getSuccess, worldPopulationList: { number }? =
 		MemoryStoreUtility.safeSortedMapGetAsync(catalogInfo, "WorldPopulationList")
 
 	lastRetrieval = time()
 	isRetrieving = false
 
-	if not getWorldPopulationListSuccess then return cachedWorldPopulationList end
+	if not getSuccess or not worldPopulationList then return end
 
-	cachedWorldPopulationList = worldPopulationList or {}
+	cachedWorldPopulationList = worldPopulationList
 
 	return cachedWorldPopulationList
 end

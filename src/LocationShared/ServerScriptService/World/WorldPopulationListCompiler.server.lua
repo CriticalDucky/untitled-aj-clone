@@ -3,11 +3,12 @@
 --[[
     Determines how often to compile the world population list.
 ]]
-local REPORT_INTERVAL = 10
+local REPORT_INTERVAL = 30
 
 local MemoryStoreService = game:GetService "MemoryStoreService"
 local ServerStorage = game:GetService "ServerStorage"
 
+local ServerCatalog = require(ServerStorage.Shared.Universe.ServerCatalog)
 local ServerInfo = require(ServerStorage.Shared.Universe.ServerInfo)
 local MemoryStoreUtility = require(ServerStorage.Shared.Utility.MemoryStoreUtility)
 
@@ -27,27 +28,34 @@ local lastBeganReporting
 repeat
 	lastBeganReporting = time()
 
-	local getAllPopulationsSuccess, worldPopulationsCollection =
+	local getAllPopulationsSuccess, worldPopulationsCollection: {{key: string, value:number}} =
 		MemoryStoreUtility.safeSortedMapGetAllAsync(worldPopulations, Enum.SortDirection.Ascending)
 
 	if not getAllPopulationsSuccess then
-		warn "Failed to get all world populations."
-		return
+		warn "Failed to get all world populations when compiling the world population list."
+		continue
+	end
+
+	local worldCount = ServerCatalog.getWorldCountAsync()
+
+	if not worldCount then
+		warn "Failed to get world count when compiling the world population list."
+		continue
+	end
+	assert(worldCount)
+
+	local worldPopulationsMap = {}
+
+	for _, worldPopulation in pairs(worldPopulationsCollection) do
+		worldPopulationsMap[worldPopulation.key] = worldPopulation.value
 	end
 
 	local worldPopulationList = {}
 
-	for _, worldPopulation in pairs(worldPopulationsCollection) do
-		local currentWorldString = worldPopulation.key:match "%d+"
+	for worldNumber = 1, worldCount do
+		local worldPopulation = worldPopulationsMap[`World{worldNumber}`] or 0
 
-		if not currentWorldString then
-			warn(`Failed to get world number from world population key '{worldPopulation.key}'`)
-			continue
-		end
-
-		local currentWorld = tonumber(currentWorldString)
-
-		worldPopulationList[currentWorld] = worldPopulation.value
+		worldPopulationList[worldNumber] = worldPopulation
 	end
 
 	MemoryStoreUtility.safeSortedMapSetAsync(

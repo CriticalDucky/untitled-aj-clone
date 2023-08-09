@@ -200,8 +200,6 @@ function ServerCatalogControlPanel.addWorldLocation(name: string, placeId: numbe
 		print(`Reserved a private server for location '{name}' in world {world}.`)
 
 		local setDictionarySuccess = slowSetAsync(serverDictionary, privateServerId, {
-			location = name,
-			type = "location",
 			world = world,
 		})
 
@@ -481,8 +479,6 @@ function ServerCatalogControlPanel.setWorldCount(count: number)
 				print(`Reserved a private server for location '{locationName}' in world {world}.`)
 
 				local setDictionarySuccess = slowSetAsync(serverDictionary, privateServerId, {
-					location = locationName,
-					type = "location",
 					world = world,
 				})
 

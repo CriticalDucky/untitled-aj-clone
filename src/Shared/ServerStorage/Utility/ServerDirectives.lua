@@ -18,7 +18,7 @@ function ServerDirectives.kickPlayer(player: Player, reason: string) kickingPlay
 
     ---
 
-    @param reason The reason for shutting down the server.
+    @param reason The message shown to players after they are kicked.
 ]]
 function ServerDirectives.shutDownServer(reason: string)
 	shuttingDownServerEvent:Fire(reason)

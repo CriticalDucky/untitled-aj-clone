@@ -1,31 +1,22 @@
+--!strict
+
 local ReplicatedFirst = game:GetService "ReplicatedFirst"
 
-local enumsFolder = ReplicatedFirst.Shared.Enums
-
-local HomeLockType = require(enumsFolder.HomeLockType)
+local Enums = require(ReplicatedFirst.Shared.Enums)
 local Types = require(ReplicatedFirst.Shared.Utility.Types)
 
 type PlayerPersistentData = Types.PlayerPersistentData
+type PlayerTempData = Types.PlayerTempData
 
-type PlayerDataInfo = {
-	inventoryLimits: {
-		accessories: number,
-		furniture: number,
-		homes: number,
-	},
+type PlayerDataTemplates = {
 	persistentDataTemplate: PlayerPersistentData,
-	tempDataTemplate: {},
+	tempDataTemplate: PlayerTempData,
 }
 
 --[[
 	Configuration for player data.
 ]]
-local PlayerDataInfo: PlayerDataInfo = {
-	inventoryLimits = {
-		accessories = 500,
-		furniture = 500,
-		homes = 200,
-	},
+local PlayerDataTemplates: PlayerDataTemplates = {
 	persistentDataTemplate = {
 		currency = {
 			money = 0,
@@ -41,7 +32,7 @@ local PlayerDataInfo: PlayerDataInfo = {
 
 		settings = {
 			findOpenWorld = true,
-			homeLock = HomeLockType.unlocked,
+			homeLock = Enums.HomeLockType.unlocked,
 			musicVolume = 1,
 			sfxVolume = 1,
 		},
@@ -49,4 +40,4 @@ local PlayerDataInfo: PlayerDataInfo = {
 	tempDataTemplate = {},
 }
 
-return PlayerDataInfo
+return PlayerDataTemplates

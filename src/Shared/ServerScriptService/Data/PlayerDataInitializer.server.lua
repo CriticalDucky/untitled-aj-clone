@@ -79,7 +79,6 @@ local function initializeHomeServer(player: Player)
 
 	local serverData: ServerDataHome = {
 		homeOwner = player.UserId,
-		type = "home",
 	}
 
 	local registerSuccess = DataStoreUtility.safeSetAsync(serverDictionary, newServerId, serverData, { player.UserId })
