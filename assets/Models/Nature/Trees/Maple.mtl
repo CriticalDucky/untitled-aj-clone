@@ -1,0 +1,16 @@
+newmtl Maple1Mtl
+Material Color
+Ka 0.373615 0.368591 0.383775
+Kd 0.373615 0.368591 0.383775
+Ks 0.0322335 0.0318 0.03311 
+
+d 1
+
+Ns 0
+
+map_Ka Maple1_diff.png
+map_Kd Maple1_diff.png
+map_d Maple1_diff.png
+
+map_Ns Maple1_spec.png
+

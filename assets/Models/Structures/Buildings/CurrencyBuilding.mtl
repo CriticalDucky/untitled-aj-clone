@@ -1,0 +1,14 @@
+newmtl Currencybuilding1Mtl
+Material Color
+Ka 1 1 1
+Kd 1 1 1
+Ks 0.0235294 0.0235294 0.0235294 
+
+d 1
+
+Ns 0
+
+map_Ka Currencybuilding1_diff.png
+map_Kd Currencybuilding1_diff.png
+map_d Currencybuilding1_diff.png
+
