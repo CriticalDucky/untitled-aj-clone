@@ -11,7 +11,9 @@ local ServerDirectives = {}
     @param player The player to kick.
     @param reason The reason for kicking the player.
 ]]
-function ServerDirectives.kickPlayer(player: Player, reason: string) kickingPlayerEvent:Fire(player, reason) end
+function ServerDirectives.kickPlayer(player: Player, reason: string)
+    kickingPlayerEvent:Fire(player, reason)
+end
 
 --[[
     Sends a request to shut down the server and halts the thread it was called on.

@@ -32,7 +32,7 @@ repeat
 
 	if not getAllPopulationsSuccess then
 		warn "Failed to get all location populations."
-		return
+		return -- TODO: why return???
 	end
 
 	local worldPopulation = 0

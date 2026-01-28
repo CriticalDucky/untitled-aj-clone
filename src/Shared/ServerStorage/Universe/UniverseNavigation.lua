@@ -8,13 +8,13 @@ local ServerStorage = game:GetService "ServerStorage"
 local Enums = require(ReplicatedFirst.Shared.Enums)
 local HomeLockType = Enums.HomeLockType
 local TeleportToHomeResult = Enums.TeleportToHomeResult
+local TeleportToLocationResult = Enums.TeleportToLocationResult
 local PlayerDataManager = require(ServerStorage.Shared.Data.PlayerDataManager)
 local TeleportUtility = require(ServerStorage.Shared.Utility.TeleportUtility)
 local PlaceIds = require(ServerStorage.Shared.Configuration.PlaceIDs)
 local ServerInfo = require(ServerStorage.Shared.Universe.ServerInfo)
 local Types = require(ReplicatedFirst.Shared.Utility.Types)
 
-type LocationType = Types.LocationType
 type PlayerPersistentData = Types.PlayerPersistentData
 type ServerDataHome = Types.ServerInfoHome
 type TeleportData = Types.TeleportData
@@ -47,7 +47,7 @@ local UniverseNavigation = {}
 	@param destination The owner of the home to teleport to. If nil, the player will be teleported to their own home.
 	@return The result of the teleport as a `TeleportToHomeResult` enum.
 ]]
-function UniverseNavigation.teleportToHomeAsync(target: Player, destination: number?)
+function UniverseNavigation.teleportToHomeAsync(target: Player, destination: number?): number
 	local destinationData: PlayerPersistentData
 
 	if destination and target.UserId ~= destination then
@@ -101,9 +101,25 @@ function UniverseNavigation.teleportToHomeAsync(target: Player, destination: num
 	return if success then TeleportToHomeResult.success else TeleportToHomeResult.teleportFailed
 end
 
-function UniverseNavigation.teleportToLocationAsync(target: Player, location: LocationType, world: number?)
-	local placeId: number = PlaceIds.location[location]
+--[[
+	Attempts to teleport the player to a location.
 
-	
+	---
+
+	@param target The player to teleport.
+	@param location The location to teleport to.
+	@param world The world to teleport to. The default value is the player's associated world, if it exists.
+]]
+function UniverseNavigation.teleportToLocationAsync(target: Player, location: string, world: number?): number
+	world = world or getAssociatedWorld(target)
+
+	if not world then return TeleportToLocationResult.worldNotFound end
+
+	local placeId = PlaceIds.location[location]
+
+	if not placeId then return TeleportToLocationResult.locationNotFound end
+
+
+
 
 return UniverseNavigation

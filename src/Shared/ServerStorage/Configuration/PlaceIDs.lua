@@ -5,16 +5,16 @@
 
 	When registering a new place ID, make sure to do the following:
 	* If it is a location, register it in the server catalog control panel.
-	* If adding a new location, minigame, or party, update the corresponding type in the `Types` module to include it.
 	* Add the place ID to the `PLACE_IDS` table. If it is a new location, minigame, or party, the name MUST be a valid
 	  type of that variant as specified in the `Types` module.
-	* Update the `ServerInfo` module to identify the new place ID.
+	* If it is a routable location, register it in the `StartingLocationInfo` module.
 ]]
 
 --#region Imports
 
 local ServerStorage = game:GetService "ServerStorage"
 
+local ServerCatalog = require(ServerStorage.Shared.Universe.ServerCatalog)
 local ServerDirectives = require(ServerStorage.Shared.Utility.ServerDirectives)
 
 local currentPlaceId = game.PlaceId
@@ -23,34 +23,14 @@ local currentPlaceId = game.PlaceId
 
 type PlaceIDs = {
 	home: number,
-	location: {
-		forest: number,
-		town: number,
-	},
-	minigame: {
-		fishing: number,
-		gatherer: number,
-	},
-	party: {
-		beach: number,
-	},
+	minigame: {[string]: number},
+	party: {[string]: number},
 	routing: number,
-}
-
-type PlaceConfiguration = {
-	recommendedPlayerCount: number,
-}
-type PlaceInfo = PlaceConfiguration & {
-	placeId: number,
 }
 
 local PLACE_IDS: { [string]: PlaceIDs } = {
 	production = {
 		home = 10564407502,
-		location = {
-			forest = 10212920968,
-			town = 10189748812,
-		},
 		minigame = {
 			fishing = 11569189394,
 			gatherer = 12939855185,
@@ -81,15 +61,17 @@ local PLACE_IDS: { [string]: PlaceIDs } = {
 
 local function getPlaceIdSet(placeId: number): PlaceIDs?
 	for _, set in pairs(PLACE_IDS) do
-		for k, idOrSubset in pairs(set) do
-			if idOrSubset == placeId then return set end
+		if set.home == placeId then return set end
 
-			if type(idOrSubset) == "table" then
-				for _, id in pairs(idOrSubset) do
-					if id == placeId then return set end
-				end
-			end
+		for _, id in pairs(set.minigame) do
+			if id == placeId then return set end
 		end
+
+		for _, id in pairs(set.party) do
+			if id == placeId then return set end
+		end
+
+		if set.routing == placeId then return set end
 	end
 
 	return
@@ -102,7 +84,16 @@ end
 ]]
 local PlaceIds = getPlaceIdSet(currentPlaceId)
 
-if not PlaceIds then ServerDirectives.shutDownServer "Failed to identify the current place ID." end
+if not PlaceIds then
+	local locationList = ServerCatalog.getWorldLocationListAsync()
+
+	if not locationList then ServerDirectives.shutDownServer "Failed to retrieve the server's location list." end
+
+	assert(locationList)
+
+end
+
+if not PlaceIds then ServerDirectives.shutDownServer "Failed to identify the server's place ID." end
 
 assert(PlaceIds)
 

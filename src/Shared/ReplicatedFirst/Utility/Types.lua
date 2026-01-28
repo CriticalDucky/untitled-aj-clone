@@ -127,12 +127,6 @@ export type CatalogWorldData = { [string]: ServerIdentifier }
 
 export type CatalogWorldLocationList = { [string]: { placeId: number } }
 
-export type LocationType = "forest" | "town"
-
-export type MinigameType = "fishing" | "gatherer"
-
-export type PartyType = "beach"
-
 export type ServerIdentifier = {
 	accessCode: string,
 	privateServerId: string,

@@ -11,9 +11,6 @@ local PlaceIDs = require(ServerStorage.Shared.Configuration.PlaceIDs)
 local ServerDirectives = require(ServerStorage.Shared.Utility.ServerDirectives)
 local Types = require(ReplicatedFirst.Shared.Utility.Types)
 
-type LocationType = Types.LocationType
-type MinigameType = Types.MinigameType
-type PartyType = Types.PartyType
 type ServerInfoHome = Types.ServerInfoHome
 type ServerInfoLocation = Types.ServerInfoLocation
 
@@ -24,87 +21,62 @@ local privateServerId = game.PrivateServerId
 
 --#endregion
 
-type HomePlaceInfo = {
+type HomeServerInfo = {
 	type: "home",
-}
-
-type HomeServerInfo = HomePlaceInfo & {
 	homeOwner: number,
 }
 
-type LocationPlaceInfo = {
+type LocationServerInfo = {
 	type: "location",
-	location: LocationType,
-}
-
-type LocationServerInfo = LocationPlaceInfo & {
+	location: string,
 	world: number,
 }
 
-type MinigamePlaceInfo = {
+type MinigameServerInfo = {
 	type: "minigame",
-	minigame: MinigameType,
+	minigame: string,
 }
 
-type MinigameServerInfo = MinigamePlaceInfo
-
-type PartyPlaceInfo = {
+type PartyServerInfo = {
 	type: "party",
-	party: PartyType,
+	party: string,
 }
 
-type PartyServerInfo = PartyPlaceInfo
-
-type RoutingPlaceInfo = {
+type RoutingServerInfo = {
 	type: "routing",
 }
 
-type RoutingServerInfo = RoutingPlaceInfo
-
-type PlaceInfo = HomePlaceInfo | LocationPlaceInfo | MinigamePlaceInfo | PartyPlaceInfo | RoutingPlaceInfo
-
 type ServerInfo = HomeServerInfo | LocationServerInfo | MinigameServerInfo | PartyServerInfo | RoutingServerInfo
 
-local PLACE_ID_INFORMATION: { PlaceInfo } = {
-	[PlaceIDs.home] = {
-		type = "home",
-	},
-	[PlaceIDs.location.forest] = {
-		type = "location",
-		location = "forest",
-	},
-	[PlaceIDs.location.town] = {
-		type = "location",
-		location = "town",
-	},
-	[PlaceIDs.minigame.fishing] = {
-		type = "minigame",
-		minigame = "fishing",
-	},
-	[PlaceIDs.minigame.gatherer] = {
-		type = "minigame",
-		minigame = "gatherer",
-	},
-	[PlaceIDs.party.beach] = {
-		type = "party",
-		party = "beach",
-	},
-	[PlaceIDs.routing] = {
-		type = "routing",
-	},
-}
+local function getPlaceIdInformation(placeId: number): (string, string?)
+	if placeId == PlaceIDs.home then return "home" end
+
+	for placeType, id in pairs(PlaceIDs.location) do
+		if id == placeId then return "location", placeType end
+	end
+
+	for placeType, id in pairs(PlaceIDs.minigame) do
+		if id == placeId then return "minigame", placeType end
+	end
+
+	for placeType, id in pairs(PlaceIDs.party) do
+		if id == placeId then return "party", placeType end
+	end
+
+	if placeId == PlaceIDs.routing then return "routing" end
+
+	return "unknown"
+end
+
+local placeType, placeSubtype = getPlaceIdInformation(placeId)
 
 --#region Server Info
 
-local placeIdInformation = PLACE_ID_INFORMATION[placeId]
-
-if not placeIdInformation then ServerDirectives.shutDownServer "The server could not identify itself." end
-
 local ServerInfo = {}
 
-ServerInfo.type = placeIdInformation.type
+ServerInfo.type = placeType
 
-if placeIdInformation.type == "home" then
+if placeType == "home" then
 	-- Home Owner
 
 	local getSuccess, serverInfo: ServerInfoHome = DataStoreUtility.safeGetAsync(serverDictionary, privateServerId)
@@ -114,10 +86,10 @@ if placeIdInformation.type == "home" then
 	end
 
 	ServerInfo.homeOwner = serverInfo.homeOwner
-elseif placeIdInformation.type == "location" then
+elseif placeType == "location" then
 	-- Location Type
 
-	ServerInfo.location = placeIdInformation.location
+	ServerInfo.location = placeSubtype
 
 	-- World ID
 
@@ -128,14 +100,16 @@ elseif placeIdInformation.type == "location" then
 	end
 
 	ServerInfo.world = serverInfo.world
-elseif placeIdInformation.type == "minigame" then
+elseif placeType == "minigame" then
 	-- Minigame Type
 
-	ServerInfo.minigame = placeIdInformation.minigame
-elseif placeIdInformation.type == "party" then
+	ServerInfo.minigame = placeSubtype
+elseif placeType == "party" then
 	-- Party Type
 
-	ServerInfo.party = placeIdInformation.party
+	ServerInfo.party = placeSubtype
+else
+	ServerDirectives.shutDownServer "The server could not identify itself."
 end
 
 --#endregion

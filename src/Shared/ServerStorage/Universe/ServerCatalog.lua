@@ -10,8 +10,6 @@ assert(not RunService:IsStudio(), "This module cannot be used in Studio.")
 local DataStoreUtility = require(ServerStorage.Shared.Utility.DataStoreUtility)
 local Types = require(ReplicatedFirst.Shared.Utility.Types)
 
-type CatalogMinigameData = Types.CatalogMinigameData
-type CatalogPartyData = Types.CatalogPartyData
 type CatalogWorldData = Types.CatalogWorldData
 
 local catalogInfo = DataStoreService:GetDataStore "CatalogInfo"

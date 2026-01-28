@@ -319,7 +319,7 @@ PlayerDataManager.persistentDataUnloading = profileUnloadingEvent.Event :: RBXSc
 PlayerDataManager.tempDataLoaded = tempDataLoadedEvent.Event :: RBXScriptSignal<Player, PlayerTempData>
 
 --[[
-	An event that fires when the player's temporary data is unloaded.
+	An event that fires when the player's temporary data is unloading.
 ]]
 PlayerDataManager.tempDataUnloaded = tempDataUnloadingEvent.Event :: RBXScriptSignal<Player, PlayerTempData>
 
